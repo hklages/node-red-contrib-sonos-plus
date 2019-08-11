@@ -1,6 +1,5 @@
 {
-  "name": "node-red-contrib-sonos-plus
-  sonos",
+  "name": "node-red-contrib-sonos-plus",
   "version": "0.0.5",
   "description": "Set of nodes for SONOS players.",
   "main": "index.js",
