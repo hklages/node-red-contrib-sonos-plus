@@ -1,0 +1,99 @@
+<!-- Sonos Get Status Node -->
+
+<!-- Registering Node -->
+<script type="text/javascript">
+RED.nodes.registerType('sonos-get-status', {
+  category: 'Sonos',
+  defaults: {
+    confignode: {
+      value: '',
+      type: 'sonos-config'
+    },
+    name: {
+      value: ''
+    }
+  },
+  inputs: 1,
+  outputs: 1,
+  icon: 'sonos.png', // saved in  icons/myicon.png
+  color: '#edb88a',
+  label: function () {
+    return this.name || 'Get Status';
+  },
+  paletteLabel: 'Get Status'
+});
+</script>
+
+<!-- Setting design and inputs for node -->
+<script type="text/x-red" data-template-name="sonos-get-status">
+	<div class="form-row">
+        <label for="node-input-confignode"> Config Node</label>
+        <input type="text" id="node-input-confignode">
+    </div>
+
+	<div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="This Node Name">
+    </div>
+</script>
+
+
+<!-- Help Text -->
+<script type="text/x-red" data-help-name="sonos-get-status">
+	<p>A node to retrieve player status. </p>
+	<p>Command can be anything and must be sent via simple input payload.
+	If payload = 'state_only' only the playing state is provided.</p>
+
+	<h3>Input (required)</h3>
+
+	<dl class="message-properties">
+			<dt>payload
+					<span class="property-type">string</span>
+			</dt>
+			<dd>Accepted values:
+				<br/> • "state_only": only state is provided
+				<br/> • anything else: several infos are provided
+			</dd>
+	</dl>
+
+	<h3>Outputs</h3>
+
+  <dl class="message-properties">
+      <dt>payload
+          <span class="property-type">string</span>
+      </dt>
+      <dd> current track's title, if playing
+      </dd>
+        <dt>state
+          <span class="property-type">string | playing/stopped/paused</span>
+      </dt>
+      <dd> current playing state
+      </dd>
+        <dt>muted
+          <span class="property-type">boolean | true-false</span>
+      </dt>
+      <dd> current mute status
+           <br/>
+           When muted, the volume value is not affected. In other words, volume value may not be 0 when speaker is muted.
+      </dd>
+        <dt>volume
+          <span class="property-type">int | 0-100</span>
+      </dt>
+      <dd> current volume value
+           <br/>
+           When muted, the volume value is not affected. In other words, volume value may not be not be 0 when speaker is muted.
+      </dd>
+        <dt>normalized_volume <span class="property-type">float | 0-1</span></dt>
+      <dd> normalized current volume value
+           <br/>value ranges from 0.0 to 1.0. Similar to above <strong><i>volume</i></strong> parameter, except this has been normalized to [0.0 - 1.0] range.
+      </dd>
+        <dt>track
+          <span class="property-type">object</span></dt>
+      <dd> full track info object
+      </dd>
+        <dt>track.albumArtURL
+          <span class="property-type">string/url</span></dt>
+      <dd> full url for the album art
+      </dd>
+  </dl>
+</script>

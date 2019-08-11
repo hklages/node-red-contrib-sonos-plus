@@ -1,0 +1,32 @@
+{
+  "name": "node-red-contrib-sonos-plus
+  sonos",
+  "version": "0.0.5",
+  "description": "Set of nodes for SONOS players.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "sonos",
+    "sonos-plus",
+    "music",
+    "node-red"
+  ],
+  "node-red": {
+    "nodes": {
+      "sonos-config": "h59ksonos/sonos-config.js",
+      "sonos-control-player": "h59ksonos/sonos-control-player.js",
+      "sonos-get-status": "h59ksonos/sonos-get-status.js",
+      "sonos-play-favorite": "h59ksonos/sonos-play-favorite.js",
+      "sonos-manage-queue": "h59ksonos/sonos-manage-queue.js",
+      "sonos-get-queue": "h59ksonos/sonos-get-queue.js"
+    }
+  },
+
+  "author": "Henning Klages",
+  "license": "MIT",
+  "dependencies": {
+    "sonos": "1.12.2"
+  }
+}

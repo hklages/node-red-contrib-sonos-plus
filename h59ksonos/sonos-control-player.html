@@ -1,0 +1,66 @@
+<!-- Sonos Control Player Node -->
+
+<!-- Registering Node -->
+<script type="text/javascript">
+RED.nodes.registerType('sonos-control-player', {
+  category: 'Sonos',
+  defaults: {
+    confignode: {
+      value: '',
+      type: 'sonos-config'
+    },
+    name: {
+      value: ''
+    }
+  },
+  inputs: 1, // set the number of inputs - only 0 or 1
+  outputs: 0, // set the number of outputs - 0 to n
+  icon: 'sonos.png', // saved in  icons/myicon.png
+  color: '#edb88a',
+  label: function () {
+    return this.name || 'Control Player';
+  },
+  paletteLabel: 'Ctrl Player'
+});
+</script>
+
+<!-- Setting design and inputs for node -->
+<script type="text/x-red" data-template-name="sonos-control-player">
+  <div class="form-row">
+        <label for="node-input-confignode"> Config Node</label>
+        <input type="text" id="node-input-confignode">
+    </div>
+
+	<div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="This Node Name">
+  </div>
+</script>
+
+
+<!-- Help Text -->
+<script type="text/x-red" data-help-name="sonos-control-player">
+  <p>A node to control Sonos player.</p>
+  <p>Command must be sent via simple input payload.</p>
+
+  <h3>Input (required)</h3>
+
+  <dl class="message-properties">
+      <dt>payload
+          <span class="property-type">string</span>
+      </dt>
+      <dd>Accepted values:
+        <br/> • "stop": stop playing
+        <br/> • "pause": pause playing
+        <br/> • "play": resume play
+        <br/> • "toggleplayback": toggle play/pause
+        <br/> • "next": play next track
+        <br/> • "previous": play previous track
+        <br/> • "mute": mute volume
+        <br/> • "unmute": unmute volume
+        <br/> • number: 0-100: set volume
+        <br/> • +N: increase volume by N
+        <br/> • -N: decrease volume by N
+      </dd>
+  </dl>
+</script>
