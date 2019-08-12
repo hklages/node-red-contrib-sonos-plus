@@ -60,100 +60,100 @@ module.exports = function (RED) {
       node.warn('invalid command: ' + JSON.stringify(splitCommand));
     }
   }
-  RED.nodes.registerType('sonos-play-favorite', SonosPlayRadioNode);
-};
 
-// -----------------------------------------------------------------------------
-function handleCommandTuneIn (node, configNode, msg, sonosPlayer, splitCommand) {
-  var reg = new RegExp('^[s][0-9]+$');
-  if (reg.test(splitCommand.parameter)) {
-    sonosPlayer.playTuneinRadio(splitCommand.parameter).then(result => {
-      node.status({ fill: 'green', shape: 'dot', text: 'OK TuneIN' });
-      // send message
-      node.send(msg);
-    }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'Error set TuneIn' });
-      node.error('Error Radio TuneIn' + JSON.stringify(err));
-    });
-  } else {
-    node.status({ fill: 'red', shape: 'dot', text: 'invalid command!' });
-    node.warn('invalid TuneIn identifier: ' + JSON.stringify(splitCommand));
+  // -----------------------------------------------------------------------------
+  function handleCommandTuneIn (node, configNode, msg, sonosPlayer, splitCommand) {
+    var reg = new RegExp('^[s][0-9]+$');
+    if (reg.test(splitCommand.parameter)) {
+      sonosPlayer.playTuneinRadio(splitCommand.parameter).then(result => {
+        node.status({ fill: 'green', shape: 'dot', text: 'OK TuneIN' });
+        // send message
+        node.send(msg);
+      }).catch(err => {
+        node.status({ fill: 'red', shape: 'dot', text: 'Error set TuneIn' });
+        node.error('Error Radio TuneIn' + JSON.stringify(err));
+      });
+    } else {
+      node.status({ fill: 'red', shape: 'dot', text: 'invalid command!' });
+      node.warn('invalid TuneIn identifier: ' + JSON.stringify(splitCommand));
+    }
   }
-}
 
-function handleCommandMySonos (node, configNode, msg, sonosPlayer, splitCommand) {
+  function handleCommandMySonos (node, configNode, msg, sonosPlayer, splitCommand) {
   // get list of My Sonos stations - first match!
-  sonosPlayer.getFavorites().then(data => {
-    if (!(data.returned !== null && data.returned !== undefined &&
+    sonosPlayer.getFavorites().then(data => {
+      if (!(data.returned !== null && data.returned !== undefined &&
         data.returned && parseInt(data.returned) > 0)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'no station found' });
-      node.error('My Sonos does not contain any stations');
-      return;
-    }
+        node.status({ fill: 'red', shape: 'dot', text: 'no station found' });
+        node.error('My Sonos does not contain any stations');
+        return;
+      }
 
-    // filter: TuneIn or Amazon Prime radio stations
-    const TUNEIN_PREFIX = 'x-sonosapi-stream:';
-    const AMAZON_PREFIX = 'x-sonosapi-radio:';
-    var stationList = [];
-    var stationUri;
-    var radioId;
-    for (let i = 0; i < parseInt(data.returned); i++) {
-      if (data.items[i].uri.startsWith(TUNEIN_PREFIX)) {
+      // filter: TuneIn or Amazon Prime radio stations
+      const TUNEIN_PREFIX = 'x-sonosapi-stream:';
+      const AMAZON_PREFIX = 'x-sonosapi-radio:';
+      var stationList = [];
+      var stationUri;
+      var radioId;
+      for (let i = 0; i < parseInt(data.returned); i++) {
+        if (data.items[i].uri.startsWith(TUNEIN_PREFIX)) {
         // get stationId
-        stationUri = data.items[i].uri;
-        radioId = stationUri.split('?')[0];
-        radioId = radioId.substr(TUNEIN_PREFIX.length);
-        stationList.push({ 'title': data.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
-      }
-      if (data.items[i].uri.startsWith(AMAZON_PREFIX)) {
-        stationList.push({ 'title': data.items[i].title, 'uri': data.items[i].uri, 'source': 'AmazonPrime' });
-      }
-    }
-    if (stationList.length === 0) {
-      node.status({ fill: 'red', shape: 'dot', text: 'no station found' });
-      node.error('My Sonos does not contain any TuneIn or Amazon stations');
-      return;
-    }
-
-    msg.mySonosRadios = stationList;
-
-    // lookup topic in list and play radio station
-    var found = false;
-    for (let i = 0; i < stationList.length; i++) {
-      if (((stationList[i].title).indexOf(splitCommand.parameter)) >= 0) {
-        found = true;
-        // play radion station
-        if (stationList[i].source === 'TuneIn') {
-          sonosPlayer.playTuneinRadio(stationList[i].radioId).then(result => {
-            node.status({ fill: 'green', shape: 'dot', text: 'OK TuneIN' });
-            // send message
-            node.send(msg);
-          }).catch(err => {
-            node.status({ fill: 'red', shape: 'dot', text: 'Erro set TuneIn' });
-            node.error('Error Radio TuneIn' + JSON.stringify(err));
-          });
-        } else if (stationList[i].source === 'AmazonPrime') {
-          sonosPlayer.setAVTransportURI(stationList[i].uri).then(result => {
-            node.status({ fill: 'green', shape: 'dot', text: 'OK Amazon' });
-            // send message
-            node.send(msg);
-          }).catch(err => {
-            node.status({ fill: 'red', shape: 'dot', text: 'Error Set Amazon' });
-            node.error('Error Radio TuneIn' + JSON.stringify(err));
-          });
-        } else {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error unknown' });
-          node.error('Error unknown');
+          stationUri = data.items[i].uri;
+          radioId = stationUri.split('?')[0];
+          radioId = radioId.substr(TUNEIN_PREFIX.length);
+          stationList.push({ 'title': data.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
+        }
+        if (data.items[i].uri.startsWith(AMAZON_PREFIX)) {
+          stationList.push({ 'title': data.items[i].title, 'uri': data.items[i].uri, 'source': 'AmazonPrime' });
         }
       }
-    }
+      if (stationList.length === 0) {
+        node.status({ fill: 'red', shape: 'dot', text: 'no station found' });
+        node.error('My Sonos does not contain any TuneIn or Amazon stations');
+        return;
+      }
 
-    if (!found) {
-      node.status({ fill: 'red', shape: 'dot', text: 'Topic not in MySonos list.' });
-      node.error('Topic not in MySonos list.');
-    }
-  }).catch(err => {
-    node.status({ fill: 'red', shape: 'dot', text: 'Error Processing MySonos List' });
-    node.error('Error processing MySonos List' + JSON.stringify(err));
-  });
-}
+      msg.mySonosRadios = stationList;
+
+      // lookup topic in list and play radio station
+      var found = false;
+      for (let i = 0; i < stationList.length; i++) {
+        if (((stationList[i].title).indexOf(splitCommand.parameter)) >= 0) {
+          found = true;
+          // play radion station
+          if (stationList[i].source === 'TuneIn') {
+            sonosPlayer.playTuneinRadio(stationList[i].radioId).then(result => {
+              node.status({ fill: 'green', shape: 'dot', text: 'OK TuneIN' });
+              // send message
+              node.send(msg);
+            }).catch(err => {
+              node.status({ fill: 'red', shape: 'dot', text: 'Erro set TuneIn' });
+              node.error('Error Radio TuneIn' + JSON.stringify(err));
+            });
+          } else if (stationList[i].source === 'AmazonPrime') {
+            sonosPlayer.setAVTransportURI(stationList[i].uri).then(result => {
+              node.status({ fill: 'green', shape: 'dot', text: 'OK Amazon' });
+              // send message
+              node.send(msg);
+            }).catch(err => {
+              node.status({ fill: 'red', shape: 'dot', text: 'Error Set Amazon' });
+              node.error('Error Radio TuneIn' + JSON.stringify(err));
+            });
+          } else {
+            node.status({ fill: 'red', shape: 'dot', text: 'Error unknown' });
+            node.error('Error unknown');
+          }
+        }
+      }
+
+      if (!found) {
+        node.status({ fill: 'red', shape: 'dot', text: 'Topic not in MySonos list.' });
+        node.error('Topic not in MySonos list.');
+      }
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'Error Processing MySonos List' });
+      node.error('Error processing MySonos List' + JSON.stringify(err));
+    });
+  }
+  RED.nodes.registerType('sonos-play-radio', SonosPlayRadioNode);
+};
