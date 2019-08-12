@@ -36,7 +36,7 @@ module.exports = function (RED) {
       return;
     }
 
-    // Check msg.payload and convert to lowercase string
+    // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'wrong payload' });
       node.error('invalid payload!');
@@ -47,8 +47,8 @@ module.exports = function (RED) {
     command = command.toLowerCase();
     var splitCommand;
 
+    // dispatch
     var commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute'];
-    // Handle simple string command format, rather than specific JSON format previously
     if (commandList.indexOf(command) > -1) {
       handleCommand(node, configNode, msg, sonosPlayer, command);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
