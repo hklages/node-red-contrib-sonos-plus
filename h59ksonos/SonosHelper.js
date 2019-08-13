@@ -4,8 +4,10 @@ class SonosHelper {
   // some function to be used in all nodes
 
   validateConfigNode (node, configNode) {
-    // PURPOSE Check existing of configNode and ipaddress, serialnumber are stored.
-    // HINT No validation whether ip address belongs to a SONOS player
+  /** Validate configNode - at least one of ipAddress or serial must exist (needed for player discovery)
+  * @param  {Object} node current node
+  * @param  {object} configNode corresponding configNode
+  */
 
     if (configNode === undefined || configNode === null) {
       node.status({ fill: 'red', shape: 'ring', text: 'please select a config node' });
@@ -24,8 +26,14 @@ class SonosHelper {
   }
 
   preprocessInputMsg (node, configNode, msg, callback) {
-    // TODO handle that in calling function - maybe obsolete as already checked before
+    /** Validates ConfigNode and return sonos player object in callback
+    * @param  {Object} node current node
+    * @param  {object} configNode corresponding configNode
+    * @return  returns the sonos player object in callback function
+    */
+
     var isValid = this.validateConfigNode(node, configNode);
+    // TODO ERROR Handling!!!!
     if (!isValid) {
       return;
     }
