@@ -43,20 +43,20 @@ class SonosHelper {
     // use IP Address if user set it
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
-      // prefered case
+      // exisiting ip address - fastes solutions
       if (callback) {
         callback(configNode);
       }
     } else {
-      // first find the Sonos IP address from given serial number
+      // get ip address - we have to start discover and get ip address based on serial
       this.setNodeStatus(node, 'warning', 'missing ip address', 'It is recommendet to set the ip Address in configuration node!');
       this.findSonos(node, configNode.serialnum, function (err, device) {
         if (err) {
-          this.setNodeStatus(node, 'error', 'error finding sonos player', 'error finding sonos player with given serialnumber ' + configNode.serialnum);
+          this.setNodeStatus(node, 'error', 'error during discovery', 'error finding sonos player with given serialnumber ' + configNode.serialnum);
           return;
         }
         if (device === null) {
-          this.setNodeStatus(node, 'error', 'seach delivers no sonos player', 'sonos player with serial not found ' + configNode.serialnum);
+          this.setNodeStatus(node, 'error', 'no sonos player', 'sonos player with serial not found ' + configNode.serialnum);
           return;
         }
         if (callback) {
@@ -70,14 +70,11 @@ class SonosHelper {
     var foundMatch = false;
     const sonos = require('sonos');
 
-      console.log('findsonos1');
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
-        // Inject additional property
         if (data.friendlyName !== undefined && data.friendlyName !== null) {
           data.ipaddress = data.friendlyName.split('-')[0].trim();
         }
-          console.log('findsonos2');
         if (device.host) {
           data.ipaddress = device.host;
         }
@@ -106,7 +103,6 @@ class SonosHelper {
         }
       }).catch({
         if (err) {
-          node.error(JSON.stringify(err));
           callback(err, null);
         }
       });
@@ -122,7 +118,7 @@ class SonosHelper {
         search.destroy();
         search = null;
       }
-    }, 3000);
+    }, 5000);
   }
 
   setNodeStatus (node, type, nodeText, msgDetails) {

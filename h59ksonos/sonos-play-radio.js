@@ -21,8 +21,12 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        helper.preprocessInputMsg(node, configNode, msg, (device) => {
-          handleInputMsg(node, msg, device.ipaddress);
+        helper.preprocessInputMsg(node, configNode, msg, function (player) {
+          if (player === null) {
+            helper.setNodeStatus(node, 'error', 'sonos player is null', 'Could not find a valid sonos player. Check configuration Node');
+          } else {
+            handleInputMsg(node, msg, player.ipaddress);
+          }
         });
       });
     }

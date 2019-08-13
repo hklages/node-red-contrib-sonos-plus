@@ -11,20 +11,17 @@ module.exports = function (RED) {
 
   // Build API to auto detect IP Addresses
   RED.httpAdmin.get('/sonosSearch', function (req, res) {
-    RED.log.debug('GET /sonosSearch');
     discoverSonos(function (devices) {
-      RED.log.debug('GET /sonosSearch: ' + devices.length + ' found');
       res.json(devices);
     });
   });
 
   function discoverSonos (discoveryCallback) {
-    RED.log.debug('Start Sonos discovery');
-
-    //  const sonos = require('sonos');
     const sonos = require('sonos');
-    var devices = [];
 
+    var devices = []; // list of all discovered devices
+
+    // start discovery and store outcome in devices
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         devices.push({
@@ -43,11 +40,11 @@ module.exports = function (RED) {
       search.destroy();
     }, 5000);
 
-    // Add a bit of delay for all devices to be discovered
+    // Add a bit of delay and return the list of all discovered devices
     if (discoveryCallback) {
       setTimeout(function () {
         discoveryCallback(devices);
-      }, 5000);
+      }, 5010);
     }
   }
 
