@@ -41,40 +41,38 @@ module.exports = function (RED) {
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
     if (sonosPlayer === null || sonosPlayer === undefined) {
-      node.status({ fill: 'red', shape: 'dot', text: 'Could not find player' });
-      node.error('sonos player is null');
+      helper.setNodeStatus(node, 'error', 'sonos player is null', 'Could not find a valid sonos player. Check configuration Node');
       return;
     }
 
     // Check msg.payload and msg.topic. Store in command. Function to lowercase
     // payload contains basic function, topic contains parameters
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'wrong payload' });
-      node.error('invalid payload!');
+      helper.setNodeStatus(node, 'error', 'invalid payload', 'Invalid payload. Read documentation.');
       return;
     }
     if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'wrong topic' });
-      node.error('invalid topic');
+      helper.setNodeStatus(node, 'error', 'invalid topc', 'Invalid topic. Read documentation.');
       return;
     }
 
     // dispatch to handle message
-    var commandObject = { 'function': ('' + msg.payload).toLowerCase(),
-      'parameter': ('' + msg.topic) };
+    var commandObject = {
+      'function': ('' + msg.payload).toLowerCase(),
+      'parameter': ('' + msg.topic)
+    };
     if (commandObject.function === 'play_mysonos') {
       handleCommandMySonos(node, msg, sonosPlayer, commandObject);
     } else if (commandObject.function === 'play_tunein') {
       handleCommandTuneIn(node, msg, sonosPlayer, commandObject);
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid command!' });
-      node.warn('invalid command: ' + JSON.stringify(commandObject));
+      helper.setNodeStatus(node, 'warning', 'invalid command.', commandObject);
     }
   }
 
   // -----------------------------------------------------------------------------
   function handleCommandTuneIn (node, msg, sonosPlayer, commandObject) {
-    /**  Activate TuneIn radion station
+    /**  Activate TuneIn radio station (via simple TuneIn Radio id)
     * @param  {Object} node current node
     * @param  {object} msg incoming message
     * @param  {object} sonosPlayer Sonos Player
@@ -84,26 +82,30 @@ module.exports = function (RED) {
     var reg = new RegExp('^[s][0-9]+$'); // example s11111
     if (reg.test(commandObject.parameter)) {
       sonosPlayer.playTuneinRadio(commandObject.parameter).then(result => {
-        node.status({ fill: 'green', shape: 'dot', text: 'OK TuneIN' });
+        helper.setNodeStatus(node, 'success', 'TuneIn', '');
         // send message
         node.send(msg);
       }).catch(err => {
-        node.status({ fill: 'red', shape: 'dot', text: 'Error set TuneIn' });
-        node.error('Error Radio TuneIn' + JSON.stringify(err));
+        helper.setNodeStatus(node, 'error', 'Radio TuneIn', err);
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid command!' });
-      node.warn('invalid TuneIn identifier: ' + JSON.stringify(commandObject));
+      helper.setNodeStatus(node, 'error', 'invalid TuneIn Radio id.', commandObject);
     }
   }
 
   function handleCommandMySonos (node, msg, sonosPlayer, commandObject) {
-  // get list of My Sonos stations - first match!
+    /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime) and start playing
+    * @param  {Object} node current node
+    * @param  {object} msg incoming message
+    * @param  {object} sonosPlayer Sonos Player
+    * @param  {object} commandObject command with function and parameter
+    */
+
+    // get list of My Sonos stations
     sonosPlayer.getFavorites().then(data => {
       if (!(data.returned !== null && data.returned !== undefined &&
         data.returned && parseInt(data.returned) > 0)) {
-        node.status({ fill: 'red', shape: 'dot', text: 'no station found' });
-        node.error('My Sonos does not contain any stations');
+        helper.setNodeStatus(node, 'error', 'no station found', 'My Sonos does not contain any stations');
         return;
       }
 
@@ -126,8 +128,7 @@ module.exports = function (RED) {
         }
       }
       if (stationList.length === 0) {
-        node.status({ fill: 'red', shape: 'dot', text: 'no station found' });
-        node.error('My Sonos does not contain any TuneIn or Amazon stations');
+        helper.setNodeStatus(node, 'error', 'no station found', 'My Sonos does not contain any TuneIn or Amazon stations');
         return;
       }
 
@@ -141,39 +142,34 @@ module.exports = function (RED) {
           isInStationList = true;
           if (stationList[i].source === 'TuneIn') {
             sonosPlayer.playTuneinRadio(stationList[i].radioId).then(result => {
-              node.status({ fill: 'green', shape: 'dot', text: 'OK TuneIN' });
+              helper.setNodeStatus(node, 'success', 'TuneIn', '');
               // send message
               msg.sonos = 'success';
               node.send(msg);
             }).catch(err => {
-              node.status({ fill: 'red', shape: 'dot', text: 'Erro set TuneIn' });
-              node.error('Error Radio TuneIn' + JSON.stringify(err));
+              helper.setNodeStatus(node, 'error', 'Radio TuneIn', err);
             });
           } else if (stationList[i].source === 'AmazonPrime') {
             sonosPlayer.setAVTransportURI(stationList[i].uri).then(result => {
-              node.status({ fill: 'green', shape: 'dot', text: 'OK Amazon' });
+              helper.setNodeStatus(node, 'success', 'Amazon', '');
               // send message
               msg.sonos = 'success';
               node.send(msg);
             }).catch(err => {
-              node.status({ fill: 'red', shape: 'dot', text: 'Error Set Amazon' });
-              node.error('Error Radio TuneIn' + JSON.stringify(err));
+              helper.setNodeStatus(node, 'error', 'Set Amazon', err);
             });
           } else {
-            node.status({ fill: 'red', shape: 'dot', text: 'Error unknown' });
-            node.error('Error unknown');
+            helper.setNodeStatus(node, 'error', 'unknown', 'Unknown error occured during loop stations.');
             return;
           }
           break;
         }
       }
       if (!isInStationList) {
-        node.status({ fill: 'red', shape: 'dot', text: 'Topic not in MySonos list.' });
-        node.error('Station name not in MySonos station list.');
+        helper.setNodeStatus(node, 'error', 'Topic not in MySonos list.', 'Topic not in MySonos list. Modify My Sonos Radion stations');
       }
     }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'Error Processing MySonos List' });
-      node.error('Error processing MySonos List' + JSON.stringify(err));
+      helper.setNodeStatus(node, 'error', 'processing MySonos List', err);
     });
   }
   RED.nodes.registerType('sonos-play-radio', SonosPlayRadioNode);

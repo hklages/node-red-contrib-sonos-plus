@@ -5,6 +5,9 @@ module.exports = function (RED) {
   'use strict';
 
   function SonosControlPlayerNode (config) {
+    /**  Create Control Player Node and subscribe to messages
+    * @param  {object} config current node configuration data
+    */
     RED.nodes.createNode(this, config);
 
     // verify config node. if valid then set status and process message
@@ -18,7 +21,7 @@ module.exports = function (RED) {
       // handle input message
       node.on('input', function (msg) {
         helper.preprocessInputMsg(node, configNode, msg, function (device) {
-          handleInputMsg(node, configNode, msg, device.ipaddress);
+          handleInputMsg(node, msg, device.ipaddress);
         });
       });
     }
@@ -26,20 +29,23 @@ module.exports = function (RED) {
 
   // ------------------------------------------------------------------------------------
 
-  function handleInputMsg (node, configNode, msg, ipaddress) {
+  function handleInputMsg (node, msg, ipaddress) {
+    /**  Validate input message and dispatch
+    * @param  {Object} node current node
+    * @param  {object} msg incoming message
+    * @param  {string} ipaddress IP address of sonos player
+    */
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
     if (sonosPlayer === null || sonosPlayer === undefined) {
-      node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null' });
-      node.error('sonos player is null');
+      helper.setNodeStatus(node, 'error', 'sonos player is null', 'Could not find a valid sonos player. Check configuration Node');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'wrong payload' });
-      node.error('invalid payload!');
+      helper.setNodeStatus(node, 'error', 'invalid payload', 'Invalid payload. Read documentation.');
       return;
     }
     var command = msg.payload;
@@ -48,103 +54,106 @@ module.exports = function (RED) {
     var splitCommand;
 
     // dispatch
-    var commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute'];
+    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute'];
     if (commandList.indexOf(command) > -1) {
-      handleCommand(node, configNode, msg, sonosPlayer, command);
+      handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
       splitCommand = { function: 'volume_up', parameter: parseInt(command) };
-      handleVolumeCommand(node, configNode, msg, sonosPlayer, splitCommand);
+      handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else if (command.startsWith('-') && !isNaN(parseInt(command)) && parseInt(command) < 0 && parseInt(command) >= -30) {
       splitCommand = { function: 'volume_down', parameter: parseInt(command) };
-      handleVolumeCommand(node, configNode, msg, sonosPlayer, splitCommand);
+      handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
       splitCommand = { function: 'volume_set', parameter: parseInt(command) };
-      handleVolumeCommand(node, configNode, msg, sonosPlayer, splitCommand);
+      handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid command!' });
-      node.warn('invalid command: ' + command);
+      helper.setNodeStatus(node, 'warning', 'invalid command.', command);
     }
   }
 
   // ------------------------------------------------------------------------------------
 
-  function handleCommand (node, configNode, msg, sonosPlayer, cmd) {
+  function handleCommandBasic (node, msg, sonosPlayer, cmd) {
+    /**  Initiate basic (no parameter) commands to control sonos player
+    * @param  {Object} node current node
+    * @param  {object} msg incoming message
+    * @param  {object} sonosPlayer Sonos Player
+    * @param  {string} cmd command - no parameter
+    */
     switch (cmd) {
       case 'play':
         sonosPlayer.play().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- play' });
+          helper.setNodeStatus(node, 'success', 'play', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error play' });
-          node.error('Error play: ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'play', err);
         });
         break;
 
       case 'stop':
         sonosPlayer.stop().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- stop' });
+          helper.setNodeStatus(node, 'success', 'stop', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error stop' });
-          node.error('Error stop: ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'stop', err);
         });
         break;
 
       case 'pause':
         sonosPlayer.pause().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- pause' });
+          helper.setNodeStatus(node, 'success', 'pause', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error pause' });
-          node.error('Error pause: ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'pause', err);
         });
         break;
 
       case 'toggleplayback':
         sonosPlayer.togglePlayback().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- toggleplayback' });
+          helper.setNodeStatus(node, 'success', 'toggleplayback', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error toggleplayback' });
-          node.error('Error toggleplayback: ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'toggleplayback', err);
         });
         break;
 
       case 'mute':
         sonosPlayer.setMuted(true).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- mute' });
+          helper.setNodeStatus(node, 'success', 'mute', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error mute' });
-          node.error('Error mute: ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'mute', err);
         });
         break;
       case 'unmute':
         sonosPlayer.setMuted(false).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- unmute' });
+          helper.setNodeStatus(node, 'success', 'unmute', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error unmute' });
-          node.error('Error unmute: ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'unmute', err);
         });
         break;
     }
   }
 
-  function handleVolumeCommand (node, configNode, msg, sonosPlayer, command) {
-    // command.parameter is assumed to be a valid number and in right range!
-    var volumeValue = parseInt(command.parameter);
-    switch (command.function) {
+  function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
+    /**  Initiate volume commands with one parameter to control sonos player
+    * @param  {Object} node current node
+    * @param  {object} msg incoming message
+    * @param  {object} sonosPlayer Sonos Player
+    * @param  {object} cmd command - function and parameter !! Valid number
+    */
+
+    var volumeValue = parseInt(commandObject.parameter);
+    switch (commandObject.function) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- volume set' });
+          helper.setNodeStatus(node, 'success', 'volume, set', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error set volume.' });
-          node.error('Error set volume ' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'set volume', err);
         });
         break;
 
       case 'volume_down':
       case 'volume_up':
         sonosPlayer.adjustVolume(volumeValue).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK- volume adjust' });
+          helper.setNodeStatus(node, 'success', 'volume adjust', '');
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'Error adjust volume' });
-          node.error('Error adjust volume' + JSON.stringify(err));
+          helper.setNodeStatus(node, 'error', 'adjust volume', err);
         });
         break;
     }

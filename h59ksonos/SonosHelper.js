@@ -16,13 +16,15 @@ class SonosHelper {
 
     var hasSerialNum = configNode.serialnum !== undefined && configNode.serialnum !== null && configNode.serialnum.trim().length > 5;
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
+
     if (!hasSerialNum && !hasIpAddress) {
-      node.status({ fill: 'red', shape: 'ring', text: 'missing serial number or IP Address in config node' });
+      this.setNodeStatus(node, 'error', 'missing serialNb, ip address', 'Missing serial number and IP Address in config node.');
       return false;
+    } else {
+      // clear node status
+      node.status({});
+      return true;
     }
-    // clear node status
-    node.status({});
-    return true;
   }
 
   preprocessInputMsg (node, configNode, msg, callback) {
@@ -32,8 +34,8 @@ class SonosHelper {
     * @return  returns the sonos player object in callback function
     */
 
+    // valdate configNode - status is set in validateConfigNode
     var isValid = this.validateConfigNode(node, configNode);
-    // TODO ERROR Handling!!!!
     if (!isValid) {
       return;
     }
@@ -47,15 +49,14 @@ class SonosHelper {
       }
     } else {
       // first find the Sonos IP address from given serial number
-      console.log('Please enter the ip address in config node - see documentation');
-
+      this.setNodeStatus(node, 'warning', 'missing ip address', 'It is recommendet to set the ip Address in configuration node!');
       this.findSonos(node, configNode.serialnum, function (err, device) {
         if (err) {
-          node.status({ fill: 'red', shape: 'dot', text: 'error looking for device ' + configNode.serialnum });
+          this.setNodeStatus(node, 'error', 'error finding sonos player', 'error finding sonos player with given serialnumber ' + configNode.serialnum);
           return;
         }
         if (device === null) {
-          node.status({ fill: 'red', shape: 'dot', text: 'device ' + configNode.serialnum + ' not found' });
+          this.setNodeStatus(node, 'error', 'seach delivers no sonos player', 'sonos player with serial not found ' + configNode.serialnum);
           return;
         }
         if (callback) {
@@ -122,6 +123,25 @@ class SonosHelper {
     }, 3000);
   }
 
+  setNodeStatus (node, type, nodeText, msgDetails) {
+    /**  Provide message back to NodeRED - status of node and Error/Warning
+    * @param  {Object} node current node
+    * @param  {string} type error|warning|other
+    * @param  {string} nodeText short description
+    * @param  {Object} msgDetails more information
+    */
+    if (type === 'error') {
+      node.status({ fill: 'red', shape: 'dot', text: nodeText });
+      node.error('Error:: ' + nodeText + ' Details: ' + JSON.stringify(msgDetails));
+    } else if (type === 'warning') {
+      node.status({ fill: 'blue', shape: 'dot', text: nodeText });
+      node.warn('Warning:: ' + nodeText + ' Details: ' + JSON.stringify(msgDetails));
+    } else if (type === 'success') {
+      node.status({ fill: 'green', shape: 'dot', text: 'OK:: ' + nodeText });
+    }
+  }
+
+  // TODO has to be removed
   handleSonosApiRequest (node, err, result, msg, successString, failureString) {
     if (err) {
       node.error(err);
