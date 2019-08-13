@@ -70,13 +70,14 @@ class SonosHelper {
     var foundMatch = false;
     const sonos = require('sonos');
 
+      console.log('findsonos1');
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         // Inject additional property
         if (data.friendlyName !== undefined && data.friendlyName !== null) {
           data.ipaddress = data.friendlyName.split('-')[0].trim();
         }
-
+          console.log('findsonos2');
         if (device.host) {
           data.ipaddress = device.host;
         }
@@ -87,6 +88,7 @@ class SonosHelper {
             foundMatch = true;
           }
         }
+          console.log('findsonos3');
         if (device.serialNumber !== undefined && device.serialNumber !== null) {
           if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
             foundMatch = true;
