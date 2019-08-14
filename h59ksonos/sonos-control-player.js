@@ -43,7 +43,7 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    console.log('%j', sonosPlayer);
+
     if (sonosPlayer === null || sonosPlayer === undefined) {
       helper.setNodeStatus(node, 'error', 'sonos player is null', 'Could not find a valid sonos player. Check configuration Node');
       return;
