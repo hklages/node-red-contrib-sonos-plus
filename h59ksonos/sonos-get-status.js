@@ -4,22 +4,25 @@ var helper = new SonosHelper();
 module.exports = function (RED) {
   'use strict';
 
-  // TODO name Node and variable n ? overwork
   function SonosGetStatusNode (config) {
     RED.nodes.createNode(this, config);
 
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNode(node, configNode);
+    var isValid = helper.validateConfigNodeV2(configNode);
     if (isValid) {
       // clear node status
       node.status({});
 
       // handle input message (the different requests are chained)
       node.on('input', function (msg) {
-        helper.preprocessInputMsg(node, configNode, msg, function (device) {
-          getSonosCurrentState(node, msg, device.ipaddress);
+        helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
+          if (ipAddress === null) {
+            // error handling node status, node error is done in identifyPlayerProcessInputMsg
+          } else {
+            getSonosCurrentState(node, msg, ipAddress);
+          }
         });
       });
     }

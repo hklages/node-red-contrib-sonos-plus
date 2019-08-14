@@ -10,7 +10,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNode(node, configNode);
+    var isValid = helper.validateConfigNodeV2(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -25,8 +25,12 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        helper.preprocessInputMsg(node, configNode, msg, function (device) {
-          handleInputMsg(node, configNode, msg, device.ipaddress);
+        helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
+          if (ipAddress === null) {
+            // error handling node status, node error is done in identifyPlayerProcessInputMsg
+          } else {
+            handleInputMsg(node, configNode, msg, ipAddress);
+          }
         });
       });
     }

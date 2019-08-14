@@ -13,18 +13,19 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNode(node, configNode);
+    var isValid = helper.validateConfigNodeV2(configNode);
     if (isValid) {
       // clear node status
       node.status({});
+      // TODO PRIO 1 it mayb be that ip address does not belong to sonos player or has wrong syntax
 
       // handle input message
       node.on('input', function (msg) {
-        helper.preprocessInputMsg(node, configNode, msg, function (player) {
-          if (player === null) {
-            helper.setNodeStatus(node, 'error', 'sonos player is null', 'Could not find a valid sonos player. Check configuration Node');
+        helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
+          if (ipAddress === null) {
+            // error handling node status, node error is done in identifyPlayerProcessInputMsg
           } else {
-            handleInputMsg(node, msg, player.ipaddress);
+            handleInputMsg(node, msg, ipAddress);
           }
         });
       });
@@ -42,11 +43,11 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
+    console.log('%j', sonosPlayer);
     if (sonosPlayer === null || sonosPlayer === undefined) {
       helper.setNodeStatus(node, 'error', 'sonos player is null', 'Could not find a valid sonos player. Check configuration Node');
       return;
     }
-
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       helper.setNodeStatus(node, 'error', 'invalid payload', 'Invalid payload. Read documentation.');
