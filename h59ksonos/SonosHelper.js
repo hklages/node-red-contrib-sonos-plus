@@ -1,7 +1,7 @@
 'use strict';
 
 class SonosHelper {
-  // some function to be used in all nodes
+  // functions to be used in other modules
 
   validateConfigNodeV2 (configNode) {
   /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
@@ -9,12 +9,14 @@ class SonosHelper {
   * @param  {object} configNode corresponding configNode
   */
     if (configNode === undefined || configNode === null) {
+      node.error('SONOS::ERROR::' + 'Undefined error configNode');
       return false;
     }
 
     var hasSerialNum = configNode.serialnum !== undefined && configNode.serialnum !== null && configNode.serialnum.trim().length > 5;
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (!hasSerialNum && !hasIpAddress) {
+      node.error('SONOS::ERROR::' + 'ConfigNode does not have ip address / serial number');
       return false;
     } else {
       // clear node status
@@ -41,6 +43,7 @@ class SonosHelper {
       }
       return;
     } else {
+      node.log('SONOS::INFO::' + 'ConfigNode object does exist with ip address or serial number.');
       node.status({});
     }
     // result at this point: either IP address or serial exists.
@@ -49,12 +52,15 @@ class SonosHelper {
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
       // exisiting ip address - fastes solutions, no discovery necessary
+      node.log('SONOS::Info::' + 'Found IP Address - good!');
       if (typeof callback === 'function') {
         callback(configNode.ipaddress);
       }
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
-      this.setNodeStatus(node, 'Warning', 'Missing ip address', 'It is recommended to set the IP address in configuration node!');
+      node.status({ fill: 'green', shape: 'dot', text: 'missing ip address'});
+      node.log('SONOS-PLUS::Warning::' + 'Missing IP address. It is recommended to set IP Address in config node');
+
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
         if (err) {
           // caution dont use "this." - eg for handler calls - as context is not available
@@ -66,7 +72,6 @@ class SonosHelper {
           return;
         }
         if (playerInfo === null || playerInfo.ipaddress === null) {
-          // caution dont use "this." - eg for helper calls  - as context is not available
           node.error('Error:: Time out: Could not find sonos player with given serial ' + configNode.serialnum);
           node.status({ fill: 'red', shape: 'dot', text: 'Could not find player.' });
           if (typeof callback === 'function') {
@@ -92,25 +97,30 @@ class SonosHelper {
     // TODO in callback only return ipaddress and not data
 
     var foundMatch = false;
+    node.log('SONOS-PLUS::Info::' + 'Start find Sonos player.')
     const sonos = require('sonos');
     // 2 api calls chained, first DeviceDiscovery then deviceDescription
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         if (data.friendlyName !== undefined && data.friendlyName !== null) {
+          node.log('SONOS-PLUS::Info::' + 'Got ipaddres from friendyName.');
           data.ipaddress = data.friendlyName.split('-')[0].trim();
         }
         if (device.host) {
+          node.log('SONOS-PLUS::Info::' + 'Got ipaddres from device.host.');
           data.ipaddress = device.host;
         }
 
         // 2 different ways to obtain serialnum
         if (data.serialNum !== undefined && data.serialNum !== null) {
           if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
+            node.log('SONOS-PLUS::Info::' + 'Found sonos player based on serialnumber in device description.');
             foundMatch = true;
           }
         }
         if (device.serialNumber !== undefined && device.serialNumber !== null) {
           if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
+            node.log('SONOS-PLUS::Info::' + 'Found sonos player based on serialnumber in device property.');
             foundMatch = true;
           }
         }
@@ -128,7 +138,7 @@ class SonosHelper {
         }
       }).catch({
         if (err) {
-          // something went wrong
+          // error handling in call back
           callback(err, null);
         }
       });
@@ -138,31 +148,15 @@ class SonosHelper {
     // In case there is no match
     setTimeout(function () {
       if (!foundMatch && (typeof callback === 'function')) {
+        node.log('SONOS-PLUS::Info::' + 'SetTimeOut - did not find sonos player');
         callback(null, null);
       }
       if (search !== null && search !== undefined) {
+        node.log('SONOS-PLUS::Info::' + 'Sonos player found - clean up object');
         search.destroy();
         search = null;
       }
     }, 5000);
-  }
-
-  setNodeStatus (node, type, nodeText, msgDetails) {
-    /**  Provide message back to NodeRED - status of node and Error/Warning
-    * @param  {Object} node current node
-    * @param  {string} type error|warning|other
-    * @param  {string} nodeText short description
-    * @param  {Object} msgDetails more information
-    */
-    if (type === 'error') {
-      node.status({ fill: 'red', shape: 'dot', text: nodeText });
-      node.error('Error:: ' + nodeText + ' Details: ' + JSON.stringify(msgDetails));
-    } else if (type === 'warning') {
-      node.status({ fill: 'blue', shape: 'dot', text: nodeText });
-      node.warn('Warning:: ' + nodeText + ' Details: ' + JSON.stringify(msgDetails));
-    } else if (type === 'success') {
-      node.status({ fill: 'green', shape: 'dot', text: 'OK:: ' + nodeText });
-    }
   }
 }
 module.exports = SonosHelper;
