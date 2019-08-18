@@ -28,8 +28,9 @@ module.exports = function (RED) {
           label: data.friendlyName + ' in room ' + data.roomName,
           value: data.serialNum
         });
+        node.info('sonos player found: ' + data.serialNum);
       }).catch(err => {
-        console.log('Error occurred %j', err);
+        node.error('SONOS-PLUS: Error occurred Device Discovery %j', err);
       });
     });
 
