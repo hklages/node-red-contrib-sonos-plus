@@ -1,6 +1,6 @@
 # node-red-contrib-sonos-plus
 
-Version 2019-08-18T0907
+Version 2019-08-18T2031
 
 A set of NodeRed nodes to control SONOS player.  
 
@@ -55,4 +55,5 @@ SONOS players may be **grouped** together (forming a **Zone**) to play the same 
 ## Credentials
 
 [node-sonos api team](https://github.com/bencevans/node-sonos)
+
 [node-red-better-sonos team](https://github.com/originallyus/node-red-contrib-better-sonos)

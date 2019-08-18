@@ -68,17 +68,17 @@ module.exports = function (RED) {
     msg.command = command;
 
     // dispatch
-    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute'];
+    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'join_group', 'leave_group'];
     if (commandList.indexOf(command) > -1) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
-      splitCommand = { function: 'volume_up', parameter: parseInt(command) };
+      splitCommand = { cmd: 'volume_increase', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else if (command.startsWith('-') && !isNaN(parseInt(command)) && parseInt(command) < 0 && parseInt(command) >= -30) {
-      splitCommand = { function: 'volume_down', parameter: parseInt(command) };
+      splitCommand = { cmd: 'volume_decrease', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
-      splitCommand = { function: 'volume_set', parameter: parseInt(command) };
+      splitCommand = { cmd: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
@@ -155,6 +155,31 @@ module.exports = function (RED) {
           node.error('SONOS-PLUS::Error::' + 'unmute. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
+
+      case 'leave_group':
+        sonosPlayer.leaveGroup().then(result => {
+          node.status({ fill: 'green', shape: 'dot', text: 'OK leave ' });
+          node.log('SONOS-PLUS::Success::' + 'leave. ');
+        }).catch(err => {
+          node.status({ fill: 'red', shape: 'dot', text: 'error - leave' });
+          node.error('SONOS-PLUS::Error::' + 'leave. ' + 'Details: ' + JSON.stringify(err));
+        });
+        break;
+      case 'join_group':
+        if (msg.topic === null || msg.topic === undefined) {
+          node.status({ fill: 'red', shape: 'dot', text: 'error - join - no topic' });
+          node.error('SONOS-PLUS::Error::' + 'join. ' + 'Details: ' + 'No valid topic');
+        } else {
+          var deviceToJoing = msg.topic;
+          sonosPlayer.joinGroup(deviceToJoing).then(result => {
+            node.status({ fill: 'green', shape: 'dot', text: 'OK join ' });
+            node.log('SONOS-PLUS::Success::' + 'join. ');
+          }).catch(err => {
+            node.status({ fill: 'red', shape: 'dot', text: 'error - join' });
+            node.error('SONOS-PLUS::Error::' + 'join. ' + 'Details: ' + JSON.stringify(err));
+          });
+        }
+        break;
     }
   }
 
@@ -163,11 +188,11 @@ module.exports = function (RED) {
     * @param  {Object} node current node
     * @param  {object} msg incoming message
     * @param  {object} sonosPlayer Sonos Player
-    * @param  {object} cmd command - function and parameter !! Valid number
+    * @param  {object} commandObject command - cmd and parameter !! Valid number
     */
 
     var volumeValue = parseInt(commandObject.parameter);
-    switch (commandObject.function) {
+    switch (commandObject.cmd) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK volume set ' });
@@ -178,8 +203,8 @@ module.exports = function (RED) {
         });
         break;
 
-      case 'volume_down':
-      case 'volume_up':
+      case 'volume_decrease':
+      case 'volume_increase':
         sonosPlayer.adjustVolume(volumeValue).then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK volume adjust ' });
           node.log('SONOS-PLUS::Success::' + 'volume adjust. ');

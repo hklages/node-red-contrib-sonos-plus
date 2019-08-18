@@ -126,10 +126,22 @@ module.exports = function (RED) {
       // Output data
       node.log('SONOS_PLUS::Info::' + 'got valid mute value and continue');
       msg.muted = muted;
-      getSonosCurrentTrack(node, msg, sonosPlayer);
+      getSonosName(node, msg, sonosPlayer);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve Mute status' });
       node.error('SONOS-PLUS::Error::' + 'Could not get mute state.' + 'Details:' + JSON.stringify(err));
+    });
+  }
+
+  function getSonosName (node, msg, sonosPlayer) {
+    sonosPlayer.getName().then(name => {
+      // Output data
+      node.log('SONOS_PLUS::Info::' + 'got valid mute value and continue');
+      msg.sonosName = name;
+      getSonosCurrentTrack(node, msg, sonosPlayer);
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve name' });
+      node.error('SONOS-PLUS::Error::' + 'Could not get name.' + 'Details:' + JSON.stringify(err));
     });
   }
 
