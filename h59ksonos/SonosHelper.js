@@ -5,21 +5,18 @@ class SonosHelper {
 
   validateConfigNodeV2 (configNode) {
   /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
-  * @param  {Object} node current node
   * @param  {object} configNode corresponding configNode
   */
+
     if (configNode === undefined || configNode === null) {
-      node.error('SONOS::ERROR::' + 'Undefined error configNode');
       return false;
     }
 
     var hasSerialNum = configNode.serialnum !== undefined && configNode.serialnum !== null && configNode.serialnum.trim().length > 5;
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (!hasSerialNum && !hasIpAddress) {
-      node.error('SONOS::ERROR::' + 'ConfigNode does not have ip address / serial number');
       return false;
     } else {
-      // clear node status
       return true;
     }
   }
@@ -58,7 +55,7 @@ class SonosHelper {
       }
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
-      node.status({ fill: 'green', shape: 'dot', text: 'missing ip address'});
+      node.status({ fill: 'green', shape: 'dot', text: 'missing ip address' });
       node.log('SONOS-PLUS::Warning::' + 'Missing IP address. It is recommended to set IP Address in config node');
 
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
@@ -97,7 +94,7 @@ class SonosHelper {
     // TODO in callback only return ipaddress and not data
 
     var foundMatch = false;
-    node.log('SONOS-PLUS::Info::' + 'Start find Sonos player.')
+    node.log('SONOS-PLUS::Info::' + 'Start find Sonos player.');
     const sonos = require('sonos');
     // 2 api calls chained, first DeviceDiscovery then deviceDescription
     var search = sonos.DeviceDiscovery(function (device) {
