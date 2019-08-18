@@ -4,8 +4,8 @@ var helper = new SonosHelper();
 module.exports = function (RED) {
   'use strict';
 
-  function SonosPlayRadioNode (config) {
-    /**  Create Play Radio Node and subscribe to messages
+  function SonosManageRadioNode (config) {
+    /**  Create Manage Radio Node and subscribe to messages
     * @param  {object} config current node configuration data
     */
 
@@ -21,13 +21,13 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        node.log('SONOS-PLUS::Info' + 'input received');
+        node.log('SONOS_PLUS::Info::' + 'input received');
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS-PLUS::Info' + 'Could not find any sonos player!');
+            node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS-PLUS::Info' + 'Found sonos player and continue!');
+            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -195,5 +195,5 @@ module.exports = function (RED) {
       node.error('SONOS-PLUS::Error::' + 'Processing MySonos list. ' + 'Details: ' + JSON.stringify(err));
     });
   }
-  RED.nodes.registerType('sonos-play-radio', SonosPlayRadioNode);
+  RED.nodes.registerType('sonos-manage-radio', SonosManageRadioNode);
 };

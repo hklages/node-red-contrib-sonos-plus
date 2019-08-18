@@ -22,13 +22,13 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        node.log('SONOS-PLUS::Info' + 'input received');
+        node.log('SONOS_PLUS::Info::' + 'input received');
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS-PLUS::Info' + 'Could not find any sonos player!');
+            node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS-PLUS::Info' + 'Found sonos player and continue!');
+            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -48,7 +48,6 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-
     if (sonosPlayer === null || sonosPlayer === undefined) {
       node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null.' });
       node.error('SONOS-PLUS::Error::' + 'Sonos player is null. Check configuration.');
@@ -66,6 +65,7 @@ module.exports = function (RED) {
     command = '' + command;// convert to string
     command = command.toLowerCase();
     var splitCommand;
+    msg.command = command;
 
     // dispatch
     const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute'];
@@ -84,7 +84,7 @@ module.exports = function (RED) {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
       node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + command);
     }
-    node.log('SONOS-PLUS::Info::' + 'Command handed over to handlexxxxCommand');
+    node.log('SONOS_PLUS::Info::' + 'Command handed over to handlexxxxCommand');
   }
 
   // ------------------------------------------------------------------------------------

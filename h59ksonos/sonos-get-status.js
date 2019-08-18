@@ -21,14 +21,14 @@ module.exports = function (RED) {
 
       // handle input message (the different requests are chained)
       node.on('input', function (msg) {
-        node.log('SONOS-PLUS::Info' + 'input received');
+        node.log('SONOS_PLUS::Info::' + 'input received');
         // TODO get sonosPlayer and handover instead of ipAddress
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS-PLUS::Info' + 'Could not find any sonos player!');
+            node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS-PLUS::Info' + 'Found sonos player and continue!');
+            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
             getSonosCurrentState(node, msg, ipAddress);
           }
         });
@@ -74,10 +74,10 @@ module.exports = function (RED) {
       msg.state = state;
       if (command === 'state_only') {
         node.status({ fill: 'green', shape: 'dot', text: 'OK got state ' });
-        node.log('SONOS-PLUS::Info' + 'got valid state.');
+        node.log('SONOS_PLUS::Info::' + 'got valid state.');
         node.send(msg);
       } else {
-        node.log('SONOS-PLUS::Info' + 'Continue to get other info.');
+        node.log('SONOS_PLUS::Info::' + 'Continue to get other info.');
         getSonosVolume(node, msg, sonosPlayer);
       }
     }).catch(err => {
@@ -107,7 +107,7 @@ module.exports = function (RED) {
       // Output data
       msg.volume = volume;
       msg.normalized_volume = volume / 100.0;
-      node.log('SONOS-PLUS::Info' + 'got valid volume and continue');
+      node.log('SONOS_PLUS::Info::' + 'got valid volume and continue');
       getSonosMuted(node, msg, sonosPlayer);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve volume.' });
@@ -124,7 +124,7 @@ module.exports = function (RED) {
       }
 
       // Output data
-      node.log('SONOS-PLUS::Info' + 'got valid mute value and continue');
+      node.log('SONOS_PLUS::Info::' + 'got valid mute value and continue');
       msg.muted = muted;
       getSonosCurrentTrack(node, msg, sonosPlayer);
     }).catch(err => {
@@ -143,17 +143,17 @@ module.exports = function (RED) {
       } else {
         // message albumArtURL property
         if (trackObj.albumArtURI !== undefined && trackObj.albumArtURI !== null) {
-          node.log('SONOS-PLUS::Info' + 'got valid albumArtURI');
+          node.log('SONOS_PLUS::Info::' + 'got valid albumArtURI');
           var port = 1400;
           trackObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + trackObj.albumArtURI;
         }
         if (trackObj.artist !== undefined && trackObj.artist !== null) {
-          node.log('SONOS-PLUS::Info' + 'got artist and title');
+          node.log('SONOS_PLUS::Info::' + 'got artist and title');
           artist = trackObj.artist;
           title = trackObj.title;
         } else {
           if (trackObj.title.indexOf(' - ') > 0) {
-            node.log('SONOS-PLUS::Info' + 'could split data to artist and title');
+            node.log('SONOS_PLUS::Info::' + 'could split data to artist and title');
             artist = trackObj.title.split(' - ')[0];
             title = trackObj.title.split(' - ')[1];
           }
@@ -164,7 +164,7 @@ module.exports = function (RED) {
         msg.title = title;
         // Send output
         node.status({ fill: 'green', shape: 'dot', text: 'OK got track and all other data.' });
-        node.log('SONOS-PLUS::Info' + 'got all data - finsih');
+        node.log('SONOS_PLUS::Info::' + 'got all data - finsih');
         node.send(msg);
       }
     }).catch(err => {

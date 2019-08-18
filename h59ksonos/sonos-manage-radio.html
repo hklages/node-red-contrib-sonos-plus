@@ -2,7 +2,7 @@
 
 <!-- Registering Node -->
 <script type="text/javascript">
-RED.nodes.registerType('sonos-play-radio', {
+RED.nodes.registerType('sonos-manage-radio', {
   category: 'SonosPlus',
   defaults: {
     confignode: {
@@ -25,7 +25,7 @@ RED.nodes.registerType('sonos-play-radio', {
 </script>
 
 <!-- Setting design and inputs for node -->
-<script type="text/x-red" data-template-name="sonos-play-radio">
+<script type="text/x-red" data-template-name="sonos-manage-radio">
   <div class="form-row">
         <label for="node-input-confignode"> Config Node</label>
         <input type="text" id="node-input-confignode">
@@ -39,7 +39,7 @@ RED.nodes.registerType('sonos-play-radio', {
 
 
 <!-- Help Text -->
-<script type="text/x-red" data-help-name="sonos-play-radio">
+<script type="text/x-red" data-help-name="sonos-manage-radio">
   <p> A node to play a radio station - works for TuneIn, Amazon Prime Station.</p>
   <p>Command must be sent via simple input payload and topic.</p>
 

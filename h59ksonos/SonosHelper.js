@@ -40,7 +40,7 @@ class SonosHelper {
       }
       return;
     } else {
-      node.log('SONOS::INFO::' + 'ConfigNode object does exist with ip address or serial number.');
+      node.log('SONOS-PLUS::INFO::' + 'ConfigNode object does exist with ip address or serial number.');
       node.status({});
     }
     // result at this point: either IP address or serial exists.
@@ -49,7 +49,7 @@ class SonosHelper {
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
       // exisiting ip address - fastes solutions, no discovery necessary
-      node.log('SONOS::Info::' + 'Found IP Address - good!');
+      node.log('SONOS_PLUS::Info::' + 'Found IP Address - good!');
       if (typeof callback === 'function') {
         callback(configNode.ipaddress);
       }
@@ -94,30 +94,30 @@ class SonosHelper {
     // TODO in callback only return ipaddress and not data
 
     var foundMatch = false;
-    node.log('SONOS-PLUS::Info::' + 'Start find Sonos player.');
+    node.log('SONOS_PLUS::Info::' + 'Start find Sonos player.');
     const sonos = require('sonos');
     // 2 api calls chained, first DeviceDiscovery then deviceDescription
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         if (data.friendlyName !== undefined && data.friendlyName !== null) {
-          node.log('SONOS-PLUS::Info::' + 'Got ipaddres from friendyName.');
+          node.log('SONOS_PLUS::Info::' + 'Got ipaddres from friendyName.');
           data.ipaddress = data.friendlyName.split('-')[0].trim();
         }
         if (device.host) {
-          node.log('SONOS-PLUS::Info::' + 'Got ipaddres from device.host.');
+          node.log('SONOS_PLUS::Info::' + 'Got ipaddres from device.host.');
           data.ipaddress = device.host;
         }
 
         // 2 different ways to obtain serialnum
         if (data.serialNum !== undefined && data.serialNum !== null) {
           if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-            node.log('SONOS-PLUS::Info::' + 'Found sonos player based on serialnumber in device description.');
+            node.log('SONOS_PLUS::Info::' + 'Found sonos player based on serialnumber in device description.');
             foundMatch = true;
           }
         }
         if (device.serialNumber !== undefined && device.serialNumber !== null) {
           if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-            node.log('SONOS-PLUS::Info::' + 'Found sonos player based on serialnumber in device property.');
+            node.log('SONOS_PLUS::Info::' + 'Found sonos player based on serialnumber in device property.');
             foundMatch = true;
           }
         }
@@ -145,11 +145,11 @@ class SonosHelper {
     // In case there is no match
     setTimeout(function () {
       if (!foundMatch && (typeof callback === 'function')) {
-        node.log('SONOS-PLUS::Info::' + 'SetTimeOut - did not find sonos player');
+        node.log('SONOS_PLUS::Info::' + 'SetTimeOut - did not find sonos player');
         callback(null, null);
       }
       if (search !== null && search !== undefined) {
-        node.log('SONOS-PLUS::Info::' + 'Sonos player found - clean up object');
+        node.log('SONOS_PLUS::Info::' + 'Sonos player found - clean up object');
         search.destroy();
         search = null;
       }
