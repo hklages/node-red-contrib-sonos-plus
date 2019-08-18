@@ -8,6 +8,7 @@ module.exports = function (RED) {
     /**  Create Control Player Node and subscribe to messages
     * @param  {object} config current node configuration data
     */
+
     RED.nodes.createNode(this, config);
 
     // verify config node. if valid then set status and process message
@@ -21,13 +22,13 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        node.log('SONOS-PLUS::Info'  + 'input received');
+        node.log('SONOS-PLUS::Info' + 'input received');
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS-PLUS::Info'  + 'Could not find any sonos player!');
+            node.log('SONOS-PLUS::Info' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS-PLUS::Info'  + 'Found sonos player and continue!');
+            node.log('SONOS-PLUS::Info' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -38,11 +39,12 @@ module.exports = function (RED) {
   // ------------------------------------------------------------------------------------
 
   function handleInputMsg (node, msg, ipaddress) {
-    /**  Validate input message and dispatch
+    /**  Validate sonos player and input message then dispatch
     * @param  {Object} node current node
     * @param  {object} msg incoming message
     * @param  {string} ipaddress IP address of sonos player
     */
+
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -52,12 +54,14 @@ module.exports = function (RED) {
       node.error('SONOS-PLUS::Error::' + 'Sonos player is null. Check configuration.');
       return;
     }
+
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload.' });
       node.error('SONOS-PLUS::Error::' + 'Invalid payload.');
       return;
     }
+
     var command = msg.payload;
     command = '' + command;// convert to string
     command = command.toLowerCase();
@@ -77,7 +81,7 @@ module.exports = function (RED) {
       splitCommand = { function: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else {
-      node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command'});
+      node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
       node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + command);
     }
     node.log('SONOS-PLUS::Info::' + 'Command handed over to handlexxxxCommand');
@@ -95,60 +99,60 @@ module.exports = function (RED) {
     switch (cmd) {
       case 'play':
         sonosPlayer.play().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK play '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK play ' });
           node.log('SONOS-PLUS::Success::' + 'play. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - play' });
-          node.error('SONOS-PLUS::Error::' + 'play. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'play. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'stop':
         sonosPlayer.stop().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK stop '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK stop ' });
           node.log('SONOS-PLUS::Success::' + 'stop. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - stop' });
-          node.error('SONOS-PLUS::Error::' + 'stop. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'stop. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'pause':
         sonosPlayer.pause().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK pause '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK pause ' });
           node.log('SONOS-PLUS::Success::' + 'pause. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - pause' });
-          node.error('SONOS-PLUS::Error::' + 'pause. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'pause. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'toggleplayback':
         sonosPlayer.togglePlayback().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK toggleplayback '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK toggleplayback ' });
           node.log('SONOS-PLUS::Success::' + 'toggleplayback. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - toggleplayback' });
-          node.error('SONOS-PLUS::Error::' + 'toggleplayback. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'toggleplayback. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'mute':
         sonosPlayer.setMuted(true).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK mute '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK mute ' });
           node.log('SONOS-PLUS::Success::' + 'mute. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - mute' });
-          node.error('SONOS-PLUS::Error::' + 'mute. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'mute. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
       case 'unmute':
         sonosPlayer.setMuted(false).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK unmute '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK unmute ' });
           node.log('SONOS-PLUS::Success::' + 'unmute. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - unmute' });
-          node.error('SONOS-PLUS::Error::' + 'unmute. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'unmute. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
     }
@@ -166,22 +170,22 @@ module.exports = function (RED) {
     switch (commandObject.function) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK volume set '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK volume set ' });
           node.log('SONOS-PLUS::Success::' + 'volume set. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - volume-set' });
-          node.error('SONOS-PLUS::Error::' + 'volume-set. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'volume-set. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'volume_down':
       case 'volume_up':
         sonosPlayer.adjustVolume(volumeValue).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK volume adjust '});
+          node.status({ fill: 'green', shape: 'dot', text: 'OK volume adjust ' });
           node.log('SONOS-PLUS::Success::' + 'volume adjust. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - volume adjust' });
-          node.error('SONOS-PLUS::Error::' + 'volume adjust. ' + 'Details: ' + JSON.stringify(err) );
+          node.error('SONOS-PLUS::Error::' + 'volume adjust. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
     }
