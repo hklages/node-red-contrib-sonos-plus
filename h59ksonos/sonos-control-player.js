@@ -28,7 +28,7 @@ module.exports = function (RED) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
+            node.log('SONOS_PLUS::Success::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -57,7 +57,7 @@ module.exports = function (RED) {
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload.' });
-      node.error('SONOS-PLUS::Error::' + 'Invalid payload.');
+      node.error('SONOS-PLUS::Error::' + 'Invalid payload. ' + JSON.stringify(msg.payload));
       return;
     }
 
@@ -84,7 +84,7 @@ module.exports = function (RED) {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
       node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + command);
     }
-    node.log('SONOS_PLUS::Info::' + 'Command handed over to handlexxxxCommand');
+    node.log('SONOS_PLUS::Success::' + 'Command handed over (async) to handlexxxxCommand');
   }
 
   // ------------------------------------------------------------------------------------

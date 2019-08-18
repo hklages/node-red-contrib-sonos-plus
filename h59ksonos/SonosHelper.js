@@ -40,7 +40,7 @@ class SonosHelper {
       }
       return;
     } else {
-      node.log('SONOS-PLUS::INFO::' + 'ConfigNode object does exist with ip address or serial number.');
+      node.log('SONOS-PLUS::Info::' + 'ConfigNode object does exist with ip address or serial number.');
       node.status({});
     }
     // result at this point: either IP address or serial exists.

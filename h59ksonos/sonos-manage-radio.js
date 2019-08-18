@@ -27,7 +27,7 @@ module.exports = function (RED) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
+            node.log('SONOS_PLUS::Success::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -38,7 +38,7 @@ module.exports = function (RED) {
   // ------------------------------------------------------------------------------------
 
   function handleInputMsg (node, msg, ipaddress) {
-  /**  Validate input message and dispatch
+  /**  Validate sonos playeer and input message and dispatch
   * @param  {Object} node current node
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
@@ -53,32 +53,33 @@ module.exports = function (RED) {
       return;
     }
 
-    // Check msg.payload and msg.topic. Store in command. Function to lowercase
+    // Check msg.payload. Store lowercase version in command
     // payload contains basic function, topic contains parameters
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload' });
-      node.error('SONOS-PLUS::Error::' + 'invalid payload. ' + 'Details: ' + 'Invalid payload.');
+      node.error('SONOS-PLUS::Error::' + 'invalid payload: ' + JSON.stringify(msg.payload));
       return;
     }
     if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid payload.' });
-      node.error('SONOS-PLUS::Error::' + 'Invalid payload.');
+      node.status({ fill: 'red', shape: 'dot', text: 'invalid topic.' });
+      node.error('SONOS-PLUS::Error::' + 'Invalid topic.' + msg.topic);
       return;
     }
 
     // dispatch to handle message
     var commandObject = {
-      'function': ('' + msg.payload).toLowerCase(),
+      'cmd': ('' + msg.payload).toLowerCase(),
       'parameter': ('' + msg.topic)
     };
-    if (commandObject.function === 'play_mysonos') {
+    if (commandObject.cmd === 'play_mysonos') {
       handleCommandMySonos(node, msg, sonosPlayer, commandObject);
-    } else if (commandObject.function === 'play_tunein') {
+    } else if (commandObject.cmd === 'play_tunein') {
       handleCommandTuneIn(node, msg, sonosPlayer, commandObject);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
-      node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + commandObject);
+      node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + JSON.stringify(commandObject));
     }
+    node.log('SONOS_PLUS::Success::' + 'Command handed over (async) to subroutines');
   }
 
   // -----------------------------------------------------------------------------

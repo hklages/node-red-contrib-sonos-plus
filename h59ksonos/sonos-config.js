@@ -15,7 +15,8 @@ module.exports = function (RED) {
       res.json(devices);
     });
   });
-
+  // TODO overwork with some more messges
+  var node = this;
   function discoverSonos (discoveryCallback) {
     const sonos = require('sonos');
 
@@ -28,8 +29,9 @@ module.exports = function (RED) {
           label: data.friendlyName + ' in room ' + data.roomName,
           value: data.serialNum
         });
+        node.log('SONOS-PLUS::Success::' + 'Found device ' + data.serialNum);
       }).catch(err => {
-        // TODO Error message - node does not work
+        node.error('SONOS-PLUS::Error::' + 'DeviceDiscovery error! ' + 'Details: ' + JSON.stringify(err));
       });
     });
 

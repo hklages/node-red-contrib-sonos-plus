@@ -8,7 +8,7 @@ This package uses code from **node-red-contrib-better-sonos**. I created a new p
 
 ## Installation
 
-Install directly from your NodeRED's Setting Pallete.
+Install directly from your NodeRED's setting pallete.
 
 ## Special Functions
 
@@ -23,35 +23,36 @@ Currently the queue management does not support inserting complete playlists int
 
 ## Functions and Usage
 
-This package provides basic functions for the SONOS player. The functions are grouped into 5 nodes.
-- _Config_ node: Select SONOS player
+The functions are grouped into 5 nodes.
+- _Config_ node: Select SONOS player, stores serialnumber or IP address
 - _Player control_ node: Execute basic SONOS player commands (e.g. play, stop, pause, ..)
-- _Get Player status_ node: Get information about current state of SONOS player (e. g. playing, volume, ..)
+- _Get player status_ node: Get information about current state of SONOS player (e. g. playing, volume, ..)
 - _Manage queue_ node: Performs basic queue commands (e. g. activate queue, get queue information)
 - _Manage radio_ node: Performs radio commands (e. g activate a TuneIn radio, Amazon Prime radio station)
 
-> It is recommended to assign fixed IP addresses (best in router) to each SONOS player and use these addresses in the configNode.  
+> It is recommended to assign static IP addresses (best in your router) to each SONOS player and use these addresses in the configNode.  
 
 ## SONOS General Concepts
 
-_SONOS Player_ may **either** play a _stream_ from _radio stations_ or _songs_ (= tracks) from the _SONOS queue_.
-- The radio station can be chosen from TuneIn or other services e. g. Amazon Prime.
+**SONOS Player** may either(!) play a **stream** from **radio stations** or **songs** (= tracks) from the **SONOS queue**.
+- The radio station can be chosen from TuneIn or other services e. g. Amazon Prime. When choosen they start to play.
 - Before activating the queue modus the SONOS queue must have been filled with songs. This can be done by chosing songs form different sources (Album, single song) or through playlists and inserting them into the SONOS queue.   
 
-SONOS players may be _grouped_ together (forming a _Zone_) to play the same song/stream in synch. In each group there is exactly one _leading player_. Several commands (play, stop, activate queue, radio, .. )  will impact all group members when having been send to the leading player. Other commands are only SONOS player specific e.g . mute, volume, ...
+SONOS players may be **grouped** together (forming a **Zone**) to play the same song/stream in synch. In each group there is exactly one **leading player**. Several commands (play, stop, activate queue, radio, .. )  will impact all group members when having been send to the leading player. Other commands are only SONOS player specific e.g . mute, volume, ...
 
-_My SONOS_ contains shortcuts to different sources and is grouped into Radio stations, Playlists, Album, Songs and My Library. The radio stations are sorted alphabetically.
+**My SONOS** contains shortcuts to different sources and is grouped into Radio stations, Playlists, Album, Songs and My Library. The radio stations are sorted alphabetically.
 
-## Roadmap 2019
+## Roadmap
 
--   August: Update to newest version of dependencies (node-sonos) DONE
--   August: Use My_SONOS to select radio stations DONE
--   August: Use TuneIn Radio id to select radio stations DONE
--   August: Improve debugging, logging capabilities
--   September: Fix joinGroup, leaveGroup
--   September/October: Insert a playlist into SONOS queue  
--   Later: Additional functionality: Spotify, ...
+- 2019-08: Update to newest version of dependencies (node-sonos) DONE
+- 2019-08: Use My_SONOS to select radio stations DONE
+- 2019-08: Use TuneIn Radio id to select radio stations DONE
+- 2019-08: Improve debugging, logging capabilities
+- 2019-09: Fix joinGroup, leaveGroup
+- 2019-09/10: Insert a playlist into SONOS queue  
+- 2019/2020: Spotify, ...
 
 ## Credentials
-- node-red-better-SONOS
-- node-sonos api
+
+[node-sonos api team](https://github.com/bencevans/node-sonos)
+[node-red-better-sonos team](https://github.com/originallyus/node-red-contrib-better-sonos)

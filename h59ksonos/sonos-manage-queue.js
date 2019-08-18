@@ -5,7 +5,7 @@ module.exports = function (RED) {
   'use strict';
 
   function SonosManageQueueNode (config) {
-    /**  Create ManageQueue Node and subscribe to messages
+    /**  Create Manage Queue Node and subscribe to messages
     * @param  {object} config current node configuration data
     */
 
@@ -35,7 +35,7 @@ module.exports = function (RED) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
           } else {
-            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
+            node.log('SONOS_PLUS::Success::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -61,10 +61,10 @@ module.exports = function (RED) {
       return;
     }
 
-    // Check msg.payload and convert to lowercase string
+    // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload' });
-      node.error('SONOS-PLUS::Error::' + 'Invalid payload.');
+      node.error('SONOS-PLUS::Error::' + 'Invalid payload.' + JSON.stringify(msg.payload));
       return;
     }
     var command = msg.payload;
@@ -95,7 +95,7 @@ module.exports = function (RED) {
       node.status({ fill: 'red', shape: 'dot', text: 'warning invalid command!' });
       node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + command);
     }
-    node.log('SONOS_PLUS::Info::' + 'Command handed over to subroutine');
+    node.log('SONOS_PLUS::Success::' + 'Command handed over (async) to subroutine');
   }
 
   function activateQueue (node, sonosPlayer) {
@@ -164,7 +164,7 @@ module.exports = function (RED) {
     }).catch(err => {
       console.log('Error retrieving queue %j', err);
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current queue' });
-      node.log('SONOS_PLUS::Info::' + 'Could get SONOS queue');
+      node.log('SONOS_PLUS::Success::' + 'Could get SONOS queue');
     });
   }
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);
