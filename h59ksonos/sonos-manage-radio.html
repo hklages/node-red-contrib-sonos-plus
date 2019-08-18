@@ -18,9 +18,9 @@ RED.nodes.registerType('sonos-manage-radio', {
   icon: 'sonos.png', // saved in  icons/myicon.png
   color: '#edb88a',
   label: function () {
-    return this.name || 'Play Radio';
+    return this.name || 'Manage Radio';
   },
-  paletteLabel: 'Play Radio'
+  paletteLabel: 'Manage Radio'
 });
 </script>
 
@@ -40,7 +40,7 @@ RED.nodes.registerType('sonos-manage-radio', {
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-radio">
-  <p> A node to play a radio station - works for TuneIn, Amazon Prime Station.</p>
+  <p> A node to manage a radio station - works for TuneIn, Amazon Prime Station.</p>
   <p>Command must be sent via simple input payload and topic.</p>
 
   <h3>Input (required)</h3>
