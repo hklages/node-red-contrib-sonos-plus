@@ -21,7 +21,14 @@
       "sonos-manage-queue": "h59ksonos/sonos-manage-queue.js"
     }
   },
-
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hklages/node-red-contrib-sonos-plus"
+  },
+  "bugs": {
+    "url": "https://github.com/hklages/node-red-contrib-sonos-plus/issues"
+  },
+  "homepage": "https://github.com/hklages/node-red-contrib-sonos-plus",
   "author": "Henning Klages",
   "license": "MIT",
   "dependencies": {
