@@ -19,14 +19,6 @@ module.exports = function (RED) {
       // clear node status
       node.status({});
 
-      // Get data from Node dialog
-      node.songuri = config.songuri;
-      node.position = config.position;
-      if (node.position === 'empty') {
-        node.position = '';
-      }
-      node.positioninqueue = config.positioninqueue;
-
       // handle input message
       node.on('input', function (msg) {
         node.log('SONOS_PLUS::Info::' + 'input received');
@@ -80,7 +72,8 @@ module.exports = function (RED) {
     } else if (command === 'play_previous') {
       playPrevious(node, sonosPlayer);
     } else if (command === 'play_track') {
-      selectTrack(node, sonosPlayer);
+      // TODO check queue activated
+      playTrack(node, sonosPlayer, msg.topic);
     } else if (command === 'flush_queue') {
       sonosPlayer.flush().then(result => {
         node.status({ fill: 'green', shape: 'dot', text: 'OK- flush' });
@@ -131,10 +124,11 @@ module.exports = function (RED) {
     });
   }
 
-  function selectTrack (node, sonosPlayer) {
+  function playTrack (node, sonosPlayer, topic) {
     // TODO Ensure there is next and queue not empty
-    // TODO only for testing
-    sonosPlayer.selectTrack(4).then(result => {
+    // TODO error handling
+    var i = parseInt(topic);
+    sonosPlayer.selectTrack(i).then(result => {
       node.status({ fill: 'green', shape: 'dot', text: 'OK- play' });
     }).catch(err => {
       node.error('Error play track: ' + JSON.stringify(err));

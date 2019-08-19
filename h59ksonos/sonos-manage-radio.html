@@ -20,7 +20,7 @@ RED.nodes.registerType('sonos-manage-radio', {
   label: function () {
     return this.name || 'Manage Radio';
   },
-  paletteLabel: 'Manage Radio'
+  paletteLabel: 'Mng Radio'
 });
 </script>
 
@@ -40,8 +40,7 @@ RED.nodes.registerType('sonos-manage-radio', {
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-radio">
-  <p> A node to manage a radio station - works for TuneIn, Amazon Prime Station.</p>
-  <p>Command must be sent via simple input payload and topic.</p>
+  <p> Incoming message starts playing either a My Sonos radio station or a TuneIn radio station.</p>
 
   <h3>Input (required)</h3>
 
@@ -49,9 +48,28 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dt>payload
           <span class="property-type">string</span>
       </dt>
-      <dd>Accepted values:
-        <br/> • "pay_MySonos" and topic a part of the title: activate radio station from My Sonos
-        <br/> • "pay_TuneIn" and topic the TuneIn Id: activate TuneIn radio station
-      </dd>
+      <dd>A command. Valid commands see Details.</dd>
+
+      <dt>topic (required)
+          <span class="property-type">string</span>
+      </dt>
+      <dd>Paramenter - either a part of the My Sonos radio station title in the TuneIn radion id.</dd>
   </dl>
+
+  <h3>Outputs</h3>
+
+  <dl class="message-properties">
+      <dt>sonos
+          <span class="property-type">string</span>
+      </dt>
+      <dd>status message: "success" or "error" </dd>
+  </dl>
+
+  <h3>Details</h3>
+  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter.</p>
+
+  Accepted values for <code>msg.payload</code> are:
+  <br/> • <i>"play_mysonos"</i> and as topic a part of the title
+  <br/> • <i>"play_tunein"</i> and as topic the TuneIn radio id
+
 </script>

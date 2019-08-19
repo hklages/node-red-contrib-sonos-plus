@@ -62,7 +62,6 @@ module.exports = function (RED) {
     var command = msg.payload;
     command = '' + command;// convert to string
     command = command.toLowerCase();
-    msg.command = command;
 
     // execute first api to get state
     sonosPlayer.getCurrentState().then(state => {

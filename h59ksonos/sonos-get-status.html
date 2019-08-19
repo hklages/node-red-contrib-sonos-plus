@@ -40,9 +40,7 @@ RED.nodes.registerType('sonos-get-status', {
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-get-status">
-	<p>A node to retrieve player status. </p>
-	<p>Command can be anything and must be sent via simple input payload.
-	If payload = 'state_only' only the playing state is provided.</p>
+	<p>Outputs SONOS player status on any incoming message.</p>
 
 	<h3>Input (required)</h3>
 
@@ -50,50 +48,53 @@ RED.nodes.registerType('sonos-get-status', {
 			<dt>payload
 					<span class="property-type">string</span>
 			</dt>
-			<dd>Accepted values:
-				<br/> • "state_only": only state is provided
-				<br/> • anything else: several infos are provided
-			</dd>
+			<dd><i>state_only</i> will provide only the state. All other messages will produce standard output.</dd>
 	</dl>
 
 	<h3>Outputs</h3>
 
   <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">string</span>
-      </dt>
-      <dd> current track's title, if playing
-      </dd>
-        <dt>state
+
+      <dt>state
           <span class="property-type">string | playing/stopped/paused</span>
       </dt>
-      <dd> current playing state
-      </dd>
-        <dt>muted
+      <dd>current playing state: playing, stopped, ...</dd>
+
+      <dt>muted
           <span class="property-type">boolean | true-false</span>
       </dt>
-      <dd> current mute status
-           <br/>
-           When muted, the volume value is not affected. In other words, volume value may not be 0 when speaker is muted.
-      </dd>
-        <dt>volume
+      <dd> current mute state</dd>
+
+      <dt>volume
           <span class="property-type">int | 0-100</span>
       </dt>
-      <dd> current volume value
-           <br/>
-           When muted, the volume value is not affected. In other words, volume value may not be not be 0 when speaker is muted.
-      </dd>
-        <dt>normalized_volume <span class="property-type">float | 0-1</span></dt>
-      <dd> normalized current volume value
-           <br/>value ranges from 0.0 to 1.0. Similar to above <strong><i>volume</i></strong> parameter, except this has been normalized to [0.0 - 1.0] range.
-      </dd>
-        <dt>track
+      <dd> current volume value</dd>
+
+      <dt>normalized_volume <span class="property-type">float | 0-1</span></dt>
+      <dd> normalized current volume value (from 0.0 to 1.0)</dd>
+
+      <dt>track
           <span class="property-type">object</span></dt>
-      <dd> full track info object
-      </dd>
-        <dt>track.albumArtURL
+      <dd> full track info object</dd>
+
+      <dt>track.albumArtURL
           <span class="property-type">string/url</span></dt>
-      <dd> full url for the album art
-      </dd>
+      <dd> full url for the album art</dd>
+
+      <dt>sonosName
+          <span class="property-type">string</span></dt>
+      <dd> SONOS player name</dd>
+
+      <dt>sonosGroupAttributes
+          <span class="property-type">Object</span></dt>
+      <dd> SONOS player group attributes</dd>
+
+      <dt>artist
+          <span class="property-type">Object</span></dt>
+      <dd> current artist only in case of TuneIn, Amazon Prime</dd>
+
+      <dt>title
+          <span class="property-type">Object</span></dt>
+      <dd> current title only in case of TuneIn, Amazon Prime</dd>
   </dl>
 </script>
