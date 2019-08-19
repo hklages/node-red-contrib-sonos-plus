@@ -136,12 +136,24 @@ module.exports = function (RED) {
   function getSonosName (node, msg, sonosPlayer) {
     sonosPlayer.getName().then(name => {
       // Output data
-      node.log('SONOS_PLUS::Info::' + 'got valid mute value and continue');
+      node.log('SONOS_PLUS::Info::' + 'got valid Sonos player name and continue');
       msg.sonosName = name;
-      getSonosCurrentTrack(node, msg, sonosPlayer);
+      getSonosGroupAttributes(node, msg, sonosPlayer);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve name' });
       node.error('SONOS-PLUS::Error::' + 'Could not get name.' + 'Details:' + JSON.stringify(err));
+    });
+  }
+
+  function getSonosGroupAttributes (node, msg, sonosPlayer) {
+    sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes().then(attributes => {
+      // Output data
+      node.log('SONOS_PLUS::Info::' + 'got valid Groups and continue');
+      msg.sonosGroupAttributes = attributes;
+      getSonosCurrentTrack(node, msg, sonosPlayer);
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve groups' });
+      node.error('SONOS-PLUS::Error::' + 'Could not get goups.' + 'Details:' + JSON.stringify(err));
     });
   }
 
