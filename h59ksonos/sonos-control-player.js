@@ -22,13 +22,13 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        node.log('SONOS_PLUS::Info::' + 'input received');
+        node.log('input received');
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
+            node.log('Could not find any sonos player!');
           } else {
-            node.log('SONOS_PLUS::Success::' + 'Found sonos player and continue!');
+            node.log('Success::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -50,14 +50,14 @@ module.exports = function (RED) {
     const sonosPlayer = new Sonos(ipaddress);
     if (sonosPlayer === null || sonosPlayer === undefined) {
       node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null.' });
-      node.error('SONOS-PLUS::Error::' + 'Sonos player is null. Check configuration.');
+      node.error('Sonos player is null. Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload.' });
-      node.error('SONOS-PLUS::Error::' + 'Invalid payload. ' + JSON.stringify(msg.payload));
+      node.error('Invalid payload. ' + JSON.stringify(msg.payload));
       return;
     }
 
@@ -65,10 +65,9 @@ module.exports = function (RED) {
     command = '' + command;// convert to string
     command = command.toLowerCase();
     var splitCommand;
-    msg.command = command;
 
     // dispatch
-    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'join_group', 'leave_group'];
+    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group'];
     if (commandList.indexOf(command) > -1) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
@@ -82,9 +81,9 @@ module.exports = function (RED) {
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
-      node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + command);
+      node.log('invalid command: ' + command);
     }
-    node.log('SONOS_PLUS::Success::' + 'Command handed over (async) to handlexxxxCommand');
+    node.log('Success::' + 'Command handed over (async) to handlexxxxCommand');
   }
 
   // ------------------------------------------------------------------------------------
@@ -100,83 +99,105 @@ module.exports = function (RED) {
       case 'play':
         sonosPlayer.play().then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK play ' });
-          node.log('SONOS-PLUS::Success::' + 'play. ');
+          node.log('Success::' + 'play. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - play' });
-          node.error('SONOS-PLUS::Error::' + 'play. ' + 'Details: ' + JSON.stringify(err));
+          node.error('play. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'stop':
         sonosPlayer.stop().then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK stop ' });
-          node.log('SONOS-PLUS::Success::' + 'stop. ');
+          node.log('Success::' + 'stop. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - stop' });
-          node.error('SONOS-PLUS::Error::' + 'stop. ' + 'Details: ' + JSON.stringify(err));
+          node.error('stop. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'pause':
         sonosPlayer.pause().then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK pause ' });
-          node.log('SONOS-PLUS::Success::' + 'pause. ');
+          node.log('Success::' + 'pause. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - pause' });
-          node.error('SONOS-PLUS::Error::' + 'pause. ' + 'Details: ' + JSON.stringify(err));
+          node.error('pause. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'toggleplayback':
         sonosPlayer.togglePlayback().then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK toggleplayback ' });
-          node.log('SONOS-PLUS::Success::' + 'toggleplayback. ');
+          node.log('Success::' + 'toggleplayback. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - toggleplayback' });
-          node.error('SONOS-PLUS::Error::' + 'toggleplayback. ' + 'Details: ' + JSON.stringify(err));
+          node.error('toggleplayback. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'mute':
         sonosPlayer.setMuted(true).then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK mute ' });
-          node.log('SONOS-PLUS::Success::' + 'mute. ');
+          node.log('Success::' + 'mute. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - mute' });
-          node.error('SONOS-PLUS::Error::' + 'mute. ' + 'Details: ' + JSON.stringify(err));
+          node.error('mute. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
       case 'unmute':
         sonosPlayer.setMuted(false).then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK unmute ' });
-          node.log('SONOS-PLUS::Success::' + 'unmute. ');
+          node.log('Success::' + 'unmute. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - unmute' });
-          node.error('SONOS-PLUS::Error::' + 'unmute. ' + 'Details: ' + JSON.stringify(err));
+          node.error('unmute. ' + 'Details: ' + JSON.stringify(err));
+        });
+        break;
+
+      case 'next_song':
+        // warn instead of error because stream may not support this command
+        sonosPlayer.next().then(result => {
+          node.status({ fill: 'green', shape: 'dot', text: 'OK next song ' });
+          node.log('Success::' + 'next song. ');
+        }).catch(err => {
+          node.status({ fill: 'blue', shape: 'dot', text: 'warning - next song' });
+          node.warn('next song. ' + 'Details: ' + JSON.stringify(err));
+        });
+        break;
+
+      case 'previous_song':
+        // warn instead of error because stream may not support this command
+        sonosPlayer.previous(false).then(result => {
+          node.status({ fill: 'green', shape: 'dot', text: 'OK previous song ' });
+          node.log('Success::' + 'previous song. ');
+        }).catch(err => {
+          node.status({ fill: 'blue', shape: 'dot', text: 'warning - previous song' });
+          node.warn('previous song. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
       case 'leave_group':
         sonosPlayer.leaveGroup().then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK leave ' });
-          node.log('SONOS-PLUS::Success::' + 'leave. ');
+          node.log('Success::' + 'leave. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - leave' });
-          node.error('SONOS-PLUS::Error::' + 'leave. ' + 'Details: ' + JSON.stringify(err));
+          node.error('leave. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
       case 'join_group':
         if (msg.topic === null || msg.topic === undefined) {
           node.status({ fill: 'red', shape: 'dot', text: 'error - join - no topic' });
-          node.error('SONOS-PLUS::Error::' + 'join. ' + 'Details: ' + 'No valid topic');
+          node.error('join. ' + 'Details: ' + 'No valid topic');
         } else {
           var deviceToJoing = msg.topic;
           sonosPlayer.joinGroup(deviceToJoing).then(result => {
             node.status({ fill: 'green', shape: 'dot', text: 'OK join ' });
-            node.log('SONOS-PLUS::Success::' + 'join. ');
+            node.log('Success::' + 'join. ');
           }).catch(err => {
             node.status({ fill: 'red', shape: 'dot', text: 'error - join' });
-            node.error('SONOS-PLUS::Error::' + 'join. ' + 'Details: ' + JSON.stringify(err));
+            node.error('join. ' + 'Details: ' + JSON.stringify(err));
           });
         }
         break;
@@ -196,10 +217,10 @@ module.exports = function (RED) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK volume set ' });
-          node.log('SONOS-PLUS::Success::' + 'volume set. ');
+          node.log('Success::' + 'volume set. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - volume-set' });
-          node.error('SONOS-PLUS::Error::' + 'volume-set. ' + 'Details: ' + JSON.stringify(err));
+          node.error('volume-set. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
 
@@ -207,10 +228,10 @@ module.exports = function (RED) {
       case 'volume_increase':
         sonosPlayer.adjustVolume(volumeValue).then(result => {
           node.status({ fill: 'green', shape: 'dot', text: 'OK volume adjust ' });
-          node.log('SONOS-PLUS::Success::' + 'volume adjust. ');
+          node.log('Success::' + 'volume adjust. ');
         }).catch(err => {
           node.status({ fill: 'red', shape: 'dot', text: 'error - volume adjust' });
-          node.error('SONOS-PLUS::Error::' + 'volume adjust. ' + 'Details: ' + JSON.stringify(err));
+          node.error('volume adjust. ' + 'Details: ' + JSON.stringify(err));
         });
         break;
     }

@@ -48,7 +48,7 @@ SONOS players may be **grouped** together (forming a **Zone**) to play the same 
 - 2019-08: Use My_SONOS to select radio stations DONE
 - 2019-08: Use TuneIn Radio id to select radio stations DONE
 - 2019-08: Improve debugging, logging capabilities
-- 2019-09: Fix joinGroup, leaveGroup
+- 2019-08: Fix joinGroup, leaveGroup and
 - 2019-09/10: Insert a playlist into SONOS queue  
 - 2019/2020: Spotify, ...
 

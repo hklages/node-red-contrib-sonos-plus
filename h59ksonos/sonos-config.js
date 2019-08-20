@@ -29,9 +29,9 @@ module.exports = function (RED) {
           label: data.friendlyName + ' in room ' + data.roomName,
           value: data.serialNum
         });
-        node.log('SONOS-PLUS::Success::' + 'Found device ' + data.serialNum);
+        node.log('Success::' + 'Found device ' + data.serialNum);
       }).catch(err => {
-        node.error('SONOS-PLUS::Error::' + 'DeviceDiscovery error! ' + 'Details: ' + JSON.stringify(err));
+        node.error('DeviceDiscovery error! ' + 'Details: ' + JSON.stringify(err));
       });
     });
 

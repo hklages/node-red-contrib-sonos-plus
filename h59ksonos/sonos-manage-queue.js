@@ -21,13 +21,13 @@ module.exports = function (RED) {
 
       // handle input message
       node.on('input', function (msg) {
-        node.log('SONOS_PLUS::Info::' + 'input received');
+        node.log('input received');
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
+            node.log('Could not find any sonos player!');
           } else {
-            node.log('SONOS_PLUS::Success::' + 'Found sonos player and continue!');
+            node.log('Success::' + 'Found sonos player and continue!');
             handleInputMsg(node, msg, ipAddress);
           }
         });
@@ -49,80 +49,55 @@ module.exports = function (RED) {
     const sonosPlayer = new Sonos(ipaddress);
     if (sonosPlayer === null || sonosPlayer === undefined) {
       node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null' });
-      node.error('SONOS-PLUS::Error::' + 'Sonos player is null. Check configuration.');
+      node.error('Sonos player is null. Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload' });
-      node.error('SONOS-PLUS::Error::' + 'Invalid payload.' + JSON.stringify(msg.payload));
+      node.error('Invalid payload.' + JSON.stringify(msg.payload));
       return;
     }
     var command = msg.payload;
     command = '' + command;// convert to string
     command = command.toLowerCase();
-    msg.command = command;
 
     // dispatch
     if (command === 'activate_queue') {
       activateQueue(node, sonosPlayer);
-    } else if (command === 'play_next') {
-      playNext(node, sonosPlayer);
-    } else if (command === 'play_previous') {
-      playPrevious(node, sonosPlayer);
     } else if (command === 'play_track') {
       // TODO check queue activated
       playTrack(node, sonosPlayer, msg.topic);
     } else if (command === 'flush_queue') {
       sonosPlayer.flush().then(result => {
         node.status({ fill: 'green', shape: 'dot', text: 'OK- flush' });
-        node.log('SONOS_PLUS::Info::' + 'flush successful');
+        node.log('flush successful');
       }).catch(err => {
         node.status({ fill: 'red', shape: 'dot', text: 'Error- flush' });
-        node.error('SONOS-PLUS::Error::' + 'Details: Could not flush queue - ' + JSON.stringify(err));
+        node.error('Details: Could not flush queue - ' + JSON.stringify(err));
       });
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'red', shape: 'dot', text: 'warning invalid command!' });
-      node.log('SONOS-PLUS::Warning::' + 'invalid command: ' + command);
+      node.log('invalid command: ' + command);
     }
-    node.log('SONOS_PLUS::Success::' + 'Command handed over (async) to subroutine');
+    node.log('Success::' + 'Command handed over (async) to subroutine');
   }
 
   function activateQueue (node, sonosPlayer) {
     // TODO ensure not empty
     sonosPlayer.selectQueue().then(result => {
       node.status({ fill: 'green', shape: 'dot', text: 'OK- activate queue' });
-      node.log('SONOS_PLUS::Info:: ' + 'OK Activate Queue');
+      node.log('OK Activate Queue');
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'Error- activateQueue' });
-      node.error('SONOS-PLUS::Error:: ' + 'Activate Queue ' + 'Details: ' + JSON.stringify(err));
+      node.error('Activate Queue ' + 'Details: ' + JSON.stringify(err));
     });
   }
 
-  function playNext (node, sonosPlayer) {
-    // TODO Ensure there is next and queue not empty
-    sonosPlayer.next().then(result => {
-      node.status({ fill: 'green', shape: 'dot', text: 'OK- play next' });
-      node.log('SONOS_PLUS::Info:: ' + 'OK play next');
-    }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'Error- play next' });
-      node.error('SONOS-PLUS::Error:: ' + 'play next ' + 'Details: ' + JSON.stringify(err));
-    });
-  }
-
-  function playPrevious (node, sonosPlayer) {
-    // TODO Ensure there is next and queue not empty
-    sonosPlayer.previous().then(result => {
-      node.status({ fill: 'green', shape: 'dot', text: 'OK- play previous' });
-      node.log('SONOS_PLUS::Info:: ' + 'OK play previous');
-    }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'Error- play previous' });
-      node.error('SONOS-PLUS::Error:: ' + 'play previous ' + 'Details: ' + JSON.stringify(err));
-    });
-  }
+  // ------------------------------------------------------------------------------------
 
   function playTrack (node, sonosPlayer, topic) {
     // TODO Ensure there is next and queue not empty
@@ -139,7 +114,7 @@ module.exports = function (RED) {
     sonosPlayer.getQueue().then(queueObj => {
       if (queueObj === null || queueObj === undefined || queueObj.items === undefined || queueObj.items === null) {
         node.status({ fill: 'red', shape: 'dot', text: 'invalid current queue retrieved' });
-        node.error('SONOS-PLUS::Error:: ' + 'could not get queue ');
+        node.error('could not get queue ');
         return;
       }
       var tracksArray = queueObj.items;
@@ -154,11 +129,11 @@ module.exports = function (RED) {
       // send message data
       msg.payload = tracksArray;
       node.send(msg);
-      node.status({ fill: 'green', shape: 'dot', text: 'OK- get SONOS queue' });
+      node.status({ fill: 'green', shape: 'dot', text: 'OK- got SONOS queue' });
+      node.log('Success ' + 'Could get SONOS queue. ');
     }).catch(err => {
-      console.log('Error retrieving queue %j', err);
-      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current queue' });
-      node.log('SONOS_PLUS::Success::' + 'Could get SONOS queue');
+      node.status({ fill: 'red', shape: 'dot', text: 'Failed to retrieve current queue' });
+      node.error('Could not get SONOS queue. ' + 'Details: ' + JSON.stringify(err));
     });
   }
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);

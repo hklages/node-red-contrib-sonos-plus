@@ -49,22 +49,23 @@ RED.nodes.registerType('sonos-control-player', {
           <span class="property-type">string</span>
       </dt>
       <dd>A command. Valid commands see Details.</dd>
-      <dt>topic (optional)
+      <dt>topic
           <span class="property-type">string</span>
       </dt>
-      <dd>Command parameter (for join_group).</dd>
+      <dd>Command parameter for join_group.</dd>
   </dl>
 
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as optional parameter and currently only being used in combination with the <i>"join_group"</i> command.</p>
+  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as command parameter and currently only being used in combination with the <i>"join_group"</i> command.</p>
 
   Accepted values for <code>msg.payload</code> are:
     <br/> • <i>"play"/"stop"/"pause"/"mute"/"ummute"</i>
+    <br/> • <i>"next_song"/"previous_song"</i> if support by stream
     <br/> • <i>"toggleplayback"</i> Toggle play/pause
     <br/> • <i>number</i>: 0 .. 100 Set volume
     <br/> • <i>+N</i>: +1 .. +30 Increase volume
     <br/> • <i>-N</i>: -30 .. -1 Decrease volume
     <br/> • <i>"leave_group"</i> Leave group
-    <br/> • <i>"join_group"</i> Join group. Group name is  specified in <code>msg.topic</code>.
+    <br/> • <i>"join_group"</i> Join group. Group name must be specified in <code>msg.topic</code>.
 
 </script>

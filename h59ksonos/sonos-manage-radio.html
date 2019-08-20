@@ -59,10 +59,10 @@ RED.nodes.registerType('sonos-manage-radio', {
   <h3>Outputs</h3>
 
   <dl class="message-properties">
-      <dt>sonos
+      <dt>payload
           <span class="property-type">string</span>
       </dt>
-      <dd>status message: "success" or "error" </dd>
+      <dd>title of station from my Sonos or in case of get the whole array</dd>
   </dl>
 
   <h3>Details</h3>
@@ -71,5 +71,5 @@ RED.nodes.registerType('sonos-manage-radio', {
   Accepted values for <code>msg.payload</code> are:
   <br/> • <i>"play_mysonos"</i> and as topic a part of the title
   <br/> • <i>"play_tunein"</i> and as topic the TuneIn radio id
-
+  <br/> • <i>"get_mysonos"</i> Provides the array with all My Sonos radio stations
 </script>

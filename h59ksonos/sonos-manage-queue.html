@@ -76,11 +76,6 @@ RED.nodes.registerType('sonos-manage-queue', {
   <h3>Outputs</h3>
 
   <dl class="message-properties">
-      <dt>sonos
-          <span class="property-type">string</span>
-      </dt>
-      <dd>status message: "success" or "error" </dd>
-
       <dt>payload
           <span class="property-type">Array</span>
       </dt>
@@ -92,8 +87,6 @@ RED.nodes.registerType('sonos-manage-queue', {
 
   Accepted values for <code>msg.payload</code> are:
   <br/> • <i>"activate_queue"</i> Starts playing song
-  <br/> • <i>"play_next"</i> Plays next song
-  <br/> • <i>"play_previous"</i> Plays previous song
   <br/> • <i>"play_track"</i> Plays specific track in queue.
   <br/> • <i>"flush"</i> Erases the queue and stops playing!
   <br/> • <i>"get_queue"</i> Provides the current queue as output

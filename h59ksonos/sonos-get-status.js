@@ -21,162 +21,190 @@ module.exports = function (RED) {
 
       // handle input message (the different requests are chained)
       node.on('input', function (msg) {
-        node.log('SONOS_PLUS::Info::' + 'input received');
+        node.log('input received');
         // TODO get sonosPlayer and handover instead of ipAddress
+
         helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
           if (ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('SONOS_PLUS::Info::' + 'Could not find any sonos player!');
+            node.log('Could not find any sonos player!');
+            node.send(msg);
           } else {
-            node.log('SONOS_PLUS::Info::' + 'Found sonos player and continue!');
-            getSonosCurrentState(node, msg, ipAddress);
+            node.log('Found sonos player and continue!');
+            handleInputMsg(node, msg, ipAddress);
           }
         });
       });
     }
   }
 
-  // ------------------------------------------------------------------------------------------
-
-  function getSonosCurrentState (node, msg, ipaddress) {
-    /**  Validate sonos player and input message then get state and all other data.
+  function handleInputMsg (node, msg, ipaddress) {
+    /**  Validate sonos player and input message then dispatch
     * @param  {Object} node current node
     * @param  {object} msg incoming message
     * @param  {string} ipaddress IP address of sonos player
     */
+
+    // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-
     if (sonosPlayer === null || sonosPlayer === undefined) {
-      node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null' });
-      node.error('SONOS-PLUS::Error::' + 'Sonos player is null. Check configuration.');
+      node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null.' });
+      node.error('Sonos player is null. Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid payload.' });
-      node.error('SONOS-PLUS::Error::' + 'Invalid payload.');
+      node.error('Invalid payload. ' + JSON.stringify(msg.payload));
       return;
     }
+
     var command = msg.payload;
     command = '' + command;// convert to string
     command = command.toLowerCase();
+
+    // dispatch
+    if (command === 'state_only') {
+      getSonosCurrentState(node, msg, sonosPlayer, false);
+    } else {
+      getSonosCurrentState(node, msg, sonosPlayer, true);
+    }
+    node.log('Success::' + 'Command handed over (async) to specific function');
+  }
+
+  // ------------------------------------------------------------------------------------------
+
+  function getSonosCurrentState (node, msg, sonosPlayer, chain) {
+    /**  Validate sonos player and input message then get state and all other data.
+    * @param  {Object} node current node
+    * @param  {Object} msg incoming message
+    * @param  {Object} sonosPlayer SONOS player object
+    * @param  {Boolean} chain start request for other status information (chaining)
+    * changes msg.state
+    */
 
     // execute first api to get state
     sonosPlayer.getCurrentState().then(state => {
       if (state === null || state === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: 'invalid current state retrieved' });
-        node.error('SONOS-PLUS::Error::' + 'get state. ' + 'Details: ' + 'invalid response from player.');
+        node.error('get state. ' + 'Details: ' + 'invalid response from player.');
         return;
       }
       msg.state = state;
-      if (command === 'state_only') {
-        node.status({ fill: 'green', shape: 'dot', text: 'OK got state ' });
-        node.log('SONOS_PLUS::Info::' + 'got valid state.');
-        node.send(msg);
+      if (chain) {
+        node.log('Continue to get other info.');
+        getSonosVolume(node, msg, sonosPlayer, true);
       } else {
-        node.log('SONOS_PLUS::Info::' + 'Continue to get other info.');
-        getSonosVolume(node, msg, sonosPlayer);
+        node.status({ fill: 'green', shape: 'dot', text: 'OK got state' });
+        node.log('got valid state.');
+        node.send(msg);
       }
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current state' });
-      node.error('SONOS-PLUS::Error::' + 'Could not get current state.' + 'Details:' + JSON.stringify(err));
+      node.error('Could not get current state.' + 'Details:' + JSON.stringify(err));
     });
   }
 
-  function getSonosVolume (node, msg, sonosPlayer) {
+  function getSonosVolume (node, msg, sonosPlayer, chain) {
     /**  get sonos volume for selected player and continue in chain
     * @param  {Object} node current node
     * @param  {Object} msg incoming message
     * @param  {Object} sonosPlayer SONOS player object
+    * @param  {Boolean} chain start request for other status information (chaining)
+    * changes msg.volume, msg.normalized_volume
     */
 
     sonosPlayer.getVolume().then(volume => {
       if (volume === null || volume === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: 'invalid volume retrieved' });
-        node.error('SONOS-PLUS::Error::' + 'get volume. ' + 'Details: ' + 'invalid response from player.');
+        node.error('get volume. ' + 'Details: ' + 'invalid response from player.');
         return;
       }
       if (volume < 0 || volume > 100) {
         node.status({ fill: 'red', shape: 'dot', text: 'invalid volume range retrieved' });
-        node.error('SONOS-PLUS::Error::' + 'get volume. ' + 'Details: ' + 'volume out of range [0..100].');
+        node.error('get volume. ' + 'Details: ' + 'volume out of range [0..100].');
         return;
       }
       // Output data
       msg.volume = volume;
       msg.normalized_volume = volume / 100.0;
-      node.log('SONOS_PLUS::Info::' + 'got valid volume and continue');
-      getSonosMuted(node, msg, sonosPlayer);
+      node.log('got valid volume and continue');
+      getSonosMuted(node, msg, sonosPlayer, chain);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve volume.' });
-      node.error('SONOS-PLUS::Error::' + 'Could not get current volume.' + 'Details:' + JSON.stringify(err));
+      node.error('Could not get current volume.' + 'Details:' + JSON.stringify(err));
     });
   }
 
-  function getSonosMuted (node, msg, sonosPlayer) {
+  function getSonosMuted (node, msg, sonosPlayer, chain) {
+    //   changes msg.muted
     sonosPlayer.getMuted().then(muted => {
       if (muted === null || muted === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: 'invalid mute value retrieved' });
-        node.error('SONOS-PLUS::Error::' + 'get mute. ' + 'Details: ' + 'invalid mute response from player.');
+        node.error('get mute. ' + 'Details: ' + 'invalid mute response from player.');
         return;
       }
 
       // Output data
-      node.log('SONOS_PLUS::Info::' + 'got valid mute value and continue');
+      node.log('got valid mute value and continue');
       msg.muted = muted;
-      getSonosName(node, msg, sonosPlayer);
+      getSonosName(node, msg, sonosPlayer, chain);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve Mute status' });
-      node.error('SONOS-PLUS::Error::' + 'Could not get mute state.' + 'Details:' + JSON.stringify(err));
+      node.error('Could not get mute state.' + 'Details:' + JSON.stringify(err));
     });
   }
 
-  function getSonosName (node, msg, sonosPlayer) {
+  function getSonosName (node, msg, sonosPlayer, chain) {
+    //   changes msg.sonosName
     sonosPlayer.getName().then(name => {
       // Output data
-      node.log('SONOS_PLUS::Info::' + 'got valid Sonos player name and continue');
+      node.log('got valid Sonos player name and continue');
       msg.sonosName = name;
-      getSonosGroupAttributes(node, msg, sonosPlayer);
+      getSonosGroupAttributes(node, msg, sonosPlayer, chain);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve name' });
-      node.error('SONOS-PLUS::Error::' + 'Could not get name.' + 'Details:' + JSON.stringify(err));
+      node.error('Could not get name.' + 'Details:' + JSON.stringify(err));
     });
   }
 
-  function getSonosGroupAttributes (node, msg, sonosPlayer) {
+  function getSonosGroupAttributes (node, msg, sonosPlayer, chain) {
+    //   changes msg.sonosGroup
     sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes().then(attributes => {
       // Output data
-      node.log('SONOS_PLUS::Info::' + 'got valid Groups and continue');
-      msg.sonosGroupAttributes = attributes;
-      getSonosCurrentTrack(node, msg, sonosPlayer);
+      node.log('got valid Groups and continue');
+      msg.sonosGroup = attributes;
+      getSonosCurrentTrack(node, msg, sonosPlayer, chain);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve groups' });
-      node.error('SONOS-PLUS::Error::' + 'Could not get goups.' + 'Details:' + JSON.stringify(err));
+      node.error('Could not get goups.' + 'Details:' + JSON.stringify(err));
     });
   }
 
-  function getSonosCurrentTrack (node, msg, sonosPlayer) {
+  function getSonosCurrentTrack (node, msg, sonosPlayer, chain) {
+    // changes   msg.track, msg.artist = artist, msg.title = title;
     var artist = 'unknown';
     var title = 'unknown';
     sonosPlayer.currentTrack().then(trackObj => {
       if (trackObj === null || trackObj === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: 'invalid current track retrieved' });
-        node.error('SONOS-PLUS::Error::' + 'get track. ' + 'Details: ' + 'invalid track object retrieved.');
+        node.error('get track. ' + 'Details: ' + 'invalid track object retrieved.');
       } else {
         // message albumArtURL property
         if (trackObj.albumArtURI !== undefined && trackObj.albumArtURI !== null) {
-          node.log('SONOS_PLUS::Info::' + 'got valid albumArtURI');
+          node.log('got valid albumArtURI');
           var port = 1400;
           trackObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + trackObj.albumArtURI;
         }
         if (trackObj.artist !== undefined && trackObj.artist !== null) {
-          node.log('SONOS_PLUS::Info::' + 'got artist and title');
+          node.log('got artist and title');
           artist = trackObj.artist;
           title = trackObj.title;
         } else {
           if (trackObj.title.indexOf(' - ') > 0) {
-            node.log('SONOS_PLUS::Info::' + 'could split data to artist and title');
+            node.log('could split data to artist and title');
             artist = trackObj.title.split(' - ')[0];
             title = trackObj.title.split(' - ')[1];
           }
@@ -187,12 +215,12 @@ module.exports = function (RED) {
         msg.title = title;
         // Send output
         node.status({ fill: 'green', shape: 'dot', text: 'OK got track and all other data.' });
-        node.log('SONOS_PLUS::Info::' + 'got all data - finsih');
+        node.log('got all data - finsih');
         node.send(msg);
       }
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current track' });
-      node.error('SONOS-PLUS::Error::' + 'Could not get track.' + 'Details:' + JSON.stringify(err));
+      node.error('Could not get track.' + 'Details:' + JSON.stringify(err));
     });
   }
 
