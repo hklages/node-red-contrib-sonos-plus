@@ -15,6 +15,7 @@ Install directly from your NodeRED's setting pallete.
 - Simple SONOS player selection in ConfigNode (recommendation: enter IP address)
 - Comfortable selection of My SONOS radio stations (TuneIn, Amazon Prime)
 - Supports TuneIn radio id to select radio stations
+- Provides many kinds of current song information: artist, title but also radio station name
 - Uses the newest node-sonos api (2019-08-18T0925)
 
 ## Restrictions

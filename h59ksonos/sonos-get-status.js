@@ -68,8 +68,13 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'state_only') {
       getSonosCurrentState(node, msg, sonosPlayer, false);
-    } else {
+    } else if (command === 'basics') {
       getSonosCurrentState(node, msg, sonosPlayer, true);
+    } else if (command === 'track_media') {
+      getSonosCurrentTrack(node, msg, sonosPlayer, true);
+    } else {
+      node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
+      node.warn('invalid command: ' + command);
     }
     node.log('Success::' + 'Command handed over (async) to specific function');
   }
@@ -176,15 +181,20 @@ module.exports = function (RED) {
       // Output data
       node.log('got valid Groups and continue');
       msg.sonosGroup = attributes;
-      getSonosCurrentTrack(node, msg, sonosPlayer, chain);
+      node.status({ fill: 'green', shape: 'dot', text: 'OK got all basic data.' });
+      node.log('got all data - finsih');
+      node.send(msg);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve groups' });
       node.error('Could not get goups.' + 'Details:' + JSON.stringify(err));
     });
   }
 
+  // next chain command for track, media, position
+
   function getSonosCurrentTrack (node, msg, sonosPlayer, chain) {
-    // changes   msg.track, msg.artist = artist, msg.title = title;
+    // finally changes  msg.title (string), msg.artist (string), msg.track (obj) msg.media (obj), msg.position (obj)
+    // first step artist, title
     var artist = 'unknown';
     var title = 'unknown';
     sonosPlayer.currentTrack().then(trackObj => {
@@ -213,14 +223,39 @@ module.exports = function (RED) {
         msg.track = trackObj;
         msg.artist = artist;
         msg.title = title;
-        // Send output
-        node.status({ fill: 'green', shape: 'dot', text: 'OK got track and all other data.' });
-        node.log('got all data - finsih');
-        node.send(msg);
+        node.log('could get track data and continue');
+        getSonosMediaData(node, msg, sonosPlayer, true);
       }
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current track' });
       node.error('Could not get track.' + 'Details:' + JSON.stringify(err));
+    });
+  }
+
+  function getSonosMediaData (node, msg, sonosPlayer, chain) {
+    //   changes msg.media
+    sonosPlayer.avTransportService().GetMediaInfo().then(media => {
+      node.log('got valid media data and continue');
+      msg.media = media;
+      getSonosPositionData(node, msg, sonosPlayer, chain);
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve media data' });
+      node.error('Could not get media data.' + 'Details:' + JSON.stringify(err));
+    });
+  }
+
+  function getSonosPositionData (node, msg, sonosPlayer, chain) {
+    //   changes msg.position
+    sonosPlayer.avTransportService().GetPositionInfo().then(position => {
+      node.log('got valid positon data');
+      msg.position = position;
+      // Send output
+      node.status({ fill: 'green', shape: 'dot', text: 'OK got all.' });
+      node.log('got all data track, media, positon data - finish');
+      node.send(msg);
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve positon data' });
+      node.error('Could not get position data.' + 'Details:' + JSON.stringify(err));
     });
   }
 

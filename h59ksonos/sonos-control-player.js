@@ -81,7 +81,7 @@ module.exports = function (RED) {
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
-      node.log('invalid command: ' + command);
+      node.warn('invalid command: ' + command);
     }
     node.log('Success::' + 'Command handed over (async) to handlexxxxCommand');
   }
