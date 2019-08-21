@@ -7,7 +7,7 @@ class SonosHelper {
   /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
   * @param  {object} configNode corresponding configNode
   * @return {Boolean} isValid true if IP Address or serial exist
-  * OK at 2019-08-21T1311
+  * TEST
   */
 
     if (configNode === undefined || configNode === null) {
@@ -18,78 +18,39 @@ class SonosHelper {
                         configNode.serialnum !== null &&
                         configNode.serialnum.trim().length > 5);
     var hasIpAddress = (configNode.ipaddress !== undefined &&
-                        configNode.ipaddress !== null &&
-                        configNode.ipaddress.trim().length > 5);
-    if (!hasSerialNum && !hasIpAddress) {
-      return false;
+                        configNode.ipaddress !== null);
+
+    const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
+    if (hasIpAddress) {
+      if ((configNode.ipaddress.trim()).match(IPREGEX)) {
+        // prefered case: valid ip address
+        return true;
+      } else {
+        if (hasSerialNum) {
+          return true;
+        } else {
+          return false;
+        }
+      }
     } else {
-      return true;
+      if (hasSerialNum) {
+        // no ip but serial
+        return true;
+      } else {
+        // no ip and no serial
+        return false;
+      }
     }
   }
 
-  // validateConfigNodeV2 (configNode) {
-  // /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
-  // * @param  {object} configNode corresponding configNode
-  // * @return {Boolean} isValid true if IP Address or serial exist
-  // * TEST
-  // */
-  //
-  //   if (configNode === undefined || configNode === null) {
-  //     return false;
-  //   }
-  //
-  //   var hasSerialNum = (configNode.serialnum !== undefined &&
-  //                       configNode.serialnum !== null &&
-  //                       configNode.serialnum.trim().length > 5);
-  //   var hasIpAddress = (configNode.ipaddress !== undefined &&
-  //                       configNode.ipaddress !== null);
-  //
-  //   const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
-  //   if (hasIpAddress) {
-  //     if ((configNode.ipaddress.trim()).match(IPREGEX)) {
-  //       // prefered case: valid ip address
-  //       return true;
-  //     } else {
-  //       if (hasSerialNum) {
-  //         return true;
-  //       } else {
-  //         return false;
-  //       }
-  //     }
-  //   } else {
-  //     if (hasSerialNum) {
-  //       // no ip but serial
-  //       return true;
-  //     } else {
-  //       // no ip and no serial
-  //       return false;
-  //     }
-  //   }
-  // }
-
   identifyPlayerProcessInputMsg (node, configNode, msg, callback) {
-    /** Validates ConfigNode and return sonos player object in callback
+    /** Returns sonos player object in callback
     * @param  {Object} node current node to set status and send error
     * @param  {Object} configNode corresponding configNode
     * @param  {Object} msg received message
     * @param  {function} callback callback function with paramenter ipaddress - can be null
+    * prereq: expecting that configNode has been validated for this input message
     */
-
-    // valdate configNode
-    var isValid = this.validateConfigNodeV3(configNode);
-    if (!isValid) {
-      node.error('Invalid config node.');
-      node.status({ fill: 'red', shape: 'dot', text: 'Invalid config node.' });
-      if (typeof callback === 'function') {
-        // error - return null as ipadrress
-        callback(null);
-      }
-      return;
-    } else {
-      node.log('ConfigNode object does exist with ip address or serial number.');
-      node.status({});
-    }
-    // result at this point: either IP address or serial exists.
 
     // use IP Address if user set it
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
@@ -195,7 +156,6 @@ class SonosHelper {
         callback(null, null);
       }
       if (search !== null && search !== undefined) {
-        node.log('Sonos player found - clean up object');
         search.destroy();
         search = null;
       }

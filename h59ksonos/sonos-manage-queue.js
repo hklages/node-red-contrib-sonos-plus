@@ -11,26 +11,31 @@ module.exports = function (RED) {
 
     RED.nodes.createNode(this, config);
 
-    // verify config node. if valid then set status and process message
+    // verify config node. if valid then set status and subscribe to messages
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
     var isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
-
-      // handle input message
+      // subscribe and handle input message
       node.on('input', function (msg) {
         node.log('input received');
-        helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-          if (ipAddress === null) {
+        // check again configNode - in the meantime it might have changed
+        var isStillValid = helper.validateConfigNodeV3(configNode);
+        if (isStillValid) {
+          helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
+            if (ipAddress === undefined || ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('Could not find any sonos player!');
-          } else {
-            node.log('Success::' + 'Found sonos player and continue!');
-            handleInputMsg(node, msg, ipAddress);
-          }
-        });
+            } else {
+              node.log('Success::' + 'Found sonos player and continue!');
+              handleInputMsg(node, msg, ipAddress);
+            }
+          });
+        } else {
+          node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
+          node.error('Invalid configNode. Please edit configNode:');
+        }
       });
     } else {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });

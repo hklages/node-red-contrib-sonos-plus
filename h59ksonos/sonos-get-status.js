@@ -11,7 +11,7 @@ module.exports = function (RED) {
 
     RED.nodes.createNode(this, config);
 
-    // verify config node. if valid then set status and process message
+    // verify config node. if valid then set status and subscribe to messages
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
     var isValid = helper.validateConfigNodeV3(configNode);
@@ -19,21 +19,24 @@ module.exports = function (RED) {
       // clear node status
       node.status({});
 
-      // handle input message (the different requests are chained)
+      // ubscribe and handle input message (the different requests are chained)
       node.on('input', function (msg) {
         node.log('input received');
-        // TODO get sonosPlayer and handover instead of ipAddress
-
-        helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-          if (ipAddress === null) {
+        // check again configNode - in the meantime it might have changed
+        var isStillValid = helper.validateConfigNodeV3(configNode);
+        if (isStillValid) {
+          helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
+            if (ipAddress === undefined || ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
-            node.log('Could not find any sonos player!');
-            node.send(msg);
-          } else {
-            node.log('Found sonos player and continue!');
-            handleInputMsg(node, msg, ipAddress);
-          }
-        });
+            } else {
+              node.log('Found sonos player and continue!');
+              handleInputMsg(node, msg, ipAddress);
+            }
+          });
+        } else {
+          node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
+          node.error('Invalid configNode. Please edit configNode:');
+        }
       });
     } else {
       node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
