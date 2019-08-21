@@ -40,7 +40,8 @@ RED.nodes.registerType('sonos-manage-radio', {
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-radio">
-  <p> Incoming message starts playing either a My Sonos radio station or a TuneIn radio station.</p>
+  <p> Incoming message starts playing either a My Sonos radio station or a TuneIn radio station.
+    The <i>get command</i>  provides information about the My Sonos radio stations.</p>
 
   <h3>Input (required)</h3>
 
@@ -53,7 +54,7 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dt>topic (required)
           <span class="property-type">string</span>
       </dt>
-      <dd>Paramenter - either a part of the My Sonos radio station title in the TuneIn radion id.</dd>
+      <dd>Paramenter - either the TuneIn radio id or a part of the My Sonos radio station title.</dd>
   </dl>
 
   <h3>Outputs</h3>

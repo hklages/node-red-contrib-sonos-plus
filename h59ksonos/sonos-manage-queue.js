@@ -128,6 +128,7 @@ module.exports = function (RED) {
       });
       // send message data
       msg.payload = tracksArray;
+      msg.queue_length = tracksArray.length;
       node.send(msg);
       node.status({ fill: 'green', shape: 'dot', text: 'OK- got SONOS queue' });
       node.log('Success ' + 'Could get SONOS queue. ');

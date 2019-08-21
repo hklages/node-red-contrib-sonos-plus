@@ -79,8 +79,9 @@ RED.nodes.registerType('sonos-manage-queue', {
       <dt>payload
           <span class="property-type">Array</span>
       </dt>
-      <dd>Array of songs in queue as object</dd>
+      <dd>Array of songs in queue as object - only when using <i>get</i></dd>
   </dl>
+
 
   <h3>Details</h3>
   <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter; currently only used for command <i>"play_track"</i>.</p>
