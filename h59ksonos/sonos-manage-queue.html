@@ -84,11 +84,11 @@ RED.nodes.registerType('sonos-manage-queue', {
 
 
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter; currently only used for command <i>"play_track"</i>.</p>
+  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter; currently only used for command <i>"play_song"</i>.</p>
 
   Accepted values for <code>msg.payload</code> are:
   <br/> • <i>"activate_queue"</i> Starts playing song
-  <br/> • <i>"play_track"</i> Plays specific track in queue.
+  <br/> • <i>"play_song"</i> Plays specific song in queue.
   <br/> • <i>"flush"</i> Erases the queue and stops playing!
   <br/> • <i>"get_queue"</i> Provides the current queue as output
 </script>

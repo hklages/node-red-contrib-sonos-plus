@@ -14,11 +14,10 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV2(configNode);
+    var isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
-      // TODO PRIO 1 it mayb be that ip address does not belong to sonos player or has wrong syntax
 
       // handle input message
       node.on('input', function (msg) {
@@ -33,6 +32,9 @@ module.exports = function (RED) {
           }
         });
       });
+    } else {
+      node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
+      node.error('Invalid configNode. Please edit configNode:');
     }
   }
 

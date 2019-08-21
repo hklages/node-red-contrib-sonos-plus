@@ -14,7 +14,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV2(configNode);
+    var isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -32,6 +32,9 @@ module.exports = function (RED) {
           }
         });
       });
+    } else {
+      node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
+      node.error('Invalid configNode. Please edit configNode:');
     }
   }
 
@@ -66,9 +69,12 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'activate_queue') {
       activateQueue(node, sonosPlayer);
-    } else if (command === 'play_track') {
+    } else if (command === 'play_song') {
       // TODO check queue activated
       playTrack(node, sonosPlayer, msg.topic);
+    } else if (command === 'insert_uri') {
+      // TODO check queue activated
+      insertUri(node, sonosPlayer, msg.topic);
     } else if (command === 'flush_queue') {
       sonosPlayer.flush().then(result => {
         node.status({ fill: 'green', shape: 'dot', text: 'OK- flush' });
@@ -79,12 +85,18 @@ module.exports = function (RED) {
       });
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
+    } else if (command === 'get_playlists') {
+      getPlaylists(node, msg, sonosPlayer);
+    } else if (command === 'get_playlist') {
+      getSpecificPlaylist(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'red', shape: 'dot', text: 'warning invalid command!' });
       node.log('invalid command: ' + command);
     }
     node.log('Success::' + 'Command handed over (async) to subroutine');
   }
+
+  // ------------------------------------------------------------------------------------
 
   function activateQueue (node, sonosPlayer) {
     // TODO ensure not empty
@@ -97,8 +109,6 @@ module.exports = function (RED) {
     });
   }
 
-  // ------------------------------------------------------------------------------------
-
   function playTrack (node, sonosPlayer, topic) {
     // TODO Ensure there is next and queue not empty
     // TODO error handling
@@ -106,7 +116,15 @@ module.exports = function (RED) {
     sonosPlayer.selectTrack(i).then(result => {
       node.status({ fill: 'green', shape: 'dot', text: 'OK- play' });
     }).catch(err => {
-      node.error('Error play track: ' + JSON.stringify(err));
+      node.error('Error play song: ' + JSON.stringify(err));
+    });
+  }
+
+  function insertUri (node, sonosPlayer, topic) {
+    sonosPlayer.queue(topic).then(result => {
+      node.status({ fill: 'green', shape: 'dot', text: 'OK- insert uri' });
+    }).catch(err => {
+      node.error('Error insert uri: ' + JSON.stringify(err));
     });
   }
 
@@ -117,24 +135,42 @@ module.exports = function (RED) {
         node.error('could not get queue ');
         return;
       }
-      var tracksArray = queueObj.items;
+      var songsArray = queueObj.items;
       // message albumArtURL
-      tracksArray.forEach(function (trackObj) {
-        if (trackObj.albumArtURL !== undefined && trackObj.albumArtURL !== null) {
+      songsArray.forEach(function (songsObj) {
+        if (songsObj.albumArtURL !== undefined && songsObj.albumArtURL !== null) {
           var port = 1400;
-          trackObj.albumArtURI = trackObj.albumArtURL;
-          trackObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + trackObj.albumArtURI;
+          songsObj.albumArtURI = songsObj.albumArtURL;
+          songsObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsObj.albumArtURI;
         }
       });
       // send message data
-      msg.payload = tracksArray;
-      msg.queue_length = tracksArray.length;
+      msg.payload = songsArray;
+      msg.queue_length = songsArray.length;
       node.send(msg);
       node.status({ fill: 'green', shape: 'dot', text: 'OK- got SONOS queue' });
       node.log('Success ' + 'Could get SONOS queue. ');
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'Failed to retrieve current queue' });
       node.error('Could not get SONOS queue. ' + 'Details: ' + JSON.stringify(err));
+    });
+  }
+
+  function getPlaylists (node, msg, sonosPlayer) {
+    sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: 25 }).then(playlists => {
+      console.log('xxxx: %j', playlists);
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'Failed to retrieve playlists' });
+      node.error('Could not get SONOS playlists. ' + 'Details: ' + JSON.stringify(err));
+    });
+  }
+
+  function getSpecificPlaylist (node, msg, sonosPlayer) {
+    sonosPlayer.getPlaylist('4', { start: 0, total: 25 }).then(playlists => {
+      console.log('xxxx: %j', playlists);
+    }).catch(err => {
+      node.status({ fill: 'red', shape: 'dot', text: 'Failed to retrieve playlists' });
+      node.error('Could not get SONOS playlists. ' + 'Details: ' + JSON.stringify(err));
     });
   }
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);

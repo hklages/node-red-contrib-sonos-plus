@@ -3,23 +3,69 @@
 class SonosHelper {
   // functions to be used in other modules
 
-  validateConfigNodeV2 (configNode) {
+  validateConfigNodeV3 (configNode) {
   /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
   * @param  {object} configNode corresponding configNode
+  * @return {Boolean} isValid true if IP Address or serial exist
+  * OK at 2019-08-21T1311
   */
 
     if (configNode === undefined || configNode === null) {
       return false;
     }
 
-    var hasSerialNum = configNode.serialnum !== undefined && configNode.serialnum !== null && configNode.serialnum.trim().length > 5;
-    var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
+    var hasSerialNum = (configNode.serialnum !== undefined &&
+                        configNode.serialnum !== null &&
+                        configNode.serialnum.trim().length > 5);
+    var hasIpAddress = (configNode.ipaddress !== undefined &&
+                        configNode.ipaddress !== null &&
+                        configNode.ipaddress.trim().length > 5);
     if (!hasSerialNum && !hasIpAddress) {
       return false;
     } else {
       return true;
     }
   }
+
+  // validateConfigNodeV2 (configNode) {
+  // /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
+  // * @param  {object} configNode corresponding configNode
+  // * @return {Boolean} isValid true if IP Address or serial exist
+  // * TEST
+  // */
+  //
+  //   if (configNode === undefined || configNode === null) {
+  //     return false;
+  //   }
+  //
+  //   var hasSerialNum = (configNode.serialnum !== undefined &&
+  //                       configNode.serialnum !== null &&
+  //                       configNode.serialnum.trim().length > 5);
+  //   var hasIpAddress = (configNode.ipaddress !== undefined &&
+  //                       configNode.ipaddress !== null);
+  //
+  //   const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
+  //   if (hasIpAddress) {
+  //     if ((configNode.ipaddress.trim()).match(IPREGEX)) {
+  //       // prefered case: valid ip address
+  //       return true;
+  //     } else {
+  //       if (hasSerialNum) {
+  //         return true;
+  //       } else {
+  //         return false;
+  //       }
+  //     }
+  //   } else {
+  //     if (hasSerialNum) {
+  //       // no ip but serial
+  //       return true;
+  //     } else {
+  //       // no ip and no serial
+  //       return false;
+  //     }
+  //   }
+  // }
 
   identifyPlayerProcessInputMsg (node, configNode, msg, callback) {
     /** Validates ConfigNode and return sonos player object in callback
@@ -30,7 +76,7 @@ class SonosHelper {
     */
 
     // valdate configNode
-    var isValid = this.validateConfigNodeV2(configNode);
+    var isValid = this.validateConfigNodeV3(configNode);
     if (!isValid) {
       node.error('Invalid config node.');
       node.status({ fill: 'red', shape: 'dot', text: 'Invalid config node.' });

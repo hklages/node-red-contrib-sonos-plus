@@ -81,11 +81,11 @@ RED.nodes.registerType('sonos-get-status', {
           <span class="property-type">Object</span></dt>
       <dd> SONOS player group attributes</dd>
 
-      <dt>track
+      <dt>song
           <span class="property-type">object</span></dt>
-      <dd> full track info object</dd>
+      <dd> full song info object</dd>
 
-      <dt>track.albumArtURL
+      <dt>song.albumArtURL
           <span class="property-type">string/url</span></dt>
       <dd> full url for the album art</dd>
 
@@ -111,7 +111,7 @@ RED.nodes.registerType('sonos-get-status', {
 
   Accepted values for <code>msg.payload</code> are:
   <br/> • <i>basics</i> will provide current state, volume, muted, player name, ...
-  <br/> • <i>track_media</i> will provide track, media and position info
+  <br/> • <i>song_media</i> will provide song, media and position info
   <br/> • <i>state_only</i> will provide only the playing state. All other messages will produce standard output.
 
 </script>

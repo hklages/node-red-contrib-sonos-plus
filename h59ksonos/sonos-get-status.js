@@ -14,7 +14,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV2(configNode);
+    var isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -35,6 +35,9 @@ module.exports = function (RED) {
           }
         });
       });
+    } else {
+      node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
+      node.error('Invalid configNode. Please edit configNode:');
     }
   }
 
@@ -70,7 +73,7 @@ module.exports = function (RED) {
       getSonosCurrentState(node, msg, sonosPlayer, false);
     } else if (command === 'basics') {
       getSonosCurrentState(node, msg, sonosPlayer, true);
-    } else if (command === 'track_media') {
+    } else if (command === 'song_media') {
       getSonosCurrentTrack(node, msg, sonosPlayer, true);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
@@ -190,45 +193,45 @@ module.exports = function (RED) {
     });
   }
 
-  // next chain command for track, media, position
+  // next chain command for song, media, position
 
   function getSonosCurrentTrack (node, msg, sonosPlayer, chain) {
-    // finally changes  msg.title (string), msg.artist (string), msg.track (obj) msg.media (obj), msg.position (obj)
+    // finally changes  msg.title (string), msg.artist (string), msg.song (obj) msg.media (obj), msg.position (obj)
     // first step artist, title
     var artist = 'unknown';
     var title = 'unknown';
-    sonosPlayer.currentTrack().then(trackObj => {
-      if (trackObj === null || trackObj === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: 'invalid current track retrieved' });
-        node.error('get track. ' + 'Details: ' + 'invalid track object retrieved.');
+    sonosPlayer.currentTrack().then(songObj => {
+      if (songObj === null || songObj === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: 'invalid current song retrieved' });
+        node.error('get song details. ' + 'Details: ' + 'invalid song object retrieved.');
       } else {
         // message albumArtURL property
-        if (trackObj.albumArtURI !== undefined && trackObj.albumArtURI !== null) {
+        if (songObj.albumArtURI !== undefined && songObj.albumArtURI !== null) {
           node.log('got valid albumArtURI');
           var port = 1400;
-          trackObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + trackObj.albumArtURI;
+          songObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songObj.albumArtURI;
         }
-        if (trackObj.artist !== undefined && trackObj.artist !== null) {
+        if (songObj.artist !== undefined && songObj.artist !== null) {
           node.log('got artist and title');
-          artist = trackObj.artist;
-          title = trackObj.title;
+          artist = songObj.artist;
+          title = songObj.title;
         } else {
-          if (trackObj.title.indexOf(' - ') > 0) {
+          if (songObj.title.indexOf(' - ') > 0) {
             node.log('could split data to artist and title');
-            artist = trackObj.title.split(' - ')[0];
-            title = trackObj.title.split(' - ')[1];
+            artist = songObj.title.split(' - ')[0];
+            title = songObj.title.split(' - ')[1];
           }
         }
         // Output data
-        msg.track = trackObj;
+        msg.song = songObj;
         msg.artist = artist;
         msg.title = title;
-        node.log('could get track data and continue');
+        node.log('could get song data and continue');
         getSonosMediaData(node, msg, sonosPlayer, true);
       }
     }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current track' });
-      node.error('Could not get track.' + 'Details:' + JSON.stringify(err));
+      node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve current song' });
+      node.error('Could not get song.' + 'Details:' + JSON.stringify(err));
     });
   }
 
@@ -251,7 +254,7 @@ module.exports = function (RED) {
       msg.position = position;
       // Send output
       node.status({ fill: 'green', shape: 'dot', text: 'OK got all.' });
-      node.log('got all data track, media, positon data - finish');
+      node.log('got all data for song, media, positon data - finish');
       node.send(msg);
     }).catch(err => {
       node.status({ fill: 'red', shape: 'dot', text: 'failed to retrieve positon data' });

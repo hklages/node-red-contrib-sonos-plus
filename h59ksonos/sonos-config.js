@@ -22,7 +22,7 @@ module.exports = function (RED) {
 
     var devices = []; // list of all discovered devices
 
-    // start discovery and store outcome in devices
+    // define discovery and store outcome in devices
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         devices.push({
@@ -37,7 +37,7 @@ module.exports = function (RED) {
 
     search.setMaxListeners(Infinity);
 
-    // Stop searching after 5 seconds
+    // destroy after 5 seconds
     setTimeout(function () {
       search.destroy();
     }, 5000);
@@ -46,7 +46,7 @@ module.exports = function (RED) {
     if (discoveryCallback) {
       setTimeout(function () {
         discoveryCallback(devices);
-      }, 5010);
+      }, 5000);
     }
   }
 

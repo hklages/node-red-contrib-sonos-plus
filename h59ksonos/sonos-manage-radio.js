@@ -14,7 +14,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and process message
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV2(configNode);
+    var isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -32,6 +32,9 @@ module.exports = function (RED) {
           }
         });
       });
+    } else {
+      node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
+      node.error('Invalid configNode. Please edit configNode:');
     }
   }
 
