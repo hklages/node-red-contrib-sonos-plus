@@ -55,7 +55,7 @@ SONOS players may be **grouped** together (forming a **Zone**) to play the same 
 
 ## Examples
 
-![Examples](https://github.com/hklages/node-red-contrib-sonos-plus/Examples.png "Examples")
+![Examples](https://raw.github.com/hklages/node-red-contrib-sonos-plus/master/Examples.png "Examples")
 
 ## Credentials
 
