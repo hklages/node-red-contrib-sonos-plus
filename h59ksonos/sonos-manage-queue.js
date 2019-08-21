@@ -137,11 +137,11 @@ module.exports = function (RED) {
       }
       var songsArray = queueObj.items;
       // message albumArtURL
-      songsArray.forEach(function (songsObj) {
-        if (songsObj.albumArtURL !== undefined && songsObj.albumArtURL !== null) {
+      songsArray.forEach(function (songsArray) {
+        if (songsArray.albumArtURL !== undefined && songsArray.albumArtURL !== null) {
           var port = 1400;
-          songsObj.albumArtURI = songsObj.albumArtURL;
-          songsObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsObj.albumArtURI;
+          songsArray.albumArtURI = songsArray.albumArtURL;
+          songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
         }
       });
       // send message data

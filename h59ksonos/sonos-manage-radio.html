@@ -46,12 +46,12 @@ RED.nodes.registerType('sonos-manage-radio', {
   <h3>Input (required)</h3>
 
   <dl class="message-properties">
-      <dt>payload
+      <dt>payload (always required)
           <span class="property-type">string</span>
       </dt>
       <dd>A command. Valid commands see Details.</dd>
 
-      <dt>topic (required)
+      <dt>topic
           <span class="property-type">string</span>
       </dt>
       <dd>Paramenter - either the TuneIn radio id or a part of the My Sonos radio station title.</dd>
@@ -63,7 +63,7 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dt>payload
           <span class="property-type">string</span>
       </dt>
-      <dd>title of station from my Sonos or in case of get the whole array</dd>
+      <dd>title of station from my Sonos or in case of <i>get_mysonos</i> the array of radios stations.</dd>
   </dl>
 
   <h3>Details</h3>

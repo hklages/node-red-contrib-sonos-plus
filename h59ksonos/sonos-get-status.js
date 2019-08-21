@@ -69,11 +69,11 @@ module.exports = function (RED) {
     command = command.toLowerCase();
 
     // dispatch
-    if (command === 'state_only') {
+    if (command === 'get_stateonly') {
       getSonosCurrentState(node, msg, sonosPlayer, false);
-    } else if (command === 'basics') {
+    } else if (command === 'get_basics') {
       getSonosCurrentState(node, msg, sonosPlayer, true);
-    } else if (command === 'song_media') {
+    } else if (command === 'get_songmedia') {
       getSonosCurrentTrack(node, msg, sonosPlayer, true);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
