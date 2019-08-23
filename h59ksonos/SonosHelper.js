@@ -56,7 +56,7 @@ class SonosHelper {
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
       // exisiting ip address - fastes solutions, no discovery necessary
-      node.log('Found IP address');
+      node.debug('Found IP address');
       if (typeof callback === 'function') {
         callback(configNode.ipaddress);
       }
@@ -100,30 +100,30 @@ class SonosHelper {
     // TODO in callback only return ipaddress and not data
 
     var foundMatch = false;
-    node.log('Start find Sonos player.');
+    node.debug('Start find Sonos player.');
     const sonos = require('sonos');
     // 2 api calls chained, first DeviceDiscovery then deviceDescription
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         if (data.friendlyName !== undefined && data.friendlyName !== null) {
-          node.log('Got ipaddres from friendlyName.');
+          node.debug('Got ipaddres from friendlyName.');
           data.ipaddress = data.friendlyName.split('-')[0].trim();
         }
         if (device.host) {
-          node.log('Got ipaddres from device.host.');
+          node.debug('Got ipaddres from device.host.');
           data.ipaddress = device.host;
         }
 
         // 2 different ways to obtain serialnum
         if (data.serialNum !== undefined && data.serialNum !== null) {
           if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-            node.log('Found sonos player based on serialnumber in device description.');
+            node.debug('Found sonos player based on serialnumber in device description.');
             foundMatch = true;
           }
         }
         if (device.serialNumber !== undefined && device.serialNumber !== null) {
           if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-            node.log('Found sonos player based on serialnumber in device property.');
+            node.debug('Found sonos player based on serialnumber in device property.');
             foundMatch = true;
           }
         }
@@ -151,7 +151,7 @@ class SonosHelper {
     // In case there is no match
     setTimeout(function () {
       if (!foundMatch && (typeof callback === 'function')) {
-        node.log('SetTimeOut - did not find sonos player');
+        node.debug('SetTimeOut - did not find sonos player');
         callback(null, null);
       }
       if (search !== null && search !== undefined) {

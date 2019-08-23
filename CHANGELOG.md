@@ -5,7 +5,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - CHANGELOG
 - Wiki first page
-- Status, info, error messages in control-player node improved
+- Status, info now debug, error messages in control-player node improved
+- Status, info now debug, error message in get-status node improved
 
 ### Changed
 - README moved some stuff to Wiki

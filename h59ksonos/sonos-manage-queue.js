@@ -20,7 +20,7 @@ module.exports = function (RED) {
       node.status({});
       // subscribe and handle input message
       node.on('input', function (msg) {
-        node.log('input received');
+        node.log('start msg received');
         // check again configNode - in the meantime it might have changed
         var isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
@@ -28,7 +28,7 @@ module.exports = function (RED) {
             if (ipAddress === undefined || ipAddress === null) {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
-              node.log('Success::' + 'Found sonos player and continue!');
+              node.log('Success::' + 'Found sonos player');
               handleInputMsg(node, msg, ipAddress);
             }
           });
