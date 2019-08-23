@@ -4,10 +4,10 @@ class SonosHelper {
   // functions to be used in other modules
 
   validateConfigNodeV3 (configNode) {
-  /** Validate configNode: exist and at least one of ipAddress or serial must exist (needed for player discovery)
+  /** Validate configNode
   * @param  {object} configNode corresponding configNode
-  * @return {Boolean} isValid true if IP Address or serial exist
-  * TEST
+  * @return {Boolean} true if: not null, not undefined, either ipaddress or serial exists
+  *                   and ipaddress has correct syntax
   */
 
     if (configNode === undefined || configNode === null) {
@@ -56,28 +56,27 @@ class SonosHelper {
     var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
       // exisiting ip address - fastes solutions, no discovery necessary
-      node.log('Found IP Address - good!');
+      node.log('Found IP address');
       if (typeof callback === 'function') {
         callback(configNode.ipaddress);
       }
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
-      node.status({ fill: 'green', shape: 'dot', text: 'missing ip address' });
+      node.status({ fill: 'green', shape: 'dot', text: 'error:check ip address - missing ip address' });
       node.warn('Missing IP address. It is recommended to set IP Address in config node');
 
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
         if (err) {
-          // caution dont use "this." - eg for handler calls - as context is not available
-          node.status({ fill: 'red', shape: 'dot', text: 'Discoery did not work.' });
-          node.error('Discovery went wrong.' + ' Details: ' + JSON.stringify(err));
+          node.status({ fill: 'red', shape: 'dot', text: 'error:findSonos - Discoery went wrong' });
+          node.error('findSonos - Discoery went wrong Details: ' + JSON.stringify(err));
           if (typeof callback === 'function') {
             callback(null);
           }
           return;
         }
         if (playerInfo === null || playerInfo.ipaddress === null) {
-          node.status({ fill: 'red', shape: 'dot', text: 'Could not find player.' });
-          node.error('Time out: Could not find sonos player with given serial ' + configNode.serialnum);
+          node.status({ fill: 'red', shape: 'dot', text: 'error:findSonos - Could not find player' });
+          node.error('findSonos - Could not find player with given serial, time out:' + configNode.serialnum);
           if (typeof callback === 'function') {
             callback(null);
           }
@@ -107,7 +106,7 @@ class SonosHelper {
     var search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription().then(data => {
         if (data.friendlyName !== undefined && data.friendlyName !== null) {
-          node.log('Got ipaddres from friendyName.');
+          node.log('Got ipaddres from friendlyName.');
           data.ipaddress = data.friendlyName.split('-')[0].trim();
         }
         if (device.host) {

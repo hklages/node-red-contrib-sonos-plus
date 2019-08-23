@@ -28,18 +28,18 @@ module.exports = function (RED) {
             if (ipAddress === undefined || ipAddress === null) {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
-              node.log('Found sonos player and continue!');
+              node.log('Found sonos player');
               handleInputMsg(node, msg, ipAddress);
             }
           });
         } else {
-          node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
-          node.error('Invalid configNode. Please edit configNode:');
+          node.status({ fill: 'red', shape: 'dot', text: 'error:process message - invalid configNode' });
+          node.error('error:process message - invalid configNode. Please modify!');
         }
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
-      node.error('Invalid configNode. Please edit configNode:');
+      node.status({ fill: 'red', shape: 'dot', text: 'error:setup subscribe - invalid configNode' });
+      node.error('setup subscribe - invalid configNode. Please modify!');
     }
   }
 
@@ -56,15 +56,15 @@ module.exports = function (RED) {
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
     if (sonosPlayer === null || sonosPlayer === undefined) {
-      node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null.' });
-      node.error('Sonos player is null. Check configuration.');
+      node.status({ fill: 'red', shape: 'dot', text: 'error: get sonosplayer - sonos player is null.' });
+      node.error('get sonosplayer - sonos player is null. Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid payload.' });
-      node.error('Invalid payload. ' + JSON.stringify(msg.payload));
+      node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
+      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
       return;
     }
 
@@ -87,10 +87,10 @@ module.exports = function (RED) {
       splitCommand = { cmd: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
     } else {
-      node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
-      node.warn('invalid command: ' + command);
+      node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
+      node.warn('depatching commands - invalid command: ' + command);
     }
-    node.log('Success::' + 'Command handed over (async) to handlexxxxCommand');
+    node.log('Command handed over (async)');
   }
 
   // ------------------------------------------------------------------------------------
@@ -102,109 +102,174 @@ module.exports = function (RED) {
     * @param  {object} sonosPlayer Sonos Player
     * @param  {string} cmd command - no parameter
     */
+
+    var sonosFunction = cmd;
+    var errDetails;
     switch (cmd) {
       case 'play':
         sonosPlayer.play().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK play ' });
-          node.log('Success::' + 'play. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - play' });
-          node.error('play. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'stop':
         sonosPlayer.stop().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK stop ' });
-          node.log('Success::' + 'stop. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - stop' });
-          node.error('stop. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'pause':
         sonosPlayer.pause().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK pause ' });
-          node.log('Success::' + 'pause. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - pause' });
-          node.error('pause. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'toggleplayback':
         sonosPlayer.togglePlayback().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK toggleplayback ' });
-          node.log('Success::' + 'toggleplayback. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - toggleplayback' });
-          node.error('toggleplayback. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'mute':
         sonosPlayer.setMuted(true).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK mute ' });
-          node.log('Success::' + 'mute. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - mute' });
-          node.error('mute. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
+
       case 'unmute':
         sonosPlayer.setMuted(false).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK unmute ' });
-          node.log('Success::' + 'unmute. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - unmute' });
-          node.error('unmute. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'next_song':
-        // warn instead of error because stream may not support this command
+        // TODO handle next: in queue, there must be a next song, in radion station previous never works
         sonosPlayer.next().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK next song ' });
-          node.log('Success::' + 'next song. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'blue', shape: 'dot', text: 'warning - next song' });
-          node.warn('next song. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'previous_song':
-        // warn instead of error because stream may not support this command
+      // TODO handle next: in queue, there must be a next song, in radion station previous never works
         sonosPlayer.previous(false).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK previous song ' });
-          node.log('Success::' + 'previous song. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'blue', shape: 'dot', text: 'warning - previous song' });
-          node.warn('previous song. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'leave_group':
         sonosPlayer.leaveGroup().then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK leave ' });
-          node.log('Success::' + 'leave. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - leave' });
-          node.error('leave. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
+
       case 'join_group':
         if (msg.topic === null || msg.topic === undefined) {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - join - no topic' });
-          node.error('join. ' + 'Details: ' + 'No valid topic');
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - no valid topic` });
+          node.error(`${sonosFunction} - no valid topic`);
         } else {
           var deviceToJoing = msg.topic;
           sonosPlayer.joinGroup(deviceToJoing).then(result => {
-            node.status({ fill: 'green', shape: 'dot', text: 'OK join ' });
-            node.log('Success::' + 'join. ');
+            node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+            node.log(`OK:${sonosFunction}`);
           }).catch(err => {
-            node.status({ fill: 'red', shape: 'dot', text: 'error - join' });
-            node.error('join. ' + 'Details: ' + JSON.stringify(err));
+            if (err.code === 'ECONNREFUSED') {
+              node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+              node.error(`${sonosFunction} - can not connect to player`);
+            } else {
+              errDetails = JSON.stringify(err);
+              node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+              node.error(`${sonosFunction}  Details: ${errDetails}`);
+            }
           });
         }
         break;
@@ -220,25 +285,39 @@ module.exports = function (RED) {
     */
 
     var volumeValue = parseInt(commandObject.parameter);
+    const sonosFunction = commandObject.cmd;
+    var errDetails;
     switch (commandObject.cmd) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK volume set ' });
-          node.log('Success::' + 'volume set. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - volume-set' });
-          node.error('volume-set. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
 
       case 'volume_decrease':
       case 'volume_increase':
         sonosPlayer.adjustVolume(volumeValue).then(result => {
-          node.status({ fill: 'green', shape: 'dot', text: 'OK volume adjust ' });
-          node.log('Success::' + 'volume adjust. ');
+          node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
+          node.log(`OK:${sonosFunction}`);
         }).catch(err => {
-          node.status({ fill: 'red', shape: 'dot', text: 'error - volume adjust' });
-          node.error('volume adjust. ' + 'Details: ' + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
+            node.error(`${sonosFunction} - can not connect to player`);
+          } else {
+            errDetails = JSON.stringify(err);
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
+            node.error(`${sonosFunction}  Details: ${errDetails}`);
+          }
         });
         break;
     }

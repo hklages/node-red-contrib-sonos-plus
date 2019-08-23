@@ -1,6 +1,6 @@
 # node-red-contrib-sonos-plus
 
-Version 2019-08-21T1849
+Version 2019-08-23T1619
 
 A set of NodeRed nodes to control SONOS player.  
 
@@ -23,7 +23,10 @@ Install directly from your NodeRED's setting pallete.
 Currently the manage queue node does not support inserting complete playlists into the SONOS queue. Supported commands are: activate (=play), play flush, get queue.
 
 > It is recommended to assign static IP addresses (best in your router) to each SONOS player and use these addresses in the configNode.  
+
 > When playing a radio station the commands next_song, previous_song may cause a warning as many stations do not support them.
+
+> It is recommmended to handle errors with the nodeRED error node.
 
 ## Functions and Usage
 
@@ -37,18 +40,7 @@ The functions are grouped into 5 nodes.
 Examples are attached at the end of this readme.
 
 ## SONOS General Concepts
-
-**SONOS Player** may either(!) play a **stream** from **radio stations** or **songs** (= tracks) from the **SONOS queue**.
-- The radio station can be chosen from TuneIn or other services e. g. Amazon Prime. When chosen they start to play.
-- Before activating the queue modus the SONOS queue must have been filled with songs. This can be done by choose songs form different sources (Album, single song) or through playlists and inserting them into the SONOS queue.   
-
-SONOS players may be **grouped** together (forming a **Zone**) to play the same song/stream in synch. In each group there is exactly one **leading player**. Several commands (play, stop, activate queue, radio, .. )  will impact all group members when having been send to the leading player. Other commands are only SONOS player specific e. g. mute, volume, ...
-
-**My SONOS** contains shortcuts to different sources and is grouped into Radio stations, Playlists, Album, Songs and My Library. The radio stations are sorted alphabetically.
-
-**TuneIn radio id** is the radio identifier. It usually looks like "s24896" - leading "s" and digits.
-
-**Sonos playlists** can easily be created with the SONOS app (e. g. save current queue) and stored.
+see the wiki.
 
 ## Roadmap
 
