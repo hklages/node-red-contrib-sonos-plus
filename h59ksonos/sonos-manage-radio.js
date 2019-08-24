@@ -20,27 +20,26 @@ module.exports = function (RED) {
       node.status({});
       // subscribe and handle input message
       node.on('input', function (msg) {
-        node.log('start msg received');
+        node.debug('node on - msg received');
         // check again configNode - in the meantime it might have changed
         var isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
             if (ipAddress === null) {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
-              node.log('Could not find any sonos player!');
             } else {
-              node.log('Success::' + 'Found sonos player');
+              node.debug('Found sonos player');
               handleInputMsg(node, msg, ipAddress);
             }
           });
         } else {
-          node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
-          node.error('Invalid configNode. Please edit configNode:');
+          node.status({ fill: 'red', shape: 'dot', text: 'error:process message - invalid configNode' });
+          node.error('process message - invalid configNode. Please modify!');
         }
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid configNode' });
-      node.error('Invalid configNode. Please edit configNode:');
+      node.status({ fill: 'red', shape: 'dot', text: 'error:setup subscribe - invalid configNode' });
+      node.error('setup subscribe - invalid configNode. Please modify!');
     }
   }
 
@@ -57,45 +56,44 @@ module.exports = function (RED) {
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
     if (sonosPlayer === null || sonosPlayer === undefined) {
-      node.status({ fill: 'red', shape: 'dot', text: 'sonos player is null.' });
-      node.error('Sonos player is null. Check configuration.');
+      node.status({ fill: 'red', shape: 'dot', text: 'error:get sonosplayer - sonos player is null.' });
+      node.error('get sonosplayer - sonos player is null. Details: Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     // payload contains basic function, topic contains parameters
     if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'invalid payload' });
-      node.error('invalid payload: ' + JSON.stringify(msg.payload));
+      node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
+      node.error('validate payload - invalid payload. Details: ' + JSON.stringify(msg.payload));
       return;
     }
 
-    // dispatch to handle message
-    var commandObject = {
+    // dispatch
+    var splitCommand = {
       'cmd': ('' + msg.payload).toLowerCase(),
       'parameter': ('' + msg.topic)
     };
-    if (commandObject.cmd === 'play_mysonos') {
+    if (splitCommand.cmd === 'play_mysonos') {
       if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
-        node.status({ fill: 'red', shape: 'dot', text: 'invalid topic.' });
-        node.error('Invalid topic.' + msg.topic);
+        node.status({ fill: 'red', shape: 'dot', text: 'error:validate mysonos - invalid topic' });
+        node.error('validate mysonos - invalid topic. Details: msg.topic ->' + JSON.stringify(msg.topic));
         return;
       }
-      playMySonos(node, msg, sonosPlayer, commandObject);
-    } else if (commandObject.cmd === 'play_tunein') {
+      playMySonos(node, msg, sonosPlayer, splitCommand);
+    } else if (splitCommand.cmd === 'play_tunein') {
       if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
-        node.status({ fill: 'red', shape: 'dot', text: 'invalid topic.' });
-        node.error('Invalid topic.' + msg.topic);
+        node.status({ fill: 'red', shape: 'dot', text: 'error:validate tunein - invalid topic' });
+        node.error('validate tunein - invalid topic. Details: msg.topic ->' + JSON.stringify(msg.topic));
         return;
       }
-      playTuneIn(node, msg, sonosPlayer, commandObject);
-    } else if (commandObject.cmd === 'get_mysonos') {
+      playTuneIn(node, msg, sonosPlayer, splitCommand);
+    } else if (splitCommand.cmd === 'get_mysonos') {
       getMySonos(node, msg, sonosPlayer);
     } else {
-      node.status({ fill: 'green', shape: 'dot', text: 'warning invalid command' });
-      node.error('invalid command: ' + JSON.stringify(commandObject));
+      node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
+      node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(splitCommand));
     }
-    node.log('Success::' + 'Command handed over (async) to subroutines');
   }
 
   // -----------------------------------------------------------------------------
@@ -109,19 +107,28 @@ module.exports = function (RED) {
     */
 
     var reg = new RegExp('^[s][0-9]+$'); // example s11111
+    var sonosFunction = 'play tunein';
+    var errorShort = 'invalid response received';
     if (reg.test(commandObject.parameter)) {
-      sonosPlayer.playTuneinRadio(commandObject.parameter).then(result => {
-        node.status({ fill: 'green', shape: 'dot', text: 'OK play tunein ' });
-        node.log('Success::' + 'play TuneIn Radio ');
+      sonosPlayer.playTuneinRadio(commandObject.parameter).then(response => {
+        if (response === null || response === undefined) {
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+          node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(response));
+          return;
+        }
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
         // send message
         node.send(msg);
       }).catch(err => {
-        node.status({ fill: 'red', shape: 'dot', text: 'error - tunein' });
-        node.error('tunein. ' + 'Details: ' + JSON.stringify(err));
+        errorShort = 'error caught from response';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'error - invalid tunein id' });
-      node.error('invalid tunein id. ' + commandObject.parameter);
+      errorShort = 'invalid tunein id';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort}  Details: ` + JSON.stringify(commandObject.parameter));
     }
   }
 
@@ -135,11 +142,13 @@ module.exports = function (RED) {
     */
 
     // get list of My Sonos stations
-    sonosPlayer.getFavorites().then(data => {
-      if (!(data.returned !== null && data.returned !== undefined &&
-        data.returned && parseInt(data.returned) > 0)) {
-        node.status({ fill: 'red', shape: 'dot', text: 'error - no station found' });
-        node.error('no station found. ' + 'Details: ' + 'My Sonos does not contain any stations');
+    var sonosFunction = 'play mysonos';
+    var errorShort = 'invalid favorite list received';
+    sonosPlayer.getFavorites().then(response => {
+      if (!(response.returned !== null && response.returned !== undefined &&
+        response.returned && parseInt(response.returned) > 0)) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: response->` + JSON.stringify(response));
         return;
       }
 
@@ -149,21 +158,22 @@ module.exports = function (RED) {
       var stationList = [];
       var stationUri;
       var radioId;
-      for (let i = 0; i < parseInt(data.returned); i++) {
-        if (data.items[i].uri.startsWith(TUNEIN_PREFIX)) {
+      for (let i = 0; i < parseInt(response.returned); i++) {
+        if (response.items[i].uri.startsWith(TUNEIN_PREFIX)) {
         // get stationId
-          stationUri = data.items[i].uri;
+          stationUri = response.items[i].uri;
           radioId = stationUri.split('?')[0];
           radioId = radioId.substr(TUNEIN_PREFIX.length);
-          stationList.push({ 'title': data.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
+          stationList.push({ 'title': response.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
         }
-        if (data.items[i].uri.startsWith(AMAZON_PREFIX)) {
-          stationList.push({ 'title': data.items[i].title, 'uri': data.items[i].uri, 'source': 'AmazonPrime' });
+        if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
+          stationList.push({ 'title': response.items[i].title, 'uri': response.items[i].uri, 'source': 'AmazonPrime' });
         }
       }
       if (stationList.length === 0) {
-        node.status({ fill: 'red', shape: 'dot', text: 'error - no station found' });
-        node.error('no station found. ' + 'Details: ' + 'My Sonos does not contain any TuneIn or Amazon stations');
+        errorShort = 'no TuneIn/Amazon station in my sonos';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: mysonos->` + JSON.stringify(response.items));
         return;
       }
 
@@ -174,42 +184,47 @@ module.exports = function (RED) {
           // play radion station
           isInStationList = true;
           if (stationList[i].source === 'TuneIn') {
-            sonosPlayer.playTuneinRadio(stationList[i].radioId).then(result => {
-              node.status({ fill: 'green', shape: 'dot', text: 'OK play tunein' });
-              node.log('Success::' + 'play TuneIn ');
+            sonosPlayer.playTuneinRadio(stationList[i].radioId).then(response => {
+              node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction} - tunein station` });
+              node.debug(`ok:${sonosFunction} - tunein station`);
               // send message
               msg.payload = stationList[i].title;
               node.send(msg);
             }).catch(err => {
-              node.status({ fill: 'red', shape: 'dot', text: 'error - set radio tunein' });
-              node.error('Set radio TuneIn. ' + 'Details: ' + JSON.stringify(err));
+              errorShort = 'play tunein error caught from response';
+              node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+              node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
             });
           } else if (stationList[i].source === 'AmazonPrime') {
-            sonosPlayer.setAVTransportURI(stationList[i].uri).then(result => {
-              node.status({ fill: 'green', shape: 'dot', text: 'OK play amazonprime' });
-              node.log('Success::' + 'play Amazon Prime. ');
+            sonosPlayer.setAVTransportURI(stationList[i].uri).then(response => {
+              node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction} - amazon station` });
+              node.debug(`ok:${sonosFunction} - amazon station`);
               // send message
               msg.payload = stationList[i].title;
               node.send(msg);
             }).catch(err => {
-              node.status({ fill: 'red', shape: 'dot', text: 'error - set amazon' });
-              node.error('set amazon. ' + 'Details: ' + JSON.stringify(err));
+              errorShort = 'play amazon error caught from response';
+              node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+              node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
             });
           } else {
-            node.status({ fill: 'red', shape: 'dot', text: 'error - unknown' });
-            node.error('Unknown. ' + 'Details: ' + 'Unknown error occured during loop stations.');
+            errorShort = 'Neither tuneIn nor amazon';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+            node.error(`${sonosFunction} - ${errorShort} Details: stationlist-> ` + JSON.stringify(stationList));
             return;
           }
           break;
         }
       }
       if (!isInStationList) {
-        node.status({ fill: 'red', shape: 'dot', text: 'error - topic not in list' });
-        node.error('topic not in MySonos list. ' + 'Details: ' + 'Topic not in MySonos list. Modify My Sonos Radion stations');
+        errorShort = 'topic not found in my sonos list';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: stationlist-> ` + JSON.stringify(stationList));
       }
     }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'error - processing mysonos list' });
-      node.error('Processing MySonos list. ' + 'Details: ' + JSON.stringify(err));
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
@@ -222,11 +237,13 @@ module.exports = function (RED) {
     */
 
     // get list of My Sonos stations
-    sonosPlayer.getFavorites().then(data => {
-      if (!(data.returned !== null && data.returned !== undefined &&
-        data.returned && parseInt(data.returned) > 0)) {
-        node.status({ fill: 'red', shape: 'dot', text: 'error - no station found' });
-        node.error('no station found. ' + 'Details: ' + 'My Sonos does not contain any stations');
+    var sonosFunction = 'get mysonos';
+    var errorShort = 'invalid favorite list received';
+    sonosPlayer.getFavorites().then(response => {
+      if (!(response.returned !== null && response.returned !== undefined &&
+        response.returned && parseInt(response.returned) > 0)) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: response->` + JSON.stringify(response));
         return;
       }
 
@@ -236,30 +253,32 @@ module.exports = function (RED) {
       var stationList = [];
       var stationUri;
       var radioId;
-      for (let i = 0; i < parseInt(data.returned); i++) {
-        if (data.items[i].uri.startsWith(TUNEIN_PREFIX)) {
+      for (let i = 0; i < parseInt(response.returned); i++) {
+        if (response.items[i].uri.startsWith(TUNEIN_PREFIX)) {
         // get stationId
-          stationUri = data.items[i].uri;
+          stationUri = response.items[i].uri;
           radioId = stationUri.split('?')[0];
           radioId = radioId.substr(TUNEIN_PREFIX.length);
-          stationList.push({ 'title': data.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
+          stationList.push({ 'title': response.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
         }
-        if (data.items[i].uri.startsWith(AMAZON_PREFIX)) {
-          stationList.push({ 'title': data.items[i].title, 'uri': data.items[i].uri, 'source': 'AmazonPrime' });
+        if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
+          stationList.push({ 'title': response.items[i].title, 'uri': response.items[i].uri, 'source': 'AmazonPrime' });
         }
       }
       if (stationList.length === 0) {
-        node.status({ fill: 'red', shape: 'dot', text: 'error - no station found' });
-        node.error('no station found. ' + 'Details: ' + 'My Sonos does not contain any TuneIn or Amazon stations');
+        errorShort = 'no TuneIn/Amazon station in my sonos';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: mysonos->` + JSON.stringify(response.items));
         return;
       }
-      node.status({ fill: 'green', shape: 'dot', text: 'OK got My Sonos list' });
-      node.log('Success::' + 'got My Sonos favarite radion stations. ');
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
       msg.playload = stationList;
       node.send(msg);
     }).catch(err => {
-      node.status({ fill: 'red', shape: 'dot', text: 'error - processing mysonos list' });
-      node.error('Processing getting My Sonos list. ' + 'Details: ' + JSON.stringify(err));
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
   RED.nodes.registerType('sonos-manage-radio', SonosManageRadioNode);

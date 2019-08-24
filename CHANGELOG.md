@@ -1,21 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.3.3] - not yet released
+## [0.3.3] - 2019-08-24T2200
 ### Added
-- CHANGELOG
+- CHANGELOG.md
 - Wiki first page
-- Status, info now debug, error messages in control-player node improved
-- Status, info now debug, error message in get-status node improved
 
 ### Changed
-- README moved some stuff to Wiki
+- Status and error messages have been standardized in all nodes
+- Now debug messages instead of info messages (keep log clean)
+- README: moved some stuff to Wiki
 
 ### Removed
 - nothing
 
 ### Fixed
-- error handling when ip address point to non SONOS device
+- error handling when ip address points to non SONOS device
+- bug in get queue. It works now for empty queue.
 
 ## [0.3.2] - 2019-08-21
 ### Added

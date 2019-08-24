@@ -63,7 +63,7 @@ class SonosHelper {
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
       node.status({ fill: 'green', shape: 'dot', text: 'error:check ip address - missing ip address' });
-      node.warn('Missing IP address. It is recommended to set IP Address in config node');
+      node.warn('Check ip address - Missing IP address. Details: It is recommended to set IP Address in config node');
 
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
         if (err) {
@@ -76,7 +76,7 @@ class SonosHelper {
         }
         if (playerInfo === null || playerInfo.ipaddress === null) {
           node.status({ fill: 'red', shape: 'dot', text: 'error:findSonos - Could not find player' });
-          node.error('findSonos - Could not find player with given serial, time out:' + configNode.serialnum);
+          node.error('findSonos - Could not find player with given serial Details: time out:' + configNode.serialnum);
           if (typeof callback === 'function') {
             callback(null);
           }

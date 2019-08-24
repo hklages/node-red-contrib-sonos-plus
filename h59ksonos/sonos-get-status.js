@@ -20,7 +20,7 @@ module.exports = function (RED) {
       node.status({});
       // subscribe and handle input message (the different requests are chained)
       node.on('input', function (msg) {
-        node.debug('start: msg received');
+        node.debug('node on - msg received');
         // check again configNode - in the meantime it might have changed
         var isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
@@ -34,7 +34,7 @@ module.exports = function (RED) {
           });
         } else {
           node.status({ fill: 'red', shape: 'dot', text: 'error:process message - invalid configNode' });
-          node.error('error:process message - invalid configNode. Please modify!');
+          node.error('process message - invalid configNode. Please modify!');
         }
       });
     } else {
@@ -81,7 +81,6 @@ module.exports = function (RED) {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
     }
-    node.debug('Command handed over (async)');
   }
 
   // ------------------------------------------------------------------------------------------
@@ -97,26 +96,26 @@ module.exports = function (RED) {
 
     // execute first api to get state
     var sonosFunction = 'player state';
-    var errDetails = 'invalid player state received';
-    sonosPlayer.getCurrentState().then(state => {
-      if (state === null || state === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid player state received';
+    sonosPlayer.getCurrentState().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
-      msg.state = state;
+      msg.state = response;
       if (chain) {
         node.debug('got valid player state');
         getSonosVolume(node, msg, sonosPlayer, true);
       } else {
-        node.status({ fill: 'green', shape: 'dot', text: `OK:${sonosFunction}` });
-        node.debug(`OK:${sonosFunction}`);
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
         node.send(msg);
       }
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
@@ -129,93 +128,93 @@ module.exports = function (RED) {
     * changes msg.volume, msg.normalized_volume
     */
     var sonosFunction = 'volume';
-    var errDetails = 'invalid volume received';
-    sonosPlayer.getVolume().then(volume => {
-      if (volume === null || volume === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid volume received';
+    sonosPlayer.getVolume().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
-      if (volume < 0 || volume > 100) {
-        errDetails = 'invalid volume rage received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+      if (response < 0 || response > 100) {
+        errorShort = 'invalid volume rage received';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction}  - ${errorShort} Details: ` + JSON.stringify(response));
         return;
       }
       // Output data
-      msg.volume = volume;
-      msg.normalized_volume = volume / 100.0;
+      msg.volume = response;
+      msg.normalized_volume = response / 100.0;
       node.debug('got valid volume');
       getSonosMuted(node, msg, sonosPlayer, chain);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
   function getSonosMuted (node, msg, sonosPlayer, chain) {
     //   changes msg.muted
     var sonosFunction = 'muted';
-    var errDetails = 'invalid muted received';
-    sonosPlayer.getMuted().then(muted => {
-      if (muted === null || muted === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid muted received';
+    sonosPlayer.getMuted().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
       // Output data
       node.debug('got valid mute value');
-      msg.muted = muted;
+      msg.muted = response;
       getSonosName(node, msg, sonosPlayer, chain);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
   function getSonosName (node, msg, sonosPlayer, chain) {
     //   changes msg.sonosName
     var sonosFunction = 'SONOS name';
-    var errDetails = 'invalid SONOS name received';
-    sonosPlayer.getName().then(name => {
-      if (name === null || name === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid SONOS name received';
+    sonosPlayer.getName().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
       // Output data
       node.debug('got valid Sonos player name');
-      msg.sonosName = name;
+      msg.sonosName = response;
       getSonosGroupAttributes(node, msg, sonosPlayer, chain);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
   function getSonosGroupAttributes (node, msg, sonosPlayer, chain) {
     //   changes msg.sonosGroup
     var sonosFunction = 'group attributes';
-    var errDetails = 'invalid group attributes received';
-    sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes().then(attributes => {
-      if (attributes === null || attributes === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid group attributes received';
+    sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
       // Output data
       node.debug('got valid Groups');
-      msg.sonosGroup = attributes;
-      node.status({ fill: 'green', shape: 'dot', text: 'OK:get_bascis' });
-      node.debug('ok:get_basics');
+      msg.sonosGroup = response;
+      node.status({ fill: 'green', shape: 'dot', text: 'ok:get bascis' });
+      node.debug('ok:get basics');
       node.send(msg);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
@@ -227,92 +226,92 @@ module.exports = function (RED) {
     var artist = 'unknown';
     var title = 'unknown';
     var sonosFunction = 'current song';
-    var errDetails = 'invalid current song received';
-    sonosPlayer.currentTrack().then(songObj => {
-      if (songObj === null || songObj === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid current song received';
+    sonosPlayer.currentTrack().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
       // message albumArtURL property
-      if (songObj.albumArtURI !== undefined && songObj.albumArtURI !== null) {
+      if (response.albumArtURI !== undefined && response.albumArtURI !== null) {
         node.debug('got valid albumArtURI');
         var port = 1400;
-        songObj.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songObj.albumArtURI;
+        response.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
       } else {
-        errDetails = 'invalid album art received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+        errorShort = 'invalid album art received';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: -response` + JSON.stringify(response));
         return;
       }
-      if (songObj.artist !== undefined && songObj.artist !== null) {
+      if (response.artist !== undefined && response.artist !== null) {
         node.debug('got artist and title');
-        artist = songObj.artist;
-        title = songObj.title;
+        artist = response.artist;
+        title = response.title;
       } else {
-        if (songObj.title.indexOf(' - ') > 0) {
+        if (response.title.indexOf(' - ') > 0) {
           node.debug('could split data to artist and title');
-          artist = songObj.title.split(' - ')[0];
-          title = songObj.title.split(' - ')[1];
+          artist = response.title.split(' - ')[0];
+          title = response.title.split(' - ')[1];
         } else {
-          errDetails = 'invalid combination artist title received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-          node.error(`${sonosFunction}  Details: ${errDetails}`);
+          errorShort = 'invalid combination artist title received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+          node.error(`${sonosFunction}  - ${errorShort} Details: ` + JSON.stringify(response));
           return;
         }
       }
       // Output data
-      msg.song = songObj;
+      msg.song = response;
       msg.artist = artist;
       msg.title = title;
       getSonosMediaData(node, msg, sonosPlayer, true);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
   function getSonosMediaData (node, msg, sonosPlayer, chain) {
     //   changes msg.media
     var sonosFunction = 'media data';
-    var errDetails = 'invalid media data received';
-    sonosPlayer.avTransportService().GetMediaInfo().then(media => {
-      if (media === null || media === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid media data received';
+    sonosPlayer.avTransportService().GetMediaInfo().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
       node.debug('got valid media data');
-      msg.media = media;
+      msg.media = response;
       getSonosPositionData(node, msg, sonosPlayer, chain);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
   function getSonosPositionData (node, msg, sonosPlayer, chain) {
     //   changes msg.position
     var sonosFunction = 'position data';
-    var errDetails = 'invalid position datareceived';
-    sonosPlayer.avTransportService().GetPositionInfo().then(position => {
-      if (position === null || position === undefined) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errDetails}` });
-        node.error(`${sonosFunction}  Details: ${errDetails}`);
+    var errorShort = 'invalid position datareceived';
+    sonosPlayer.avTransportService().GetPositionInfo().then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
       node.debug('got valid positon data');
-      msg.position = position;
+      msg.position = response;
       // Send output
-      node.status({ fill: 'green', shape: 'dot', text: 'OK:got tracksmedia' });
-      node.debug('OK:got tracksmedia');
+      node.status({ fill: 'green', shape: 'dot', text: 'ok:got tracksmedia' });
+      node.debug('ok:got tracksmedia');
       node.send(msg);
     }).catch(err => {
-      errDetails = JSON.stringify(err);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - see log` });
-      node.error(`${sonosFunction}  Details: ${errDetails}`);
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
