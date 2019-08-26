@@ -7,7 +7,7 @@ A set of NodeRed nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-08-26 Insert SONOS playlist to queue and play
+2019-08-26 Insert SONOS playlist to queue and play songs now possible
 
 ## Installation
 
