@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - not yet published
+### Added
+- get queue node: new command "get_sonos_playlists"
+- example to insert a playlist into the SONOS queue
+
+### Changed
+- get queue node: now all commands will send message as output (if no error)
+- Color of nodes
+
+### Fixed
+- get_queue now provides message even if albumArtURL could not be found
+
 ## [0.3.3] - 2019-08-24T2200
 ### Added
 - CHANGELOG.md
@@ -15,7 +27,7 @@ All notable changes to this project will be documented in this file.
 - nothing
 
 ### Fixed
-- error handling when ip address points to non SONOS device
+- error handling when IP address points to non SONOS device
 - bug in get queue. It works now for empty queue.
 
 ## [0.3.2] - 2019-08-21
