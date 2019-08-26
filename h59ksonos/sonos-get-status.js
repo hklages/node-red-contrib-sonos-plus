@@ -225,6 +225,7 @@ module.exports = function (RED) {
     // first step artist, title
     var artist = 'unknown';
     var title = 'unknown';
+    var albumArtURL = 'unknown';
     var sonosFunction = 'current song';
     var errorShort = 'invalid current song received';
     sonosPlayer.currentTrack().then(response => {
@@ -236,13 +237,10 @@ module.exports = function (RED) {
       // message albumArtURL property
       if (response.albumArtURI !== undefined && response.albumArtURI !== null) {
         node.debug('got valid albumArtURI');
-        var port = 1400;
-        response.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
+        const port = 1400;
+        albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
       } else {
-        errorShort = 'invalid album art received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-        node.error(`${sonosFunction} - ${errorShort} Details: -response` + JSON.stringify(response));
-        return;
+        // TuneIn does not provide AlbumArtURL -so we continure
       }
       if (response.artist !== undefined && response.artist !== null) {
         node.debug('got artist and title');
@@ -250,6 +248,7 @@ module.exports = function (RED) {
         title = response.title;
       } else {
         if (response.title.indexOf(' - ') > 0) {
+          // TuneIn provides artist and title in title field
           node.debug('could split data to artist and title');
           artist = response.title.split(' - ')[0];
           title = response.title.split(' - ')[1];
@@ -264,6 +263,7 @@ module.exports = function (RED) {
       msg.song = response;
       msg.artist = artist;
       msg.title = title;
+      msg.albumArtURL = albumArtURL;
       getSonosMediaData(node, msg, sonosPlayer, true);
     }).catch(err => {
       errorShort = 'error caught from response';

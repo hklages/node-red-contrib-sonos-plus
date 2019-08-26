@@ -73,30 +73,29 @@ module.exports = function (RED) {
 
     // dispatch
     if (command === 'activate_queue') {
-      activateQueue(node, sonosPlayer);
+      activateQueue(node, msg, sonosPlayer);
     } else if (command === 'play_song') {
       // TODO check queue activated
-      playTrack(node, sonosPlayer, msg.topic);
+      playTrack(node, msg, sonosPlayer, msg.topic);
+    } else if (command === 'insert_uri') {
+      // TODO check queue activated
+      insertUri(node, msg, sonosPlayer, msg.topic);
     } else if (command === 'flush_queue') {
       sonosPlayer.flush().then(result => {
         node.status({ fill: 'green', shape: 'dot', text: 'OK- flush queue' });
         node.debug('OK- flush queue');
+        node.send(msg);
       }).catch(err => {
         node.status({ fill: 'red', shape: 'dot', text: 'error:flush queue' });
         node.error('flush queue - Could not flush Details: ' + JSON.stringify(err));
       });
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
-      // here test test
-    } else if (command === 'get_queuesize') {
-      getQueueSize(node, msg, sonosPlayer);
-    } else if (command === 'get_playlists') {
-      getPlaylists(node, msg, sonosPlayer);
-    } else if (command === 'get_playlist') {
-      getSpecificPlaylist(node, msg, sonosPlayer);
-    } else if (command === 'insert_uri') {
-      // TODO check queue activated
-      insertUri(node, sonosPlayer, msg.topic);
+      //
+      // here starts test
+      //
+    } else if (command === 'get_sonos_playlists') {
+      getSonosPlaylists(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(command));
@@ -105,13 +104,14 @@ module.exports = function (RED) {
 
   // ------------------------------------------------------------------------------------
 
-  function activateQueue (node, sonosPlayer) {
+  function activateQueue (node, msg, sonosPlayer) {
     // TODO ensure not empty
     var sonosFunction = 'activate queue';
     var errorShort = '';
     sonosPlayer.selectQueue().then(response => {
       node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
       node.debug(`ok:${sonosFunction}`);
+      node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -119,7 +119,7 @@ module.exports = function (RED) {
     });
   }
 
-  function playTrack (node, sonosPlayer, topic) {
+  function playTrack (node, msg, sonosPlayer, topic) {
     // TODO Ensure there is next and queue not empty
     // TODO error handling
     var sonosFunction = 'play track';
@@ -128,6 +128,22 @@ module.exports = function (RED) {
     sonosPlayer.selectTrack(i).then(response => {
       node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
       node.debug(`ok:${sonosFunction}`);
+      node.send(msg);
+    }).catch(err => {
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+    });
+  }
+
+  function insertUri (node, msg, sonosPlayer, uri) {
+    // TODO STILL IN TEST
+    var sonosFunction = 'insert uri';
+    var errorShort = '';
+    sonosPlayer.queue(uri).then(response => {
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
+      node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -179,85 +195,46 @@ module.exports = function (RED) {
 
   /// TEST TEST TEST TEST TEST
 
-  // function getQueueSize (node, msg, sonosPlayer) {
-  //   /**  payload will be set to number of songs (format number) in queue. 0 means empty queue.
-  //   * @param  {Object} node current node
-  //   * @param  {Object} msg incoming message
-  //   * @param  {Object} sonosPlayer selected sonos player
-  //   */
-  //
-  //   var sonosFunction = 'get queue size';
-  //   var errorShort = 'invalid response received';
-  //   sonosPlayer.getQueue().then(response => {
-  //     console.log('--> %j', response);
-  //     if (response === null || response === undefined) {
-  //       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-  //       node.error(`${sonosFunction} - ${errorShort}`);
-  //       return;
-  //     }
-  //     if (response === false) {
-  //       // queue is empty
-  //       msg.payload = 0;
-  //       errorShort = 'queue is empty!';
-  //     } else {
-  //       msg.payload = parseInt(response.returned);
-  //       errorShort = `queue contains ${msg.payload} songs`;
-  //     }
-  //     node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction} - ${errorShort}` });
-  //     node.debug(`ok:${sonosFunction} - ${errorShort}`);
-  //     // send message
-  //     node.send(msg);
-  //   }).catch(err => {
-  //     if (err === false) {
-  //       node.status({ fill: 'blue', shape: 'dot', text: `ok:${sonosFunction} - queue is empty` });
-  //       node.debug(`ok:${sonosFunction} - queue is empty`);
-  //       msg.payload = 0;
-  //       node.send(msg);
-  //     } else {
-  //       errorShort = 'error caught from response';
-  //       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-  //       node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
-  //     }
-  //   });
-  // }
-
-  function insertUri (node, sonosPlayer, uri) {
-    // TODO STILL IN TEST
-    var sonosFunction = 'insert uri';
-    var errorShort = '';
-    sonosPlayer.queue(uri).then(response => {
-      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-      node.debug(`ok:${sonosFunction}`);
-    }).catch(err => {
-      errorShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
-    });
-  }
-
-  function getPlaylists (node, msg, sonosPlayer) {
-    // TODO STILL IN TEST
+  function getSonosPlaylists (node, msg, sonosPlayer) {
     var sonosFunction = 'get all SONOS playlists';
-    var errorShort = '';
-    sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: 25 }).then(response => {
-      console.log('xxxx: %j', response);
-    }).catch(err => {
-      errorShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
-    });
-  }
+    var msgShort = '';
+    sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: 50 }).then(response => {
+      if (response === null || response === undefined) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort}`);
+        return;
+      }
+      var playlistArray;
+      var numberOfPlaylists;
+      if (response === false) {
+        // no playlist
+        numberOfPlaylists = 0;
+        playlistArray = [];
+        msgShort = 'No SONOS playlists found!';
+      } else {
+        numberOfPlaylists = parseInt(response.total);
+        playlistArray = response.items;
+        msgShort = `found ${numberOfPlaylists} SONOS playlists`;
+        // message albumArtURL
+        playlistArray.forEach(function (songsArray) {
+          if (songsArray.albumArtURL !== undefined && songsArray.albumArtURL !== null) {
+            var port = 1400;
+            songsArray.albumArtURI = songsArray.albumArtURL;
+            songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
+          }
+        });
 
-  function getSpecificPlaylist (node, msg, sonosPlayer) {
-    // TODO STILL IN TEST
-    var sonosFunction = 'get specific SONOS playlists';
-    var errorShort = '';
-    sonosPlayer.getPlaylist('4', { start: 0, total: 25 }).then(response => {
-      console.log('xxxx: %j', response);
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction} - ${msgShort}` });
+        node.debug(`ok:${sonosFunction} - ${msgShort}`);
+        // send message data
+        msg.payload = playlistArray;
+        msg.available_playlists = numberOfPlaylists;
+        node.send(msg);
+      }
     }).catch(err => {
-      errorShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+      msgShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
     });
   }
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);
