@@ -282,6 +282,12 @@ module.exports = function (RED) {
         node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
+      var uri = response.CurrentURI;
+      if (uri.startsWith('x-rincon-queue')) {
+        response.queue_active = true;
+      } else {
+        response.queue_active = false;
+      }
       node.debug('got valid media data');
       msg.media = response;
       getSonosPositionData(node, msg, sonosPlayer, chain);
@@ -297,6 +303,7 @@ module.exports = function (RED) {
     var sonosFunction = 'position data';
     var errorShort = 'invalid position datareceived';
     sonosPlayer.avTransportService().GetPositionInfo().then(response => {
+      node.debug(JSON.stringify(response));
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
         node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));

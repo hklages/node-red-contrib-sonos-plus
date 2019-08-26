@@ -91,9 +91,6 @@ module.exports = function (RED) {
       });
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
-      //
-      // here starts test
-      //
     } else if (command === 'get_sonos_playlists') {
       getSonosPlaylists(node, msg, sonosPlayer);
     } else {
@@ -168,6 +165,7 @@ module.exports = function (RED) {
         songsArray = [];
         errorShort = 'queue is empty!';
       } else {
+        node.debug(JSON.stringify(response));
         queueSize = parseInt(response.returned);
         songsArray = response.items;
         errorShort = `queue contains ${queueSize} songs`;
@@ -192,8 +190,6 @@ module.exports = function (RED) {
       node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
-
-  /// TEST TEST TEST TEST TEST
 
   function getSonosPlaylists (node, msg, sonosPlayer) {
     var sonosFunction = 'get all SONOS playlists';

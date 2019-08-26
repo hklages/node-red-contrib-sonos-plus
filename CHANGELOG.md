@@ -1,9 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.3.4] - not yet published
+## [0.3.4] - 2019-08-26T1615
 ### Added
-- get queue node: new command "get_sonos_playlists"
+- manage queue node: new command "get_sonos_playlists"
 - example to insert a playlist into the SONOS queue
 
 ### Changed
@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Color of nodes
 
 ### Fixed
-- get_queue now provides message even if albumArtURL could not be found
+- get_queue now provides output message even if albumArtURL could not be found
 
 ## [0.3.3] - 2019-08-24T2200
 ### Added

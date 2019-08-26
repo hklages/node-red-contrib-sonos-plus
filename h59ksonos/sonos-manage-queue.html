@@ -82,6 +82,13 @@ RED.nodes.registerType('sonos-manage-queue', {
       <dd>Array of songs in queue as object - only when using <i>get</i></dd>
   </dl>
 
+  <dl class="message-properties">
+      <dt>available_playlists
+          <span class="property-type">number</span>
+      </dt>
+      <dd>The amount of SONOS playlists (0 means no playlist available)</i></dd>
+  </dl>
+
 
   <h3>Details</h3>
   <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter; currently only used for command <i>"play_song"</i>.</p>
@@ -91,4 +98,6 @@ RED.nodes.registerType('sonos-manage-queue', {
   <br/> • <i>"play_song"</i> Plays specific song in queue.
   <br/> • <i>"flush"</i> Erases the queue and stops playing!
   <br/> • <i>"get_queue"</i> Provides the current queue as output
+  <br/> • <i>"get_sonos_playlists"</i> Provides a list of all Sonos playlists
+
 </script>
