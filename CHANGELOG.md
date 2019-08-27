@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2019-08-27T1623
+### Fixed
+- error in documentation for node "get status"
+
+### Added
+- Link to Wiki - new Examples
+
+### Changed
+- Some messages
+
 ## [0.3.4] - 2019-08-26T1615
 ### Added
 - manage queue node: new command "get_sonos_playlists"

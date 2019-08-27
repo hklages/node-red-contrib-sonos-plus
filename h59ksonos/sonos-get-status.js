@@ -208,7 +208,7 @@ module.exports = function (RED) {
       // Output data
       node.debug('got valid Groups');
       msg.sonosGroup = response;
-      node.status({ fill: 'green', shape: 'dot', text: 'ok:get bascis' });
+      node.status({ fill: 'green', shape: 'dot', text: 'ok:get basics' });
       node.debug('ok:get basics');
       node.send(msg);
     }).catch(err => {
@@ -312,8 +312,8 @@ module.exports = function (RED) {
       node.debug('got valid positon data');
       msg.position = response;
       // Send output
-      node.status({ fill: 'green', shape: 'dot', text: 'ok:got tracksmedia' });
-      node.debug('ok:got tracksmedia');
+      node.status({ fill: 'green', shape: 'dot', text: 'ok:get songmedia' });
+      node.debug('ok:get songmedia');
       node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';

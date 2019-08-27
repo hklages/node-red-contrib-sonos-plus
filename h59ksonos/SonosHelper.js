@@ -63,7 +63,7 @@ class SonosHelper {
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
       node.status({ fill: 'green', shape: 'dot', text: 'error:check ip address - missing ip address' });
-      node.warn('Check ip address - Missing IP address. Details: It is recommended to set IP Address in config node');
+      node.warn('Only a Warning: Missing IP address. Details: It is recommended to set IP Address in config node');
 
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
         if (err) {

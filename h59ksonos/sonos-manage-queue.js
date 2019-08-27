@@ -119,7 +119,7 @@ module.exports = function (RED) {
   function playTrack (node, msg, sonosPlayer, topic) {
     // TODO Ensure there is next and queue not empty
     // TODO error handling
-    var sonosFunction = 'play track';
+    var sonosFunction = 'play song';
     var errorShort = '';
     var i = parseInt(topic);
     sonosPlayer.selectTrack(i).then(response => {
