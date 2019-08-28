@@ -1,14 +1,11 @@
 # node-red-contrib-sonos-plus
 
-Version 2019-08-27T1619
-
 A set of NodeRed nodes to control SONOS player in your local WLAN.
 
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-08-27 fixed bug in documentation "get status" node, minor changes, added Wiki link
-2019-08-26 Insert SONOS playlist to queue and play songs now possible
+2019-08-28 Update Wiki: added more examples. Minor bug fixes in documentation. See CHANGELOG for more details.
 
 ## Installation
 
@@ -25,7 +22,7 @@ Install directly from your NodeRED's setting pallete.
 
 ## Restrictions
 
-> When playing a radio station the commands next_song, previous_song may cause a warning as many stations do not support them.
+> When playing a radio station the commands next_song, previous_song may cause an error message as many stations do not support them.
 
 > Amazon, ... playlist can not be activated directly.
 
@@ -50,7 +47,7 @@ The functions are grouped into 5 nodes.
 - 2019-08: Fix join_group, leave_group and get group information DONE
 - 2019-09/10: Insert a playlist into SONOS queue  DONE
 - 2019-10 Insert Amazon playlist
-- 2019/2020: Insert AMAZON Playlist, Spotifiy, ...
+- 2019/2020: Insert AMAZON Playlist, Spotifiy. Notification, Queue handlinge, Playlist handling
 
 ## Credentials
 

@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 - fixed some documentation errors (get_songmedia)
 
 ### Changed
-- Wiki documentation now cover the full scope
+- Wiki documentation now cover the full scope and has more complex examples
 
 ## [0.3.5] - 2019-08-27T1623
 ### Fixed
