@@ -192,7 +192,7 @@ module.exports = function (RED) {
   }
 
   function getSonosPlaylists (node, msg, sonosPlayer) {
-    var sonosFunction = 'get all SONOS playlists';
+    var sonosFunction = 'get SONOS playlists';
     var msgShort = '';
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: 50 }).then(response => {
       if (response === null || response === undefined) {

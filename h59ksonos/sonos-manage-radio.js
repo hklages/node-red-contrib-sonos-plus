@@ -273,7 +273,7 @@ module.exports = function (RED) {
       }
       node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
       node.debug(`ok:${sonosFunction}`);
-      msg.playload = stationList;
+      msg.payload = stationList;
       node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';

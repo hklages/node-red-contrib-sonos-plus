@@ -61,7 +61,7 @@ RED.nodes.registerType('sonos-get-status', {
       <dd>current playing state: playing, stopped, ...</dd>
 
       <dt>muted
-          <span class="property-type">boolean | true-false</span>
+          <span class="property-type">boolean</span>
       </dt>
       <dd> current mute state</dd>
 
@@ -97,11 +97,11 @@ RED.nodes.registerType('sonos-get-status', {
           <span class="property-type">string</span></dt>
       <dd> current title only in case of TuneIn, Amazon Prime</dd>
 
-      <dt>media info
+      <dt>media
           <span class="property-type">Object</span></dt>
       <dd> more information - for instance radio station name</dd>
 
-      <dt>position info
+      <dt>position
           <span class="property-type">Object</span></dt>
       <dd> more info - for instance duration, radio station name </dd>
 
@@ -111,7 +111,7 @@ RED.nodes.registerType('sonos-get-status', {
 
   Accepted values for <code>msg.payload</code> are:
   <br/> • <i>get_basics</i> will provide current state, volume, muted, player name, ...
-  <br/> • <i>get_song_media</i> will provide song, media and position info
+  <br/> • <i>get_songmedia</i> will provide song, media and position info
   <br/> • <i>get_state_only</i> will provide only the playing state. All other messages will produce standard output.
 
 </script>

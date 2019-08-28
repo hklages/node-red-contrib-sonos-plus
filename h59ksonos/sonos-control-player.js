@@ -298,8 +298,8 @@ module.exports = function (RED) {
     switch (commandObject.cmd) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(response => {
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
+          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}  to ${volumeValue}` });
+          node.debug(`ok:${sonosFunction} ${volumeValue}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
             node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });

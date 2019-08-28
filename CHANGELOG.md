@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.6] - not yet released
+### Fixed
+- overwork node documentation
+- fixed some documentation errors (get_songmedia)
+
+### Changed
+- Wiki documentation now cover the full scope
+
 ## [0.3.5] - 2019-08-27T1623
 ### Fixed
 - error in documentation for node "get status"
