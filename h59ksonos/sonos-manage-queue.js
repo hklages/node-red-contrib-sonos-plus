@@ -93,6 +93,8 @@ module.exports = function (RED) {
       getQueue(node, msg, sonosPlayer);
     } else if (command === 'get_sonos_playlists') {
       getSonosPlaylists(node, msg, sonosPlayer);
+    } else if (command === 'get_amazon_playlists') {
+      getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(command));
@@ -231,6 +233,53 @@ module.exports = function (RED) {
       msgShort = 'error caught from response';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
       node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
+    });
+  }
+
+  function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
+    /**  Get list of My Sonos Amazon Playlist (only standards)
+    * @param  {Object} node current node
+    * @param  {object} msg incoming message
+    * @param  {object} sonosPlayer Sonos Player
+    * change msg.payload to current array of My Sonos Amazon Prime playlist
+    */
+
+    // get list of My Sonos items
+    let sonosFunction = 'get amazon prime playlist';
+    let errorShort = 'invalid or empty My Sonos list received';
+    sonosPlayer.getFavorites().then(response => {
+      if (!(response.returned !== null && response.returned !== undefined &&
+          response.returned && parseInt(response.returned) > 0)) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: response->` + JSON.stringify(response));
+        return;
+      }
+      // filter: Amazon Prime Playlists only
+      const PRIME_IDENTIFIER = 'prime_playlist';
+      let primePlaylistList = []; // will hold all playlist items
+      let primePlaylistUri = '';
+      for (let i = 0; i < parseInt(response.returned); i++) {
+        primePlaylistUri = response.items[i].uri;
+        if (primePlaylistUri.indexOf(PRIME_IDENTIFIER) > 0) {
+          // found prime playlist
+          primePlaylistUri = response.items[i].uri;
+          primePlaylistList.push({ 'title': response.items[i].title, 'uri': primePlaylistUri });
+        }
+      }
+      if (primePlaylistList.length === 0) {
+        errorShort = 'no amazon prime playlist in my sonos';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: mysonos->` + JSON.stringify(response.items));
+        return;
+      }
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
+      msg.payload = primePlaylistList;
+      node.send(msg);
+    }).catch(err => {
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);

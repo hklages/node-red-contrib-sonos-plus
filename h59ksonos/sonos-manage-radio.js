@@ -89,7 +89,7 @@ module.exports = function (RED) {
       }
       playTuneIn(node, msg, sonosPlayer, splitCommand);
     } else if (splitCommand.cmd === 'get_mysonos') {
-      getMySonos(node, msg, sonosPlayer);
+      getMySonosStations(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(splitCommand));
@@ -228,7 +228,7 @@ module.exports = function (RED) {
     });
   }
 
-  function getMySonos (node, msg, sonosPlayer) {
+  function getMySonosStations (node, msg, sonosPlayer) {
     /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime)
     * @param  {Object} node current node
     * @param  {object} msg incoming message
@@ -237,7 +237,7 @@ module.exports = function (RED) {
     */
 
     // get list of My Sonos stations
-    var sonosFunction = 'get mysonos';
+    var sonosFunction = 'get my sonos stations';
     var errorShort = 'invalid favorite list received';
     sonosPlayer.getFavorites().then(response => {
       if (!(response.returned !== null && response.returned !== undefined &&
