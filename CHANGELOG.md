@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.7] - 2019-08-27T1623
+### Added
+- Play notification node
+
+### Changed
+- Requires Node-Sonos 1.12.3 (fixes a bug with notifications while playing from TuneIn)
+
 ## [0.3.6] - not yet released
 ### Fixed
 - overwork node documentation
