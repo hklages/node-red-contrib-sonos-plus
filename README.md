@@ -1,5 +1,5 @@
 # node-red-contrib-sonos-plus
-![Dependencies](https://david-dm.org/hklages/node-red-contrib-sonos-plus.svg)
+[![Dependencies](https://david-dm.org/hklages/node-red-contrib-sonos-plus.svg)(https://david-dm.org/foddy/node-red-contrib-huemagic)]
 ![npm](https://img.shields.io/npm/dt/node-red-contrib-sonos-plus.svg)
 ![npm](https://img.shields.io/npm/v/node-red-contrib-sonos-plus.svg)
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
