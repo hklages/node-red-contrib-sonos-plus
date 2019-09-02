@@ -76,7 +76,13 @@ module.exports = function (RED) {
     } else if (command === 'get_basics') {
       getSonosCurrentState(node, msg, sonosPlayer, true);
     } else if (command === 'get_songmedia') {
-      getSonosCurrentTrack(node, msg, sonosPlayer, true);
+      getSonosCurrentSong(node, msg, sonosPlayer, true);
+    } else if (command === 'get_songinfo') {
+      getSonosCurrentSong(node, msg, sonosPlayer, false);
+    } else if (command === 'get_mediainfo') {
+      getSonosMediaInfo(node, msg, sonosPlayer, false);
+    } else if (command === 'get_positioninfo') {
+      getSonosPositionInfo(node, msg, sonosPlayer, false);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
@@ -220,7 +226,7 @@ module.exports = function (RED) {
 
   // next chain command for song, media, position
 
-  function getSonosCurrentTrack (node, msg, sonosPlayer, chain) {
+  function getSonosCurrentSong (node, msg, sonosPlayer, chain) {
     // finally changes  msg.title (string), msg.artist (string), msg.song (obj) msg.media (obj), msg.position (obj)
     // first step artist, title
     var artist = 'unknown';
@@ -264,7 +270,15 @@ module.exports = function (RED) {
       msg.artist = artist;
       msg.title = title;
       msg.albumArtURL = albumArtURL;
-      getSonosMediaData(node, msg, sonosPlayer, true);
+
+      if (chain) {
+        node.debug('got current song information');
+        getSonosMediaInfo(node, msg, sonosPlayer, chain);
+      } else {
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
+        node.send(msg);
+      }
     }).catch(err => {
       errorShort = 'error caught from response';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -272,7 +286,7 @@ module.exports = function (RED) {
     });
   }
 
-  function getSonosMediaData (node, msg, sonosPlayer, chain) {
+  function getSonosMediaInfo (node, msg, sonosPlayer, chain) {
     //   changes msg.media
     var sonosFunction = 'media data';
     var errorShort = 'invalid media data received';
@@ -288,9 +302,16 @@ module.exports = function (RED) {
       } else {
         response.queue_active = false;
       }
-      node.debug('got valid media data');
+
       msg.media = response;
-      getSonosPositionData(node, msg, sonosPlayer, chain);
+      if (chain) {
+        node.debug('got valid media data');
+        getSonosPositionInfo(node, msg, sonosPlayer, chain);
+      } else {
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
+        node.send(msg);
+      }
     }).catch(err => {
       errorShort = 'error caught from response';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -298,7 +319,7 @@ module.exports = function (RED) {
     });
   }
 
-  function getSonosPositionData (node, msg, sonosPlayer, chain) {
+  function getSonosPositionInfo (node, msg, sonosPlayer, chain) {
     //   changes msg.position
     var sonosFunction = 'position data';
     var errorShort = 'invalid position datareceived';

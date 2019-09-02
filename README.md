@@ -5,7 +5,8 @@ A set of NodeRed nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-08-28 Update Wiki: added more examples. Minor bug fixes in documentation. See CHANGELOG for more details.
+2019-09-02 Notification node from gitjho
+
 
 ## Installation
 
@@ -18,7 +19,8 @@ Install directly from your NodeRED's setting pallete.
 - Supports TuneIn radio id to select and play radio stations
 - Provides many kinds of current song information: artist, title, media information and radio station name
 - Supports Sonos playlists: Can be inserted into queue
-- Uses the newest node-sonos api (2019-08-18T0925)
+- Supports notifications
+- Uses the newest node-sonos api (2019-09-02T0722)
 
 ## Restrictions
 

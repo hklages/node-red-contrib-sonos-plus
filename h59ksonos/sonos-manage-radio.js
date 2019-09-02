@@ -90,6 +90,8 @@ module.exports = function (RED) {
       playTuneIn(node, msg, sonosPlayer, splitCommand);
     } else if (splitCommand.cmd === 'get_mysonos') {
       getMySonosStations(node, msg, sonosPlayer);
+    } else if (splitCommand.cmd === 'get_mysonosall') {
+      getMySonosAll(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(splitCommand));
@@ -274,6 +276,42 @@ module.exports = function (RED) {
       node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
       node.debug(`ok:${sonosFunction}`);
       msg.payload = stationList;
+      node.send(msg);
+    }).catch(err => {
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+    });
+  }
+
+  function getMySonosAll (node, msg, sonosPlayer) {
+    /**  Get list of My Sonos all items
+    * @param  {Object} node current node
+    * @param  {object} msg incoming message
+    * @param  {object} sonosPlayer Sonos Player
+    * change msg.payload to current array of my Sonos radio stations
+    */
+
+    // get list of My Sonos items
+    var sonosFunction = 'get my sonos all';
+    var errorShort = 'invalid my sonos list received';
+    sonosPlayer.getFavorites().then(response => {
+      if (!(response.returned !== null && response.returned !== undefined &&
+        response.returned && parseInt(response.returned) > 0)) {
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: response->` + JSON.stringify(response));
+        return;
+      }
+      var list = response.items;
+      if (list.length === 0) {
+        errorShort = 'no my sonos items found';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: mysonos->` + JSON.stringify(response.items));
+        return;
+      }
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
+      msg.payload = list;
       node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';
