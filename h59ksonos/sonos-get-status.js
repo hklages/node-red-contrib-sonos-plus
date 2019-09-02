@@ -288,8 +288,8 @@ module.exports = function (RED) {
 
   function getSonosMediaInfo (node, msg, sonosPlayer, chain) {
     //   changes msg.media
-    var sonosFunction = 'media data';
-    var errorShort = 'invalid media data received';
+    var sonosFunction = 'media info';
+    var errorShort = 'invalid media info received';
     sonosPlayer.avTransportService().GetMediaInfo().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -305,7 +305,7 @@ module.exports = function (RED) {
 
       msg.media = response;
       if (chain) {
-        node.debug('got valid media data');
+        node.debug('got valid media info');
         getSonosPositionInfo(node, msg, sonosPlayer, chain);
       } else {
         node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
@@ -321,8 +321,8 @@ module.exports = function (RED) {
 
   function getSonosPositionInfo (node, msg, sonosPlayer, chain) {
     //   changes msg.position
-    var sonosFunction = 'position data';
-    var errorShort = 'invalid position datareceived';
+    var sonosFunction = 'position info';
+    var errorShort = 'invalid position info received';
     sonosPlayer.avTransportService().GetPositionInfo().then(response => {
       node.debug(JSON.stringify(response));
       if (response === null || response === undefined) {
@@ -330,11 +330,17 @@ module.exports = function (RED) {
         node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
-      node.debug('got valid positon data');
+      node.debug('got valid positon info');
       msg.position = response;
       // Send output
-      node.status({ fill: 'green', shape: 'dot', text: 'ok:get songmedia' });
-      node.debug('ok:get songmedia');
+      if (chain) {
+        node.debug('got valid position info');
+        node.status({ fill: 'green', shape: 'dot', text: 'ok:get songmedia' });
+        node.debug('ok:get songmedia');
+      } else {
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
+      }
       node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';
