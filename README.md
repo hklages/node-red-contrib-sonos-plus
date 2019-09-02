@@ -5,7 +5,7 @@ A set of NodeRed nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-09-02 Notification node from gitjho
+2019-09-02 Notification node from gitjho, a few new commands
 
 
 ## Installation
@@ -30,26 +30,16 @@ Install directly from your NodeRED's setting pallete.
 
 ## Functions and Usage
 
-The functions are grouped into 5 nodes.
+The functions are grouped into 6 nodes.
 - _Config_ node: Select SONOS player, stores serialnumber or IP address
 - _Control player_ node: Execute basic SONOS player commands (e.g. play, stop, pause, join/leave group ...)
 - _Get status_ node: Get information about current state of SONOS player (e. g. playing, volume, groups, song info ...)
 - _Manage queue_ node: Performs basic queue commands (e. g. activate queue and start playing, get queue information)
 - _Manage radio_ node: Performs radio commands (e. g activate a TuneIn radio, Amazon Prime radio station)
+- _Play notification_ node: Play a short notification and return to previous stream, queue.
 
-## EXAMPLES, RECOMMENDATIONS, SONOS GENERAL Concept
+## Recommendations, more information see the Wiki
 [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
-
-## Roadmap
-
-- 2019-08: Update to newest version of dependencies (node-sonos) DONE
-- 2019-08: Use My_SONOS to select radio stations DONE
-- 2019-08: Use TuneIn Radio id to select radio stations DONE
-- 2019-08: Improve debugging, logging capabilities DONE
-- 2019-08: Fix join_group, leave_group and get group information DONE
-- 2019-09/10: Insert a playlist into SONOS queue  DONE
-- 2019-10 Insert Amazon playlist
-- 2019/2020: Insert AMAZON Playlist, Spotifiy. Notification, Queue handlinge, Playlist handling
 
 ## Credentials
 

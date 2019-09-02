@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.3.7] - to be published 2019-09-03
+## [0.3.7] - 2019-09-03
 ### Added
 - new node: Play notification contributed by gitjho
 - manage queue node: get_primeplaylists
@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Requires Node-Sonos 1.12.3 (fixes a bug with notifications while playing from TuneIn)
 
-## [0.3.6] - not yet released
+## [0.3.6] - 2019-08-28
 ### Fixed
 - overwork node documentation
 - fixed some documentation errors (get_songmedia)
