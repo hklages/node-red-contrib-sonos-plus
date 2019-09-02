@@ -31,6 +31,7 @@ RED.nodes.registerType('sonos-manage-queue', {
   },
   paletteLabel: 'Mng Queue',
 
+  // TODO check necessary
   oneditprepare: function () {
     $('#node-input-position').change(function() {
       var value = $('#node-input-position').val()
@@ -96,9 +97,6 @@ RED.nodes.registerType('sonos-manage-queue', {
       <dd>Number of SONOS playlists</i></dd>
   </dl>
 
-
-
-
   <h3>Details</h3>
   <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter; currently only used for command <i>"play_song"</i>.</p>
 
@@ -107,7 +105,7 @@ RED.nodes.registerType('sonos-manage-queue', {
   <br/> • <i>insert_uri</i> Inserts a song or a complete playlist into queue
   <br/> • <i>play_song</i> Plays a specific song in queue.
   <br/> • <i>flush</i> Erases the queue and stops playing!
-  <br/> • <i>get_queue</i> Provides the current queue as output
-  <br/> • <i>get_sonos_playlists</i> Provides a list of all Sonos playlists as output
-  <br/> • <i>get_prime_playlists</i> Provides a list of all My Sonos items as output
+  <br/> • <i>get_queue</i> Outputs the current queue as output
+  <br/> • <i>get_sonos_playlists</i> Outputs an array of all Sonos playlists
+  <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos items
 </script>
