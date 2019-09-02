@@ -9,7 +9,7 @@
   "keywords": [
     "sonos",
     "music",
-    "node-red";
+    "node-red",
     "node-red-contrib-sonos-plus"
   ],
   "node-red": {
