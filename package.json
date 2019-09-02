@@ -8,9 +8,9 @@
   },
   "keywords": [
     "sonos",
-    "sonos-plus",
     "music",
-    "node-red"
+    "node-red";
+    "node-red-contrib-sonos-plus"
   ],
   "node-red": {
     "nodes": {
@@ -18,8 +18,7 @@
       "sonos-control-player": "h59ksonos/sonos-control-player.js",
       "sonos-get-status": "h59ksonos/sonos-get-status.js",
       "sonos-manage-radio": "h59ksonos/sonos-manage-radio.js",
-      "sonos-manage-queue": "h59ksonos/sonos-manage-queue.js",
-      "sonos-play-notification": "h59ksonos/sonos-play-notification.js"
+      "sonos-manage-queue": "h59ksonos/sonos-manage-queue.js"
     }
   },
   "repository": {
