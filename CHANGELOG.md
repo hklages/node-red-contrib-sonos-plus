@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - manage radio node: get_mysonosall (may be changed in the future)
 
 ### Changed
-- Requires Node-Sonos 1.12.3 (fixes a bug with notifications while playing from TuneIn)
+- Update to Node-Sonos 1.12.3
 
 ## [0.3.6] - 2019-08-28
 ### Fixed
