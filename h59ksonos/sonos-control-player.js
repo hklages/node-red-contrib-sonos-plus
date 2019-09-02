@@ -86,7 +86,7 @@ module.exports = function (RED) {
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
       splitCommand = { cmd: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
-    } else if (command === 'play_avtransport') {
+    } else if (command === 'activate_avtransport') {
       // TODO error handling topic
       let sonosFunction = command;
       let errorShort = '';
