@@ -1,5 +1,6 @@
 # node-red-contrib-sonos-plus
-[![Dependencies](https://david-dm.org/hklages/node-red-contrib-sonos-plus.svg)]
+![Dependencies](https://david-dm.org/hklages/node-red-contrib-sonos-plus.svg)
+[![npm](https://img.shields.io/npm/dt/node-red-contrib-sonos-plus.svg)]
 
 A set of NodeRed nodes to control SONOS player in your local WLAN.
 
