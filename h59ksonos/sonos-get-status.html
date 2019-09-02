@@ -110,8 +110,11 @@ RED.nodes.registerType('sonos-get-status', {
   <p><code>msg.payload</code> is used as command. </p>
 
   Accepted values for <code>msg.payload</code> are:
-  <br/> • <i>get_basics</i> will provide current state, volume, muted, player name, ...
-  <br/> • <i>get_songmedia</i> will provide song, media and position info
-  <br/> • <i>get_stateonly</i> will provide only the playing state. All other messages will produce standard output.
+  <br/> • <i>get_basics</i> Outputs current state, volume, muted, player name, ...
+  <br/> • <i>get_stateonly</i> Outputs only the playing state.
+  <br/> • <i>get_songmedia</i> Outputs song, media and position info
+  <br/> • <i>get_songinfo</i> Outputs song info
+  <br/> • <i>get_mediainfo</i> Outputs media info
+  <br/> • <i>get_positioninfo</i> Outputs position info
 
 </script>

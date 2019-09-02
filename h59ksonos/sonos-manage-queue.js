@@ -93,7 +93,7 @@ module.exports = function (RED) {
       getQueue(node, msg, sonosPlayer);
     } else if (command === 'get_sonos_playlists') {
       getSonosPlaylists(node, msg, sonosPlayer);
-    } else if (command === 'get_primeplaylists') {
+    } else if (command === 'get_prime_playlists') {
       getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
