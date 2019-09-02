@@ -86,6 +86,20 @@ module.exports = function (RED) {
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
       splitCommand = { cmd: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
+    } else if (command === 'play_avtransport') {
+      // TODO error handling topic
+      let sonosFunction = command;
+      let errorShort = '';
+      sonosPlayer.setAVTransportURI(msg.topic).then(response => {
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
+        // send message
+        node.send(msg);
+      }).catch(err => {
+        errorShort = 'caught error from seAVTransportURI';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+        node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+      });
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
