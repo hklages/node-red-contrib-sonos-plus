@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.8] - to be published 2019-09-10
+### Changed
+- subdirectory src
+
 ## [0.3.7] - 2019-09-03
 ### Added
 - manage queue node: get_prime_playlists

@@ -71,8 +71,8 @@ module.exports = function (RED) {
 
     // dispatch
     var splitCommand = {
-      'cmd': ('' + msg.payload).toLowerCase(),
-      'parameter': ('' + msg.topic)
+      cmd: ('' + msg.payload).toLowerCase(),
+      parameter: ('' + msg.topic)
     };
     if (splitCommand.cmd === 'play_mysonos') {
       if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
@@ -166,10 +166,10 @@ module.exports = function (RED) {
           stationUri = response.items[i].uri;
           radioId = stationUri.split('?')[0];
           radioId = radioId.substr(TUNEIN_PREFIX.length);
-          stationList.push({ 'title': response.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
+          stationList.push({ title: response.items[i].title, radioId: radioId, uri: stationUri, source: 'TuneIn' });
         }
         if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
-          stationList.push({ 'title': response.items[i].title, 'uri': response.items[i].uri, 'source': 'AmazonPrime' });
+          stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'AmazonPrime' });
         }
       }
       if (stationList.length === 0) {
@@ -261,10 +261,10 @@ module.exports = function (RED) {
           stationUri = response.items[i].uri;
           radioId = stationUri.split('?')[0];
           radioId = radioId.substr(TUNEIN_PREFIX.length);
-          stationList.push({ 'title': response.items[i].title, 'radioId': radioId, 'uri': stationUri, 'source': 'TuneIn' });
+          stationList.push({ title: response.items[i].title, radioId: radioId, uri: stationUri, source: 'TuneIn' });
         }
         if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
-          stationList.push({ 'title': response.items[i].title, 'uri': response.items[i].uri, 'source': 'AmazonPrime' });
+          stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'AmazonPrime' });
         }
       }
       if (stationList.length === 0) {
