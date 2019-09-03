@@ -45,14 +45,11 @@ RED.nodes.registerType('sonos-config', {
       });
     });
   },
-  oneditsave: function () {
-    var node = this;
-    node.language = $("#node-input-language").val();
-  }
 });
 </script>
 
 <script type="text/x-red" data-template-name="sonos-config">
+
   <div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-config-input-name" placeholder="This Node Name">
@@ -66,7 +63,8 @@ RED.nodes.registerType('sonos-config', {
 
   <div><p></p></div>
 
-  <div class="form-tips">Sonos devices are identified by their fixed <strong>Serial Number</strong>. So you don't have to worry about setting static IP Addresses for them. Just hit the <i class="fa fa-search"></i> button and pick a device from the list. It's that simple. Alternatively, you can enter its IP Address below.</div>
+  <div class="form-tips">Sonos devices are identified by their fixed <strong>Serial Number</strong>. Hit the <i class="fa fa-search"></i> button and pick a device from the list.
+    Alternatively, you can enter its IP Address below. It is recommended to enter the (static) IP address</div>
 
   <div><p></p></div>
 
@@ -74,4 +72,5 @@ RED.nodes.registerType('sonos-config', {
         <label for="node-config-input-ipaddress"><i class="fa fa-globe"></i> IP Address</label>
         <input type="text" id="node-config-input-ipaddress" placeholder="192.168.xx.xx">
   </div>
+
 </script>

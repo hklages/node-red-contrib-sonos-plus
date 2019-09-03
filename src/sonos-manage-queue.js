@@ -76,7 +76,7 @@ module.exports = function (RED) {
       activateQueue(node, msg, sonosPlayer);
     } else if (command === 'play_song') {
       // TODO check queue activated
-      playTrack(node, msg, sonosPlayer, msg.topic);
+      playSong(node, msg, sonosPlayer, msg.topic);
     } else if (command === 'insert_uri') {
       // TODO check queue activated
       insertUri(node, msg, sonosPlayer, msg.topic);
@@ -95,6 +95,8 @@ module.exports = function (RED) {
       getSonosPlaylists(node, msg, sonosPlayer);
     } else if (command === 'get_prime_playlists') {
       getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
+    } else if (command === 'insert_prime_playlist') {
+      insertPrimePlaylist(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(command));
@@ -118,7 +120,7 @@ module.exports = function (RED) {
     });
   }
 
-  function playTrack (node, msg, sonosPlayer, topic) {
+  function playSong (node, msg, sonosPlayer, topic) {
     // TODO Ensure there is next and queue not empty
     // TODO error handling
     const SONOSFUNCTION = 'play song';
@@ -274,6 +276,40 @@ module.exports = function (RED) {
       node.status({ fill: 'green', shape: 'dot', text: `ok:${SONOSFUNCTION}` });
       node.debug(`ok:${SONOSFUNCTION}`);
       msg.payload = primePlaylistList;
+      node.send(msg);
+    }).catch(err => {
+      errorShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${errorShort}` });
+      node.error(`${SONOSFUNCTION} - ${errorShort} Details: ` + JSON.stringify(err));
+    });
+  }
+  function insertPrimePlaylist (node, msg, sonosPlayer) {
+    const SONOSFUNCTION = 'insert prime playlist';
+    let errorShort = '';
+    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+      errorShort = 'invalid topic';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${errorShort}` });
+      node.error(`${SONOSFUNCTION} - ${errorShort}`);
+      return;
+    }
+
+    const uri = msg.topic;
+    const newUri = String(uri).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+    const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1);
+    // TODOD does that work everywhere
+    const region = 51463;
+    const title = 'my title';
+    const metadata = `
+      <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
+      <item id="${parsed[1]}" restricted="true">
+      <dc:title>${title}</dc:title>
+      <upnp:class>object.container.playlistContainer</upnp:class>
+      <desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON${region}_X_#Svc${region}-0-Token</desc>
+      </item>
+      </DIDL-Lite>`;
+    sonosPlayer.queue({ uri, metadata }).then(result => {
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${SONOSFUNCTION}` });
+      node.debug(`ok:${SONOSFUNCTION}`);
       node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';

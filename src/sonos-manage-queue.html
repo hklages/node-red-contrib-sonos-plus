@@ -9,15 +9,6 @@ RED.nodes.registerType('sonos-manage-queue', {
       value: '',
       type: 'sonos-config'
     },
-    songuri: {
-      value: ''
-    },
-    position: {
-      value: ''
-    },
-    positioninqueue: {
-      value: ''
-    },
     name: {
       value: ''
     }
@@ -29,22 +20,14 @@ RED.nodes.registerType('sonos-manage-queue', {
   label: function () {
     return this.name || 'Manage Queue';
   },
-  paletteLabel: 'Mng Queue',
-
-  // TODO check necessary
-  oneditprepare: function () {
-    $('#node-input-position').change(function() {
-      var value = $('#node-input-position').val()
-      $('.form-row.toggle').hide()
-      $('.form-row.' + value).show()
-    });
-  }
+  paletteLabel: 'Mng Queue'
 });
 </script>
 
 <!-- Setting design and inputs for node -->
 <script type="text/x-red" data-template-name="sonos-manage-queue">
-	<div class="form-row">
+
+  <div class="form-row">
         <label for="node-input-confignode"> Config Node</label>
         <input type="text" id="node-input-confignode">
   </div>
@@ -53,6 +36,7 @@ RED.nodes.registerType('sonos-manage-queue', {
       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
       <input type="text" id="node-input-name" placeholder="This Node Name">
   </div>
+
 </script>
 
 
@@ -104,7 +88,7 @@ RED.nodes.registerType('sonos-manage-queue', {
   <br/> • <i>activate_queue</i> Starts playing songs from queue
   <br/> • <i>insert_uri</i> Inserts a song or a complete playlist into queue
   <br/> • <i>play_song</i> Plays a specific song in queue.
-  <br/> • <i>flush</i> Erases the queue and stops playing!
+  <br/> • <i>flush_queue</i> Erases the queue and stops playing!
   <br/> • <i>get_queue</i> Outputs the current queue as output
   <br/> • <i>get_sonos_playlists</i> Outputs an array of all Sonos playlists
   <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos items
