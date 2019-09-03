@@ -45,13 +45,12 @@ module.exports = function (RED) {
 
   // -------------------------------------------------------------------------
 
+  /**  Validate sonos player and input message then dispatch further.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} ipaddress IP address of sonos player
+  */
   function handleInputMsg (node, msg, ipaddress) {
-    /**  Validate sonos player and input message then dispatch
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {string} ipaddress IP address of sonos player
-    */
-
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -67,8 +66,7 @@ module.exports = function (RED) {
       node.error('validate payload - invalid payload. Details: ' + JSON.stringify(msg.payload));
       return;
     }
-    var command = msg.payload;
-    command = '' + command;// convert to string
+    let command = String(msg.payload);
     command = command.toLowerCase();
 
     // dispatch
@@ -138,16 +136,16 @@ module.exports = function (RED) {
   }
 
   function insertUri (node, msg, sonosPlayer, uri) {
-    const SONOSFUNCTION = 'insert uri';
+    const sonosFunction = 'insert uri';
     let errorShort = '';
     sonosPlayer.queue(uri).then(response => {
-      node.status({ fill: 'green', shape: 'dot', text: `ok:${SONOSFUNCTION}` });
-      node.debug(`ok:${SONOSFUNCTION}`);
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
       node.send(msg);
     }).catch(err => {
       errorShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${errorShort}` });
-      node.error(`${SONOSFUNCTION} - ${errorShort} Details: ` + JSON.stringify(err));
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+      node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
 
@@ -175,7 +173,7 @@ module.exports = function (RED) {
         // message albumArtURL
         songsArray.forEach(function (songsArray) {
           if (songsArray.albumArtURL !== undefined && songsArray.albumArtURL !== null) {
-            var port = 1400;
+            const port = 1400;
             songsArray.albumArtURI = songsArray.albumArtURL;
             songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
           }
@@ -195,16 +193,16 @@ module.exports = function (RED) {
   }
 
   function getSonosPlaylists (node, msg, sonosPlayer) {
-    var sonosFunction = 'get SONOS playlists';
-    var msgShort = '';
+    const sonosFunction = 'get SONOS playlists';
+    let msgShort = '';
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: 50 }).then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
         node.error(`${sonosFunction} - ${msgShort}`);
         return;
       }
-      var playlistArray;
-      var numberOfPlaylists;
+      let playlistArray;
+      let numberOfPlaylists;
       if (response === false) {
         // no playlist
         numberOfPlaylists = 0;
@@ -217,7 +215,7 @@ module.exports = function (RED) {
         // message albumArtURL
         playlistArray.forEach(function (songsArray) {
           if (songsArray.albumArtURL !== undefined && songsArray.albumArtURL !== null) {
-            var port = 1400;
+            const port = 1400;
             songsArray.albumArtURI = songsArray.albumArtURL;
             songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
           }
@@ -237,14 +235,13 @@ module.exports = function (RED) {
     });
   }
 
+  /**  Get list of My Sonos Amazon Playlist (only standards).
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * change msg.payload to current array of My Sonos Amazon Prime playlist
+  */
   function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
-    /**  Get list of My Sonos Amazon Playlist (only standards)
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * change msg.payload to current array of My Sonos Amazon Prime playlist
-    */
-
     // get list of My Sonos items
     const SONOSFUNCTION = 'get amazon prime playlist';
     let errorShort = 'invalid or empty My Sonos list received';
@@ -283,6 +280,7 @@ module.exports = function (RED) {
       node.error(`${SONOSFUNCTION} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
+
   function insertPrimePlaylist (node, msg, sonosPlayer) {
     const SONOSFUNCTION = 'insert prime playlist';
     let errorShort = '';

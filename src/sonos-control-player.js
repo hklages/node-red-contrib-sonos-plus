@@ -45,13 +45,12 @@ module.exports = function (RED) {
 
   // ------------------------------------------------------------------------------------
 
+  /**  Validate sonos player and input message then dispatch further.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} ipaddress IP address of sonos player
+  */
   function handleInputMsg (node, msg, ipaddress) {
-    /**  Validate sonos player and input message then dispatch
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {string} ipaddress IP address of sonos player
-    */
-
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -68,38 +67,23 @@ module.exports = function (RED) {
       return;
     }
 
-    var command = msg.payload;
-    command = '' + command;// convert to string
+    let command = String(msg.payload);
     command = command.toLowerCase();
-    var splitCommand;
+    let commandWithParam = {};
 
     // dispatch
-    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group'];
+    const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group', 'activate_avtransport'];
     if (commandList.indexOf(command) > -1) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
-      splitCommand = { cmd: 'volume_increase', parameter: parseInt(command) };
-      handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
+      commandWithParam = { cmd: 'volume_increase', parameter: parseInt(command) };
+      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else if (command.startsWith('-') && !isNaN(parseInt(command)) && parseInt(command) < 0 && parseInt(command) >= -30) {
-      splitCommand = { cmd: 'volume_decrease', parameter: parseInt(command) };
-      handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
+      commandWithParam = { cmd: 'volume_decrease', parameter: parseInt(command) };
+      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
-      splitCommand = { cmd: 'volume_set', parameter: parseInt(command) };
-      handleVolumeCommand(node, msg, sonosPlayer, splitCommand);
-    } else if (command === 'activate_avtransport') {
-      // TODO error handling topic
-      const sonosFunction = command;
-      let errorShort = '';
-      sonosPlayer.setAVTransportURI(msg.topic).then(response => {
-        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-        node.debug(`ok:${sonosFunction}`);
-        // send message
-        node.send(msg);
-      }).catch(err => {
-        errorShort = 'caught error from seAVTransportURI';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-        node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
-      });
+      commandWithParam = { cmd: 'volume_set', parameter: parseInt(command) };
+      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
@@ -108,16 +92,15 @@ module.exports = function (RED) {
 
   // ------------------------------------------------------------------------------------
 
+  /**  Handle basic commands to control sonos player.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @param  {string} cmd command - no parameter
+  */
   function handleCommandBasic (node, msg, sonosPlayer, cmd) {
-    /**  Initiate basic (no parameter) commands to control sonos player
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * @param  {string} cmd command - no parameter
-    */
-
-    var sonosFunction = cmd;
-    var errorShort;
+    const sonosFunction = cmd;
+    let errorShort;
     switch (cmd) {
       case 'play':
         sonosPlayer.play().then(response => {
@@ -277,38 +260,56 @@ module.exports = function (RED) {
         if (msg.topic === null || msg.topic === undefined) {
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - no valid topic` });
           node.error(`${sonosFunction} - no valid topic`);
-        } else {
-          var deviceToJoing = msg.topic;
-          sonosPlayer.joinGroup(deviceToJoing).then(response => {
-            node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-            node.debug(`ok:${sonosFunction}`);
-          }).catch(err => {
-            if (err.code === 'ECONNREFUSED') {
-              errorShort = 'can not connect to player';
-              node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-              node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
-            } else {
-              errorShort = 'error caught from response';
-              node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-              node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
-            }
-          });
+          return;
         }
+        var deviceToJoing = msg.topic;
+        sonosPlayer.joinGroup(deviceToJoing).then(response => {
+          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+          node.debug(`ok:${sonosFunction}`);
+        }).catch(err => {
+          if (err.code === 'ECONNREFUSED') {
+            errorShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+          } else {
+            errorShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+          }
+        });
+        break;
+
+      case 'activate_avtransport':
+        if (msg.topic === null || msg.topic === undefined) {
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - no valid topic` });
+          node.error(`${sonosFunction} - no valid topic`);
+          return;
+        }
+        errorShort = '';
+        sonosPlayer.setAVTransportURI(msg.topic).then(response => {
+          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+          node.debug(`ok:${sonosFunction}`);
+          // send message
+          node.send(msg);
+        }).catch(err => {
+          errorShort = 'caught error from seAVTransportURI';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
+          node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+        });
         break;
     }
   }
 
+  /**  Initiate volume commands to control sonos player.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @param  {object} commandObject command - cmd and parameter !! Valid number
+  */
   function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
-    /**  Initiate volume commands with one parameter to control sonos player
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * @param  {object} commandObject command - cmd and parameter !! Valid number
-    */
-
-    var volumeValue = parseInt(commandObject.parameter);
+    const volumeValue = parseInt(commandObject.parameter);
     const sonosFunction = commandObject.cmd;
-    var errorShort;
+    let errorShort;
     switch (commandObject.cmd) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(response => {

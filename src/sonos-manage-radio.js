@@ -45,13 +45,12 @@ module.exports = function (RED) {
 
   // ------------------------------------------------------------------------------------
 
-  function handleInputMsg (node, msg, ipaddress) {
-  /**  Validate sonos playeer and input message and dispatch
+  /**  Validate sonos player and input message then dispatch further.
   * @param  {Object} node current node
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
-
+  function handleInputMsg (node, msg, ipaddress) {
     // get sonos player object
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -69,48 +68,49 @@ module.exports = function (RED) {
       return;
     }
 
-    // dispatch
-    var splitCommand = {
-      cmd: ('' + msg.payload).toLowerCase(),
-      parameter: ('' + msg.topic)
+    // dispatch (dont add msg.topic because may not exist and is not checked)
+    const commandWithParam = {
+      cmd: (String(msg.payload)).toLowerCase(),
+      parameter: ''
     };
-    if (splitCommand.cmd === 'play_mysonos') {
+    if (commandWithParam.cmd === 'play_mysonos') {
       if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
         node.status({ fill: 'red', shape: 'dot', text: 'error:validate mysonos - invalid topic' });
         node.error('validate mysonos - invalid topic. Details: msg.topic ->' + JSON.stringify(msg.topic));
         return;
       }
-      playMySonos(node, msg, sonosPlayer, splitCommand);
-    } else if (splitCommand.cmd === 'play_tunein') {
+      commandWithParam.parameter = String(msg.topic);
+      playMySonos(node, msg, sonosPlayer, commandWithParam);
+    } else if (commandWithParam.cmd === 'play_tunein') {
       if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
         node.status({ fill: 'red', shape: 'dot', text: 'error:validate tunein - invalid topic' });
-        node.error('validate tunein - invalid topic. Details: msg.topic ->' + JSON.stringify(msg.topic));
+        node.error('validate tunein - invalid topic.');
         return;
       }
-      playTuneIn(node, msg, sonosPlayer, splitCommand);
-    } else if (splitCommand.cmd === 'get_mysonos') {
+      commandWithParam.parameter = String(msg.topic);
+      playTuneIn(node, msg, sonosPlayer, commandWithParam);
+    } else if (commandWithParam.cmd === 'get_mysonos') {
       getMySonosStations(node, msg, sonosPlayer);
-    } else if (splitCommand.cmd === 'get_mysonosall') {
+    } else if (commandWithParam.cmd === 'get_mysonosall') {
       getMySonosAll(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
-      node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(splitCommand));
+      node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(commandWithParam));
     }
   }
 
   // -----------------------------------------------------------------------------
 
+  /**  Activate TuneIn radio station (via simple TuneIn Radio id).
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @param  {object} commandObject command with function and parameter
+  */
   function playTuneIn (node, msg, sonosPlayer, commandObject) {
-    /**  Activate TuneIn radio station (via simple TuneIn Radio id)
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * @param  {object} commandObject command with function and parameter
-    */
-
-    var reg = new RegExp('^[s][0-9]+$'); // example s11111
-    var sonosFunction = 'play tunein';
-    var errorShort = 'invalid response received';
+    const reg = new RegExp('^[s][0-9]+$'); // example s11111
+    const sonosFunction = 'play tunein';
+    let errorShort = 'invalid response received';
     if (reg.test(commandObject.parameter)) {
       sonosPlayer.playTuneinRadio(commandObject.parameter).then(response => {
         if (response === null || response === undefined) {
@@ -134,18 +134,17 @@ module.exports = function (RED) {
     }
   }
 
+  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime) and start playing.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @param  {object} commandObject command with function and parameter
+  * change msg.payload to current station title if no error occures
+  */
   function playMySonos (node, msg, sonosPlayer, commandObject) {
-    /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime) and start playing
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * @param  {object} commandObject command with function and parameter
-    * change msg.payload to current station title if no error occures
-    */
-
     // get list of My Sonos stations
-    var sonosFunction = 'play mysonos';
-    var errorShort = 'invalid favorite list received';
+    const sonosFunction = 'play mysonos';
+    let errorShort = 'invalid favorite list received';
     sonosPlayer.getFavorites().then(response => {
       if (!(response.returned !== null && response.returned !== undefined &&
         response.returned && parseInt(response.returned) > 0)) {
@@ -230,14 +229,13 @@ module.exports = function (RED) {
     });
   }
 
+  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime).
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * change msg.payload to current array of my Sonos radio stations
+  */
   function getMySonosStations (node, msg, sonosPlayer) {
-    /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime)
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * change msg.payload to current array of my Sonos radio stations
-    */
-
     // get list of My Sonos stations
     var sonosFunction = 'get my sonos stations';
     var errorShort = 'invalid favorite list received';
@@ -284,14 +282,13 @@ module.exports = function (RED) {
     });
   }
 
+  /**  Get list of My Sonos all items.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * change msg.payload to current array of my Sonos radio stations
+  */
   function getMySonosAll (node, msg, sonosPlayer) {
-    /**  Get list of My Sonos all items
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {object} sonosPlayer Sonos Player
-    * change msg.payload to current array of my Sonos radio stations
-    */
-
     // get list of My Sonos items
     var sonosFunction = 'get my sonos all';
     var errorShort = 'invalid my sonos list received';

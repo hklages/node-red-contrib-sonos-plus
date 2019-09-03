@@ -43,13 +43,12 @@ module.exports = function (RED) {
     }
   }
 
+  /**  Validate sonos player and input message then dispatch further.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} ipaddress IP address of sonos player
+  */
   function handleInputMsg (node, msg, ipaddress) {
-    /**  Validate sonos player and input message then dispatch
-    * @param  {Object} node current node
-    * @param  {object} msg incoming message
-    * @param  {string} ipaddress IP address of sonos player
-    */
-
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -66,8 +65,7 @@ module.exports = function (RED) {
       return;
     }
 
-    var command = msg.payload;
-    command = '' + command;// convert to string
+    let command = String(msg.payload);
     command = command.toLowerCase();
 
     // dispatch
@@ -91,18 +89,17 @@ module.exports = function (RED) {
 
   // ------------------------------------------------------------------------------------------
 
+  /**  Validate sonos player and input message then get state and all other data.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer SONOS player object
+  * @param  {Boolean} chain start request for other status information (chaining)
+  * changes msg.state
+  */
   function getSonosCurrentState (node, msg, sonosPlayer, chain) {
-    /**  Validate sonos player and input message then get state and all other data.
-    * @param  {Object} node current node
-    * @param  {Object} msg incoming message
-    * @param  {Object} sonosPlayer SONOS player object
-    * @param  {Boolean} chain start request for other status information (chaining)
-    * changes msg.state
-    */
-
     // execute first api to get state
-    var sonosFunction = 'player state';
-    var errorShort = 'invalid player state received';
+    const sonosFunction = 'player state';
+    let errorShort = 'invalid player state received';
     sonosPlayer.getCurrentState().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -125,16 +122,16 @@ module.exports = function (RED) {
     });
   }
 
+  /**  get sonos volume for selected player and continue in chain.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer SONOS player object
+  * @param  {Boolean} chain start request for other status information (chaining)
+  * changes msg.volume, msg.normalized_volume
+  */
   function getSonosVolume (node, msg, sonosPlayer, chain) {
-    /**  get sonos volume for selected player and continue in chain
-    * @param  {Object} node current node
-    * @param  {Object} msg incoming message
-    * @param  {Object} sonosPlayer SONOS player object
-    * @param  {Boolean} chain start request for other status information (chaining)
-    * changes msg.volume, msg.normalized_volume
-    */
-    var sonosFunction = 'volume';
-    var errorShort = 'invalid volume received';
+    const sonosFunction = 'volume';
+    let errorShort = 'invalid volume received';
     sonosPlayer.getVolume().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -161,8 +158,8 @@ module.exports = function (RED) {
 
   function getSonosMuted (node, msg, sonosPlayer, chain) {
     //   changes msg.muted
-    var sonosFunction = 'muted';
-    var errorShort = 'invalid muted received';
+    const sonosFunction = 'muted';
+    let errorShort = 'invalid muted received';
     sonosPlayer.getMuted().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -182,8 +179,8 @@ module.exports = function (RED) {
 
   function getSonosName (node, msg, sonosPlayer, chain) {
     //   changes msg.sonosName
-    var sonosFunction = 'SONOS name';
-    var errorShort = 'invalid SONOS name received';
+    const sonosFunction = 'SONOS name';
+    let errorShort = 'invalid SONOS name received';
     sonosPlayer.getName().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -203,8 +200,8 @@ module.exports = function (RED) {
 
   function getSonosGroupAttributes (node, msg, sonosPlayer, chain) {
     //   changes msg.sonosGroup
-    var sonosFunction = 'group attributes';
-    var errorShort = 'invalid group attributes received';
+    const sonosFunction = 'group attributes';
+    let errorShort = 'invalid group attributes received';
     sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -229,11 +226,11 @@ module.exports = function (RED) {
   function getSonosCurrentSong (node, msg, sonosPlayer, chain) {
     // finally changes  msg.title (string), msg.artist (string), msg.song (obj) msg.media (obj), msg.position (obj)
     // first step artist, title
-    var artist = 'unknown';
-    var title = 'unknown';
-    var albumArtURL = 'unknown';
-    var sonosFunction = 'current song';
-    var errorShort = 'invalid current song received';
+    let artist = 'unknown';
+    let title = 'unknown';
+    let albumArtURL = 'unknown';
+    const sonosFunction = 'current song';
+    let errorShort = 'invalid current song received';
     sonosPlayer.currentTrack().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -288,15 +285,15 @@ module.exports = function (RED) {
 
   function getSonosMediaInfo (node, msg, sonosPlayer, chain) {
     //   changes msg.media
-    var sonosFunction = 'media info';
-    var errorShort = 'invalid media info received';
+    const sonosFunction = 'media info';
+    let errorShort = 'invalid media info received';
     sonosPlayer.avTransportService().GetMediaInfo().then(response => {
       if (response === null || response === undefined) {
         node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
         node.error(`${sonosFunction} - ${errorShort} Details: respose ->` + JSON.stringify(response));
         return;
       }
-      var uri = response.CurrentURI;
+      const uri = response.CurrentURI;
       if (uri.startsWith('x-rincon-queue')) {
         response.queue_active = true;
       } else {
@@ -321,8 +318,8 @@ module.exports = function (RED) {
 
   function getSonosPositionInfo (node, msg, sonosPlayer, chain) {
     //   changes msg.position
-    var sonosFunction = 'position info';
-    var errorShort = 'invalid position info received';
+    const sonosFunction = 'position info';
+    let errorShort = 'invalid position info received';
     sonosPlayer.avTransportService().GetPositionInfo().then(response => {
       node.debug(JSON.stringify(response));
       if (response === null || response === undefined) {
