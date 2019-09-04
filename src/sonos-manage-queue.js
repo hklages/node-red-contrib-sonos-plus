@@ -78,6 +78,8 @@ module.exports = function (RED) {
     } else if (command === 'insert_uri') {
       // TODO check queue activated
       insertUri(node, msg, sonosPlayer, msg.topic);
+    } else if (command === 'remove_song') {
+      removeSongFromQueue(node, msg, sonosPlayer);
     } else if (command === 'flush_queue') {
       sonosPlayer.flush().then(result => {
         node.status({ fill: 'green', shape: 'dot', text: 'OK- flush queue' });
@@ -315,5 +317,77 @@ module.exports = function (RED) {
       node.error(`${SONOSFUNCTION} - ${errorShort} Details: ` + JSON.stringify(err));
     });
   }
+
+  function removeSongFromQueue (node, msg, sonosPlayer) {
+    const sonosFunction = 'remove song from queue';
+    let msgShort = '';
+    sonosPlayer.getQueue().then(response => {
+      if (response === null || response === undefined) {
+        msgShort = 'invalid response received';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort}`);
+        return;
+      }
+      let queueSize;
+      if (response === false) {
+        // queue is empty
+        queueSize = 0;
+        msgShort = 'queue is empty!';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort}`);
+        return;
+      }
+      queueSize = parseInt(response.returned);
+      node.debug(`queue contains ${queueSize} songs`);
+
+      if (msg.topic === null || msg.topic === undefined) {
+        msgShort = 'invalid topic';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort}`);
+        return;
+      }
+      let position = String(msg.topic).trim();
+      if (position === 'last') {
+        position = queueSize;
+      } else if (position === 'first') {
+        position = 1;
+      } else {
+        if (isNaN(position)) {
+          msgShort = 'topic - invalid number';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort}`);
+          return;
+        }
+        if (position < 1 || position > queueSize) {
+          msgShort = 'topic - number out of range';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort}`);
+          return;
+        }
+      }
+      // position is in range 1 ... queueSize
+
+      sonosPlayer.removeTracksFromQueue(position, 1).then(response => {
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
+        node.send(msg);
+      }).catch(err => {
+        if (err.code === 'ECONNREFUSED') {
+          msgShort = 'can not connect to player';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
+        } else {
+          msgShort = 'error caught from response';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
+        }
+      });
+    }).catch(err => {
+      msgShort = 'error caught from response';
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
+    });
+  }
+
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);
 };

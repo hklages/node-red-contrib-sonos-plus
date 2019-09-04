@@ -3,7 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [0.3.8] - to be published 2019-09-10
 ### Changed
-- subdirectory src
+- code subdirectory to src
+
+### Added
+- Control player node: activate_avtransport - to activate a specific stream (e.g. line in)
+- Get status node: get_properties: list all player properties (ip, mac, deviceType, ...)
+- Get status node: get_state, get_volume, get_muted, get_name: output to payload
+- Manage queue node: remove_song: removes a song from the queue
 
 ## [0.3.7] - 2019-09-03
 ### Added

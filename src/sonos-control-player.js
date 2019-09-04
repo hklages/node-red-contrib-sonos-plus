@@ -100,7 +100,7 @@ module.exports = function (RED) {
   */
   function handleCommandBasic (node, msg, sonosPlayer, cmd) {
     const sonosFunction = cmd;
-    let errorShort;
+    let msgShort;
     switch (cmd) {
       case 'play':
         sonosPlayer.play().then(response => {
@@ -108,13 +108,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -125,13 +125,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -142,13 +142,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -159,13 +159,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -176,13 +176,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -196,9 +196,9 @@ module.exports = function (RED) {
             node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
             node.error(`${sonosFunction} - can not connect to player`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -210,13 +210,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response - maybe next song not available';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response - maybe next song not available';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -228,13 +228,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response - maybe next song not available';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response - maybe next song not available';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -245,13 +245,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -268,33 +268,40 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            errorShort = 'can not connect to player';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: Verify IP address of player.`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
 
       case 'activate_avtransport':
         if (msg.topic === null || msg.topic === undefined) {
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - no valid topic` });
-          node.error(`${sonosFunction} - no valid topic`);
+          msgShort = 'no valid topic';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} -  ${msgShort}` });
+          node.error(`${sonosFunction} -  ${msgShort}`);
           return;
         }
-        errorShort = '';
+        msgShort = '';
         sonosPlayer.setAVTransportURI(msg.topic).then(response => {
           node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
           node.debug(`ok:${sonosFunction}`);
           // send message
           node.send(msg);
         }).catch(err => {
-          errorShort = 'caught error from seAVTransportURI';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-          node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+          if (err.code === 'ECONNREFUSED') {
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
+          } else {
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
+          }
         });
         break;
     }
@@ -309,7 +316,7 @@ module.exports = function (RED) {
   function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
     const volumeValue = parseInt(commandObject.parameter);
     const sonosFunction = commandObject.cmd;
-    let errorShort;
+    let msgShort;
     switch (commandObject.cmd) {
       case 'volume_set':
         sonosPlayer.setVolume(volumeValue).then(response => {
@@ -317,12 +324,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction} ${volumeValue}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
-            node.error(`${sonosFunction} - can not connect to player`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
@@ -334,12 +342,13 @@ module.exports = function (RED) {
           node.debug(`ok:${sonosFunction}`);
         }).catch(err => {
           if (err.code === 'ECONNREFUSED') {
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - can not connect to player` });
-            node.error(`${sonosFunction} - can not connect to player`);
+            msgShort = 'can not connect to player';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
           } else {
-            errorShort = 'error caught from response';
-            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
-            node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(err));
+            msgShort = 'error caught from response';
+            node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+            node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
           }
         });
         break;
