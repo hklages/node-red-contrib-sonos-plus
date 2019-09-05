@@ -39,8 +39,8 @@ The functions are grouped into 5 nodes.
 - _Manage queue_ node: Performs basic queue commands (e. g. activate queue and start playing, get queue information)
 - _Manage radio_ node: Performs radio commands (e. g activate a TuneIn radio, Amazon Prime radio station)
 
-## Usage, Recommendations, more information see the Wiki
-[Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
+## Usage, Recommendations, ...
+For more information - also examples - see the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
 ## Credentials
 

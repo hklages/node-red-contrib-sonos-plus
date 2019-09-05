@@ -84,6 +84,8 @@ module.exports = function (RED) {
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
       commandWithParam = { cmd: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+    } else if (command === 'LAB_play_notification') {
+      handleLabPlayNotification(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
@@ -353,6 +355,44 @@ module.exports = function (RED) {
         });
         break;
     }
+  }
+
+  /**  LAB: For testing only : Play Notification.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  */
+  function handleLabPlayNotification (node, msg, sonosPlayer) {
+    // Check msg.topic.
+    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+      node.status({ fill: 'red', shape: 'dot', text: 'error: invalid topic.' });
+      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
+      return;
+    }
+    const uri = String(msg.topic).trim();
+    let msgShort;
+    const sonosFunction = 'play notificaton';
+    sonosPlayer.adjustVolume(
+      {
+        uri: uri,
+        onlyWhenPlaying: false, // It will query the state anyway, don't play the notification if the speaker is currently off.
+        volume: 15 // Change the volume for the notification, and revert back afterwards.
+      }).then(response => {
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
+      // It starts (and stops) a listener in the background so you have to exit the process explicitly.
+      process.exit();
+    }).catch(err => {
+      if (err.code === 'ECONNREFUSED') {
+        msgShort = 'can not connect to player';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort} Details: Verify IP address of player.`);
+      } else {
+        msgShort = 'error caught from response';
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
+      }
+    });
   }
   RED.nodes.registerType('sonos-control-player', SonosControlPlayerNode);
 };
