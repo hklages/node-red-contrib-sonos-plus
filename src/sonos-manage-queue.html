@@ -85,11 +85,14 @@ RED.nodes.registerType('sonos-manage-queue', {
   <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter; currently only used for command <i>"play_song"</i>.</p>
 
   Accepted values for <code>msg.payload</code> are:
-  <br/> • <i>activate_queue</i> Starts playing songs from queue
+  <br/> • <i>activate_queue</i> Starts playing songs from queue (checks is empty)
   <br/> • <i>insert_uri</i> Inserts a song or a complete playlist into queue
-  <br/> • <i>play_song</i> Plays a specific song in queue.
+  <br/> • <i>play_song</i> Plays a specific song in queue. (checks is valid position)
+  <br/> • <i>remove_song</i> Removes a specific song from queue. (checks is valid position)
   <br/> • <i>flush_queue</i> Erases the queue and stops playing!
   <br/> • <i>get_queue</i> Outputs the current queue as output
   <br/> • <i>get_sonos_playlists</i> Outputs an array of all Sonos playlists
-  <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos items
+  <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos prime playlists
+
+
 </script>

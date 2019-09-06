@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 - code subdirectory to src
 - play_song now verifies position but still does not check queue activated
 - activate queue now checks whether queue is empty
+- node documentation update, readme update, changelog update
 
 ### Added
 - Control player node: activate_avtransport - to activate a specific stream (e.g. line in)

@@ -42,7 +42,7 @@ RED.nodes.registerType('sonos-get-status', {
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-get-status">
-	<p>Outputs different kind of SONOS player status on incoming message.</p>
+	<p>Outputs different kind of SONOS player status. The commands <i>get basics/songmedia</i> are aggregations.</p>
 
 	<h3>Input (required)</h3>
 
@@ -55,6 +55,7 @@ RED.nodes.registerType('sonos-get-status', {
 
 	<h3>Outputs</h3>
 
+  The commands <i>get_state/volume/muted/name/properties</i> outputs to <code>msg.payload</code>. The other commands use the properties as stated beneath.
   <dl class="message-properties">
 
       <dt>state
@@ -118,5 +119,6 @@ RED.nodes.registerType('sonos-get-status', {
   <br/> • <i>get_songinfo</i> Outputs song info
   <br/> • <i>get_mediainfo</i> Outputs media info
   <br/> • <i>get_positioninfo</i> Outputs position info
+  <br/> • <i>get_properties</i> Outputs player properties
 
 </script>

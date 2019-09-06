@@ -252,6 +252,7 @@ module.exports = function (RED) {
   }
 
   function insertPrimePlaylist (node, msg, sonosPlayer) {
+    // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
     const SONOSFUNCTION = 'insert prime playlist';
     let msgShort = '';
     if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
@@ -264,9 +265,9 @@ module.exports = function (RED) {
     const uri = msg.topic;
     const newUri = String(uri).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
     const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1);
-    // TODOD does that work everywhere
+    // TODO Region? Does that work everywhere?
     const region = 51463;
-    const title = 'my title';
+    const title = 'Amazon Prime Playlist from My Sonos';
     const metadata = `
       <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
       <item id="${parsed[1]}" restricted="true">

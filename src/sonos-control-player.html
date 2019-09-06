@@ -36,7 +36,7 @@ RED.nodes.registerType('sonos-control-player', {
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="This Node Name">
   </div>
-  
+
 </script>
 
 
@@ -54,20 +54,21 @@ RED.nodes.registerType('sonos-control-player', {
       <dt>topic
           <span class="property-type">string</span>
       </dt>
-      <dd>Command parameter for join_group.</dd>
+      <dd>Command parameter for <i>join_group, activate_avtransport</i></dd>
   </dl>
 
   <h3>Details</h3>
   <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as command parameter and currently only being used in combination with the <i>"join_group"</i> command.</p>
 
   Accepted values for <code>msg.payload</code> are:
-    <br/> • <i>play/stop/pause/mute/ummute</i>
-    <br/> • <i>toggleplayback</i>: toggles play/stop
+    <br/> • <i>play/stop/pause/mute/ummute</i> Obvious
+    <br/> • <i>toggleplayback</i> Toggles play/stop
     <br/> • <i>number</i>: 0 .. 100 Set volume
     <br/> • <i>+N</i>: +1 .. +30 Increase volume
     <br/> • <i>-N</i>: -30 .. -1 Decrease volume
     <br/> • <i>leave_group</i> Leave group
     <br/> • <i>join_group</i> Join group. Group name must be specified in <code>msg.topic</code>.
+    <br/> • <i>activate_avtransport</i> Activates a specific stream - e.g. line in. URI must be specified in <code>msg.topic</code>.
 
 <br/><br/>The commands <i>next_song/previous_song</i> don't work with TuneIn radio stations. Amazon Prime radion stations support "next_song" but not "previous_song".
 </script>
