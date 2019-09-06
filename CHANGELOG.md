@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.0] - to be published 2019-09-10
+## [0.4.0] - 2019-09-06
 ### Changed
 - code subdirectory to src
 - play_song now verifies position but still does not check queue activated

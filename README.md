@@ -9,7 +9,7 @@ A set of NodeRed nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-09-02 a few new commands - get_songinfo, ....
+2019-09-06 activate line in (see Example-complex), get_properties, remove_song and more
 
 ## Installation
 

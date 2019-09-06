@@ -75,6 +75,8 @@ module.exports = function (RED) {
     const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group', 'activate_avtransport'];
     if (commandList.indexOf(command) > -1) {
       handleCommandBasic(node, msg, sonosPlayer, command);
+    } else if (command === 'lab_play_notification') {
+      handleLabPlayNotification(node, msg, sonosPlayer);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
       commandWithParam = { cmd: 'volume_increase', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
@@ -84,8 +86,6 @@ module.exports = function (RED) {
     } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
       commandWithParam = { cmd: 'volume_set', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
-    } else if (command === 'LAB_play_notification') {
-      handleLabPlayNotification(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
@@ -372,16 +372,14 @@ module.exports = function (RED) {
     const uri = String(msg.topic).trim();
     let msgShort;
     const sonosFunction = 'play notificaton';
-    sonosPlayer.adjustVolume(
+    sonosPlayer.playNotification(
       {
         uri: uri,
         onlyWhenPlaying: false, // It will query the state anyway, don't play the notification if the speaker is currently off.
-        volume: 15 // Change the volume for the notification, and revert back afterwards.
+        volume: 40 // Change the volume for the notification, and revert back afterwards.
       }).then(response => {
       node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
       node.debug(`ok:${sonosFunction}`);
-      // It starts (and stops) a listener in the background so you have to exit the process explicitly.
-      process.exit();
     }).catch(err => {
       if (err.code === 'ECONNREFUSED') {
         msgShort = 'can not connect to player';
