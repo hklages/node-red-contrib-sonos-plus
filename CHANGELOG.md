@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - scheduled for 2019-09-12
+### Changed
+- if title, artist could not be identified now only warning and no output (instead of error)
+
+### Added
+- more examples in Wiki
+- Manage queue node: insert_musiclibrary_playlist, insertSonosPlaylist, getMusicLibraryPlaylists
+
 ## [0.4.0] - 2019-09-06
 ### Changed
 - code subdirectory to src

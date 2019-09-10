@@ -425,9 +425,9 @@ module.exports = function (RED) {
           artist = response.title.split(' - ')[0];
           title = response.title.split(' - ')[1];
         } else {
-          msgShort = 'invalid combination artist title received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
+          msgShort = 'warning: invalid combination artist title received';
+          node.status({ fill: 'blue', shape: 'dot', text: `warn:${sonosFunction} - ${msgShort}` });
+          node.warn(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
           return;
         }
       }

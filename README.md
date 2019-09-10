@@ -9,7 +9,7 @@ A set of NodeRed nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-09-06 activate line in (see Example-complex), get_properties, remove_song and more
+
 
 ## Installation
 
@@ -21,14 +21,12 @@ Install directly from your NodeRED's setting pallete.
 - Comfortable selection of My SONOS radio stations from TuneIn, Amazon Prime by search string.
 - Supports TuneIn radio id to select and play radio stations
 - Provides many kinds of current song information: artist, title, media information and radio station name
-- Supports Sonos playlists: Can be inserted into queue
+- Sonos playlists and Amazon Prime playlists ready to play in queue
 - Uses the newest node-sonos api (2019-09-02T0722)
 
 ## Restrictions
 
 > When playing a radio station the commands next_song, previous_song may cause an error message as many stations do not support them.
-
-> Amazon, ... playlist can not yet be activated directly.
 
 ## Nodes
 
@@ -39,7 +37,7 @@ The functions are grouped into 5 nodes.
 - _Manage queue_ node: Performs basic queue commands (e. g. activate queue and start playing, get queue information)
 - _Manage radio_ node: Performs radio commands (e. g activate a TuneIn radio, Amazon Prime radio station)
 
-## Usage, Recommendations, ...
+## Usage ...
 For more information - also examples - see the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
 ## Credentials
