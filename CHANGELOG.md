@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - more examples in Wiki
-- Manage queue node: insert_musiclibrary_playlist, insertSonosPlaylist, getMusicLibraryPlaylists
+- Manage queue node: insert_musiclibrary_playlist, insertSonosPlaylist, insert_prime_playlist, getMusicLibraryPlaylists
 
 ## [0.4.0] - 2019-09-06
 ### Changed

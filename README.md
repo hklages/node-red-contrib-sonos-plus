@@ -10,7 +10,7 @@ A set of NodeRed nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-09-12 Insert playlist by name from MusicLibrary and Sonos playlists into queue
+2019-09-12 Insert playlist by name from Amazon Prime, MusicLibrary and Sonos playlists into queue
 
 ## Installation
 

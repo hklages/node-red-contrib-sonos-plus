@@ -135,12 +135,12 @@ module.exports = function (RED) {
   */
   function insertPrimePlaylist (node, msg, sonosPlayer) {
     // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
-    const SONOSFUNCTION = 'insert prime playlist';
+    const sonosFunction = 'insert prime playlist';
     let msgShort = '';
     if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
       msgShort = 'invalid topic';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-      node.error(`${SONOSFUNCTION} - ${msgShort}`);
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+      node.error(`${sonosFunction} - ${msgShort}`);
       return;
     }
 
@@ -159,13 +159,13 @@ module.exports = function (RED) {
       </item>
       </DIDL-Lite>`;
     sonosPlayer.queue({ uri, metadata }).then(result => {
-      node.status({ fill: 'green', shape: 'dot', text: `ok:${SONOSFUNCTION}` });
-      node.debug(`ok:${SONOSFUNCTION}`);
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
       node.send(msg);
     }).catch(err => {
       msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-      node.error(`${SONOSFUNCTION} - ${msgShort} Details: ` + JSON.stringify(err));
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
     });
   }
 
@@ -616,13 +616,13 @@ module.exports = function (RED) {
   */
   function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
     // get list of My Sonos items
-    const SONOSFUNCTION = 'get amazon prime playlist';
+    const sonosFunction = 'get amazon prime playlist';
     let msgShort = 'invalid or empty My Sonos list received';
     sonosPlayer.getFavorites().then(response => {
       if (!(response.returned !== null && response.returned !== undefined &&
           response.returned && parseInt(response.returned) > 0)) {
-        node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-        node.error(`${SONOSFUNCTION} - ${msgShort} Details: response->` + JSON.stringify(response));
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort} Details: response->` + JSON.stringify(response));
         return;
       }
       // filter: Amazon Prime Playlists only
@@ -639,18 +639,18 @@ module.exports = function (RED) {
       }
       if (primePlaylistList.length === 0) {
         msgShort = 'no amazon prime playlist in my sonos';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-        node.error(`${SONOSFUNCTION} - ${msgShort} Details: mysonos->` + JSON.stringify(response.items));
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort} Details: mysonos->` + JSON.stringify(response.items));
         return;
       }
-      node.status({ fill: 'green', shape: 'dot', text: `ok:${SONOSFUNCTION}` });
-      node.debug(`ok:${SONOSFUNCTION}`);
+      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+      node.debug(`ok:${sonosFunction}`);
       msg.payload = primePlaylistList;
       node.send(msg);
     }).catch(err => {
       msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-      node.error(`${SONOSFUNCTION} - ${msgShort} Details: ` + JSON.stringify(err));
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
     });
   }
 
@@ -662,52 +662,71 @@ module.exports = function (RED) {
   * CAUTION limited to 100
   */
   function getMusicLibraryPlaylists (node, msg, sonosPlayer) {
-    const SONOSFUNCTION = 'get music library playlists';
+    const sonosFunction = 'get music library playlists';
     let msgShort;
     sonosPlayer.getMusicLibrary('playlists', { start: 0, total: 100 })
       .then(response => {
         if (!(response.returned !== null && response.returned !== undefined &&
           response.total && parseInt(response.total) > 0)) {
           msgShort = 'invalid or empty response received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-          node.error(`${SONOSFUNCTION} - ${msgShort} Details: response->` + JSON.stringify(response));
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: response->` + JSON.stringify(response));
           return;
         }
         const mlPaylist = response.items;
         if (mlPaylist.length === 0) {
           msgShort = 'no music libary playlist found';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-          node.error(`${SONOSFUNCTION} - ${msgShort} Details: mysonos->` + JSON.stringify(response.items));
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: mysonos->` + JSON.stringify(response.items));
           return;
         }
-        node.status({ fill: 'green', shape: 'dot', text: `ok:${SONOSFUNCTION}` });
-        node.debug(`ok:${SONOSFUNCTION}`);
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
         msg.payload = mlPaylist;
         node.send(msg);
       })
       .catch(err => {
         msgShort = 'error caught from response';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${SONOSFUNCTION} - ${msgShort}` });
-        node.error(`${SONOSFUNCTION} - ${msgShort} Details: ` + JSON.stringify(err));
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
       });
   }
 
   // TODO TEST
   function shuffleQueue (node, msg, sonosPlayer) {
+    const sonosFunction = 'shuffleQueue';
+    let msgShort;
     sonosPlayer.getQueue()
-      .then(queue => queue.items.length)
-      .then(queueLength => {
-      // if (queueLength === 0) {
-        return new Error('empty queue');
-        // }
+      .then(response => {
+        if (response === null || response === undefined) {
+          return Promise.reject(new Error('Could not get queue data from player'));
+        }
+        if (response === false) {
+          return Promise.reject(new Error('Queue empty'));
+        }
+        return response;
       })
-      .then(sonosPlayer.setPlayMode('SHUFFLE'))
       .then(() => {
-        node.status({ fill: 'green', shape: 'dot', text: 'ok' });
+        sonosPlayer.setPlayMode('SHFFLE').then(response => {
+          if (response === null || response === undefined || response) {
+            // OK - shows message if wrong command!
+            // console.log('1 %j', response); does not work - []
+            console.log('1 ', response);
+            console.log('2 ' + JSON.stringify(response, Object.getOwnPropertyNames(response)));
+          } else {
+            return Promise.reject(new Error('Unknown error from setPlayMode'));
+          }
+        });
+      })
+      .then(() => {
+        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
+        node.debug(`ok:${sonosFunction}`);
+        node.send(msg);
       })
       .catch(err => {
-        node.error('error' + JSON.stringify(err));
-        node.status({ fill: 'red', shape: 'dot', text: 'error' });
+        msgShort = err;
+        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+        node.error(`${sonosFunction} - ${msgShort}`);
       });
   }
 

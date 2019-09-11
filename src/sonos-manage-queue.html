@@ -42,7 +42,7 @@ RED.nodes.registerType('sonos-manage-queue', {
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-queue">
-  <p> Incoming message are used as commands. The <i>get ... </i> provides information about the current queue or the SONOS playlists.</p>
+  <p> Incoming message are used as commands. The <i>get ... </i> provides information about the current queue or different playlists.</p>
 
   <h3>Input (required)</h3>
 
@@ -87,12 +87,16 @@ RED.nodes.registerType('sonos-manage-queue', {
   Accepted values for <code>msg.payload</code> are:
   <br/> • <i>activate_queue</i> Starts playing songs from queue (checks is empty)
   <br/> • <i>insert_uri</i> Inserts a song or a complete playlist into queue
+  <br/> • <i>insert_prime_playlist</i> Inserts all songs of a Amazon Prime playlist into queue (topic is uri)
+  <br/> • <i>insert_sonos_playlist</i> Inserts all songs of a Sonos playlist into queue (topic provides search string)
+  <br/> • <i>insert_musiclibrary_playlist</i> Inserts all songs of a Music Library playlist into queue (topic provides search string)
   <br/> • <i>play_song</i> Plays a specific song in queue. (checks is valid position)
   <br/> • <i>remove_song</i> Removes a specific song from queue. (checks is valid position)
   <br/> • <i>flush_queue</i> Erases the queue and stops playing!
   <br/> • <i>get_queue</i> Outputs the current queue as output
   <br/> • <i>get_sonos_playlists</i> Outputs an array of all Sonos playlists
-  <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos prime playlists
+  <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos Amazon Prime playlists
+  <br/> • <i>get_musiclibrary_playlists</i> Outputs an array of all Music Library playlists
 
 
 </script>
