@@ -18,12 +18,12 @@ Install directly from your NodeRED's setting pallete.
 
 ## Special Functions
 
-- Simple SONOS player selection in ConfigNode (recommendation: enter IP address)
-- Comfortable selection of My SONOS radio stations from TuneIn, Amazon Prime by name (search string).
-- Supports TuneIn radio id to select and play radio stations
-- Provides many kinds of current song information: artist, title, media information and radio station name
-- Sonos playlists, Music Library and Amazon Prime standard playlists insertion into queue
-- Uses the newest node-sonos api (2019-09-02T0722)
+- Sonos Player: Simply select SONOS player in ConfigNode by search button (recommendation: enter IP address)
+- Stations: Convenient selection of "My Sonos" radio stations from TuneIn, Amazon Prime by name (search string).
+- TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
+- Playlists: Convenient selection (and insertion) of My Sonos Music Library  and Sonos playlists by name (search string).
+- Playlists: Insert Amazon Prime standard playlists by URI
+- Information: Provides many kinds of current song information: artist, title, media information and radio station name
 
 ## Restrictions
 
@@ -34,9 +34,9 @@ Install directly from your NodeRED's setting pallete.
 The functions are grouped into 5 nodes.
 - _Config_ node: Select SONOS player, stores serial number or IP address
 - _Control player_ node: Execute basic SONOS player commands (e.g. play, stop, pause, join/leave group ...)
-- _Get status_ node: Get information about current state of SONOS player (e. g. playing, volume, groups, song info ...)
-- _Manage queue_ node: Performs basic queue commands (e. g. activate queue and start playing, get queue information, insert into queue)
-- _Manage radio_ node: Performs radio commands (e. g activate a TuneIn radio, Amazon Prime radio station)
+- _Get status_ node: Get information about current state of SONOS player (e. g. playing, volume, groups, song info, media info, ...)
+- _Manage queue_ node: Performs queue performs (e. g. activate queue and start playing, get queue information, insert into queue)
+- _Manage radio_ node: Performs radio performs (e. g activate a TuneIn radio, Amazon Prime radio station, ... )
 
 ## Usage ...
 For more information - also examples - see the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)

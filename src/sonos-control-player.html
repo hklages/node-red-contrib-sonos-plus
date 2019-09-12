@@ -58,10 +58,10 @@ RED.nodes.registerType('sonos-control-player', {
   </dl>
 
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as command parameter and currently only being used in combination with the <i>"join_group"</i> command.</p>
+  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as command parameter and currently only being used in combination with the <i>"join_group/activate_avtransport"</i> command.</p>
 
   Accepted values for <code>msg.payload</code> are:
-    <br/> • <i>play/stop/pause/mute/ummute</i> Obvious
+    <br/> • <i>play/stop/pause/mute/ummute/next_song/previous_song</i> Obvious
     <br/> • <i>toggleplayback</i> Toggles play/stop
     <br/> • <i>number</i>: 0 .. 100 Set volume
     <br/> • <i>+N</i>: +1 .. +30 Increase volume
