@@ -23,15 +23,17 @@ module.exports = function (RED) {
 
     // define discovery and store outcome in devices
     var search = sonos.DeviceDiscovery(function (device) {
-      device.deviceDescription().then(data => {
-        devices.push({
-          label: data.friendlyName + ' in room ' + data.roomName,
-          value: data.serialNum
+      device.deviceDescription()
+        .then(data => {
+          devices.push({
+            label: data.friendlyName + ' in room ' + data.roomName,
+            value: data.serialNum
+          });
+          node.log('Found device ' + data.serialNum);
+        })
+        .catch(err => {
+          node.error('DeviceDiscovery error! ' + 'Details: ' + JSON.stringify(err));
         });
-        node.log('Found device ' + data.serialNum);
-      }).catch(err => {
-        node.error('DeviceDiscovery error! ' + 'Details: ' + JSON.stringify(err));
-      });
     });
 
     search.setMaxListeners(Infinity);

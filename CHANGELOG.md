@@ -1,13 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.1] - scheduled for 2019-09-12
+## [0.4.3] scheduled for 2019-09-19 IN WORK
+### Changed
+- code more readable (.then, .catch)
+
+### Added
+- set_playmode  - shuffle, normal, ... for queues
+- line in / TV as commands
+- more examples in Wiki
+
+## [0.4.2] 2019-09-12
 ### Changed
 - if title, artist could not be identified now only warning and no output (instead of error)
 
 ### Added
 - more examples in Wiki
-- Manage queue node: insert_musiclibrary_playlist, insertSonosPlaylist, insert_prime_playlist, getMusicLibraryPlaylists
+- Manage queue node: insert_musiclibrary_playlist, insert_sonos_playlist, insert_prime_playlist, get_musicLibrary_playlists
 
 ## [0.4.0] - 2019-09-06
 ### Changed

@@ -115,42 +115,38 @@ module.exports = function (RED) {
   function getPlayerStateV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player state';
     let msgShort = '';
-    sonosPlayer.getCurrentState().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid player state received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.getCurrentState()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid player state received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got valid player state');
-      switch (outputType) {
-        case 'get_basics':
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got valid player state');
+        switch (outputType) {
+          case 'get_basics':
           // part of a chain, dont send message
-          msg.state = response;
-          node.debug('chain next command');
-          getPlayerVolumeV2(node, msg, sonosPlayer, 'get_basics');
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.state = response;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.debug('output to payload');
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+            msg.state = response;
+            node.debug('chain next command');
+            getPlayerVolumeV2(node, msg, sonosPlayer, 'get_basics');
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.state = response;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            node.debug('output to payload');
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player volume and either outputs or starts another asyn request (chaining).
@@ -163,50 +159,46 @@ module.exports = function (RED) {
   function getPlayerVolumeV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player volume';
     let msgShort = '';
-    sonosPlayer.getVolume().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid player volume received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.getVolume()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid player volume received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      if (response < 0 || response > 100) {
-        msgShort = 'invalid volume rage received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
-        return;
-      }
+        if (response < 0 || response > 100) {
+          msgShort = 'invalid volume rage received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
+          return;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got valid player volume');
-      switch (outputType) {
-        case 'get_basics':
-          // part of a chain, dont send message
-          msg.volume = response;
-          msg.normalized_volume = response / 100.0;
-          node.debug('got volume data and continue');
-          getPlayerMutedV2(node, msg, sonosPlayer, 'get_basics');
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.volume = response;
-          msg.normalized_volume = response / 100.0;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got valid player volume');
+        switch (outputType) {
+          case 'get_basics':
+            // part of a chain, dont send message
+            msg.volume = response;
+            msg.normalized_volume = response / 100.0;
+            node.debug('got volume data and continue');
+            getPlayerMutedV2(node, msg, sonosPlayer, 'get_basics');
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.volume = response;
+            msg.normalized_volume = response / 100.0;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player muted state and either outputs or starts another asyn request (chaining).
@@ -219,40 +211,36 @@ module.exports = function (RED) {
   function getPlayerMutedV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player muted state';
     let msgShort = '';
-    sonosPlayer.getMuted().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid muted state received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.getMuted()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid muted state received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got valid player muted state');
-      switch (outputType) {
-        case 'get_basics':
-          // part of a chain, dont send message
-          msg.muted = response;
-          getPlayerNameV2(node, msg, sonosPlayer, 'get_basics');
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.muted = response;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got valid player muted state');
+        switch (outputType) {
+          case 'get_basics':
+            // part of a chain, dont send message
+            msg.muted = response;
+            getPlayerNameV2(node, msg, sonosPlayer, 'get_basics');
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.muted = response;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player name and either outputs or starts another asyn request (chaining).
@@ -265,40 +253,36 @@ module.exports = function (RED) {
   function getPlayerNameV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player name';
     let msgShort = '';
-    sonosPlayer.getName().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid player name received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.getName()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid player name received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got valid player name');
-      switch (outputType) {
-        case 'get_basics':
-          // part of a chain, dont send message
-          msg.sonosName = response;
-          getPlayerGroupAttributesV2(node, msg, sonosPlayer, 'get_basics');
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.sonosName = response;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got valid player name');
+        switch (outputType) {
+          case 'get_basics':
+            // part of a chain, dont send message
+            msg.sonosName = response;
+            getPlayerGroupAttributesV2(node, msg, sonosPlayer, 'get_basics');
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.sonosName = response;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player group attributes and either outputs or starts another asyn request (chaining).
@@ -311,42 +295,37 @@ module.exports = function (RED) {
   function getPlayerGroupAttributesV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get group attributes';
     let msgShort = '';
-    sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid groupt attributes received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid groupt attributes received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got group attributes');
-      switch (outputType) {
-        case 'get_basics':
-          // end of chain
-          msg.sonosGroup = response;
-          node.status({ fill: 'green', shape: 'dot', text: 'ok:get basics' });
-          node.debug('ok:get basics');
-          node.send(msg);
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.sonosGroup = response;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got group attributes');
+        switch (outputType) {
+          case 'get_basics':
+            // end of chain
+            msg.sonosGroup = response;
+            helper.showSuccess(node, outputType);
+            node.send(msg);
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.sonosGroup = response;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   // -----------------------------------------
@@ -362,24 +341,21 @@ module.exports = function (RED) {
   function getPlayerProperties (node, msg, sonosPlayer) {
     const sonosFunction = 'get player properties';
     let msgShort = '';
-    sonosPlayer.deviceDescription().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid player properties received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.deviceDescription()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid player properties received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      // Output data to payload
-      node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-      node.debug(`ok:${sonosFunction}`);
-      msg.payload = response;
-      node.send(msg);
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // Output data to payload
+        helper.showSuccess(node, sonosFunction);
+        msg.payload = response;
+        node.send(msg);
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   // ---------------------------------------------------
@@ -399,68 +375,64 @@ module.exports = function (RED) {
     let albumArtURL = 'unknown';
     const sonosFunction = 'get current song';
     let msgShort = '';
-    sonosPlayer.currentTrack().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid current song received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
-      // message albumArtURL property
-      if (response.albumArtURI !== undefined && response.albumArtURI !== null) {
-        node.debug('got valid albumArtURI');
-        const port = 1400;
-        albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
-      } else {
-        // TuneIn does not provide AlbumArtURL -so we continure
-      }
-      if (response.artist !== undefined && response.artist !== null) {
-        node.debug('got artist and title');
-        artist = response.artist;
-        title = response.title;
-      } else {
-        if (response.title.indexOf(' - ') > 0) {
-          // TuneIn provides artist and title in title field
-          node.debug('could split data to artist and title');
-          artist = response.title.split(' - ')[0];
-          title = response.title.split(' - ')[1];
-        } else {
-          msgShort = 'warning: invalid combination artist title received';
-          node.status({ fill: 'blue', shape: 'dot', text: `warn:${sonosFunction} - ${msgShort}` });
-          node.warn(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
+    sonosPlayer.currentTrack()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid current song received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
           return;
         }
-      }
-      // Output data
-      node.debug('got valid song info');
-      msg.song = response;
-      msg.artist = artist;
-      msg.albumArtURL = albumArtURL;
-      switch (outputType) {
-        case 'get_songmedia':
-          // part of a chain, dont send message
-          node.debug('continue async');
-          msg.title = title;
-          getMediaInfo(node, msg, sonosPlayer, 'get_songmedia');
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.title = title;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = title;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // message albumArtURL property
+        if (response.albumArtURI !== undefined && response.albumArtURI !== null) {
+          node.debug('got valid albumArtURI');
+          const port = 1400;
+          albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
+        } else {
+          // TuneIn does not provide AlbumArtURL -so we continure
+        }
+        if (response.artist !== undefined && response.artist !== null) {
+          node.debug('got artist and title');
+          artist = response.artist;
+          title = response.title;
+        } else {
+          if (response.title.indexOf(' - ') > 0) {
+            // TuneIn provides artist and title in title field
+            node.debug('could split data to artist and title');
+            artist = response.title.split(' - ')[0];
+            title = response.title.split(' - ')[1];
+          } else {
+            msgShort = 'warning: invalid combination artist title received';
+            node.status({ fill: 'blue', shape: 'dot', text: `warn:${sonosFunction} - ${msgShort}` });
+            node.warn(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
+            return;
+          }
+        }
+        // Output data
+        node.debug('got valid song info');
+        msg.song = response;
+        msg.artist = artist;
+        msg.albumArtURL = albumArtURL;
+        switch (outputType) {
+          case 'get_songmedia':
+            // part of a chain, dont send message
+            node.debug('continue async');
+            msg.title = title;
+            getMediaInfo(node, msg, sonosPlayer, 'get_songmedia');
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.title = title;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = title;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the media info and either outputs or starts another asyn request (chaining).
@@ -473,47 +445,43 @@ module.exports = function (RED) {
   function getMediaInfo (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get media info';
     let msgShort = '';
-    sonosPlayer.avTransportService().GetMediaInfo().then(response => {
-      if (response === null || response === undefined) {
-        msgShort = 'invalid media info received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
-      const uri = response.CurrentURI;
-      if (uri.startsWith('x-rincon-queue')) {
-        response.queue_active = true;
-      } else {
-        response.queue_active = false;
-      }
+    sonosPlayer.avTransportService().GetMediaInfo()
+      .then(response => {
+        if (response === null || response === undefined) {
+          msgShort = 'invalid media info received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
+        const uri = response.CurrentURI;
+        if (uri.startsWith('x-rincon-queue')) {
+          response.queue_active = true;
+        } else {
+          response.queue_active = false;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got valid media info');
-      switch (outputType) {
-        case 'get_songmedia':
-          // part of a chain, dont send message
-          msg.media = response;
-          node.debug('continue');
-          getPositionInfo(node, msg, sonosPlayer, 'get_songmedia');
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.media = response;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got valid media info');
+        switch (outputType) {
+          case 'get_songmedia':
+            // part of a chain, dont send message
+            msg.media = response;
+            node.debug('continue');
+            getPositionInfo(node, msg, sonosPlayer, 'get_songmedia');
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.media = response;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the position inf and either outputs or starts another asyn request (chaining).
@@ -526,43 +494,38 @@ module.exports = function (RED) {
   function getPositionInfo (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'position info';
     let msgShort = '';
-    sonosPlayer.avTransportService().GetPositionInfo().then(response => {
-      node.debug(JSON.stringify(response));
-      if (response === null || response === undefined) {
-        msgShort = 'invalid position info received';
-        node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-        node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
-        return;
-      }
+    sonosPlayer.avTransportService().GetPositionInfo()
+      .then(response => {
+        node.debug(JSON.stringify(response));
+        if (response === null || response === undefined) {
+          msgShort = 'invalid position info received';
+          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
+          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+          return;
+        }
 
-      // output chaining, to seperate msg property or to msg.payload
-      node.debug('got valid positon info');
-      switch (outputType) {
-        case 'get_songmedia':
-          // end of chain
-          msg.position = response;
-          node.status({ fill: 'green', shape: 'dot', text: 'ok:get songmedia' });
-          node.debug('ok:get songmedia');
-          node.send(msg);
-          break;
-        case 'separate':
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.position = response;
-          node.send(msg);
-          break;
-        default:
-        // payload
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-          node.debug(`ok:${sonosFunction}`);
-          msg.payload = response;
-          node.send(msg);
-      }
-    }).catch(err => {
-      msgShort = 'error caught from response';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + JSON.stringify(err));
-    });
+        // output chaining, to seperate msg property or to msg.payload
+        node.debug('got valid positon info');
+        switch (outputType) {
+          case 'get_songmedia':
+            // end of chain
+            msg.position = response;
+            helper.showSuccess(node, outputType);
+            node.send(msg);
+            break;
+          case 'separate':
+            helper.showSuccess(node, sonosFunction);
+            msg.position = response;
+            node.send(msg);
+            break;
+          default:
+          // payload
+            helper.showSuccess(node, sonosFunction);
+            msg.payload = response;
+            node.send(msg);
+        }
+      })
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

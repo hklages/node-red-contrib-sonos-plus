@@ -5,7 +5,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hklages/node-red-contrib-sonos-plus/master/LICENSE)
 
-A set of NodeRed nodes to control SONOS player in your local WLAN.
+A set of NodeRED nodes to control SONOS player in your local WLAN.
 
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
@@ -29,17 +29,10 @@ Install directly from your NodeRED's setting pallete.
 
 > When playing a radio station the commands next_song, previous_song may cause an error message as many stations do not support them.
 
-## Nodes
-
-The functions are grouped into 5 nodes.
-- _Config_ node: Select SONOS player, stores serial number or IP address
-- _Control player_ node: Execute basic SONOS player commands (e.g. play, stop, pause, join/leave group ...)
-- _Get status_ node: Get information about current state of SONOS player (e. g. playing, volume, groups, song info, media info, ...)
-- _Manage queue_ node: Performs queue performs (e. g. activate queue and start playing, get queue information, insert into queue)
-- _Manage radio_ node: Performs radio performs (e. g activate a TuneIn radio, Amazon Prime radio station, ... )
-
 ## Usage ...
 For more information - also examples - see the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Credentials
 

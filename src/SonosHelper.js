@@ -104,47 +104,49 @@ class SonosHelper {
     const sonos = require('sonos');
     // 2 api calls chained, first DeviceDiscovery then deviceDescription
     var search = sonos.DeviceDiscovery(function (device) {
-      device.deviceDescription().then(data => {
-        if (data.friendlyName !== undefined && data.friendlyName !== null) {
-          node.debug('Got ipaddres from friendlyName.');
-          data.ipaddress = data.friendlyName.split('-')[0].trim();
-        }
-        if (device.host) {
-          node.debug('Got ipaddres from device.host.');
-          data.ipaddress = device.host;
-        }
+      device.deviceDescription()
+        .then(data => {
+          if (data.friendlyName !== undefined && data.friendlyName !== null) {
+            node.debug('Got ipaddres from friendlyName.');
+            data.ipaddress = data.friendlyName.split('-')[0].trim();
+          }
+          if (device.host) {
+            node.debug('Got ipaddres from device.host.');
+            data.ipaddress = device.host;
+          }
 
-        // 2 different ways to obtain serialnum
-        if (data.serialNum !== undefined && data.serialNum !== null) {
-          if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-            node.debug('Found sonos player based on serialnumber in device description.');
-            foundMatch = true;
+          // 2 different ways to obtain serialnum
+          if (data.serialNum !== undefined && data.serialNum !== null) {
+            if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
+              node.debug('Found sonos player based on serialnumber in device description.');
+              foundMatch = true;
+            }
           }
-        }
-        if (device.serialNumber !== undefined && device.serialNumber !== null) {
-          if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-            node.debug('Found sonos player based on serialnumber in device property.');
-            foundMatch = true;
+          if (device.serialNumber !== undefined && device.serialNumber !== null) {
+            if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
+              node.debug('Found sonos player based on serialnumber in device property.');
+              foundMatch = true;
+            }
           }
-        }
 
-        // found matching device: call back and stop search
-        if (foundMatch && (typeof callback === 'function')) {
-          // return "no error" and data object
-          callback(null, data);
-        }
-        if (foundMatch) {
-          if (search !== null && search !== undefined) {
-            search.destroy();
+          // found matching device: call back and stop search
+          if (foundMatch && (typeof callback === 'function')) {
+            // return "no error" and data object
+            callback(null, data);
           }
-          search = null;
-        }
-      }).catch({
-        if (err) {
-          // error handling in call back
-          callback(err, null);
-        }
-      });
+          if (foundMatch) {
+            if (search !== null && search !== undefined) {
+              search.destroy();
+            }
+            search = null;
+          }
+        })
+        .catch({
+          if (err) {
+            // error handling in call back
+            callback(err, null);
+          }
+        });
     });
     search.setMaxListeners(Infinity);
 
@@ -159,6 +161,33 @@ class SonosHelper {
         search = null;
       }
     }, 5000);
+  }
+
+  /** show error status and error message
+  * @param  {Object} node current node
+  * @param  {Error object} error  error object from response
+  * @param  {string} functionName name of calling function
+  * @param  {sting} messageShort  short message for status
+  */
+  showError (node, error, functionName, messageShort) {
+    let msgShort = messageShort;
+    if (error.code === 'ECONNREFUSED') {
+      msgShort = 'can not connect to player';
+      node.error(`${functionName} - ${msgShort} Details: Verify IP address of player.`);
+    } else {
+      // Caution: getOwn is neccessary for some error messages eg playmode!
+      node.error(`${functionName} - ${messageShort} Details: ` + JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    }
+    node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
+  }
+
+  /** show successful completion
+  * @param  {Object} node current node
+  * @param  {string} functionName name of calling function
+  */
+  showSuccess (node, functionName) {
+    node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
+    node.debug(`ok:${functionName}`);
   }
 }
 module.exports = SonosHelper;
