@@ -1,5 +1,5 @@
-var SonosHelper = require('./SonosHelper.js');
-var helper = new SonosHelper();
+const SonosHelper = require('./SonosHelper.js');
+const helper = new SonosHelper();
 
 module.exports = function (RED) {
   'use strict';
@@ -13,7 +13,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and subscribe to messages
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV3(configNode);
+    const isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -21,7 +21,7 @@ module.exports = function (RED) {
       node.on('input', function (msg) {
         node.debug('node on - msg received');
         // check again configNode - in the meantime it might have changed
-        var isStillValid = helper.validateConfigNodeV3(configNode);
+        const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
             if (ipAddress === undefined || ipAddress === null) {

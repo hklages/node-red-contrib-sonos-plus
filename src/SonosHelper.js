@@ -171,12 +171,19 @@ class SonosHelper {
   */
   showError (node, error, functionName, messageShort) {
     let msgShort = messageShort;
+    node.debug(`Entering error handling from ${functionName}`);
     if (error.code === 'ECONNREFUSED') {
       msgShort = 'can not connect to player';
       node.error(`${functionName} - ${msgShort} Details: Verify IP address of player.`);
     } else {
       // Caution: getOwn is neccessary for some error messages eg playmode!
-      node.error(`${functionName} - ${messageShort} Details: ` + JSON.stringify(error, Object.getOwnPropertyNames(error)));
+      let errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      if (errorDetails.indexOf('n-r-c-s-p') > -1) {
+        // handle my own error
+        msgShort = error.message.replace('n-r-c-s-p: ', '');
+        errorDetails = msgShort;
+      }
+      node.error(`${functionName} - ${messageShort} Details: ` + errorDetails);
     }
     node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
   }

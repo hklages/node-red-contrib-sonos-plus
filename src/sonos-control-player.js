@@ -1,5 +1,5 @@
-var SonosHelper = require('./SonosHelper.js');
-var helper = new SonosHelper();
+const SonosHelper = require('./SonosHelper.js');
+const helper = new SonosHelper();
 
 module.exports = function (RED) {
   'use strict';
@@ -14,7 +14,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and subscribe to messages
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV3(configNode);
+    const isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -22,7 +22,7 @@ module.exports = function (RED) {
       node.on('input', function (msg) {
         node.debug('node on - msg received');
         // check again configNode - in the meantime it might have changed
-        var isStillValid = helper.validateConfigNodeV3(configNode);
+        const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
             if (ipAddress === undefined || ipAddress === null) {
@@ -75,8 +75,11 @@ module.exports = function (RED) {
     const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group', 'activate_avtransport'];
     if (commandList.indexOf(command) > -1) {
       handleCommandBasic(node, msg, sonosPlayer, command);
+      // TODO lab
     } else if (command === 'lab_play_notification') {
       handleLabPlayNotification(node, msg, sonosPlayer);
+    } else if (command === 'lab_play_uri') {
+      handleLabPlayUri(node, msg, sonosPlayer);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
       commandWithParam = { cmd: 'volume_increase', parameter: parseInt(command) };
       handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
@@ -231,6 +234,25 @@ module.exports = function (RED) {
         onlyWhenPlaying: false, // It will query the state anyway, don't play the notification if the speaker is currently off.
         volume: 40 // Change the volume for the notification, and revert back afterwards.
       })
+      .then(helper.showSuccess(node, sonosFunction))
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+  }
+  /**  LAB: For testing only : Play mp3
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * uses msg.topic
+  */
+  function handleLabPlayUri (node, msg, sonosPlayer) {
+    // Check msg.topic.
+    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+      node.status({ fill: 'red', shape: 'dot', text: 'error: invalid topic.' });
+      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
+      return;
+    }
+    const uri = String(msg.topic).trim();
+    const sonosFunction = 'play uri';
+    sonosPlayer.play(uri)
       .then(helper.showSuccess(node, sonosFunction))
       .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }

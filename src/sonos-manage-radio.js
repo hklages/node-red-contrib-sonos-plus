@@ -1,5 +1,5 @@
-var SonosHelper = require('./SonosHelper.js');
-var helper = new SonosHelper();
+const SonosHelper = require('./SonosHelper.js');
+const helper = new SonosHelper();
 
 module.exports = function (RED) {
   'use strict';
@@ -14,7 +14,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and subscribe to messages
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV3(configNode);
+    const isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -22,7 +22,7 @@ module.exports = function (RED) {
       node.on('input', function (msg) {
         node.debug('node on - msg received');
         // check again configNode - in the meantime it might have changed
-        var isStillValid = helper.validateConfigNodeV3(configNode);
+        const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
             if (ipAddress === null) {
@@ -153,9 +153,9 @@ module.exports = function (RED) {
         // filter: TuneIn or Amazon Prime radio stations
         const TUNEIN_PREFIX = 'x-sonosapi-stream:';
         const AMAZON_PREFIX = 'x-sonosapi-radio:';
-        var stationList = [];
-        var stationUri;
-        var radioId;
+        const stationList = [];
+        let stationUri;
+        let radioId;
         for (let i = 0; i < parseInt(response.returned); i++) {
           if (response.items[i].uri.startsWith(TUNEIN_PREFIX)) {
           // get stationId
@@ -176,7 +176,7 @@ module.exports = function (RED) {
         }
 
         // lookup topic in list and play radio station - first match counts
-        var isInStationList = false;
+        let isInStationList = false;
         for (let i = 0; i < stationList.length; i++) {
           if (((stationList[i].title).indexOf(commandObject.parameter)) >= 0) {
             // play radion station
@@ -223,8 +223,8 @@ module.exports = function (RED) {
   */
   function getMySonosStations (node, msg, sonosPlayer) {
     // get list of My Sonos stations
-    var sonosFunction = 'get my sonos stations';
-    var errorShort = 'invalid favorite list received';
+    const sonosFunction = 'get my sonos stations';
+    let errorShort = 'invalid favorite list received';
     sonosPlayer.getFavorites()
       .then(response => {
         if (!(response.returned !== null && response.returned !== undefined &&
@@ -237,9 +237,9 @@ module.exports = function (RED) {
         // filter: TuneIn or Amazon Prime radio stations
         const TUNEIN_PREFIX = 'x-sonosapi-stream:';
         const AMAZON_PREFIX = 'x-sonosapi-radio:';
-        var stationList = [];
-        var stationUri;
-        var radioId;
+        const stationList = [];
+        let stationUri;
+        let radioId;
         for (let i = 0; i < parseInt(response.returned); i++) {
           if (response.items[i].uri.startsWith(TUNEIN_PREFIX)) {
           // get stationId
@@ -273,8 +273,8 @@ module.exports = function (RED) {
   */
   function getMySonosAll (node, msg, sonosPlayer) {
     // get list of My Sonos items
-    var sonosFunction = 'get my sonos all';
-    var errorShort = 'invalid my sonos list received';
+    const sonosFunction = 'get my sonos all';
+    let errorShort = 'invalid my sonos list received';
     sonosPlayer.getFavorites()
       .then(response => {
         if (!(response.returned !== null && response.returned !== undefined &&
@@ -283,7 +283,7 @@ module.exports = function (RED) {
           node.error(`${sonosFunction} - ${errorShort} Details: response->` + JSON.stringify(response));
           return;
         }
-        var list = response.items;
+        const list = response.items;
         if (list.length === 0) {
           errorShort = 'no my sonos items found';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });

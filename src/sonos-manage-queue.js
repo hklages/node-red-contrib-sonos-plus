@@ -1,5 +1,5 @@
-var SonosHelper = require('./SonosHelper.js');
-var helper = new SonosHelper();
+const SonosHelper = require('./SonosHelper.js');
+const helper = new SonosHelper();
 
 module.exports = function (RED) {
   'use strict';
@@ -14,7 +14,7 @@ module.exports = function (RED) {
     // verify config node. if valid then set status and subscribe to messages
     var node = this;
     var configNode = RED.nodes.getNode(config.confignode);
-    var isValid = helper.validateConfigNodeV3(configNode);
+    const isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
       node.status({});
@@ -22,7 +22,7 @@ module.exports = function (RED) {
       node.on('input', function (msg) {
         node.debug('node on - msg received');
         // check again configNode - in the meantime it might have changed
-        var isStillValid = helper.validateConfigNodeV3(configNode);
+        const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
             if (ipAddress === undefined || ipAddress === null) {
@@ -96,9 +96,10 @@ module.exports = function (RED) {
       getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
     } else if (command === 'get_musiclibrary_playlists') {
       getMusicLibraryPlaylists(node, msg, sonosPlayer);
-    } else if (command === 'set_playmode') {
-      // TODO TEST
-      setPlaymode(node, msg, sonosPlayer);
+    } else if (command === 'get_queuemode') {
+      getQueuemode(node, msg, sonosPlayer);
+    } else if (command === 'set_queuemode') {
+      setQueuemode(node, msg, sonosPlayer);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command. Details: command -> ' + JSON.stringify(command));
@@ -562,7 +563,7 @@ module.exports = function (RED) {
         }
         // filter: Amazon Prime Playlists only
         const PRIME_IDENTIFIER = 'prime_playlist';
-        var primePlaylistList = []; // will hold all playlist items
+        const primePlaylistList = []; // will hold all playlist items
         let primePlaylistUri = '';
         for (let i = 0; i < parseInt(response.returned); i++) {
           primePlaylistUri = response.items[i].uri;
@@ -620,12 +621,17 @@ module.exports = function (RED) {
       .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
-  // TODO TEST Caution activated + not empty
-  function setPlaymode (node, msg, sonosPlayer) {
-    const sonosFunction = 'set playmode';
+  /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
+  * @param  {Object} node current node, msg.payload and msg.topic are beeing used
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * msg send in case of success
+  */
+  function setQueuemode (node, msg, sonosPlayer) {
+    const sonosFunction = 'set queuemode';
     let msgShort;
 
-    // check top
+    // check topic
     if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
       msgShort = 'invalid topic';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
@@ -636,24 +642,64 @@ module.exports = function (RED) {
     sonosPlayer.getQueue()
       .then(response => {
         if (response === null || response === undefined) {
-          return Promise.reject(new Error('Could not get queue data from player'));
+          return Promise.reject(new Error('n-r-c-s-p: could not get queue data from player'));
         }
         if (response === false) {
-          return Promise.reject(new Error('Queue empty'));
+          return Promise.reject(new Error('n-r-c-s-p: queue is empty'));
         }
         return response;
       })
-      .then(() => {
-        sonosPlayer.setPlayMode(msg.topic)
-          .then(response => {
-            if (response === null || response === undefined || response) {
-              console.log(JSON.stringify(response, Object.getOwnPropertyNames(response)));
-              return Promise.reject(response);
-            }
-          });
+      .then(() => { return sonosPlayer.avTransportService().GetMediaInfo(); })
+      .then(mediaInfo => {
+        if (mediaInfo === null || mediaInfo === undefined) {
+          return Promise.reject(new Error('n-r-c-s-p: undefined response from get media info'));
+        }
+        if (mediaInfo.CurrentURI === null || mediaInfo.CurrentURI === undefined) {
+          return Promise.reject(new Error('n-r-c-s-p: could not get CurrentURI'));
+        }
+        const uri = mediaInfo.CurrentURI;
+        if (!uri.startsWith('x-rincon-queue')) {
+          return Promise.reject(new Error('n-r-c-s-p: queue has to be activated'));
+        } else {
+          return Promise.resolve(true);
+        }
+      })
+      .then(() => { return sonosPlayer.setPlayMode(msg.topic); })
+      .then(plresp => {
+        if (plresp === null || plresp === undefined) {
+          return Promise.reject(new Error('n-r-c-s-p: undefined response from setPlayMode'));
+        } else {
+          const resp = JSON.stringify(plresp, Object.getOwnPropertyNames(plresp));
+          const INVALID_PLAYMODE = 'Invalid play mode:';
+          if (resp.indexOf(INVALID_PLAYMODE) > -1) {
+            return Promise.reject(new Error(`n-r-c-s-p: wrong topic: ${msg.topic}`));
+          } else {
+            return Promise.resolve(true);
+          }
+        }
       })
       .then(() => {
         helper.showSuccess(node, sonosFunction);
+        node.send(msg);
+      })
+      .catch((error) => helper.showError(node, error, sonosFunction, 'error caught from responses'));
+  }
+
+  /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
+  * @param  {Object} node current node, msg.payload and msg.topic are beeing used
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * msg send in case of succes
+  */
+  function getQueuemode (node, msg, sonosPlayer) {
+    const sonosFunction = 'get queuemode';
+    sonosPlayer.getPlayMode()
+      .then(response => {
+        if (response === null || response === undefined) {
+          return Promise.reject(new Error('n-r-c-s-p: could not get queue mode from player'));
+        }
+        helper.showSuccess(node, sonosFunction);
+        msg.payload = response;
         node.send(msg);
       })
       .catch((error) => helper.showError(node, error, sonosFunction, 'error caught from responses'));
