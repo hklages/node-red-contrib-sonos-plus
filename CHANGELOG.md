@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file.
 ## [0.4.3] scheduled for 2019-09-19
 ### Changed
 - code more readable (.then, .catch), more error handling, coding standard
-- Wiki restructured, added URI information
+- Wiki overwork, added URI information
 
 ### Added
 - get/set_playmode SHUFFLE, ...
-- Wiki examples: activate TV / Line in with Play:5, Beam
+- More Wiki examples
 
-## [0.4.2/1] 2019-09-12
+## [0.4.2] 2019-09-12
 ### Changed
 - if title, artist could not be identified now only warning and no output (instead of error)
 
