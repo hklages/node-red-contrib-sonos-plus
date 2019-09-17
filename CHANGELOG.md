@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.3] scheduled for 2019-09-19
+## [0.4.3] 2019-09-19
 ### Changed
 - code more readable (.then, .catch), more error handling, coding standard
 - Wiki overwork, added URI information
