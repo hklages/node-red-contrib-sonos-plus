@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 - Wiki overwork, added URI information
 
 ### Added
-- get/set_playmode SHUFFLE, ...
+- get/set_queuemode: SHUFFLE, ...
 - More Wiki examples
 
 ## [0.4.2] 2019-09-12
