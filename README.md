@@ -10,7 +10,7 @@ A set of NodeRED nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-09-19 get/set_queuemode for queue: ['NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE']
+2019-09-18 get/set_queuemode for queue: ['NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE']
 
 ## Installation
 
