@@ -1,14 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.3] 2019-09-19
+## [0.4.3] 2019-09-18
+### Added
+- get_queuemode and set_queuemode: SHUFFLE, NORMAL, ....
+- More Wiki examples
+
 ### Changed
 - code more readable (.then, .catch), more error handling, coding standard
 - Wiki overwork, added URI information
-
-### Added
-- get/set_queuemode: SHUFFLE, ...
-- More Wiki examples
 
 ## [0.4.2] 2019-09-12
 ### Changed
