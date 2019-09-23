@@ -12,8 +12,8 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     // verify config node. if valid then set status and subscribe to messages
-    var node = this;
-    var configNode = RED.nodes.getNode(config.confignode);
+    const node = this;
+    const configNode = RED.nodes.getNode(config.confignode);
     const isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status
@@ -163,18 +163,18 @@ module.exports = function (RED) {
           .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
         break;
 
-      case 'join_group':
+      case 'join_group': {
         if (msg.topic === null || msg.topic === undefined) {
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - no valid topic` });
           node.error(`${sonosFunction} - no valid topic`);
           return;
         }
-        var deviceToJoing = msg.topic;
+        const deviceToJoing = msg.topic;
         sonosPlayer.joinGroup(deviceToJoing)
           .then(helper.showSuccess(node, sonosFunction))
           .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
         break;
-
+      }
       case 'activate_avtransport':
         if (msg.topic === null || msg.topic === undefined) {
           msgShort = 'no valid topic';

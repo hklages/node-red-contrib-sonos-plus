@@ -11,8 +11,8 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     // verify config node. if valid then set status and subscribe to messages
-    var node = this;
-    var configNode = RED.nodes.getNode(config.confignode);
+    const node = this;
+    const configNode = RED.nodes.getNode(config.confignode);
     const isValid = helper.validateConfigNodeV3(configNode);
     if (isValid) {
       // clear node status

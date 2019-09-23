@@ -1,6 +1,6 @@
 'use strict';
 
-class SonosHelper {
+module.exports = class SonosHelper {
   // functions to be used in other modules
 
   validateConfigNodeV3 (configNode) {
@@ -14,10 +14,10 @@ class SonosHelper {
       return false;
     }
 
-    var hasSerialNum = (configNode.serialnum !== undefined &&
+    const hasSerialNum = (configNode.serialnum !== undefined &&
                         configNode.serialnum !== null &&
                         configNode.serialnum.trim().length > 5);
-    var hasIpAddress = (configNode.ipaddress !== undefined &&
+    const hasIpAddress = (configNode.ipaddress !== undefined &&
                         configNode.ipaddress !== null);
 
     const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
@@ -53,7 +53,7 @@ class SonosHelper {
     */
 
     // use IP Address if user set it
-    var hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
+    const hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
       // exisiting ip address - fastes solutions, no discovery necessary
       node.debug('Found IP address');
@@ -99,11 +99,11 @@ class SonosHelper {
     */
     // TODO in callback only return ipaddress and not data
 
-    var foundMatch = false;
+    let foundMatch = false;
     node.debug('Start find Sonos player.');
     const sonos = require('sonos');
     // 2 api calls chained, first DeviceDiscovery then deviceDescription
-    var search = sonos.DeviceDiscovery(function (device) {
+    let search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription()
         .then(data => {
           if (data.friendlyName !== undefined && data.friendlyName !== null) {
@@ -196,5 +196,4 @@ class SonosHelper {
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
     node.debug(`ok:${functionName}`);
   }
-}
-module.exports = SonosHelper;
+};

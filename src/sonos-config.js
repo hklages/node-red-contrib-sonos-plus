@@ -15,14 +15,14 @@ module.exports = function (RED) {
       res.json(devices);
     });
   });
-  var node = this;
+  const node = this;
   function discoverSonos (discoveryCallback) {
     const sonos = require('sonos');
 
-    var devices = []; // list of all discovered devices
+    const devices = []; // list of all discovered devices
 
     // define discovery and store outcome in devices
-    var search = sonos.DeviceDiscovery(function (device) {
+    const search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription()
         .then(data => {
           devices.push({
