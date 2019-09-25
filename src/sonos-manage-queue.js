@@ -5,7 +5,7 @@ module.exports = function (RED) {
   'use strict';
 
   function SonosManageQueueNode (config) {
-    /**  Create Manage Queue Node and subscribe to messages
+    /**  Create Manage Queue Node and subscribe to messages.
     * @param  {Object} config current node configuration data
     */
 
@@ -333,7 +333,7 @@ module.exports = function (RED) {
       .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
-  /**  Activate queue and start playing first song
+  /**  Activate queue and start playing first song.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message with topic
   * @param  {Object} sonosPlayer sonos player Object
@@ -449,7 +449,7 @@ module.exports = function (RED) {
       .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
-  /**  Get the list of current songs in queue
+  /**  Get the list of current songs in queue.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player

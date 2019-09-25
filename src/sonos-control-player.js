@@ -6,7 +6,7 @@ module.exports = function (RED) {
 
   function SonosControlPlayerNode (config) {
     /**  Create Control Player Node and subscribe to messages
-    * @param  {object} config current node configuration data
+    * @param  {Object} config current node configuration data
     */
 
     RED.nodes.createNode(this, config);
@@ -47,7 +47,7 @@ module.exports = function (RED) {
 
   /**  Validate sonos player and input message then dispatch further.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
+  * @param  {Object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
   function handleInputMsg (node, msg, ipaddress) {
@@ -75,7 +75,9 @@ module.exports = function (RED) {
     const commandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group', 'activate_avtransport'];
     if (commandList.indexOf(command) > -1) {
       handleCommandBasic(node, msg, sonosPlayer, command);
-      // TODO lab
+    } else if (command === 'play_notification') {
+      handlePlayNotification(node, msg, sonosPlayer);
+      // TODO lab - error message and using play_notification
     } else if (command === 'lab_play_notification') {
       handleLabPlayNotification(node, msg, sonosPlayer);
     } else if (command === 'lab_play_uri') {
@@ -99,8 +101,8 @@ module.exports = function (RED) {
 
   /**  Handle basic commands to control sonos player.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
   * @param  {string} cmd command - no parameter
   */
   function handleCommandBasic (node, msg, sonosPlayer, cmd) {
@@ -191,9 +193,9 @@ module.exports = function (RED) {
 
   /**  Initiate volume commands to control sonos player.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * @param  {object} commandObject command - cmd and parameter !! Valid number
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {Object} commandObject command - cmd and parameter !! Valid number
   */
   function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
     const volumeValue = parseInt(commandObject.parameter);
@@ -214,10 +216,39 @@ module.exports = function (RED) {
     }
   }
 
+  /**  Play Notification.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * uses msg.topic (uri) and optional msg.volume
+  */
+  function handlePlayNotification (node, msg, sonosPlayer) {
+    // Check msg.topic.
+    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+      node.status({ fill: 'red', shape: 'dot', text: 'error: invalid topic.' });
+      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
+      return;
+    }
+    let notificationVolume = 40; // default
+    if (!(msg.volume !== null && msg.volume !== undefined && msg.volume)) {
+      notificationVolume = msg.volume;
+    }
+    const uri = String(msg.topic).trim();
+    const sonosFunction = 'play notificaton';
+    sonosPlayer.playNotification(
+      {
+        uri: uri,
+        onlyWhenPlaying: false, // It will query the state anyway, don't play the notification if the speaker is currently off.
+        volume: notificationVolume // Change the volume for the notification, and revert back afterwards.
+      })
+      .then(helper.showSuccess(node, sonosFunction))
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+  }
+
   /**  LAB: For testing only : Play Notification.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
   */
   function handleLabPlayNotification (node, msg, sonosPlayer) {
     // Check msg.topic.
@@ -239,8 +270,8 @@ module.exports = function (RED) {
   }
   /**  LAB: For testing only : Play mp3
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
   * uses msg.topic
   */
   function handleLabPlayUri (node, msg, sonosPlayer) {
