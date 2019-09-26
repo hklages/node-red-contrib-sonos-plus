@@ -25,7 +25,7 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (ipAddress === undefined || ipAddress === null) {
+            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -54,14 +54,14 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (sonosPlayer === null || sonosPlayer === undefined) {
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error: get sonosplayer - sonos player is null.' });
       node.error('get sonosplayer - sonos player is null. Details: Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
+    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
       node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
       return;
@@ -77,9 +77,9 @@ module.exports = function (RED) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command === 'play_notification') {
       handlePlayNotification(node, msg, sonosPlayer);
-      // TODO lab - error message and using play_notification
     } else if (command === 'lab_play_notification') {
-      handleLabPlayNotification(node, msg, sonosPlayer);
+      node.warn('lab_... is depreciated. Please use play_notification');
+      handlePlayNotification(node, msg, sonosPlayer);
     } else if (command === 'lab_play_uri') {
       handleLabPlayUri(node, msg, sonosPlayer);
     } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
@@ -166,7 +166,7 @@ module.exports = function (RED) {
         break;
 
       case 'join_group': {
-        if (msg.topic === null || msg.topic === undefined) {
+        if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - no valid topic` });
           node.error(`${sonosFunction} - no valid topic`);
           return;
@@ -178,7 +178,7 @@ module.exports = function (RED) {
         break;
       }
       case 'activate_avtransport':
-        if (msg.topic === null || msg.topic === undefined) {
+        if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
           msgShort = 'no valid topic';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} -  ${msgShort}` });
           node.error(`${sonosFunction} -  ${msgShort}`);
@@ -220,54 +220,48 @@ module.exports = function (RED) {
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
-  * uses msg.topic (uri) and optional msg.volume
+  * uses msg.topic (uri) and optional msg.volume (default is 40)
   */
   function handlePlayNotification (node, msg, sonosPlayer) {
     // Check msg.topic.
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error: invalid topic.' });
-      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
+      node.error('invalid topic. Details complete payload: ' + JSON.stringify(msg.payload));
       return;
     }
-    let notificationVolume = 40; // default
-    if (!(msg.volume !== null && msg.volume !== undefined && msg.volume)) {
-      notificationVolume = msg.volume;
+    let notificationVolume;
+    const defaultVolume = 40;
+    if (typeof msg.volume === 'undefined' || msg.volume === null || msg.volume === '') {
+      notificationVolume = defaultVolume; // default
+    } else {
+      let notificationVolume = parseInt(msg.volume);
+      if (Number.isInteger(notificationVolume)) {
+        notificationVolume = parseInt(notificationVolume);
+        if (notificationVolume > 0 && notificationVolume < 80) {
+          node.debug('is in range' + notificationVolume);
+        } else {
+          node.debug('is not in range' + notificationVolume);
+          notificationVolume = defaultVolume;
+          node.warn('volume value out of range - set to 40');
+        }
+      } else {
+        node.debug('is not number');
+        notificationVolume = defaultVolume;
+        node.warn('invalid volume - corrected to 40');
+      }
     }
     const uri = String(msg.topic).trim();
     const sonosFunction = 'play notificaton';
     sonosPlayer.playNotification(
       {
         uri: uri,
-        onlyWhenPlaying: false, // It will query the state anyway, don't play the notification if the speaker is currently off.
+        onlyWhenPlaying: false,
         volume: notificationVolume // Change the volume for the notification, and revert back afterwards.
       })
       .then(helper.showSuccess(node, sonosFunction))
       .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
   }
 
-  /**  LAB: For testing only : Play Notification.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  */
-  function handleLabPlayNotification (node, msg, sonosPlayer) {
-    // Check msg.topic.
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
-      node.status({ fill: 'red', shape: 'dot', text: 'error: invalid topic.' });
-      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
-      return;
-    }
-    const uri = String(msg.topic).trim();
-    const sonosFunction = 'play notificaton';
-    sonosPlayer.playNotification(
-      {
-        uri: uri,
-        onlyWhenPlaying: false, // It will query the state anyway, don't play the notification if the speaker is currently off.
-        volume: 40 // Change the volume for the notification, and revert back afterwards.
-      })
-      .then(helper.showSuccess(node, sonosFunction))
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
-  }
   /**  LAB: For testing only : Play mp3
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
@@ -276,7 +270,7 @@ module.exports = function (RED) {
   */
   function handleLabPlayUri (node, msg, sonosPlayer) {
     // Check msg.topic.
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error: invalid topic.' });
       node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
       return;
