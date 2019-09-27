@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.4] 2019-10-02
+### Added
+- set_notification with option to set notification volume
+
+### Changed
+- code: more input verification (error handling)
+
 ## [0.4.3] 2019-09-18
 ### Added
 - get_queuemode and set_queuemode: SHUFFLE, NORMAL, ....

@@ -10,7 +10,7 @@ A set of NodeRED nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-09-18 get/set_queuemode for queue: ['NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE']
+2019-10-02 play_notification with volume control.
 
 ## Installation
 
@@ -23,6 +23,7 @@ Install directly from your NodeRED's setting pallete.
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
 - Playlists: Convenient selection (and insertion) of My Sonos Music Library  and Sonos playlists by name (search string).
 - Playlists: Insert Amazon Prime standard playlists by URI
+- Notification: Interrupt current song and play an notification
 - Information: Provides many kinds of current song information: artist, title, media information and radio station name
 
 ## Restrictions

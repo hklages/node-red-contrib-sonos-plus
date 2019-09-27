@@ -80,17 +80,18 @@ module.exports = function (RED) {
     } else if (command === 'lab_play_notification') {
       node.warn('lab_... is depreciated. Please use play_notification');
       handlePlayNotification(node, msg, sonosPlayer);
+      // TODO lab_ function
     } else if (command === 'lab_play_uri') {
       handleLabPlayUri(node, msg, sonosPlayer);
-    } else if (command.startsWith('+') && !isNaN(parseInt(command)) && parseInt(command) > 0 && parseInt(command) <= 30) {
-      commandWithParam = { cmd: 'volume_increase', parameter: parseInt(command) };
-      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
-    } else if (command.startsWith('-') && !isNaN(parseInt(command)) && parseInt(command) < 0 && parseInt(command) >= -30) {
-      commandWithParam = { cmd: 'volume_decrease', parameter: parseInt(command) };
-      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
-    } else if (!isNaN(parseInt(command)) && parseInt(command) >= 0 && parseInt(command) <= 100) {
-      commandWithParam = { cmd: 'volume_set', parameter: parseInt(command) };
-      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+    } else if (command.startsWith('+')) {
+      commandWithParam = { cmd: 'volume_increase', parameter: command };
+      handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+    } else if (command.startsWith('-')) {
+      commandWithParam = { cmd: 'volume_decrease', parameter: command };
+      handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+    } else if (!isNaN(parseInt(command))) {
+      commandWithParam = { cmd: 'volume_set', parameter: command };
+      handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else {
       node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
       node.warn('depatching commands - invalid command: ' + command);
@@ -191,24 +192,46 @@ module.exports = function (RED) {
     }
   }
 
-  /**  Initiate volume commands to control sonos player.
+  /**  Send set/adjust volume command to sonos player.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
-  * @param  {Object} commandObject command - cmd and parameter !! Valid number
+  * @param  {Object} commandObject command - cmd and parameter both as string or volume as integer
+  * special: volume range 0 .. 100, adjust volume rage -30 ..  +30
   */
-  function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
-    const volumeValue = parseInt(commandObject.parameter);
+  function handleNewVolumeCommand (node, msg, sonosPlayer, commandObject) {
+    const volumeValue = parseInt(commandObject.parameter); // convert to integer
     const sonosFunction = commandObject.cmd;
     switch (commandObject.cmd) {
       case 'volume_set':
+        if (Number.isInteger(volumeValue)) {
+          if (volumeValue > 0 && volumeValue < 100) {
+            node.debug('is in range:' + volumeValue);
+          } else {
+            helper.showError(node, new Error('n-r-c-s-p: volume is out of range: ' + volumeValue), sonosFunction, 'out of range');
+            return;
+          }
+        } else {
+          helper.showError(node, new Error('n-r-c-s-p: volume is not valid number: ' + volumeValue), sonosFunction, 'out of range');
+          return;
+        }
         sonosPlayer.setVolume(volumeValue)
           .then(helper.showSuccess(node, sonosFunction))
           .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
         break;
-
       case 'volume_decrease':
       case 'volume_increase':
+        if (Number.isInteger(volumeValue)) {
+          if (volumeValue > -30 && volumeValue < 30) {
+            node.debug('is in range ' + volumeValue);
+          } else {
+            helper.showError(node, new Error('n-r-c-s-p: volume is out of range: ' + volumeValue), sonosFunction, 'out of range');
+            return;
+          }
+        } else {
+          helper.showError(node, new Error('n-r-c-s-p: volume is not valid number: ' + volumeValue), sonosFunction, 'out of range');
+          return;
+        }
         sonosPlayer.adjustVolume(volumeValue)
           .then(helper.showSuccess(node, sonosFunction))
           .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
@@ -234,24 +257,24 @@ module.exports = function (RED) {
     if (typeof msg.volume === 'undefined' || msg.volume === null || msg.volume === '') {
       notificationVolume = defaultVolume; // default
     } else {
-      let notificationVolume = parseInt(msg.volume);
+      notificationVolume = parseInt(msg.volume);
       if (Number.isInteger(notificationVolume)) {
-        notificationVolume = parseInt(notificationVolume);
-        if (notificationVolume > 0 && notificationVolume < 80) {
-          node.debug('is in range' + notificationVolume);
+        if (notificationVolume > 0 && notificationVolume < 100) {
+          node.debug('is in range ' + notificationVolume);
         } else {
-          node.debug('is not in range' + notificationVolume);
+          node.debug('is not in range: ' + notificationVolume);
           notificationVolume = defaultVolume;
-          node.warn('volume value out of range - set to 40');
+          node.warn('volume value out of range - set to default');
         }
       } else {
         node.debug('is not number');
         notificationVolume = defaultVolume;
-        node.warn('invalid volume - corrected to 40');
+        node.warn('invalid volume - corrected to default');
       }
     }
     const uri = String(msg.topic).trim();
     const sonosFunction = 'play notificaton';
+    node.debug('notification volume ' + String(notificationVolume));
     sonosPlayer.playNotification(
       {
         uri: uri,

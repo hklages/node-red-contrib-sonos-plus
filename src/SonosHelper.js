@@ -178,7 +178,7 @@ module.exports = class SonosHelper {
     } else {
       // Caution: getOwn is neccessary for some error messages eg playmode!
       let errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      if (errorDetails.indexOf('n-r-c-s-p') > -1) {
+      if (errorDetails.indexOf('n-r-c-s-p:') > -1) {
         // handle my own error
         msgShort = error.message.replace('n-r-c-s-p: ', '');
         errorDetails = msgShort;
