@@ -24,7 +24,7 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (ipAddress === undefined || ipAddress === null) {
+            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -51,14 +51,14 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (sonosPlayer === null || sonosPlayer === undefined) {
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error: get sonosplayer - sonos player is null.' });
       node.error('get sonosplayer - sonos player is null. Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
+    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
       node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
       return;
@@ -117,7 +117,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.getCurrentState()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid player state received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -161,13 +161,13 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.getVolume()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid player volume received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
           return;
         }
-
+        // TODO check number
         if (response < 0 || response > 100) {
           msgShort = 'invalid volume rage received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
@@ -213,7 +213,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.getMuted()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid muted state received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -255,7 +255,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.getName()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid player name received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -297,7 +297,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid groupt attributes received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -343,7 +343,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.deviceDescription()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid player properties received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -377,7 +377,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.currentTrack()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid current song received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -447,7 +447,7 @@ module.exports = function (RED) {
     let msgShort = '';
     sonosPlayer.avTransportService().GetMediaInfo()
       .then(response => {
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid media info received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
@@ -497,7 +497,7 @@ module.exports = function (RED) {
     sonosPlayer.avTransportService().GetPositionInfo()
       .then(response => {
         node.debug(JSON.stringify(response));
-        if (response === null || response === undefined) {
+        if (typeof response === 'undefined' || response === null || response === '') {
           msgShort = 'invalid position info received';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));

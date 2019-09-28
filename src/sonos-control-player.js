@@ -282,7 +282,8 @@ module.exports = function (RED) {
         volume: notificationVolume // Change the volume for the notification, and revert back afterwards.
       })
       .then(helper.showSuccess(node, sonosFunction))
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'))
+      .finally(() => node.debug('process id- finally ' + process.pid));
   }
 
   /**  LAB: For testing only : Play mp3

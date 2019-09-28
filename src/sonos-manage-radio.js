@@ -25,7 +25,7 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (ipAddress === null) {
+            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -54,7 +54,7 @@ module.exports = function (RED) {
     // get sonos player object
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (sonosPlayer === null || sonosPlayer === undefined) {
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error:get sonosplayer - sonos player is null.' });
       node.error('get sonosplayer - sonos player is null. Details: Check configuration.');
       return;
@@ -62,7 +62,7 @@ module.exports = function (RED) {
 
     // Check msg.payload. Store lowercase version in command
     // payload contains basic function, topic contains parameters
-    if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
+    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
       node.error('validate payload - invalid payload. Details: ' + JSON.stringify(msg.payload));
       return;
@@ -74,7 +74,7 @@ module.exports = function (RED) {
       parameter: ''
     };
     if (commandWithParam.cmd === 'play_mysonos') {
-      if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+      if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
         node.status({ fill: 'red', shape: 'dot', text: 'error:validate mysonos - invalid topic' });
         node.error('validate mysonos - invalid topic. Details: msg.topic ->' + JSON.stringify(msg.topic));
         return;
@@ -82,7 +82,7 @@ module.exports = function (RED) {
       commandWithParam.parameter = String(msg.topic);
       playMySonos(node, msg, sonosPlayer, commandWithParam);
     } else if (commandWithParam.cmd === 'play_tunein') {
-      if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+      if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
         node.status({ fill: 'red', shape: 'dot', text: 'error:validate tunein - invalid topic' });
         node.error('validate tunein - invalid topic.');
         return;

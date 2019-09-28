@@ -25,7 +25,7 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (ipAddress === undefined || ipAddress === null) {
+            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -54,14 +54,14 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (sonosPlayer === null || sonosPlayer === undefined) {
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error:get sonosplayer - sonos player is null.' });
       node.error('get sonosplayer - sonos player is null. Details: Check configuration.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!(msg.payload !== null && msg.payload !== undefined && msg.payload)) {
+    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
       node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
       node.error('validate payload - invalid payload. Details: ' + JSON.stringify(msg.payload));
       return;
@@ -132,7 +132,7 @@ module.exports = function (RED) {
     // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
     const sonosFunction = 'insert prime playlist';
     let msgShort = '';
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
       msgShort = 'invalid topic';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
       node.error(`${sonosFunction} - ${msgShort}`);
@@ -170,7 +170,7 @@ module.exports = function (RED) {
   function insertSonosPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert sonos playlist';
     let msgShort = '';
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
       msgShort = 'invalid topic (playlist name)';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
       node.error(`${sonosFunction} - ${msgShort}`);
@@ -226,7 +226,7 @@ module.exports = function (RED) {
   function insertMusicLibraryPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert music library playlist';
     let msgShort = '';
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
       msgShort = 'invalid topic (playlist name)';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
       node.error(`${sonosFunction} - ${msgShort}`);
@@ -296,7 +296,7 @@ module.exports = function (RED) {
         queueSize = parseInt(response.returned);
         node.debug(`queue contains ${queueSize} songs`);
 
-        if (msg.topic === null || msg.topic === undefined) {
+        if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
           msgShort = 'invalid topic';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort}`);
@@ -397,7 +397,7 @@ module.exports = function (RED) {
         queueSize = parseInt(response.returned);
         node.debug(`queue contains ${queueSize} songs`);
 
-        if (msg.topic === null || msg.topic === undefined) {
+        if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
           msgShort = 'invalid topic - index of song';
           node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
           node.error(`${sonosFunction} - ${msgShort}`);
@@ -632,7 +632,7 @@ module.exports = function (RED) {
     let msgShort;
 
     // check topic
-    if (!(msg.topic !== null && msg.topic !== undefined && msg.topic)) {
+    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
       msgShort = 'invalid topic';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
       node.error(`${sonosFunction} - ${msgShort} Details: topic` + JSON.stringify(msg.topic));
