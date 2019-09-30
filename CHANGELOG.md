@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.4] 2019-10-02
+## [0.4.4] 2019-10-01
 ### Added
 - set_notification with option to set notification volume
 
