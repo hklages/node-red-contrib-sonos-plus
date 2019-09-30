@@ -10,7 +10,7 @@ A set of NodeRED nodes to control SONOS player in your local WLAN.
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-2019-10-02 play_notification with volume control.
+2019-10-01 play_notification with volume control.
 
 ## Installation
 

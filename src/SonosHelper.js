@@ -3,13 +3,12 @@
 module.exports = class SonosHelper {
   // functions to be used in other modules
 
-  validateConfigNodeV3 (configNode) {
   /** Validate configNode
   * @param  {object} configNode corresponding configNode
   * @return {Boolean} true if: not null, not undefined, either ipaddress or serial exists
   *                   and ipaddress has correct syntax
   */
-
+  validateConfigNodeV3 (configNode) {
     if (configNode === undefined || configNode === null) {
       return false;
     }
@@ -43,15 +42,14 @@ module.exports = class SonosHelper {
     }
   }
 
+  /** Returns sonos player object in callback
+  * @param  {Object} node current node to set status and send error
+  * @param  {Object} configNode corresponding configNode
+  * @param  {Object} msg received message
+  * @param  {function} callback callback function with paramenter ipaddress - can be null
+  * prereq: expecting that configNode has been validated for this input message
+  */
   identifyPlayerProcessInputMsg (node, configNode, msg, callback) {
-    /** Returns sonos player object in callback
-    * @param  {Object} node current node to set status and send error
-    * @param  {Object} configNode corresponding configNode
-    * @param  {Object} msg received message
-    * @param  {function} callback callback function with paramenter ipaddress - can be null
-    * prereq: expecting that configNode has been validated for this input message
-    */
-
     // use IP Address if user set it
     const hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
@@ -90,15 +88,14 @@ module.exports = class SonosHelper {
     }
   }
 
+  /** Starts async discovery of sonos player and selecte the one with given serial
+  * @param  {Object} node current node
+  * @param  {string} serialNumber player serial number
+  * @param  {function} callback function with parameter err, data from type object
+  * data.ipaddress provides ip-address
+  */
+  // TODO in callback only return ipaddress and not data
   findSonos (node, serialNumber, callback) {
-    /** Starts async discovery of sonos player and selecte the one with given serial
-    * @param  {Object} node current node
-    * @param  {string} serialNumber player serial number
-    * @param  {function} callback function with parameter err, data from type object
-    * data.ipaddress provides ip-address
-    */
-    // TODO in callback only return ipaddress and not data
-
     let foundMatch = false;
     node.debug('Start find Sonos player.');
     const sonos = require('sonos');
