@@ -3,7 +3,7 @@
 module.exports = class SonosHelper {
   // functions to be used in other modules
 
-  /** Validate configNode
+  /** Validate configNode.
   * @param  {object} configNode corresponding configNode
   * @return {Boolean} true if: not null, not undefined, either ipaddress or serial exists
   *                   and ipaddress has correct syntax
@@ -42,7 +42,7 @@ module.exports = class SonosHelper {
     }
   }
 
-  /** Returns sonos player object in callback
+  /** Returns sonos player object in callback.
   * @param  {Object} node current node to set status and send error
   * @param  {Object} configNode corresponding configNode
   * @param  {Object} msg received message
@@ -88,7 +88,7 @@ module.exports = class SonosHelper {
     }
   }
 
-  /** Starts async discovery of sonos player and selecte the one with given serial
+  /** Starts async discovery of sonos player and selecte the one with given serial.
   * @param  {Object} node current node
   * @param  {string} serialNumber player serial number
   * @param  {function} callback function with parameter err, data from type object
@@ -160,11 +160,11 @@ module.exports = class SonosHelper {
     }, 5000);
   }
 
-  /** show error status and error message
+  /** show error status and error message.
   * @param  {Object} node current node
   * @param  {Error object} error  error object from response
   * @param  {string} functionName name of calling function
-  * @param  {sting} messageShort  short message for status
+  * @param  {string} messageShort  short message for status
   */
   showError (node, error, functionName, messageShort) {
     let msgShort = messageShort;
@@ -185,7 +185,7 @@ module.exports = class SonosHelper {
     node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
   }
 
-  /** show successful completion
+  /** show successful completion.
   * @param  {Object} node current node
   * @param  {string} functionName name of calling function
   */

@@ -10,7 +10,7 @@ module.exports = function (RED) {
     */
 
     RED.nodes.createNode(this, config);
-
+    const sonosFunction = 'create node manage queue';
     // verify config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
@@ -25,7 +25,8 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
+            if (typeof ipAddress === 'undefined' || ipAddress === null ||
+              (typeof ipAddress === 'number' && isNaN(ipAddress)) || ipAddress === '') {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -33,13 +34,11 @@ module.exports = function (RED) {
             }
           });
         } else {
-          node.status({ fill: 'red', shape: 'dot', text: 'error:process message - invalid configNode' });
-          node.error('process message - invalid configNode. Please modify!');
+          helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
         }
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:setup subscribe - invalid configNode' });
-      node.error('setup subscribe - invalid configNode. Please modify!');
+      helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'setup subscribe - invalid configNode');
     }
   }
 
@@ -54,18 +53,20 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:get sonosplayer - sonos player is null.' });
-      node.error('get sonosplayer - sonos player is null. Details: Check configuration.');
+    const sonosFunction = 'handle input msg';
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
+      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
+      helper.showError(node, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
-      node.error('validate payload - invalid payload. Details: ' + JSON.stringify(msg.payload));
+    if (typeof msg.payload === 'undefined' || msg.payload === null ||
+      (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
       return;
     }
+
     let command = String(msg.payload);
     command = command.toLowerCase();
 
@@ -131,11 +132,9 @@ module.exports = function (RED) {
   function insertPrimePlaylist (node, msg, sonosPlayer) {
     // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
     const sonosFunction = 'insert prime playlist';
-    let msgShort = '';
-    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-      msgShort = 'invalid topic';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort}`);
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
       return;
     }
 
@@ -170,10 +169,9 @@ module.exports = function (RED) {
   function insertSonosPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert sonos playlist';
     let msgShort = '';
-    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-      msgShort = 'invalid topic (playlist name)';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort}`);
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
       return;
     }
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: 100 })
@@ -226,10 +224,9 @@ module.exports = function (RED) {
   function insertMusicLibraryPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert music library playlist';
     let msgShort = '';
-    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-      msgShort = 'invalid topic (playlist name)';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort}`);
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
       return;
     }
     sonosPlayer.getMusicLibrary('playlists', { start: 0, total: 100 })
@@ -296,10 +293,9 @@ module.exports = function (RED) {
         queueSize = parseInt(response.returned);
         node.debug(`queue contains ${queueSize} songs`);
 
-        if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-          msgShort = 'invalid topic';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort}`);
+        if (typeof msg.topic === 'undefined' || msg.topic === null ||
+          (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
           return;
         }
         let position = String(msg.topic).trim();
@@ -359,14 +355,30 @@ module.exports = function (RED) {
         // queue not empty
 
         sonosPlayer.selectQueue()
-          .then(response => {
-            node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-            node.debug(`ok:${sonosFunction}`);
-            node.send(msg);
+          .then(() => {
+            if (typeof msg.volume === 'undefined' || msg.volume === null ||
+              (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+              // dont touch volume
+            } else {
+              const newVolume = parseInt(msg.volume);
+              if (Number.isInteger(newVolume)) {
+                if (newVolume > 0 && newVolume < 100) {
+                  node.debug('is in range ' + newVolume);
+                  sonosPlayer.setVolume(newVolume);
+                } else {
+                  node.debug('is not in range: ' + newVolume);
+                  throw new Error('n-r-c-s-p: msg.volume is out of range 1 ... 100');
+                }
+              } else {
+                node.debug('msg.volume is not number');
+                throw new Error('n-r-c-s-p: msg.volume is not a number');
+              }
+            }
+            helper.showSuccess(node, sonosFunction);
           })
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response select queue'));
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response get queue'));
   }
 
   /**  Play a specific song in queue - only when queue is active.
@@ -397,10 +409,9 @@ module.exports = function (RED) {
         queueSize = parseInt(response.returned);
         node.debug(`queue contains ${queueSize} songs`);
 
-        if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-          msgShort = 'invalid topic - index of song';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort}`);
+        if (typeof msg.topic === 'undefined' || msg.topic === null ||
+          (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
           return;
         }
         let position = String(msg.topic).trim();
@@ -486,8 +497,7 @@ module.exports = function (RED) {
             }
           });
         }
-        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction} - queue size is ${queueSize}` });
-        node.debug(`ok:${sonosFunction} - queue size is ${queueSize}`);
+        helper.showSuccess(node, sonosFunction);
         // send message data
         msg.payload = songsArray;
         msg.queue_length = queueSize;
@@ -522,7 +532,7 @@ module.exports = function (RED) {
         } else {
           numberOfPlaylists = parseInt(response.total);
           playlistArray = response.items;
-          msgShort = `found ${numberOfPlaylists} SONOS playlists`;
+
           // message albumArtURL
           playlistArray.forEach(function (songsArray) {
             if (songsArray.albumArtURL !== undefined && songsArray.albumArtURL !== null) {
@@ -531,9 +541,7 @@ module.exports = function (RED) {
               songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
             }
           });
-
-          node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction} - ${msgShort}` });
-          node.debug(`ok:${sonosFunction} - ${msgShort}`);
+          helper.showSuccess(node, sonosFunction);
           // send message data
           msg.payload = playlistArray;
           msg.available_playlists = numberOfPlaylists;
@@ -579,8 +587,7 @@ module.exports = function (RED) {
           node.error(`${sonosFunction} - ${msgShort} Details: mysonos->` + JSON.stringify(response.items));
           return;
         }
-        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-        node.debug(`ok:${sonosFunction}`);
+        helper.showSuccess(node, sonosFunction);
         msg.payload = primePlaylistList;
         node.send(msg);
       })
@@ -613,8 +620,7 @@ module.exports = function (RED) {
           node.error(`${sonosFunction} - ${msgShort} Details: mysonos->` + JSON.stringify(response.items));
           return;
         }
-        node.status({ fill: 'green', shape: 'dot', text: `ok:${sonosFunction}` });
-        node.debug(`ok:${sonosFunction}`);
+        helper.showSuccess(node, sonosFunction);
         msg.payload = mlPaylist;
         node.send(msg);
       })
@@ -622,20 +628,18 @@ module.exports = function (RED) {
   }
 
   /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
-  * @param  {Object} node current node, msg.payload and msg.topic are beeing used
-  * @param  {Object} msg incoming message
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message, msg.payload and msg.topic are beeing used
   * @param  {Object} sonosPlayer Sonos Player
   * msg send in case of success
   */
   function setQueuemode (node, msg, sonosPlayer) {
     const sonosFunction = 'set queuemode';
-    let msgShort;
 
     // check topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-      msgShort = 'invalid topic';
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-      node.error(`${sonosFunction} - ${msgShort} Details: topic` + JSON.stringify(msg.topic));
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
       return;
     }
 
@@ -682,7 +686,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         node.send(msg);
       })
-      .catch((error) => helper.showError(node, error, sonosFunction, 'error caught from responses'));
+      .catch((error) => helper.showError(node, error, sonosFunction, 'error caught from responses and then procedures'));
   }
 
   /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'

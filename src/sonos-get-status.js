@@ -14,6 +14,7 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
     const isValid = helper.validateConfigNodeV3(configNode);
+    const sonosFunction = 'create node get status';
     if (isValid) {
       // clear node status
       node.status({});
@@ -24,7 +25,8 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
+            if (typeof ipAddress === 'undefined' || ipAddress === null ||
+              (typeof ipAddress === 'number' && isNaN(ipAddress)) || ipAddress === '') {
             // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -32,13 +34,11 @@ module.exports = function (RED) {
             }
           });
         } else {
-          node.status({ fill: 'red', shape: 'dot', text: 'error:process message - invalid configNode' });
-          node.error('process message - invalid configNode. Please modify!');
+          helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
         }
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:setup subscribe - invalid configNode' });
-      node.error('setup subscribe - invalid configNode. Please modify!');
+      helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'setup subscribe - invalid configNode');
     }
   }
 
@@ -51,18 +51,20 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
-      node.status({ fill: 'red', shape: 'dot', text: 'error: get sonosplayer - sonos player is null.' });
-      node.error('get sonosplayer - sonos player is null. Check configuration.');
+    const sonosFunction = 'handle input msg';
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
+      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
+      helper.showError(node, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
-      node.error('validate payload - invalid payload. Details' + JSON.stringify(msg.payload));
+    if (typeof msg.payload === 'undefined' || msg.payload === null ||
+      (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
       return;
     }
+
     let command = String(msg.payload);
     command = command.toLowerCase();
 
@@ -96,8 +98,8 @@ module.exports = function (RED) {
     } else if (command === 'get_positioninfo') {
       getPositionInfo(node, msg, sonosPlayer, '');
     } else {
-      node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
-      node.warn('depatching commands - invalid command: ' + command);
+      node.status({ fill: 'green', shape: 'dot', text: 'warning:dispatching commands - invalid command' });
+      node.warn('dispatching commands - invalid command: ' + command);
     }
   }
 

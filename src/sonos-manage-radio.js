@@ -10,7 +10,7 @@ module.exports = function (RED) {
     */
 
     RED.nodes.createNode(this, config);
-
+    const sonosFunction = 'create node manage radio';
     // verify config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
@@ -25,7 +25,8 @@ module.exports = function (RED) {
         const isStillValid = helper.validateConfigNodeV3(configNode);
         if (isStillValid) {
           helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (typeof ipAddress === 'undefined' || ipAddress === null || ipAddress === '') {
+            if (typeof ipAddress === 'undefined' || ipAddress === null ||
+              (typeof ipAddress === 'number' && isNaN(ipAddress)) || ipAddress === '') {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
             } else {
               node.debug('Found sonos player');
@@ -33,13 +34,11 @@ module.exports = function (RED) {
             }
           });
         } else {
-          node.status({ fill: 'red', shape: 'dot', text: 'error:process message - invalid configNode' });
-          node.error('process message - invalid configNode. Please modify!');
+          helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
         }
       });
     } else {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:setup subscribe - invalid configNode' });
-      node.error('setup subscribe - invalid configNode. Please modify!');
+      helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'setup subscribe - invalid configNode');
     }
   }
 
@@ -54,17 +53,18 @@ module.exports = function (RED) {
     // get sonos player object
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null || sonosPlayer === '') {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:get sonosplayer - sonos player is null.' });
-      node.error('get sonosplayer - sonos player is null. Details: Check configuration.');
+    const sonosFunction = 'handle input msg';
+    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
+      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
+      helper.showError(node, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     // payload contains basic function, topic contains parameters
-    if (typeof msg.payload === 'undefined' || msg.payload === null || msg.payload === '') {
-      node.status({ fill: 'red', shape: 'dot', text: 'error:validate payload - invalid payload.' });
-      node.error('validate payload - invalid payload. Details: ' + JSON.stringify(msg.payload));
+    if (typeof msg.payload === 'undefined' || msg.payload === null ||
+      (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
+      helper.showError(node, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
       return;
     }
 
@@ -74,17 +74,17 @@ module.exports = function (RED) {
       parameter: ''
     };
     if (commandWithParam.cmd === 'play_mysonos') {
-      if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-        node.status({ fill: 'red', shape: 'dot', text: 'error:validate mysonos - invalid topic' });
-        node.error('validate mysonos - invalid topic. Details: msg.topic ->' + JSON.stringify(msg.topic));
+      if (typeof msg.topic === 'undefined' || msg.topic === null ||
+        (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+        helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
         return;
       }
       commandWithParam.parameter = String(msg.topic);
       playMySonos(node, msg, sonosPlayer, commandWithParam);
     } else if (commandWithParam.cmd === 'play_tunein') {
-      if (typeof msg.topic === 'undefined' || msg.topic === null || msg.topic === '') {
-        node.status({ fill: 'red', shape: 'dot', text: 'error:validate tunein - invalid topic' });
-        node.error('validate tunein - invalid topic.');
+      if (typeof msg.topic === 'undefined' || msg.topic === null ||
+        (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+        helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
         return;
       }
       commandWithParam.parameter = String(msg.topic);
@@ -101,9 +101,9 @@ module.exports = function (RED) {
 
   // -----------------------------------------------------------------------------
 
-  /**  Activate TuneIn radio station (via simple TuneIn Radio id).
+  /**  Activate TuneIn radio station and optional set volume (via simple TuneIn Radio id).
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
+  * @param  {object} msg incoming message - uses msg.voluem if provided
   * @param  {object} sonosPlayer Sonos Player
   * @param  {object} commandObject command with function and parameter
   */
@@ -114,15 +114,36 @@ module.exports = function (RED) {
     if (reg.test(commandObject.parameter)) {
       sonosPlayer.playTuneinRadio(commandObject.parameter)
         .then(response => {
+          node.debug('response from playTuneInRadio: ' + JSON.stringify(response));
           if (response === null || response === undefined) {
             node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
             node.error(`${sonosFunction} - ${errorShort} Details: ` + JSON.stringify(response));
             return;
           }
+          // set volume if provided
+          if (typeof msg.volume === 'undefined' || msg.volume === null ||
+            (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+            // dont touch volume
+          } else {
+            const newVolume = parseInt(msg.volume);
+            if (Number.isInteger(newVolume)) {
+              if (newVolume > 0 && newVolume < 100) {
+                node.debug('is in range ' + newVolume);
+                sonosPlayer.setVolume(newVolume);
+              } else {
+                node.debug('is not in range: ' + newVolume);
+                throw new Error('n-r-c-s-p: msg.volume is out of range 1 ... 100');
+              }
+            } else {
+              node.debug('msg.volume is not number');
+              throw new Error('n-r-c-s-p: msg.volume is not a number');
+            }
+          }
+          // update node status and send msg
           helper.showSuccess(node, sonosFunction);
           node.send(msg);
         })
-        .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+        .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response or program'));
     } else {
       errorShort = 'invalid tunein id';
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${errorShort}` });
@@ -130,9 +151,9 @@ module.exports = function (RED) {
     }
   }
 
-  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime) and start playing.
+  /**  Play a specific  My Sonos radion station (only TuneIn, AmazonPrime), start playing and optionally set volume.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
+  * @param  {object} msg incoming message - uses msg.volume if provided
   * @param  {object} sonosPlayer Sonos Player
   * @param  {object} commandObject command with function and parameter
   * change msg.payload to current station title if no error occures
@@ -184,6 +205,26 @@ module.exports = function (RED) {
             if (stationList[i].source === 'TuneIn') {
               sonosPlayer.playTuneinRadio(stationList[i].radioId)
                 .then(response => {
+                  // set volume if provided
+                  if (typeof msg.volume === 'undefined' || msg.volume === null ||
+                    (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+                    // dont touch volume
+                  } else {
+                    const newVolume = parseInt(msg.volume);
+                    if (Number.isInteger(newVolume)) {
+                      if (newVolume > 0 && newVolume < 100) {
+                        node.debug('is in range ' + newVolume);
+                        sonosPlayer.setVolume(newVolume);
+                      } else {
+                        node.debug('is not in range: ' + newVolume);
+                        throw new Error('n-r-c-s-p: msg.volume is out of range 1 ... 100');
+                      }
+                    } else {
+                      node.debug('msg.volume is not number');
+                      throw new Error('n-r-c-s-p: msg.volume is not a number');
+                    }
+                  }
+                  // update node status and send message
                   helper.showSuccess(node, sonosFunction);
                   msg.payload = stationList[i].title;
                   node.send(msg);
@@ -192,6 +233,24 @@ module.exports = function (RED) {
             } else if (stationList[i].source === 'AmazonPrime') {
               sonosPlayer.setAVTransportURI(stationList[i].uri)
                 .then(response => {
+                  if (typeof msg.volume === 'undefined' || msg.volume === null ||
+                    (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+                    // dont touch volume
+                  } else {
+                    const newVolume = parseInt(msg.volume);
+                    if (Number.isInteger(newVolume)) {
+                      if (newVolume > 0 && newVolume < 100) {
+                        node.debug('is in range ' + newVolume);
+                        sonosPlayer.setVolume(newVolume);
+                      } else {
+                        node.debug('is not in range: ' + newVolume);
+                        throw new Error('n-r-c-s-p: msg.volume is out of range 1 ... 100');
+                      }
+                    } else {
+                      node.debug('msg.volume is not number');
+                      throw new Error('n-r-c-s-p: msg.volume is not a number');
+                    }
+                  }
                   helper.showSuccess(node, sonosFunction);
                   msg.payload = stationList[i].title;
                   node.send(msg);

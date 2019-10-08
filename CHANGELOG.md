@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.5] Scheduled for 2019-10-15
+### Added
+- play, activate_avtransport, activate_queue, play_mysonos, play_tunein with optional volume
+
+### Changed
+- code: changed validation of input (avoiding NaN)
+
+
 ## [0.4.4] 2019-10-01
 ### Added
 - play_notification with option to set notification volume
