@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 - play, activate_avtransport, activate_queue, play_mysonos, play_tunein with optional volume
 
 ### Changed
-- code: changed validation of input (avoiding NaN)
+- code: changed validation of input (avoiding NaN) and error, warning messages
 
 
 ## [0.4.4] 2019-10-01
