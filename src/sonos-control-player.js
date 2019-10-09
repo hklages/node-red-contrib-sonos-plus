@@ -80,7 +80,7 @@ module.exports = function (RED) {
       handlePlayNotification(node, msg, sonosPlayer);
       // TODO lab_ function
     } else if (command === 'lab_play_notification') {
-      node.warn('lab_... is depreciated. Please use play_notification');
+      helper.showWarning(node, sonosFunction, 'lab ... is depreciated', 'Please use play_notification');
       handlePlayNotification(node, msg, sonosPlayer);
       // TODO lab_ function
     } else if (command === 'lab_play_uri') {
@@ -95,8 +95,7 @@ module.exports = function (RED) {
       commandWithParam = { cmd: 'volume_set', parameter: command };
       handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else {
-      node.status({ fill: 'green', shape: 'dot', text: 'warning:depatching commands - invalid command' });
-      node.warn('dispatching commands - invalid command: ' + command);
+      helper.showWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(commandWithParam));
     }
   }
 
@@ -308,12 +307,12 @@ module.exports = function (RED) {
         } else {
           node.debug('is not in range: ' + notificationVolume);
           notificationVolume = defaultVolume;
-          node.warn('volume value out of range - set to default');
+          helper.showWarning(node, sonosFunction, 'volume value out of range - set to default', 'value-> ' + JSON.stringify(notificationVolume));
         }
       } else {
         node.debug('is not number');
         notificationVolume = defaultVolume;
-        node.warn('invalid volume - corrected to default');
+        helper.showWarning(node, sonosFunction, 'invalid volume - set to default', 'value-> ' + JSON.stringify(notificationVolume));
       }
     }
     const uri = String(msg.topic).trim();

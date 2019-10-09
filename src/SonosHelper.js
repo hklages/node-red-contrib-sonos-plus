@@ -185,6 +185,18 @@ module.exports = class SonosHelper {
     node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
   }
 
+  /** show warning status and warn message
+  * @param  {Object} node current node
+  * @param  {string} functionName name of calling function
+  * @param  {string} messageShort  short message for status
+  * @param  {string} messageDetail  details
+  */
+  showWarning (node, functionName, messageShort, messageDetail) {
+    node.debug(`Entering warning handling from ${functionName}`);
+    node.warn(`W A R N I N G : ${functionName} - ${messageShort}. Details: ` + messageDetail);
+    node.status({ fill: 'red', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
+  }
+
   /** show successful completion.
   * @param  {Object} node current node
   * @param  {string} functionName name of calling function

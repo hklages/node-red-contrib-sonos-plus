@@ -98,8 +98,7 @@ module.exports = function (RED) {
     } else if (command === 'get_positioninfo') {
       getPositionInfo(node, msg, sonosPlayer, '');
     } else {
-      node.status({ fill: 'green', shape: 'dot', text: 'warning:dispatching commands - invalid command' });
-      node.warn('dispatching commands - invalid command: ' + command);
+      helper.showWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
   }
 
@@ -107,7 +106,7 @@ module.exports = function (RED) {
   // start chain get_basics
   // -----------------------------------------------------
 
-  /** Gets the sonos player state and either outputs or starts another asyn request (chaining).
+  /** Get the sonos player state and either outputs or starts another asyn request (chaining).
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer sonos player object
@@ -116,13 +115,11 @@ module.exports = function (RED) {
   */
   function getPlayerStateV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player state';
-    let msgShort = '';
     sonosPlayer.getCurrentState()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid player state received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid player state received ' + JSON.stringify(response)), sonosFunction, 'invalid player state received');
           return;
         }
 
@@ -160,20 +157,16 @@ module.exports = function (RED) {
   */
   function getPlayerVolumeV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player volume';
-    let msgShort = '';
     sonosPlayer.getVolume()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid player volume received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '' || isNaN(response)) {
+          helper.showError(node, new Error('n-r-c-s-p: invalid player volume received ' + JSON.stringify(response)), sonosFunction, 'invalid player volume received');
           return;
         }
-        // TODO check number
+
         if (response < 0 || response > 100) {
-          msgShort = 'invalid volume rage received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
+          helper.showError(node, new Error('n-r-c-s-p: invalid volume range received ' + JSON.stringify(response)), sonosFunction, 'invalid volume range received');
           return;
         }
 
@@ -212,13 +205,11 @@ module.exports = function (RED) {
   */
   function getPlayerMutedV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player muted state';
-    let msgShort = '';
     sonosPlayer.getMuted()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid muted state received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid mute state received ' + JSON.stringify(response)), sonosFunction, 'invalid mute state received');
           return;
         }
 
@@ -254,13 +245,11 @@ module.exports = function (RED) {
   */
   function getPlayerNameV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get player name';
-    let msgShort = '';
     sonosPlayer.getName()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid player name received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid player name received ' + JSON.stringify(response)), sonosFunction, 'invalid player name received');
           return;
         }
 
@@ -296,13 +285,11 @@ module.exports = function (RED) {
   */
   function getPlayerGroupAttributesV2 (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get group attributes';
-    let msgShort = '';
     sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid groupt attributes received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid zone received ' + JSON.stringify(response)), sonosFunction, 'invalid zone received');
           return;
         }
 
@@ -342,13 +329,11 @@ module.exports = function (RED) {
   */
   function getPlayerProperties (node, msg, sonosPlayer) {
     const sonosFunction = 'get player properties';
-    let msgShort = '';
     sonosPlayer.deviceDescription()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid player properties received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid player properties received ' + JSON.stringify(response)), sonosFunction, 'invalid player properties received');
           return;
         }
 
@@ -376,13 +361,11 @@ module.exports = function (RED) {
     let title = 'unknown';
     let albumArtURL = 'unknown';
     const sonosFunction = 'get current song';
-    let msgShort = '';
     sonosPlayer.currentTrack()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid current song received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid current song received ' + JSON.stringify(response)), sonosFunction, 'invalid current song received');
           return;
         }
         // message albumArtURL property
@@ -404,9 +387,7 @@ module.exports = function (RED) {
             artist = response.title.split(' - ')[0];
             title = response.title.split(' - ')[1];
           } else {
-            msgShort = 'warning: invalid combination artist title received';
-            node.status({ fill: 'blue', shape: 'dot', text: `warn:${sonosFunction} - ${msgShort}` });
-            node.warn(`${sonosFunction}  - ${msgShort} Details: ` + JSON.stringify(response));
+            helper.showWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
             return;
           }
         }
@@ -446,13 +427,11 @@ module.exports = function (RED) {
   */
   function getMediaInfo (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'get media info';
-    let msgShort = '';
     sonosPlayer.avTransportService().GetMediaInfo()
       .then(response => {
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid media info received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid media info received ' + JSON.stringify(response)), sonosFunction, 'invalid media info received');
           return;
         }
         const uri = response.CurrentURI;
@@ -495,14 +474,12 @@ module.exports = function (RED) {
   */
   function getPositionInfo (node, msg, sonosPlayer, outputType) {
     const sonosFunction = 'position info';
-    let msgShort = '';
     sonosPlayer.avTransportService().GetPositionInfo()
       .then(response => {
         node.debug(JSON.stringify(response));
-        if (typeof response === 'undefined' || response === null || response === '') {
-          msgShort = 'invalid position info received';
-          node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-          node.error(`${sonosFunction} - ${msgShort} Details: respose ->` + JSON.stringify(response));
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          helper.showError(node, new Error('n-r-c-s-p: invalid position info received ' + JSON.stringify(response)), sonosFunction, 'invalid position info received');
           return;
         }
 
