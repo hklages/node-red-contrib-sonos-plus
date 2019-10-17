@@ -35,11 +35,15 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
+          helper.showError(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
         }
       });
     } else {
-      helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'setup subscribe - invalid configNode');
+      // no msg available!
+      const msgShort = 'setup subscribe - invalid configNode';
+      const errorDetails = 'Please modify config node';
+      node.error(`${sonosFunction} - ${msgShort} Details: ` + errorDetails);
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
     }
   }
 
@@ -57,14 +61,14 @@ module.exports = function (RED) {
     const sonosPlayer = new Sonos(ipaddress);
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showError(node, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
+      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showError(node, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
+      helper.showError(node, msg, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
       return;
     }
 
@@ -78,6 +82,9 @@ module.exports = function (RED) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command === 'play_notification') {
       handlePlayNotification(node, msg, sonosPlayer);
+      // TODO lab_ function
+    } else if (command === 'lab_test') {
+      labTest(node, msg, sonosPlayer);
       // TODO lab_ function
     } else if (command === 'lab_play_notification') {
       helper.showWarning(node, sonosFunction, 'lab ... is depreciated', 'Please use play_notification');
@@ -109,125 +116,138 @@ module.exports = function (RED) {
   */
   function handleCommandBasic (node, msg, sonosPlayer, cmd) {
     const sonosFunction = cmd;
+
     switch (cmd) {
       case 'play':
         sonosPlayer.play()
-          .then(() => {
+          .then(() => { // optionally change volume
+            // validate volume: integer, betweent 1 and 99
             if (typeof msg.volume === 'undefined' || msg.volume === null ||
-              (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-              // dont touch volume
-            } else {
-              const newVolume = parseInt(msg.volume);
-              if (Number.isInteger(newVolume)) {
-                if (newVolume > 0 && newVolume < 100) {
-                  node.debug('is in range ' + newVolume);
-                  sonosPlayer.setVolume(newVolume);
-                } else {
-                  node.debug('is not in range: ' + newVolume);
-                  throw new Error('n-r-c-s-p: msg.volume is out of range 1 ... 100');
-                }
-              } else {
-                node.debug('msg.volume is not number');
-                throw new Error('n-r-c-s-p: msg.volume is not a number');
-              }
+            (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+              // do NOT change volume - just return
+              return true;
             }
-            helper.showSuccess(node, sonosFunction);
+            const newVolume = parseInt(msg.volume);
+            if (Number.isInteger(newVolume)) {
+              if (newVolume > 0 && newVolume < 100) {
+                // change volume
+                node.debug('msg.volume is in range 1...99: ' + newVolume);
+                return sonosPlayer.setVolume(newVolume);
+              } else {
+                node.debug('msg.volume is not in range: ' + newVolume);
+                throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+              }
+            } else {
+              node.debug('msg.volume is not number');
+              throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+            }
           })
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response or throw'));
+          .then(() => { // show success
+            helper.showSuccess(node, sonosFunction);
+            return true;
+          })
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'stop':
         sonosPlayer.stop()
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'pause':
         sonosPlayer.pause()
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'toggleplayback':
         sonosPlayer.togglePlayback()
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'mute':
         sonosPlayer.setMuted(true)
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'unmute':
         sonosPlayer.setMuted(false)
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'next_song':
         //  CAUTION! PRERQ: there should be a next song. Only a few stations support that (example Amazon Prime)
         sonosPlayer.next()
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'previous_song':
         //  CAUTION! PRERQ: there should be a previous song. Only a few stations support that (example Amazon Prime)
         sonosPlayer.previous(false)
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'leave_group':
         sonosPlayer.leaveGroup()
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
 
       case 'join_group': {
         if (typeof msg.topic === 'undefined' || msg.topic === null ||
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
           return;
         }
 
         const deviceToJoing = msg.topic;
         sonosPlayer.joinGroup(deviceToJoing)
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
       }
       case 'activate_avtransport':
+        // validate msg.topic
         if (typeof msg.topic === 'undefined' || msg.topic === null ||
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
           return;
         }
+
         sonosPlayer.setAVTransportURI(msg.topic)
-          .then(() => {
+          .then(() => { // optionally change volume
+            // validate volume: integer, betweent 1 and 99
             if (typeof msg.volume === 'undefined' || msg.volume === null ||
-              (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-              // dont touch volume
-            } else {
-              const newVolume = parseInt(msg.volume);
-              if (Number.isInteger(newVolume)) {
-                if (newVolume > 0 && newVolume < 100) {
-                  node.debug('is in range ' + newVolume);
-                  sonosPlayer.setVolume(newVolume);
-                } else {
-                  node.debug('is not in range: ' + newVolume);
-                  throw new Error('n-r-c-s-p: msg.volume is out of range 1 ... 100');
-                }
-              } else {
-                node.debug('msg.volume is not number');
-                throw new Error('n-r-c-s-p: msg.volume is not a number');
-              }
+            (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+              // do NOT change volume - just return
+              return true;
             }
-            helper.showSuccess(node, sonosFunction);
+            const newVolume = parseInt(msg.volume);
+            if (Number.isInteger(newVolume)) {
+              if (newVolume > 0 && newVolume < 100) {
+                // change volume
+                node.debug('msg.volume is in range 1...99: ' + newVolume);
+                return sonosPlayer.setVolume(newVolume);
+              } else {
+                node.debug('msg.volume is not in range: ' + newVolume);
+                throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+              }
+            } else {
+              node.debug('msg.volume is not number');
+              throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+            }
           })
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .then(() => { // show success
+            helper.showSuccess(node, sonosFunction);
+            return true;
+          })
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
     }
   }
@@ -248,16 +268,16 @@ module.exports = function (RED) {
           if (volumeValue > 0 && volumeValue < 100) {
             node.debug('is in range:' + volumeValue);
           } else {
-            helper.showError(node, new Error('n-r-c-s-p: volume is out of range: ' + volumeValue), sonosFunction, 'out of range');
+            helper.showError(node, msg, new Error('n-r-c-s-p: volume is out of range: ' + volumeValue), sonosFunction, 'out of range');
             return;
           }
         } else {
-          helper.showError(node, new Error('n-r-c-s-p: volume is not valid number: ' + volumeValue), sonosFunction, 'out of range');
+          helper.showError(node, msg, new Error('n-r-c-s-p: volume is not valid number: ' + volumeValue), sonosFunction, 'out of range');
           return;
         }
         sonosPlayer.setVolume(volumeValue)
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
       case 'volume_decrease':
       case 'volume_increase':
@@ -265,16 +285,16 @@ module.exports = function (RED) {
           if (volumeValue > -30 && volumeValue < 30) {
             node.debug('is in range ' + volumeValue);
           } else {
-            helper.showError(node, new Error('n-r-c-s-p: volume is out of range: ' + volumeValue), sonosFunction, 'out of range');
+            helper.showError(node, msg, new Error('n-r-c-s-p: volume is out of range: ' + volumeValue), sonosFunction, 'out of range');
             return;
           }
         } else {
-          helper.showError(node, new Error('n-r-c-s-p: volume is not valid number: ' + volumeValue), sonosFunction, 'out of range');
+          helper.showError(node, msg, new Error('n-r-c-s-p: volume is not valid number: ' + volumeValue), sonosFunction, 'out of range');
           return;
         }
         sonosPlayer.adjustVolume(volumeValue)
           .then(helper.showSuccess(node, sonosFunction))
-          .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+          .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
         break;
     }
   }
@@ -290,7 +310,7 @@ module.exports = function (RED) {
     // validate msg.topic.
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+      helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
       return;
     }
     // validate msg.volume - use default as backup
@@ -324,8 +344,20 @@ module.exports = function (RED) {
         volume: notificationVolume // Change the volume for the notification, and revert back afterwards.
       })
       .then(helper.showSuccess(node, sonosFunction))
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'))
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'))
       .finally(() => node.debug('process id- finally ' + process.pid));
+  }
+
+  /**  LAB: Test new features, error messsages, ...
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  */
+  function labTest (node, msg, sonosPlayer) {
+    sonosPlayer.setPlayMode('SHFFLE')
+    //  .then(playmode => { console.log('Got current playmode %j', playmode); })
+      .then(playmode => { console.log('Got current playmode' + JSON.stringify(playmode, Object.getOwnPropertyNames(playmode))); })
+      .catch(err => { console.log('Error occurred %j', err); });
   }
 
   /**  LAB: For testing only : Play mp3
@@ -339,13 +371,13 @@ module.exports = function (RED) {
     // Check msg.topic.
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+      helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
       return;
     }
     const uri = String(msg.topic).trim();
     sonosPlayer.play(uri)
       .then(helper.showSuccess(node, sonosFunction))
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
   RED.nodes.registerType('sonos-control-player', SonosControlPlayerNode);
 };

@@ -162,16 +162,17 @@ module.exports = class SonosHelper {
 
   /** show error status and error message.
   * @param  {Object} node current node
+  * @param  {Object} msg current msg
   * @param  {Error object} error  error object from response
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
   */
-  showError (node, error, functionName, messageShort) {
+  showError (node, msg, error, functionName, messageShort) {
     let msgShort = messageShort;
     node.debug(`Entering error handling from ${functionName}`);
     if (error.code === 'ECONNREFUSED') {
       msgShort = 'can not connect to player';
-      node.error(`${functionName} - ${msgShort} Details: Verify IP address of player.`);
+      node.error(`${functionName} - ${msgShort} Details: Verify IP address of player.`, msg);
     } else {
       // Caution: getOwn is neccessary for some error messages eg playmode!
       let errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
@@ -180,7 +181,7 @@ module.exports = class SonosHelper {
         msgShort = error.message.replace('n-r-c-s-p: ', '');
         errorDetails = msgShort;
       }
-      node.error(`${functionName} - ${messageShort} Details: ` + errorDetails);
+      node.error(`${functionName} - ${messageShort} Details: ` + errorDetails, msg);
     }
     node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
   }
@@ -194,7 +195,7 @@ module.exports = class SonosHelper {
   showWarning (node, functionName, messageShort, messageDetail) {
     node.debug(`Entering warning handling from ${functionName}`);
     node.warn(`W A R N I N G : ${functionName} - ${messageShort}. Details: ` + messageDetail);
-    node.status({ fill: 'red', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
+    node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
   }
 
   /** show successful completion.

@@ -34,11 +34,15 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
+          helper.showError(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
         }
       });
     } else {
-      helper.showError(node, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'setup subscribe - invalid configNode');
+      // no msg available!
+      const msgShort = 'setup subscribe - invalid configNode';
+      const errorDetails = 'Please modify config node';
+      node.error(`${sonosFunction} - ${msgShort} Details: ` + errorDetails);
+      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
     }
   }
 
@@ -54,14 +58,14 @@ module.exports = function (RED) {
     const sonosFunction = 'handle input msg';
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showError(node, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
+      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showError(node, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
+      helper.showError(node, msg, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
       return;
     }
 
@@ -119,7 +123,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid player state received ' + JSON.stringify(response)), sonosFunction, 'invalid player state received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player state received ' + JSON.stringify(response)), sonosFunction, 'invalid player state received');
           return;
         }
 
@@ -145,7 +149,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player volume and either outputs or starts another asyn request (chaining).
@@ -161,12 +165,12 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '' || isNaN(response)) {
-          helper.showError(node, new Error('n-r-c-s-p: invalid player volume received ' + JSON.stringify(response)), sonosFunction, 'invalid player volume received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player volume received ' + JSON.stringify(response)), sonosFunction, 'invalid player volume received');
           return;
         }
 
         if (response < 0 || response > 100) {
-          helper.showError(node, new Error('n-r-c-s-p: invalid volume range received ' + JSON.stringify(response)), sonosFunction, 'invalid volume range received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid volume range received ' + JSON.stringify(response)), sonosFunction, 'invalid volume range received');
           return;
         }
 
@@ -193,7 +197,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player muted state and either outputs or starts another asyn request (chaining).
@@ -209,7 +213,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid mute state received ' + JSON.stringify(response)), sonosFunction, 'invalid mute state received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid mute state received ' + JSON.stringify(response)), sonosFunction, 'invalid mute state received');
           return;
         }
 
@@ -233,7 +237,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player name and either outputs or starts another asyn request (chaining).
@@ -249,7 +253,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid player name received ' + JSON.stringify(response)), sonosFunction, 'invalid player name received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player name received ' + JSON.stringify(response)), sonosFunction, 'invalid player name received');
           return;
         }
 
@@ -273,7 +277,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the sonos player group attributes and either outputs or starts another asyn request (chaining).
@@ -289,7 +293,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid zone received ' + JSON.stringify(response)), sonosFunction, 'invalid zone received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid zone received ' + JSON.stringify(response)), sonosFunction, 'invalid zone received');
           return;
         }
 
@@ -314,7 +318,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   // -----------------------------------------
@@ -333,7 +337,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid player properties received ' + JSON.stringify(response)), sonosFunction, 'invalid player properties received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player properties received ' + JSON.stringify(response)), sonosFunction, 'invalid player properties received');
           return;
         }
 
@@ -342,7 +346,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   // ---------------------------------------------------
@@ -365,7 +369,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid current song received ' + JSON.stringify(response)), sonosFunction, 'invalid current song received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid current song received ' + JSON.stringify(response)), sonosFunction, 'invalid current song received');
           return;
         }
         // message albumArtURL property
@@ -415,7 +419,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the media info and either outputs or starts another asyn request (chaining).
@@ -431,7 +435,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid media info received ' + JSON.stringify(response)), sonosFunction, 'invalid media info received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid media info received ' + JSON.stringify(response)), sonosFunction, 'invalid media info received');
           return;
         }
         const uri = response.CurrentURI;
@@ -462,7 +466,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   /** Gets the position inf and either outputs or starts another asyn request (chaining).
@@ -479,7 +483,7 @@ module.exports = function (RED) {
         node.debug(JSON.stringify(response));
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, new Error('n-r-c-s-p: invalid position info received ' + JSON.stringify(response)), sonosFunction, 'invalid position info received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: invalid position info received ' + JSON.stringify(response)), sonosFunction, 'invalid position info received');
           return;
         }
 
@@ -504,7 +508,7 @@ module.exports = function (RED) {
             node.send(msg);
         }
       })
-      .catch(error => helper.showError(node, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

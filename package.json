@@ -32,6 +32,6 @@
   "author": "Henning Klages",
   "license": "MIT",
   "dependencies": {
-    "sonos": "1.12.3"
+    "sonos": "1.12.4"
   }
 }

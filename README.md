@@ -10,7 +10,8 @@ A set of NodeRED nodes to control SONOS player in your local WLAN. Works well wi
 This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
 
 ## NEWS
-Added option to set volume for commands: play, activate_queue, activate_avtransport, play_mysonos, play_tunein
+Added option to set volume for commands: play, activate_avtransport, activate_queue, play_mysonos, play_tunein
+You can use now "catch" node to handle errors.
 
 ## Installation
 
