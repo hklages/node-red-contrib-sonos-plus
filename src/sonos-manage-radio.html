@@ -44,20 +44,21 @@ RED.nodes.registerType('sonos-manage-radio', {
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-radio">
   <p>Incoming message is being converted to valid command and send to SONOS player.
-    The <i>get</i> provides information about the My Sonos radio stations.</p>
+    The <b>get</b> provides information about the My Sonos radio stations.</p>
 
   <h3>Input (required)</h3>
 
   <dl class="message-properties">
-      <dt>payload (always required)
-          <span class="property-type">string</span>
-      </dt>
+
+      <dt>payload (always required) <span class="property-type">string</span>  </dt>
       <dd>A command. Valid commands see Details.</dd>
 
-      <dt>topic
-          <span class="property-type">string</span>
-      </dt>
+      <dt>topic <span class="property-type">string</span> </dt>
       <dd>Parameter - either the TuneIn radio id or a part of the My Sonos radio station title.</dd>
+
+      <dt>volume <span class="property-type">string</span> </dt>
+      <dd>Volume beeing used together with <b>play_mysonos and play_tunein</b></dd>
+
   </dl>
 
   <h3>Outputs</h3>
@@ -66,15 +67,14 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dt>payload
           <span class="property-type">string</span>
       </dt>
-      <dd>title of station from my Sonos or in case of <i>get_mysonos</i> the array of radios stations.</dd>
+      <dd>title of station from my Sonos or in case of <b>get_mysonos</b> the array of radios stations.</dd>
   </dl>
 
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter.</p>
 
-  Accepted values for <code>msg.payload</code> are:
-  <br/> • <i>play_mysonos</i> and as topic a part of the title (unique search string)
-  <br/> • <i>play_tunein</i> and as topic the TuneIn radio id (eg s12345)
-  <br/> • <i>get_mysonos</i> Outputs the array of all My Sonos radio stations from TuneIn, Prime
-  <br/> • <i>get_mysonosall</i> Outputs the array of all My Sonos items
+  Accepted values for <code>payload</code> are:
+  <br/> • <b>play_mysonos</b> and as topic a part of the title (unique search string)
+  <br/> • <b>play_tunein</b> and as topic the TuneIn radio id (eg s12345)
+  <br/> • <b>get_mysonos</b> Outputs the array of all My Sonos radio stations from TuneIn, Prime
+  <br/> • <b>get_mysonosall</b> Outputs the array of all My Sonos items
 </script>

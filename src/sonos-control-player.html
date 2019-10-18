@@ -47,31 +47,32 @@ RED.nodes.registerType('sonos-control-player', {
   <h3>Input</h3>
 
   <dl class="message-properties">
-      <dt>payload (always required)
-          <span class="property-type">string</span>
-      </dt>
+
+      <dt>payload (always required) <span class="property-type">string</span> </dt>
       <dd>A command. Valid commands see Details.</dd>
-      <dt>topic
-          <span class="property-type">string</span>
-      </dt>
-      <dd>Command parameter for <i>join_group, activate_avtransport</i></dd>
+
+      <dt>topic <span class="property-type">string</span> </dt>
+      <dd>Command parameter beeing used together with <b>join_group, activate_avtransport</b></dd>
+
+      <dt>volume <span class="property-type">string</span> </dt>
+      <dd>Volume beeing used together with <b>play, play_notification and activate_avtransport</b></dd>
+
   </dl>
 
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as command parameter and currently only being used in combination with the <i>"join_group/activate_avtransport"</i> command.</p>
 
-  Accepted values for <code>msg.payload</code> are:
-    <br/> • <i>play/stop/pause/mute/ummute/next_song/previous_song</i> Obvious
-    <br/> • <i>toggleplayback</i> Toggles play/stop
-    <br/> • <i>number</i>: 0 .. 100 Set volume
-    <br/> • <i>+number</i>: +1 .. +30 Increase volume CAUTION: use string not number format!
-    <br/> • <i>-number</i>: -30 .. -1 Decrease volume
-    <br/> • <i>leave_group</i> Leave group
-    <br/> • <i>join_group</i> Join group. Group name must be specified in <code>msg.topic</code>.
-    <br/> • <i>activate_avtransport</i> Activates a specific stream - e.g. line in. URI must be specified in <code>msg.topic</code>.
-    <br/> • <i>play_notification</i> Plays a given notification. Notification must be specified in <code>msg.topic</code>. <code>msg.volume</code> may contain the notificaiton volume in the range from 0 to 100. Default is 40.
+  Accepted values for <code>payload</code> are:
+    <br/> • <b>play/stop/pause/mute/ummute/next_song/previous_song</b> Obvious.
+    <br/> • <b>toggleplayback</b> Toggles play/stop
+    <br/> • <b>number</b>: 1...99 Set volume
+    <br/> • <b>+number</b>: +1...+29 Increase volume CAUTION: use string not number format!
+    <br/> • <b>-number</b>: -29...-1 Decrease volume
+    <br/> • <b>leave_group</b> Leave group
+    <br/> • <b>join_group</b> Join group. Group name must be specified in <code>topic</code>.
+    <br/> • <b>activate_avtransport</b> Activates a specific stream - e.g. line in. URI must be specified in <code>topic</code>.
+    <br/> • <b>play_notification</b> Plays a given notification. Notification must be specified in <code>topic</code>. <code>volume</code> may contain the notificaiton volume in the range from 1 to 99. Default is 40.
 
-<br/><br/>The commands <b>next_song/previous_song</b> don't work with TuneIn radio stations. Amazon Prime radion stations support "next_song" but not "previous_song".
+<br/><br/>The commands <b>next_song/previous_song</b> don't work with TuneIn radio stations. Amazon Prime radion stations support <b>next_song</b> but not <b>previous_song</b>.
 
 <br/><br/> <b>Play a notification</b> is NOT a build in SONOS function. Instead the currenst state is stored, then the notification beeing played and then the previous state restored.
 This works with the following restrictions:

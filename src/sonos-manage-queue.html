@@ -47,15 +47,15 @@ RED.nodes.registerType('sonos-manage-queue', {
   <h3>Input (required)</h3>
 
   <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">string</span>
-      </dt>
+
+      <dt>payload <span class="property-type">string</span> </dt>
       <dd>A command. Valid commands see Details.</dd>
 
-      <dt>topic
-          <span class="property-type">string</span>
-      </dt>
+      <dt>topic <span class="property-type">string</span> </dt>
       <dd>Command parameter only used for some commands.</dd>
+
+      <dt>volume <span class="property-type">string</span> </dt>
+      <dd>Volume beeing used together with <b>activate_queue</b></dd>
   </dl>
 
   <h3>Outputs</h3>
@@ -82,23 +82,21 @@ RED.nodes.registerType('sonos-manage-queue', {
   </dl>
 
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. <code>msg.topic</code> is used as parameter.</p>
 
-  Accepted values for <code>msg.payload</code> are:
-  <br/> • <i>activate_queue</i> Starts playing songs from queue (checks queue is not empty)
-  <br/> • <i>insert_uri</i> Inserts a song or a complete playlist into queue
-  <br/> • <i>insert_prime_playlist</i> Inserts all songs of a Amazon Prime playlist into queue (topic is uri)
-  <br/> • <i>insert_sonos_playlist</i> Inserts all songs of a Sonos playlist into queue (topic provides search string)
-  <br/> • <i>insert_musiclibrary_playlist</i> Inserts all songs of a Music Library playlist into queue (topic provides search string)
-  <br/> • <i>play_song</i> Plays a specific song in queue. (checks valid position)
-  <br/> • <i>remove_song</i> Removes a specific song from queue. (checks valid position)
-  <br/> • <i>flush_queue</i> Erases the queue and stops playing!
-  <br/> • <i>set_queuemode</i> Set queue mode to NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE
-  <br/> • <i>get_queue</i> Outputs the current queue as output
-  <br/> • <i>get_queuemode</i> Gets the current queue mode (e. g SHUFFLE, NORMAL, ...)
-  <br/> • <i>get_sonos_playlists</i> Outputs an array of all Sonos playlists
-  <br/> • <i>get_prime_playlists</i> Outputs an array of all My Sonos Amazon Prime playlists
-  <br/> • <i>get_musiclibrary_playlists</i> Outputs an array of all Music Library playlists
-
+  Accepted values for <code>payload</code> are:
+  <br/> • <b>activate_queue</b> Starts playing songs from queue (checks queue is not empty)
+  <br/> • <b>insert_uri</b> Inserts a song or a complete playlist into queue
+  <br/> • <b>insert_prime_playlist</b> Inserts all songs of a Amazon Prime playlist into queue (topic is uri)
+  <br/> • <b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue (topic provides search string)
+  <br/> • <b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue (topic provides search string)
+  <br/> • <b>play_song</b> Plays a specific song in queue. (checks valid position)
+  <br/> • <b>remove_song</b> Removes a specific song from queue. (checks valid position)
+  <br/> • <b>flush_queue</b> Erases the queue and stops playing!
+  <br/> • <b>set_queuemode</b> Set queue mode to NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE
+  <br/> • <b>get_queue</b> Outputs the current queue as output
+  <br/> • <b>get_queuemode</b> Gets the current queue mode (e. g SHUFFLE, NORMAL, ...)
+  <br/> • <b>get_sonos_playlists</b> Outputs an array of all Sonos playlists
+  <br/> • <b>get_prime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists
+  <br/> • <b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists
 
 </script>

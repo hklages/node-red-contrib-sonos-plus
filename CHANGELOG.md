@@ -1,14 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.5] Scheduled for 2019-10-15
+## [0.4.5] 2019-10-18
 ### Added
 - play, activate_avtransport, activate_queue, play_mysonos, play_tunein with optional msg.volume
-- you can now use "catch" node to handle errors
+- option to "catch" node to handle errors
 
 ### Changed
 - code: changed validation of input (avoiding NaN) and error, warning message
-
+- code: bug fixing
 
 ## [0.4.4] 2019-10-01
 ### Added

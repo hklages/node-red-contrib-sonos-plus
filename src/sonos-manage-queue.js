@@ -339,7 +339,7 @@ module.exports = function (RED) {
 
   /**  Activate queue and start playing first song, optionally set volume
   * @param  {Object} node current node
-  * @param  {Object} msg incoming message with topic, volume
+  * @param  {Object} msg incoming message optional with volume
   * @param  {Object} sonosPlayer sonos player Object
   */
   function activateQueue (node, msg, sonosPlayer) {
@@ -348,7 +348,7 @@ module.exports = function (RED) {
       .then(response => { // validiate queue ist not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: invalid getqueue response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: invalid get queue response received ' + JSON.stringify(response));
         }
         if (response === false) {
           // queue is empty

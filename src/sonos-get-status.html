@@ -47,78 +47,64 @@ RED.nodes.registerType('sonos-get-status', {
 	<h3>Input (required)</h3>
 
 	<dl class="message-properties">
-			<dt>payload
-					<span class="property-type">string</span>
-			</dt>
+			<dt>payload <span class="property-type">string</span> </dt>
       <dd>A command. Valid commands see Details.</dd>
 	</dl>
 
 	<h3>Outputs</h3>
 
-  The commands <i>get_state/volume/muted/name/properties</i> outputs to <code>msg.payload</code>. The other commands use the properties as stated beneath.
+  The commands <b>get_state/volume/muted/name/properties</b> outputs to <code>payload</code>. The other commands use the properties as stated beneath.
   <dl class="message-properties">
 
-      <dt>state
-          <span class="property-type">string | playing/stopped/paused</span>
-      </dt>
+      <dt>state <span class="property-type">string | playing/stopped/paused</span> </dt>
       <dd>current playing state: playing, stopped, ...</dd>
 
-      <dt>muted
-          <span class="property-type">boolean</span>
-      </dt>
+      <dt>muted <span class="property-type">boolean</span> </dt>
       <dd> current mute state</dd>
 
-      <dt>volume
-          <span class="property-type">int | 0-100</span>
-      </dt>
+      <dt>volume <span class="property-type">int | 1..99</span> </dt>
       <dd> current volume value</dd>
 
       <dt>normalized_volume <span class="property-type">float | 0-1</span></dt>
       <dd> normalized current volume value (from 0.0 to 1.0)</dd>
 
-      <dt>sonosName
-          <span class="property-type">string</span></dt>
+      <dt>sonosName <span class="property-type">string</span></dt>
       <dd> SONOS player name</dd>
 
-      <dt>sonosGroup
-          <span class="property-type">Object</span></dt>
+      <dt>sonosGroup <span class="property-type">Object</span></dt>
       <dd> SONOS player group attributes</dd>
 
       <dt>song
           <span class="property-type">object</span></dt>
       <dd> full song info object</dd>
 
-      <dt>song.albumArtURL
-          <span class="property-type">string/url</span></dt>
+      <dt>song.albumArtURL <span class="property-type">string/url</span></dt>
       <dd> full url for the album art</dd>
 
       <dt>artist
           <span class="property-type">string</span></dt>
       <dd> current artist only in case of TuneIn, Amazon Prime</dd>
 
-      <dt>title
-          <span class="property-type">string</span></dt>
+      <dt>title <span class="property-type">string</span></dt>
       <dd> current title only in case of TuneIn, Amazon Prime</dd>
 
       <dt>media
           <span class="property-type">Object</span></dt>
       <dd> more information - for instance radio station name</dd>
 
-      <dt>position
-          <span class="property-type">Object</span></dt>
+      <dt>position <span class="property-type">Object</span></dt>
       <dd> more info - for instance duration, radio station name </dd>
 
   </dl>
   <h3>Details</h3>
-  <p><code>msg.payload</code> is used as command. </p>
 
-  Accepted values for <code>msg.payload</code> are:
-  <br/> • <i>get_basics</i> Outputs current state, volume, muted, player name, ...
-  <br/> • <i>get_state/volume/muted/name</i> Outputs only the playing state/volume/muted/name.
-  <br/> • <i>get_songmedia</i> Outputs song, media and position info
-  <br/> • <i>get_songinfo</i> Outputs song info
-  <br/> • <i>get_mediainfo</i> Outputs media info
-  <br/> • <i>get_positioninfo</i> Outputs position info
-  <br/> • <i>get_properties</i> Outputs player properties
+  Accepted values for <code>payload</code> are:
+  <br/> • <b>get_basics</b> Outputs current state, volume, muted, player name, ...
+  <br/> • <b>get_state/volume/muted/name</b> Outputs only the playing state/volume/muted/name.
+  <br/> • <b>get_songmedia</b> Outputs song, media and position info
+  <br/> • <b>get_songinfo</b> Outputs song info
+  <br/> • <b>get_mediainfo</b> Outputs media info
+  <br/> • <b>get_positioninfo</b> Outputs position info
+  <br/> • <b>get_properties</b> Outputs player properties
 
 </script>

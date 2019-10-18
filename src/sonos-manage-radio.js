@@ -104,9 +104,9 @@ module.exports = function (RED) {
 
   // -----------------------------------------------------------------------------
 
-  /**  Activate TuneIn radio station and optional set volume (via simple TuneIn Radio id).
+  /**  Activate TuneIn radio station (via simple TuneIn Radio id) and optional set volume.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message - uses msg.voluem if provided
+  * @param  {object} msg incoming message - uses volume if provided
   * @param  {object} sonosPlayer Sonos Player
   * @param  {object} commandObject command with function and parameter
   */
@@ -143,7 +143,7 @@ module.exports = function (RED) {
         })
         .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
     } else {
-      node.debug('msg.volume is not number');
+      node.debug('invalid TuneIn radio id: ' + JSON.stringify(commandObject));
       helper.showError(node, msg, new Error('n-r-c-s-p: invalid TuneIn radio id: ' + JSON.stringify(commandObject)), sonosFunction, 'invalid TuneIn radio id');
     }
   }
@@ -175,9 +175,10 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
         }
 
-        // filter: TuneIn or Amazon Prime radio stations
+        // create stationList with all valid items and source field: TuneIn, AmazonPrime
         const TUNEIN_PREFIX = 'x-sonosapi-stream:';
         const AMAZON_PREFIX = 'x-sonosapi-radio:';
+        const MP3_RADIO = 'x-rincon-mp3radio';
         const stationList = [];
         let stationUri;
         let radioId;
@@ -192,9 +193,12 @@ module.exports = function (RED) {
           if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
             stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'AmazonPrime' });
           }
+          if (response.items[i].uri.startsWith(MP3_RADIO)) {
+            stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'Internet' });
+          }
         }
         if (stationList.length === 0) {
-          throw new Error('n-r-c-s-p: no TuneIn/Amazon station in my sonos');
+          throw new Error('n-r-c-s-p: no TuneIn/Amazon/Internet station in my sonos');
         }
 
         // lookup topic in list and play radio station - first match counts
@@ -205,8 +209,10 @@ module.exports = function (RED) {
               return sonosPlayer.playTuneinRadio(stationList[i].radioId);
             } else if (stationList[i].source === 'AmazonPrime') {
               return sonosPlayer.setAVTransportURI(stationList[i].uri);
+            } else if (stationList[i].source === 'Internet') {
+              return sonosPlayer.setAVTransportURI(stationList[i].uri);
             } else {
-              throw new Error('n-r-c-s-p: Neither tuneIn nor amazon');
+              throw new Error('n-r-c-s-p: Neither tuneIn nor amazon nor mp3 radio');
             }
           }
         }
@@ -241,7 +247,7 @@ module.exports = function (RED) {
       .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
-  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime).
+  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime, mp3 stations).
   * @param  {Object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
@@ -270,9 +276,10 @@ module.exports = function (RED) {
           return;
         }
 
-        // filter: TuneIn or Amazon Prime radio stations
+        // create stationList with all valid items and source field: TuneIn, AmazonPrime
         const TUNEIN_PREFIX = 'x-sonosapi-stream:';
         const AMAZON_PREFIX = 'x-sonosapi-radio:';
+        const MP3_RADIO = 'x-rincon-mp3radio';
         const stationList = [];
         let stationUri;
         let radioId;
@@ -286,6 +293,9 @@ module.exports = function (RED) {
           }
           if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
             stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'AmazonPrime' });
+          }
+          if (response.items[i].uri.startsWith(MP3_RADIO)) {
+            stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'Internet' });
           }
         }
         if (stationList.length === 0) {

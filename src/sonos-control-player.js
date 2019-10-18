@@ -82,14 +82,14 @@ module.exports = function (RED) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command === 'play_notification') {
       handlePlayNotification(node, msg, sonosPlayer);
-      // TODO lab_ function
+      // TODO lab_ function - remove
     } else if (command === 'lab_test') {
       labTest(node, msg, sonosPlayer);
-      // TODO lab_ function
+      // TODO lab_ function - remove
     } else if (command === 'lab_play_notification') {
       helper.showWarning(node, sonosFunction, 'lab ... is depreciated', 'Please use play_notification');
       handlePlayNotification(node, msg, sonosPlayer);
-      // TODO lab_ function
+      // TODO lab_ function - remove
     } else if (command === 'lab_play_uri') {
       handleLabPlayUri(node, msg, sonosPlayer);
     } else if (command.startsWith('+')) {
