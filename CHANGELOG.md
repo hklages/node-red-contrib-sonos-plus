@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## [0.4.6] 2019-10-20
+### Changed
+- code: get_mysonos with more validation and debugging
+
 ## [0.4.5] 2019-10-18
 ### Added
 - play, activate_avtransport, activate_queue, play_mysonos, play_tunein with optional msg.volume
