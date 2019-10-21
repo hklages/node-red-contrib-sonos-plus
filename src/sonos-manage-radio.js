@@ -148,7 +148,7 @@ module.exports = function (RED) {
     }
   }
 
-  /**  Play a specific  My Sonos radio station (only TuneIn, AmazonPrime), start playing and optionally set volume
+  /**  Play a specific  My Sonos radio station (only TuneIn, AmazonPrime, MP3 station), start playing and optionally set volume
   * @param  {Object} node current node
   * @param  {object} msg incoming message - uses msg.volume if provided
   * @param  {object} sonosPlayer Sonos Player
@@ -158,48 +158,64 @@ module.exports = function (RED) {
   function playMySonos (node, msg, sonosPlayer, commandObject) {
     // get list of My Sonos stations
     const sonosFunction = 'play mysonos';
+    const stationList = [];
+    let stationTitleFinal = "unbekannt";
     sonosPlayer.getFavorites()
       .then(response => { // select right command to play and play
+        // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: invalid getFavorites response received ' + JSON.stringify(response));
         }
-
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
           throw new Error('n-r-c-s-p: invalid favorite list received ' + JSON.stringify(response));
         }
-
-        // filter: Amazon Prime Playlists only
         if (!Array.isArray(response.items)) {
           throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
         }
 
-        // create stationList with all valid items and source field: TuneIn, AmazonPrime
+        // create stationList with all valid items and source field: TuneIn, AmazonPrime, MP3 station
         const TUNEIN_PREFIX = 'x-sonosapi-stream:';
         const AMAZON_PREFIX = 'x-sonosapi-radio:';
-        const MP3_RADIO = 'x-rincon-mp3radio';
-        const stationList = [];
-        let stationUri;
+        const MP3_PREFIX = 'x-rincon-mp3radio:';
         let radioId;
+        let stationUri;
+        let stationTitle;
         for (let i = 0; i < response.items.length; i++) {
-          if (response.items[i].uri.startsWith(TUNEIN_PREFIX)) {
-          // get stationId
+          if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
+            (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
+            // uri not defined - example: Sonos PocketCast --- ignore!
+          } else {
             stationUri = response.items[i].uri;
-            radioId = stationUri.split('?')[0];
-            radioId = radioId.substr(TUNEIN_PREFIX.length);
-            stationList.push({ title: response.items[i].title, radioId: radioId, uri: stationUri, source: 'TuneIn' });
-          }
-          if (response.items[i].uri.startsWith(AMAZON_PREFIX)) {
-            stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'AmazonPrime' });
-          }
-          if (response.items[i].uri.startsWith(MP3_RADIO)) {
-            stationList.push({ title: response.items[i].title, uri: response.items[i].uri, source: 'Internet' });
+
+            if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
+              (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
+              throw new Error('n-r-c-s-p: invalid title at position ' + String(i));
+            }
+            stationTitle = response.items[i].title;
+            if (stationUri.startsWith(TUNEIN_PREFIX)) {
+            // get stationId
+              radioId = stationUri.split('?')[0];
+              radioId = radioId.substr(TUNEIN_PREFIX.length);
+              stationList.push({ title: stationTitle, radioId: radioId, uri: stationUri, source: 'TuneIn' });
+              stationTitleFinal = stationTitle;
+            }
+            if (stationUri.startsWith(AMAZON_PREFIX)) {
+              stationList.push({ title: stationTitle, uri: stationUri, source: 'AmazonPrime' });
+              stationTitleFinal = stationTitle;
+            }
+            if (stationUri.startsWith(MP3_PREFIX)) {
+              stationList.push({ title: stationTitle, uri: stationUri, source: 'MP3Stream' });
+              stationTitleFinal = stationTitle;
+            }
           }
         }
+
         if (stationList.length === 0) {
           throw new Error('n-r-c-s-p: no TuneIn/Amazon/Internet station in my sonos');
         }
+        node.debug('successfully extracted relevant station list');
 
         // lookup topic in list and play radio station - first match counts
         for (let i = 0; i < stationList.length; i++) {
@@ -209,7 +225,7 @@ module.exports = function (RED) {
               return sonosPlayer.playTuneinRadio(stationList[i].radioId);
             } else if (stationList[i].source === 'AmazonPrime') {
               return sonosPlayer.setAVTransportURI(stationList[i].uri);
-            } else if (stationList[i].source === 'Internet') {
+            } else if (stationList[i].source === 'MP3Stream') {
               return sonosPlayer.setAVTransportURI(stationList[i].uri);
             } else {
               throw new Error('n-r-c-s-p: Neither tuneIn nor amazon nor mp3 radio');
@@ -242,12 +258,13 @@ module.exports = function (RED) {
       })
       .then(() => { // show success
         helper.showSuccess(node, sonosFunction);
+        msg.payload = stationTitleFinal;
         return true;
       })
       .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
   }
 
-  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime, mp3 stations).
+  /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime, MP3 stations).
   * @param  {Object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
@@ -264,53 +281,56 @@ module.exports = function (RED) {
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: invalid getFavorites response received ' + JSON.stringify(response));
         }
-
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
           throw new Error('n-r-c-s-p: invalid favorite list received ' + JSON.stringify(response));
         }
-
         if (!Array.isArray(response.items)) {
           throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
         }
 
-        // create stationList with all valid items and source field: TuneIn, AmazonPrime
+        // create stationList with all valid items and source field: TuneIn, AmazonPrime, MP3
         const TUNEIN_PREFIX = 'x-sonosapi-stream:';
         const AMAZON_PREFIX = 'x-sonosapi-radio:';
         const MP3_PREFIX = 'x-rincon-mp3radio:';
         let radioId;
         let stationUri;
         let stationTitle;
+        let ingnoredItems = 0;
         node.debug('start processing items');
         for (let i = 0; i < (response.items).length; i++) {
           if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
             (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            throw new Error('n-r-c-s-p: invalid uri at position ' + String(i));
-          }
-          stationUri = response.items[i].uri;
+            // uri not defined - example: Sonos PocketCast
+            ingnoredItems++;
+          } else {
+            stationUri = response.items[i].uri;
 
-          if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
-            (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-            throw new Error('n-r-c-s-p: invalid title at position ' + String(i));
+            if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
+              (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
+              throw new Error('n-r-c-s-p: invalid title at position ' + String(i));
+            }
+            stationTitle = response.items[i].title;
+            if (stationUri.startsWith(TUNEIN_PREFIX)) {
+            // get stationId
+              radioId = stationUri.split('?')[0];
+              radioId = radioId.substr(TUNEIN_PREFIX.length);
+              stationList.push({ title: stationTitle, radioId: radioId, uri: stationUri, source: 'TuneIn' });
+            }
+            if (stationUri.startsWith(AMAZON_PREFIX)) {
+              stationList.push({ title: stationTitle, uri: stationUri, source: 'AmazonPrime' });
+            }
+            if (stationUri.startsWith(MP3_PREFIX)) {
+              stationList.push({ title: stationTitle, uri: stationUri, source: 'MP3Stream' });
+            }
+            node.debug('successfully processed item:  ' + String(i));
           }
-          stationTitle = response.items[i].title;
-
-          if (stationUri.startsWith(TUNEIN_PREFIX)) {
-          // get stationId
-            radioId = stationUri.split('?')[0];
-            radioId = radioId.substr(TUNEIN_PREFIX.length);
-            stationList.push({ title: stationTitle, radioId: radioId, uri: stationUri, source: 'TuneIn' });
-          }
-          if (stationUri.startsWith(AMAZON_PREFIX)) {
-            stationList.push({ title: stationTitle, uri: stationUri, source: 'AmazonPrime' });
-          }
-          if (stationUri.startsWith(MP3_PREFIX)) {
-            stationList.push({ title: stationTitle, uri: stationUri, source: 'MP3Stream' });
-          }
-          node.debug('successfully processed item:  ' + String(i));
         }
         if (stationList.length === 0) {
           throw new Error('n-r-c-s-p: no TuneIn/Amazon/Internet station in my sonos');
+        }
+        if (ingnoredItems > 0) {
+          node.warn('Some My Sonos items do not contain an uri. Count: ' + String(ingnoredItems));
         }
         node.debug('successfully finished routine');
         return true;

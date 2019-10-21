@@ -11,7 +11,10 @@ This package uses code from **node-red-contrib-better-sonos**. I created this ne
 
 ## NEWS
 Added msg.volume to set volume for commands: play, activate_avtransport, activate_queue, play_mysonos, play_tunein.
+
 You can now  "catch" node to handle errors.
+
+Some bugfixing in play_mysonos, get_mysonos.
 
 ## Installation
 

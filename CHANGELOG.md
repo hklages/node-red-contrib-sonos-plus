@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.7] 2019-10-21
+### Changed
+- code: get_mysonos, play_mysonos with more validation, debugging and ignoring items with missing uri
 
 ## [0.4.6] 2019-10-20
 ### Changed
