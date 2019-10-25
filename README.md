@@ -5,7 +5,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hklages/node-red-contrib-sonos-plus/master/LICENSE)
 
-A set of NodeRED nodes to control SONOS player in your local LAN. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
+A set of NodeRED nodes to control SONOS player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
 ## NEWS
 Added msg.size to specify the size of Music Library playlist list.
