@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.8] 2019-10-27
+### Changed
+- added msg.size for insert_musiclibrary_playlist, get_musiclibrary_playlists to define the maximum standardized
+- code: more validation and a warning, if there might be more playlists to be imported
+
 ## [0.4.7] 2019-10-21
 ### Changed
 - code: get_mysonos, play_mysonos with more validation, debugging and ignoring items with missing uri
