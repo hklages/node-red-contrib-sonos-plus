@@ -1,10 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.4.8] 2019-10-27
+## [0.4.8] 2019-10-26
 ### Changed
-- added msg.size for insert_musiclibrary_playlist, get_musiclibrary_playlists to define the maximum standardized
-- code: more validation and a warning, if there might be more playlists to be imported
+- added msg.size for insert_musiclibrary_playlist, get_musiclibrary_playlists
+- code: Added a warning, if there might be more playlists in Music Library then having been fetched
+- code: more validation and error handling
 
 ## [0.4.7] 2019-10-21
 ### Changed
