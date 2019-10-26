@@ -51,6 +51,7 @@ module.exports = class SonosHelper {
   */
   identifyPlayerProcessInputMsg (node, configNode, msg, callback) {
     // use IP Address if user set it
+    const sonosFunction = 'identify player';
     const hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
     if (hasIpAddress) {
       // exisiting ip address - fastes solutions, no discovery necessary
@@ -61,7 +62,7 @@ module.exports = class SonosHelper {
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
       node.status({ fill: 'green', shape: 'dot', text: 'error:check ip address - missing ip address' });
-      node.warn('Only a Warning: Missing IP address. Details: It is recommended to set IP Address in config node');
+      this.showWarning(node, sonosFunction, 'Missing IP address', 'It is recommended to set IP Address in config node');
 
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
         if (err) {
@@ -194,7 +195,7 @@ module.exports = class SonosHelper {
   */
   showWarning (node, functionName, messageShort, messageDetail) {
     node.debug(`Entering warning handling from ${functionName}`);
-    node.warn(`W A R N I N G : ${functionName} - ${messageShort}. Details: ` + messageDetail);
+    node.warn(`Just a warning: ${functionName} - ${messageShort}. Details: ` + messageDetail);
     node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
   }
 

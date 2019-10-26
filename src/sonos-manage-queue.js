@@ -225,7 +225,7 @@ module.exports = function (RED) {
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
-  * Maximum number of playlist is 100 entries if not specified msg.size
+  * Maximum number of playlists is 100 entries if not specified msg.size
   */
   function insertMusicLibraryPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert music library playlist';
@@ -241,21 +241,18 @@ module.exports = function (RED) {
     let listDimension = 100; // default
     if (typeof msg.size === 'undefined' || msg.size === null ||
     (typeof msg.size === 'number' && isNaN(msg.size)) || msg.size === '') {
-      // use default
+      node.debug('msg.size undefined - use default size 100');
     } else {
       listDimension = parseInt(msg.size);
       if (Number.isInteger(listDimension)) {
         if (listDimension > 0) {
-          // use this new value
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          node.debug('invalid msg.size: ' + msg.size);
           helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size),
             sonosFunction, 'invalid msg.size');
           return;
         }
       } else {
-        node.debug('msg.size is not an integer' + msg.size);
         helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size),
           sonosFunction, 'msg.size is not an integer');
         return;
@@ -268,6 +265,9 @@ module.exports = function (RED) {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: invalid getMusicLibrary response received ' + JSON.stringify(response));
+        }
+        if (response === false) {
+          throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
@@ -282,12 +282,13 @@ module.exports = function (RED) {
         }
         node.debug('length:' + mlPlaylist.length);
         if (mlPlaylist.length === listDimension) {
-          node.warn(`W A R N I N G: There may be more then ${listDimension} playlists. Please use/modify msg.size`);
+          helper.showWarning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
         }
         return mlPlaylist;
       })
       .then((playlistArray) => {
         // find topic in title and return uri
+        node.debug('playlist array: ' + JSON.stringify(playlistArray));
         let position = -1;
         for (let i = 0; i < playlistArray.length; i++) {
           if ((playlistArray[i].title).indexOf(msg.topic) > -1) {
@@ -302,6 +303,7 @@ module.exports = function (RED) {
         }
       })
       .then((uri) => {
+        node.debug('founde uri: ' + JSON.stringify(uri));
         return sonosPlayer.queue(uri);
       })
       .then(() => {
@@ -654,21 +656,18 @@ module.exports = function (RED) {
     let listDimension = 100; // default
     if (typeof msg.size === 'undefined' || msg.size === null ||
     (typeof msg.size === 'number' && isNaN(msg.size)) || msg.size === '') {
-      // use default
+      node.debug('msg.size undefined - use default size 100');
     } else {
       listDimension = parseInt(msg.size);
       if (Number.isInteger(listDimension)) {
         if (listDimension > 0) {
-          // use this new value
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          node.debug('invalid msg.size: ' + msg.size);
           helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size),
             sonosFunction, 'invalid msg.size');
           return;
         }
       } else {
-        node.debug('msg.size is not an integer' + msg.size);
         helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size),
           sonosFunction, 'msg.size is not an integer');
         return;
@@ -681,6 +680,9 @@ module.exports = function (RED) {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: invalid getMusicLibrary response received ' + JSON.stringify(response));
+        }
+        if (response === false) {
+          throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
@@ -695,7 +697,7 @@ module.exports = function (RED) {
         }
         node.debug('length:' + mlPlaylist.length);
         if (mlPlaylist.length === listDimension) {
-          node.warn(`W A R N I N G: There may be more then ${listDimension} playlists. Please use/modify msg.size`);
+          helper.showWarning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
         }
         return mlPlaylist;
       })

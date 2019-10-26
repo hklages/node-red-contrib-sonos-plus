@@ -12,7 +12,7 @@ Added msg.size to specify the size of Music Library playlist list.
 
 Added msg.volume to set volume for commands: play, activate_avtransport, activate_queue, play_mysonos, play_tunein.
 
-You can now  "catch" node to handle errors.
+You can now use "catch" node to handle errors.
 
 ## Installation
 

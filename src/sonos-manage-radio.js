@@ -330,7 +330,7 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: no TuneIn/Amazon/Internet station in my sonos');
         }
         if (ingnoredItems > 0) {
-          node.warn('Some My Sonos items do not contain an uri. Count: ' + String(ingnoredItems));
+          helper.showWarning(node, sonosFunction, 'Some My Sonos items do not contain an uri', 'Count: ' + String(ingnoredItems));
         }
         node.debug('successfully finished routine');
         return true;

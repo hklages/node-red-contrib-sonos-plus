@@ -55,7 +55,10 @@ RED.nodes.registerType('sonos-manage-queue', {
       <dd>Command parameter only used for some commands.</dd>
 
       <dt>volume <span class="property-type">string</span> </dt>
-      <dd>Volume beeing used together with <b>activate_queue</b></dd>
+      <dd>Volume being used together with <b>activate_queue</b></dd>
+
+      <dt>size <span class="property-type">string</span> </dt>
+      <dd>Size (maximum number of playlists) being used together with <b>insert_musiclibrary_playlist, get_musiclibrary_playlists</b>.</dd>
   </dl>
 
   <h3>Outputs</h3>
@@ -99,4 +102,5 @@ RED.nodes.registerType('sonos-manage-queue', {
   <br/> • <b>get_prime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists
   <br/> • <b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists
 
+The msg.size property specifies the buffer size for retrieving Music library playlists. If you have more then 100 imported Music Library playlist you can use this property to increase the buffer size. 
 </script>
