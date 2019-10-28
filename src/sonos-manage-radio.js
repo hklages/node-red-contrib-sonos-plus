@@ -11,7 +11,7 @@ module.exports = function (RED) {
 
     RED.nodes.createNode(this, config);
     const sonosFunction = 'create node manage radio';
-    // verify config node. if valid then set status and subscribe to messages
+    // validate config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
     const isValid = helper.validateConfigNodeV3(configNode);
@@ -60,14 +60,14 @@ module.exports = function (RED) {
     const sonosFunction = 'handle input msg';
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
+      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'undefined sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
+      helper.showError(node, msg, new Error('n-r-c-s-p: undefined payload ' + JSON.stringify(msg)), sonosFunction, 'undefined payload');
       return;
     }
 
@@ -80,7 +80,7 @@ module.exports = function (RED) {
     if (commandWithParam.cmd === 'play_mysonos') {
       if (typeof msg.topic === 'undefined' || msg.topic === null ||
         (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-        helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+        helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
         return;
       }
       commandWithParam.parameter = String(msg.topic);
@@ -88,7 +88,7 @@ module.exports = function (RED) {
     } else if (commandWithParam.cmd === 'play_tunein') {
       if (typeof msg.topic === 'undefined' || msg.topic === null ||
         (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-        helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+        helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
         return;
       }
       commandWithParam.parameter = String(msg.topic);
@@ -159,17 +159,17 @@ module.exports = function (RED) {
     // get list of My Sonos stations
     const sonosFunction = 'play mysonos';
     const stationList = [];
-    let stationTitleFinal = "unbekannt";
+    let stationTitleFinal = 'unbekannt';
     sonosPlayer.getFavorites()
       .then(response => { // select right command to play and play
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: invalid getFavorites response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getFavorites response received ' + JSON.stringify(response));
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: invalid favorite list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined favorite list received ' + JSON.stringify(response));
         }
         if (!Array.isArray(response.items)) {
           throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
@@ -191,7 +191,7 @@ module.exports = function (RED) {
 
             if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
               (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-              throw new Error('n-r-c-s-p: invalid title at position ' + String(i));
+              throw new Error('n-r-c-s-p: undefined title at position ' + String(i));
             }
             stationTitle = response.items[i].title;
             if (stationUri.startsWith(TUNEIN_PREFIX)) {
@@ -279,11 +279,11 @@ module.exports = function (RED) {
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: invalid getFavorites response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getFavorites response received ' + JSON.stringify(response));
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: invalid favorite list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined favorite list received ' + JSON.stringify(response));
         }
         if (!Array.isArray(response.items)) {
           throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
@@ -308,7 +308,7 @@ module.exports = function (RED) {
 
             if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
               (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-              throw new Error('n-r-c-s-p: invalid title at position ' + String(i));
+              throw new Error('n-r-c-s-p: undefined title at position ' + String(i));
             }
             stationTitle = response.items[i].title;
             if (stationUri.startsWith(TUNEIN_PREFIX)) {
@@ -357,13 +357,13 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid getFavorites response received ' + JSON.stringify(response)), sonosFunction, 'invalid getqueue response received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined getFavorites response received ' + JSON.stringify(response)), sonosFunction, 'undefined getqueue response received');
           return;
         }
 
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid favorite list received ' + JSON.stringify(response)), sonosFunction, 'invalid favorite list received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined favorite list received ' + JSON.stringify(response)), sonosFunction, 'undefined favorite list received');
           return;
         }
 

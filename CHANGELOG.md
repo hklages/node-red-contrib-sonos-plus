@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] scheduled for 2019-11-05
+### Changed
+- added msg.size for insert_sonos_playlist, get_sonos_playlists
+- code: more validation and error handling in manage_queue
+
 ## [0.4.8] 2019-10-26
 ### Changed
 - added msg.size for insert_musiclibrary_playlist, get_musiclibrary_playlists

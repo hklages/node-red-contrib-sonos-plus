@@ -10,7 +10,7 @@ module.exports = function (RED) {
   function SonosGetStatusNode (config) {
     RED.nodes.createNode(this, config);
 
-    // verify config node. if valid then set status and subscribe to messages
+    // validate config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
     const isValid = helper.validateConfigNodeV3(configNode);
@@ -58,14 +58,14 @@ module.exports = function (RED) {
     const sonosFunction = 'handle input msg';
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
+      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'undefined sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
+      helper.showError(node, msg, new Error('n-r-c-s-p: undefined payload ' + JSON.stringify(msg)), sonosFunction, 'undefined payload');
       return;
     }
 
@@ -123,7 +123,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player state received ' + JSON.stringify(response)), sonosFunction, 'invalid player state received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined player state received ' + JSON.stringify(response)), sonosFunction, 'undefined player state received');
           return;
         }
 
@@ -165,7 +165,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '' || isNaN(response)) {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player volume received ' + JSON.stringify(response)), sonosFunction, 'invalid player volume received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined player volume received ' + JSON.stringify(response)), sonosFunction, 'undefined player volume received');
           return;
         }
 
@@ -213,7 +213,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid mute state received ' + JSON.stringify(response)), sonosFunction, 'invalid mute state received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined mute state received ' + JSON.stringify(response)), sonosFunction, 'undefined mute state received');
           return;
         }
 
@@ -253,7 +253,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player name received ' + JSON.stringify(response)), sonosFunction, 'invalid player name received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined player name received ' + JSON.stringify(response)), sonosFunction, 'undefined player name received');
           return;
         }
 
@@ -293,7 +293,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid zone received ' + JSON.stringify(response)), sonosFunction, 'invalid zone received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined zone received ' + JSON.stringify(response)), sonosFunction, 'undefined zone received');
           return;
         }
 
@@ -337,7 +337,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid player properties received ' + JSON.stringify(response)), sonosFunction, 'invalid player properties received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined player properties received ' + JSON.stringify(response)), sonosFunction, 'undefined player properties received');
           return;
         }
 
@@ -369,30 +369,44 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid current song received ' + JSON.stringify(response)), sonosFunction, 'invalid current song received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined current song received ' + JSON.stringify(response)), sonosFunction, 'undefined current song received');
           return;
         }
         // message albumArtURL property
-        if (response.albumArtURI !== undefined && response.albumArtURI !== null) {
+        if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
+          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {
+          // TuneIn does not provide AlbumArtURL -so we continure
+        } else {
           node.debug('got valid albumArtURI');
           const port = 1400;
           albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
-        } else {
-          // TuneIn does not provide AlbumArtURL -so we continure
         }
-        if (response.artist !== undefined && response.artist !== null) {
-          node.debug('got artist and title');
-          artist = response.artist;
-          title = response.title;
-        } else {
-          if (response.title.indexOf(' - ') > 0) {
-            // TuneIn provides artist and title in title field
-            node.debug('could split data to artist and title');
-            artist = response.title.split(' - ')[0];
-            title = response.title.split(' - ')[1];
-          } else {
-            helper.showWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+        // artist title
+        if (typeof response.artist === 'undefined' || response.artist === null ||
+          (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
+          // missing artist: TuneIn provides artist and title in title field
+          if (typeof response.title === 'undefined' || response.title === null ||
+              (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            helper.showWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
             return;
+          } else {
+            if (response.title.indexOf(' - ') > 0) {
+              node.debug('could split data to artist and title');
+              artist = response.title.split(' - ')[0];
+              title = response.title.split(' - ')[1];
+            } else {
+              helper.showWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              return;
+            }
+          }
+        } else {
+          artist = response.artist;
+          if (typeof response.title === 'undefined' || response.title === null ||
+              (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            title = response.title;
+            node.debug('got artist and title');
+          } else {
+            title = 'unbekannt';
           }
         }
         // Output data
@@ -435,9 +449,15 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid media info received ' + JSON.stringify(response)), sonosFunction, 'invalid media info received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined media info received ' + JSON.stringify(response)), sonosFunction, 'undefined media info received');
           return;
         }
+        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
+          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined CurrentURI received ' + JSON.stringify(response)), sonosFunction, 'undefined CurrentURI received');
+          return;
+        }
+
         const uri = response.CurrentURI;
         if (uri.startsWith('x-rincon-queue')) {
           response.queue_active = true;
@@ -483,7 +503,7 @@ module.exports = function (RED) {
         node.debug(JSON.stringify(response));
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid position info received ' + JSON.stringify(response)), sonosFunction, 'invalid position info received');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined position info received ' + JSON.stringify(response)), sonosFunction, 'undefined position info received');
           return;
         }
 

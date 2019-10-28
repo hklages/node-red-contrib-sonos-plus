@@ -11,7 +11,7 @@ module.exports = function (RED) {
 
     RED.nodes.createNode(this, config);
     const sonosFunction = 'create node control player';
-    // verify config node. if valid then set status and subscribe to messages
+    // validate config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
     const isValid = helper.validateConfigNodeV3(configNode);
@@ -61,14 +61,14 @@ module.exports = function (RED) {
     const sonosPlayer = new Sonos(ipaddress);
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'invalid sonos player.');
+      helper.showError(node, msg, new Error('n-r-c-s-p: Check configuration'), sonosFunction, 'undefined sonos player.');
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: invalid payload ' + JSON.stringify(msg)), sonosFunction, 'invalid payload');
+      helper.showError(node, msg, new Error('n-r-c-s-p: undefined payload ' + JSON.stringify(msg)), sonosFunction, 'undefined payload');
       return;
     }
 
@@ -202,7 +202,7 @@ module.exports = function (RED) {
       case 'join_group': {
         if (typeof msg.topic === 'undefined' || msg.topic === null ||
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
           return;
         }
 
@@ -216,7 +216,7 @@ module.exports = function (RED) {
         // validate msg.topic
         if (typeof msg.topic === 'undefined' || msg.topic === null ||
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-          helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+          helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
           return;
         }
 
@@ -310,7 +310,7 @@ module.exports = function (RED) {
     // validate msg.topic.
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
       return;
     }
     // validate msg.volume - use default as backup
@@ -371,7 +371,7 @@ module.exports = function (RED) {
     // Check msg.topic.
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: invalid topic ' + JSON.stringify(msg)), sonosFunction, 'invalid topic');
+      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
       return;
     }
     const uri = String(msg.topic).trim();
