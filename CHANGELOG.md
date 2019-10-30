@@ -2,9 +2,14 @@
 All notable changes to this project will be documented in this file.
 
 ## [0.5.0] scheduled for 2019-11-05
-### Changed
+### Addded
 - added msg.size for insert_sonos_playlist, get_sonos_playlists
-- code: more validation and error handling in manage_queue
+- added insert_amazonprime_playlist
+- added activate queue for play_song
+
+### Changed
+- in manage queue node: rework of async chains, more validation and error handling
+- in manage queue node: replaces insert_prime_playlist by insert_prime_playlisturi
 
 ## [0.4.8] 2019-10-26
 ### Changed

@@ -361,9 +361,9 @@ module.exports = function (RED) {
   * changes msg.artist, title, albumArt, song, media and position info in chain mode
   */
   function getPlayerCurrentSong (node, msg, sonosPlayer, outputType) {
-    let artist = 'unknown';
-    let title = 'unknown';
-    let albumArtURL = 'unknown';
+    let artist = 'unknown'; // as default
+    let title = 'unknown'; // as default
+    let albumArtURL = '';
     const sonosFunction = 'get current song';
     sonosPlayer.currentTrack()
       .then(response => {
@@ -372,7 +372,7 @@ module.exports = function (RED) {
           helper.showError(node, msg, new Error('n-r-c-s-p: undefined current song received ' + JSON.stringify(response)), sonosFunction, 'undefined current song received');
           return;
         }
-        // message albumArtURL property
+        // modify albumArtURL property
         if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
           (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {
           // TuneIn does not provide AlbumArtURL -so we continure
@@ -381,7 +381,7 @@ module.exports = function (RED) {
           const port = 1400;
           albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
         }
-        // artist title
+        // extract artist and title if available
         if (typeof response.artist === 'undefined' || response.artist === null ||
           (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
           // missing artist: TuneIn provides artist and title in title field
@@ -403,10 +403,10 @@ module.exports = function (RED) {
           artist = response.artist;
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            // title unknown
+          } else {
             title = response.title;
             node.debug('got artist and title');
-          } else {
-            title = 'unbekannt';
           }
         }
         // Output data

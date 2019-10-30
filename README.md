@@ -8,11 +8,8 @@
 A set of NodeRED nodes to control SONOS player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
 ## NEWS
-Added msg.size to specify the size of Music Library playlist list.
+Added insert_amazonprime_playlist.
 
-Added msg.volume to set volume for commands: play, activate_avtransport, activate_queue, play_mysonos, play_tunein.
-
-You can now use "catch" node to handle errors.
 
 ## Installation
 

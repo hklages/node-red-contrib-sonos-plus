@@ -35,7 +35,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'process message - invalid configNode');
+          helper.showError(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'invalid configNode');
         }
       });
     } else {
