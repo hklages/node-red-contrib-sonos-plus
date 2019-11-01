@@ -171,6 +171,7 @@ module.exports = class SonosHelper {
   showError (node, msg, error, functionName, messageShort) {
     let msgShort = messageShort;
     node.debug(`Entering error handling from ${functionName}`);
+    node.debug('Error Object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error)));
     if (error.code === 'ECONNREFUSED') {
       msgShort = 'can not connect to player';
       node.error(`${functionName} - ${msgShort} Details: Validate IP address of player.`, msg);
@@ -184,6 +185,52 @@ module.exports = class SonosHelper {
       node.error(`${functionName} - ${messageShort} Details: ` + errorDetails, msg);
     }
     node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
+  }
+
+  /** show error status and error message - Version 2
+  * @param  {Object} node current node
+  * @param  {Object} msg current msg
+  * @param  {Error object} error  error object from response
+  * @param  {string} functionName name of calling function
+  * @param  {string} messageShort  short message for status
+  */
+  showErrorV2 (node, msg, error, functionName) {
+    let msgShort = 'unknown'; // default text
+    let msgDetails = 'unknown'; // default text
+    node.debug(`Entering error handling from ${functionName}`);
+
+    // validate .code and check for ECONNREFUSED
+    if (typeof error.code === 'undefined' || error.code === null ||
+      (typeof error.code === 'number' && isNaN(error.code)) || error.code === '') {
+      // Caution: getOwn is neccessary for some error messages eg playmode!
+      if (typeof error.message === 'undefined' || error.message === null ||
+        (typeof error.message === 'number' && isNaN(error.message)) || error.message === '') {
+        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        msgShort = 'sonos-node / exception';
+      } else {
+        if (error.message.startsWith('n-r-c-s-p:')) {
+          // handle my own error
+          msgDetails = 'none';
+          msgShort = error.message.replace('n-r-c-s-p: ', '');
+        } else {
+          // Caution: getOwn is neccessary for some error messages eg playmode!
+          msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
+          msgShort = error.message;
+        }
+      }
+    } else {
+      if (error.code === 'ECONNREFUSED') {
+        msgShort = 'can not connect to player';
+        msgDetails = 'Validate IP adress of player';
+      } else {
+        // Caution: getOwn is neccessary for some error messages eg playmode!
+        msgShort = 'sonos-node / exception';
+        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
+      }
+    }
+
+    node.error(`${functionName} - ${msgShort} \n Details: ${msgDetails}`, msg);
+    node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}` });
   }
 
   /** show warning status and warn message

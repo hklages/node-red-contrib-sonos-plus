@@ -34,7 +34,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'invalid configNode');
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction);
         }
       });
     } else {
@@ -60,14 +60,14 @@ module.exports = function (RED) {
     const sonosFunction = 'handle input msg';
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction, 'undefined sonos player.');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined payload ' + JSON.stringify(msg)), sonosFunction, 'undefined payload');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined payload'), sonosFunction);
       return;
     }
 
@@ -99,7 +99,7 @@ module.exports = function (RED) {
       getQueue(node, msg, sonosPlayer);
     } else if (command === 'get_sonos_playlists') {
       getSonosPlaylists(node, msg, sonosPlayer);
-    } else if (command === 'get_prime_playlists') {
+    } else if (command === 'get_amazonprime_playlists') {
       getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
     } else if (command === 'get_musiclibrary_playlists') {
       getMusicLibraryPlaylists(node, msg, sonosPlayer);
@@ -126,7 +126,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     const uri = msg.topic;
@@ -138,7 +138,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs of specified Amazon Prime playlist  (URI format) into SONOS queue.
@@ -155,11 +155,11 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined prime playlist ' + JSON.stringify(msg)), sonosFunction, 'undefined prime playlist');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
       return;
     }
     if (!msg.topic.startsWith('x-rincon-cpcontainer:')) {
-      helper.showError(node, msg, new Error('n-r-c-s-p: invalid prime playlist ' + JSON.stringify(msg.topic)), sonosFunction, 'invalid prime playlist');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: invalid prime playlist'), sonosFunction);
       return;
     }
 
@@ -185,7 +185,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs from matching SONOS playlist (first match, topic string) into SONOS queue.
@@ -202,7 +202,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -217,13 +217,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size),
-            sonosFunction, 'invalid msg.size');
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size),
-          sonosFunction, 'msg.size is not an integer');
+        helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -234,21 +232,21 @@ module.exports = function (RED) {
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined playlists list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined playlists list received');
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined playlists list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined playlists list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
         const sonosPlaylists = response.items;
         if (sonosPlaylists.length === 0) {
-          throw new Error('n-r-c-s-p: no SONOS playlist available ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: no SONOS playlist available');
         }
         node.debug('length:' + sonosPlaylists.length);
         if (sonosPlaylists.length === listDimension) {
@@ -267,7 +265,7 @@ module.exports = function (RED) {
           }
         }
         if (position === -1) {
-          throw new Error('n-r-c-s-p: could not find playlist name in playlists ' + JSON.stringify(playlistArray));
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists');
         } else {
           return playlistArray[position].uri;
         }
@@ -284,7 +282,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs from matching Music Libary playlist (first match, topic string) into SONOS queue.
@@ -301,7 +299,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -316,13 +314,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size),
-            sonosFunction, 'invalid msg.size');
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not positve:' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size),
-          sonosFunction, 'msg.size is not an integer');
+        helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -333,21 +329,21 @@ module.exports = function (RED) {
         // get array of playlists and return
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received');
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined playlists list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined playlists list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
         const mlPlaylist = response.items;
         if (mlPlaylist.length === 0) {
-          throw new Error('n-r-c-s-p: no music libary playlist found ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: no music libary playlist found');
         }
         node.debug('length:' + mlPlaylist.length);
         if (mlPlaylist.length === listDimension) {
@@ -366,7 +362,7 @@ module.exports = function (RED) {
           }
         }
         if (position === -1) {
-          throw new Error('n-r-c-s-p: could not find playlist name in playlists ' + JSON.stringify(playlistArray));
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists');
         } else {
           return playlistArray[position].uri;
         }
@@ -382,7 +378,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Insert all songs from matching My Sonos Amazon Prime Playlist  (first match, topic string) into SONOS queue.
@@ -398,7 +394,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -409,17 +405,17 @@ module.exports = function (RED) {
         const primePlaylistList = []; // will hold all playlist items
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined favorite list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined favorite list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
         let primePlaylistUri = '';
         node.debug('favorites:' + JSON.stringify(response.items));
@@ -460,7 +456,7 @@ module.exports = function (RED) {
           }
         }
         if (position === -1) {
-          throw new Error('n-r-c-s-p: could not find playlist name in playlists ' + JSON.stringify(playlistArray));
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists');
         } else {
           return playlistArray[position].uri;
         }
@@ -468,7 +464,7 @@ module.exports = function (RED) {
       .then((uri) => {
         // create DIDL from uri and queue
         if (!uri.startsWith('x-rincon-cpcontainer:')) {
-          throw new Error('n-r-c-s-p: invalid prime playlist ' + JSON.stringify(msg.topic));
+          throw new Error('n-r-c-s-p: invalid prime playlist');
         }
         const newUri = String(uri).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
         const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1);
@@ -490,7 +486,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /** Removes song with specified index (msg.topic) from SONOS queue.
@@ -509,7 +505,7 @@ module.exports = function (RED) {
         // get queue size - ensure not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getqueue response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         if (response === false) {
           // queue is empty
@@ -517,7 +513,7 @@ module.exports = function (RED) {
         }
         if (typeof response.returned === 'undefined' || response.returned === null ||
           (typeof response.returned === 'number' && isNaN(response.returned)) || response.returned === '' || isNaN(response.returned)) {
-          throw new Error('n-r-c-s-p: undefined queue size received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined queue size received');
         }
         // queue not empty
         node.debug(`queue contains ${parseInt(response.returned)} songs`);
@@ -528,7 +524,7 @@ module.exports = function (RED) {
         // validate message topic. Remark: at this position because we need queue size
         if (typeof msg.topic === 'undefined' || msg.topic === null ||
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-          throw new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg));
+          throw new Error('n-r-c-s-p: undefined topic');
         }
         let position = String(msg.topic).trim();
         if (position === 'last') {
@@ -537,7 +533,7 @@ module.exports = function (RED) {
           position = 1;
         } else {
           if (isNaN(position)) {
-            throw new Error('n-r-c-s-p: topic is not number ');
+            throw new Error('n-r-c-s-p: topic is not number');
           }
           position = parseInt(position); // make integer
           node.debug('queue size: ' + queueSize + ' / position: ' + position);
@@ -556,7 +552,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Activate SONOS queue and start playing first song, optionally set volume
@@ -573,7 +569,7 @@ module.exports = function (RED) {
         // validiate queue ist not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined get queue response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined get queue response received');
         }
         if (response === false) {
           // queue is empty
@@ -611,7 +607,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Play song with specified index (msg.topic) in SONOS queue. Activates also SONOS Queue.
@@ -621,7 +617,7 @@ module.exports = function (RED) {
   * @output {Object} Success: msg, no modifications!
   */
   function playSong (node, msg, sonosPlayer) {
-    const sonosFunction = 'play specific song in queue';
+    const sonosFunction = 'play song';
 
     let validatedPosition;
     sonosPlayer.getQueue()
@@ -629,15 +625,15 @@ module.exports = function (RED) {
         // get queue size - ensure not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getqueue response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         if (response === false) {
           // queue is empty
-          throw new Error('n-r-c-s-p: queue is empty' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: queue is empty');
         }
         if (typeof response.returned === 'undefined' || response.returned === null ||
           (typeof response.returned === 'number' && isNaN(response.returned)) || response.returned === '' || isNaN(response.returned)) {
-          throw new Error('n-r-c-s-p: undefined queue size received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined queue size received');
         }
         // queue not empty
         node.debug(`queue contains ${parseInt(response.returned)} songs`);
@@ -648,7 +644,7 @@ module.exports = function (RED) {
         // validate message topic. Remark: at this position because we need queue size
         if (typeof msg.topic === 'undefined' || msg.topic === null ||
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-          throw new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg));
+          throw new Error('n-r-c-s-p: undefined index (msg.topic)');
         }
         let position = String(msg.topic).trim();
         if (position === 'last') {
@@ -657,12 +653,12 @@ module.exports = function (RED) {
           position = 1;
         } else {
           if (isNaN(position)) {
-            throw new Error('n-r-c-s-p: topic is not number ');
+            throw new Error('n-r-c-s-p: index (msg.topic) is not number');
           }
           position = parseInt(position); // make integer
           node.debug('queue size: ' + queueSize + ' / position: ' + position);
           if (position < 1 || position > queueSize) {
-            throw new Error('n-r-c-s-p: topic is out of range');
+            throw new Error('n-r-c-s-p: index (msg.topic) is out of range: ' + String(position));
           }
         }
         // position is in range 1 ... queueSize
@@ -677,7 +673,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Flushes queue - removes all songs from queue.
@@ -693,7 +689,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Get the list of current songs in queue.
@@ -708,7 +704,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getqueue response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         let songsArray;
         let queueSize;
@@ -719,7 +715,7 @@ module.exports = function (RED) {
         } else {
           if (typeof response.returned === 'undefined' || response.returned === null ||
             (typeof response.returned === 'number' && isNaN(response.returned)) || response.returned === '' || isNaN(response.returned)) {
-            throw new Error('n-r-c-s-p: undefined queue size received ' + JSON.stringify(response));
+            throw new Error('n-r-c-s-p: undefined queue size received');
           }
           node.debug(JSON.stringify(response));
           queueSize = parseInt(response.returned);
@@ -743,7 +739,7 @@ module.exports = function (RED) {
         msg.queue_length = queueSize;
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Get list of SONOS playlists. Dont mix up with My Sonos playlists.
@@ -767,13 +763,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size),
-            sonosFunction, 'invalid msg.size');
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size),
-          sonosFunction, 'msg.size is not an integer');
+        helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -784,21 +778,21 @@ module.exports = function (RED) {
         // validate response and change albumArtUri
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received');
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined sonos playlist list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined sonos playlist list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
         const sonosPlaylists = response.items;
         if (sonosPlaylists.length === 0) {
-          throw new Error('n-r-c-s-p: no SONOS playlist available ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: no SONOS playlist available');
         }
         node.debug('length:' + sonosPlaylists.length);
         if (sonosPlaylists.length === listDimension) {
@@ -825,7 +819,7 @@ module.exports = function (RED) {
         msg.available_playlists = playlistArray.length;
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Get list of My Sonos Amazon Playlist (only standards).
@@ -841,17 +835,17 @@ module.exports = function (RED) {
         // validate response and send output
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined favorite list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined favorite list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
         const PRIME_IDENTIFIER = 'prime_playlist';
         const primePlaylistList = []; // will hold all playlist items
@@ -885,7 +879,7 @@ module.exports = function (RED) {
         msg.payload = primePlaylistList;
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Get list of music library playlists (imported).
@@ -910,13 +904,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size),
-            sonosFunction, 'invalid msg.size');
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.showError(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size),
-          sonosFunction, 'msg.size is not an integer');
+        helper.showErrorV2(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -927,21 +919,21 @@ module.exports = function (RED) {
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received');
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined playlists list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined playlists list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
         const mlPlaylist = response.items;
         if (mlPlaylist.length === 0) {
-          throw new Error('n-r-c-s-p: no music libary playlist found ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: no music libary playlist found');
         }
         node.debug('length:' + mlPlaylist.length);
         if (mlPlaylist.length === listDimension) {
@@ -956,7 +948,7 @@ module.exports = function (RED) {
         msg.available_playlists = playlistArray.length;
         node.send(msg);
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
@@ -971,7 +963,12 @@ module.exports = function (RED) {
     // check topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.showError(node, msg, new Error('n-r-c-s-p: undefined topic ' + JSON.stringify(msg)), sonosFunction, 'undefined topic');
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+    const playmodes = ['NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'];
+    if (playmodes.indexOf(msg.topic) === -1) {
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: this topic is not allowed ' + msg.topic), sonosFunction);
       return;
     }
 
@@ -1011,12 +1008,8 @@ module.exports = function (RED) {
           (typeof plresp === 'number' && isNaN(plresp)) || plresp === '') {
           throw new Error('n-r-c-s-p: undefined response from setPlayMode'); // promise implicitly rejected
         } else {
-          const resp = JSON.stringify(plresp, Object.getOwnPropertyNames(plresp));
-          if (resp.indexOf('Invalid play mode:') > -1) {
-            throw new Error(`n-r-c-s-p: wrong topic: ${msg.topic}`);
-          } else {
-            return true;
-          }
+          // response should be true
+          return true;
         }
       })
       .then(() => {
@@ -1024,7 +1017,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true; // promise implicitly resolved
       })
-      .catch((error) => helper.showError(node, msg, error, sonosFunction, 'error caught from responses and .then'));
+      .catch((error) => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
@@ -1045,7 +1038,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch((error) => helper.showError(node, msg, error, sonosFunction, 'error caught from responses'));
+      .catch((error) => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);

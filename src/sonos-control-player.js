@@ -82,16 +82,6 @@ module.exports = function (RED) {
       handleCommandBasic(node, msg, sonosPlayer, command);
     } else if (command === 'play_notification') {
       handlePlayNotification(node, msg, sonosPlayer);
-      // TODO lab_ function - remove
-    } else if (command === 'lab_test') {
-      labTest(node, msg, sonosPlayer);
-      // TODO lab_ function - remove
-    } else if (command === 'lab_play_notification') {
-      helper.showWarning(node, sonosFunction, 'lab ... is depreciated', 'Please use play_notification');
-      handlePlayNotification(node, msg, sonosPlayer);
-      // TODO lab_ function - remove
-    } else if (command === 'lab_play_uri') {
-      handleLabPlayUri(node, msg, sonosPlayer);
     } else if (command.startsWith('+')) {
       commandWithParam = { cmd: 'volume_increase', parameter: command };
       handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
@@ -101,6 +91,13 @@ module.exports = function (RED) {
     } else if (!isNaN(parseInt(command))) {
       commandWithParam = { cmd: 'volume_set', parameter: command };
       handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+    } else if (command === 'set_led') {
+      handleSetLed(node, msg, sonosPlayer);
+      // TODO lab_ function - remove
+    } else if (command === 'lab_test') {
+      labTest(node, msg, sonosPlayer);
+    } else if (command === 'lab_play_uri') {
+      handleLabPlayUri(node, msg, sonosPlayer);
     } else {
       helper.showWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(commandWithParam));
     }
@@ -348,16 +345,47 @@ module.exports = function (RED) {
       .finally(() => node.debug('process id- finally ' + process.pid));
   }
 
+  /**  Set LED On or Off.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  *             topic: On | Off
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output none
+  */
+  function handleSetLed (node, msg, sonosPlayer) {
+    const sonosFunction = 'set LED';
+    // validate msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
+      return;
+    }
+
+    sonosPlayer.setLEDState(msg.topic)
+      .then((response) => {
+        // should return true
+        helper.showSuccess(node, sonosFunction);
+        return true;
+      })
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+  }
+
   /**  LAB: Test new features, error messsages, ...
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
-    sonosPlayer.setPlayMode('SHFFLE')
-    //  .then(playmode => { console.log('Got current playmode %j', playmode); })
-      .then(playmode => { console.log('Got current playmode' + JSON.stringify(playmode, Object.getOwnPropertyNames(playmode))); })
-      .catch(err => { console.log('Error occurred %j', err); });
+    //  sonosPlayer.getLEDState() // On | Off
+      // .then(response => { console.log('response' + JSON.stringify(response, Object.getOwnPropertyNames(response))); })
+      // .catch(error => { console.log('Error occurred %j', error); });
+    sonosPlayer.setLEDState('Off') // On | Off
+      .then(response => { console.log('response' + JSON.stringify(response, Object.getOwnPropertyNames(response))); })
+      .catch(error => { console.log('Error occurred %j', error); });
   }
 
   /**  LAB: For testing only : Play mp3

@@ -8,8 +8,9 @@
 A set of NodeRED nodes to control SONOS player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
 ## NEWS
-Added insert_amazonprime_playlist.
+Added insert_amazonprime_playlist, get_amazonprime_playlists
 
+Added set_led command
 
 ## Installation
 
@@ -33,7 +34,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Usage ...
 For more information - also examples - see the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
-
 
 
 ## Credentials

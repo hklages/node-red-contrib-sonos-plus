@@ -1,15 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.5.0] scheduled for 2019-11-05
+## [0.5.0] scheduled for 2019-11-02
 ### Addded
 - added msg.size for insert_sonos_playlist, get_sonos_playlists
 - added insert_amazonprime_playlist
-- added activate queue for play_song
+- added: play_song now automatically activates queue.
+- added: set_led with topic On or Off to set the LED light
 
-### Changed
-- in manage queue node: rework of async chains, more validation and error handling
-- in manage queue node: replaces insert_prime_playlist by insert_prime_playlisturi
+### Changed in managed queue node
+- replaces get_prime_playlists by get_amazonprime_playlists
+- replaces insert_prime_playlist by insert_prime_playlisturi
+- rework of async chains, more validation and error handling
+- in manage queue node: shorter error messages
+
+### Removed
+- in control player node: removed lab_play_notification -> use play_notification
 
 ## [0.4.8] 2019-10-26
 ### Changed
