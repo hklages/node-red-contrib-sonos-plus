@@ -3,14 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [0.5.0] scheduled for 2019-11-02
 ### Addded
-- added msg.size for insert_sonos_playlist, get_sonos_playlists
-- added insert_amazonprime_playlist
-- added: play_song now automatically activates queue.
 - added: set_led with topic On or Off to set the LED light
+- added msg.size for insert_sonos_playlist, get_sonos_playlists
+- added insert_amazonprime_playlist to search in My Sonos
 
 ### Changed in managed queue node
-- replaces get_prime_playlists by get_amazonprime_playlists
-- replaces insert_prime_playlist by insert_prime_playlisturi
+- play_song now automatically activates queue.
+- replacing get_prime_playlists by get_amazonprime_playlists
+- replacing insert_prime_playlist by insert_prime_playlisturi
 - rework of async chains, more validation and error handling
 - in manage queue node: shorter error messages
 
