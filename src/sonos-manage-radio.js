@@ -203,15 +203,12 @@ module.exports = function (RED) {
               radioId = stationUri.split('?')[0];
               radioId = radioId.substr(TUNEIN_PREFIX.length);
               stationList.push({ title: stationTitle, radioId: radioId, uri: stationUri, source: 'TuneIn' });
-              stationTitleFinal = stationTitle;
             }
             if (stationUri.startsWith(AMAZON_PREFIX)) {
               stationList.push({ title: stationTitle, uri: stationUri, source: 'AmazonPrime' });
-              stationTitleFinal = stationTitle;
             }
             if (stationUri.startsWith(MP3_PREFIX)) {
               stationList.push({ title: stationTitle, uri: stationUri, source: 'MP3Stream' });
-              stationTitleFinal = stationTitle;
             }
           }
         }
@@ -228,10 +225,13 @@ module.exports = function (RED) {
           if (((stationList[i].title).indexOf(commandObject.parameter)) >= 0) {
             // play radio station
             if (stationList[i].source === 'TuneIn') {
+              stationTitleFinal = stationList[i].title;
               return sonosPlayer.playTuneinRadio(stationList[i].radioId);
             } else if (stationList[i].source === 'AmazonPrime') {
+              stationTitleFinal = stationList[i].title;
               return sonosPlayer.setAVTransportURI(stationList[i].uri);
             } else if (stationList[i].source === 'MP3Stream') {
+              stationTitleFinal = stationList[i].title;
               return sonosPlayer.setAVTransportURI(stationList[i].uri);
             } else {
               throw new Error('n-r-c-s-p: Neither tuneIn nor amazon nor mp3 radio');
