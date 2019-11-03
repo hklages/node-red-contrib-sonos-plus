@@ -148,31 +148,34 @@ module.exports = function (RED) {
     }
   }
 
-  /**  Play a specific  My Sonos radio station (only TuneIn, AmazonPrime, MP3 station), start playing and optionally set volume
+  /**  Play a specific My Sonos radio station (only TuneIn, AmazonPrime, MP3 station), start playing and optionally set volume
   * @param  {Object} node current node
-  * @param  {object} msg incoming message - uses msg.volume if provided
+  * @param  {object} msg incoming message
+                topic search string
+                volume volume to be used
   * @param  {object} sonosPlayer Sonos Player
   * @param  {object} commandObject command with function and parameter
-  * change msg.payload to current station title if no error occures
+  * @output msg.payload is stationTitle
   */
   function playMySonos (node, msg, sonosPlayer, commandObject) {
-    // get list of My Sonos stations
     const sonosFunction = 'play mysonos';
+
     const stationList = [];
-    let stationTitleFinal = 'unbekannt';
+    let stationTitleFinal = 'unknown';
+
     sonosPlayer.getFavorites()
-      .then(response => { // select right command to play and play
+      .then(response => {
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
           (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined favorite list received ' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: undefined favorite list received');
         }
         if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list' + JSON.stringify(response));
+          throw new Error('n-r-c-s-p: did not receive a list');
         }
 
         // create stationList with all valid items and source field: TuneIn, AmazonPrime, MP3 station
@@ -185,7 +188,8 @@ module.exports = function (RED) {
         for (let i = 0; i < response.items.length; i++) {
           if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
             (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            // uri not defined - example: Sonos PocketCast --- ignore!
+            // uri not defined - example: Pocket Cast --- ignore!
+            node.debug('uri not define - this record is ignored' + String(i) + JSON.stringify(response));
           } else {
             stationUri = response.items[i].uri;
 
@@ -216,7 +220,9 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: no TuneIn/Amazon/Internet station in my sonos');
         }
         node.debug('successfully extracted relevant station list');
-
+        return true;
+      })
+      .then(() => {
         // lookup topic in list and play radio station - first match counts
         for (let i = 0; i < stationList.length; i++) {
           if (((stationList[i].title).indexOf(commandObject.parameter)) >= 0) {
@@ -259,9 +265,10 @@ module.exports = function (RED) {
       .then(() => { // show success
         helper.showSuccess(node, sonosFunction);
         msg.payload = stationTitleFinal;
+        node.send(msg);
         return true;
       })
-      .catch(error => helper.showError(node, msg, error, sonosFunction, 'error caught from response'));
+      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
   }
 
   /**  Get list of My Sonos radion station (only TuneIn, AmazonPrime, MP3 stations).

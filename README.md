@@ -8,6 +8,8 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
 ## NEWS
+Bug fix in manage radio node - no output for play_mysonons
+
 Added insert_amazonprime_playlist, get_amazonprime_playlists
 
 Added set_led command
@@ -20,10 +22,10 @@ Install directly from your NodeRED's setting pallete.
 ## Special Functions
 
 - Sonos Player: Simply select SONOS player in ConfigNode by search button (recommendation: enter IP address)
-- Stations: Convenient selection of "My Sonos" radio stations from TuneIn, Amazon Prime by name (search string).
+- Stations: Convenient selection of "My Sonos" radio stations from TuneIn, Amazon Prime, Internet radios stations by name (search string in station name).
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
-- Playlists: Convenient selection (and insertion) of My Sonos Music Library  and Sonos playlists by name (search string).
-- Playlists: Insert Amazon Prime standard playlists by URI
+- Playlists: Insert Music Libary playlist or Sonos playlists by name (search string in playlist name)
+- Playlists: Insert Amazon Prime from My Sonos by using name (search string in name)
 - Notification: Interrupt current song and play an notification
 - Information: Provides many kinds of current song information: artist, title, media information and radio station name
 

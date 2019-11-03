@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] 2019-11-03
+### Changed
+- bug fix in manage radio node: play_mysonos does not output msg
+
 ## [0.5.0] scheduled for 2019-11-02
 ### Addded
 - added: set_led with topic On or Off to set the LED light
