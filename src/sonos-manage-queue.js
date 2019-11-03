@@ -34,7 +34,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction);
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
         }
       });
     } else {
@@ -112,7 +112,9 @@ module.exports = function (RED) {
     }
   }
 
-  // ------------------------------------------------------------------------------------
+  // -----------------------------------------------------
+  // Commands
+  // -----------------------------------------------------
 
   /**  Insert defined uri at end of SONOS queue. Can be used for single songs, playlists, .... Does NOT activate queue.
   * @param  {Object} node current node

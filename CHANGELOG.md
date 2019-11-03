@@ -1,7 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.5.0] scheduled for 2019-11-02
+## [0.6.0] 2019-11-12
+### Changed
+- rework node Get Status Node !! changes some commands and properties
+- Get Status node: get_state replacing get_stateonly
+- Get Status node: get_name replacing get_sonosname
+- Several output properties changed: camelCase
+- Get Status Node: msg.name instead of msg.sonosName
+- Get Status Node: msg.group instead of msg.sonosGroup
+- Get Status Node: msg.volumeNormalized instead of msg.normalized_volume
+- Get Status Node: msg.queueActivated instead of msg.queue_active
+
+### added
+- Get Status Node: get_led provides the state of the LED
+
+
+## [0.5.0] 2019-11-02
 ### Addded
 - added: set_led with topic On or Off to set the LED light
 - added msg.size for insert_sonos_playlist, get_sonos_playlists
