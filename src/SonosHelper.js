@@ -67,7 +67,7 @@ module.exports = class SonosHelper {
       this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
         if (err) {
           node.status({ fill: 'red', shape: 'dot', text: 'error:findSonos - Discoery went wrong' });
-          node.error('findSonos - Discoery went wrong Details: ' + JSON.stringify(err));
+          node.error('findSonos - Discoery went wrong :: Details: ' + JSON.stringify(err));
           if (typeof callback === 'function') {
             callback(null);
           }
@@ -174,7 +174,7 @@ module.exports = class SonosHelper {
     node.debug('Error Object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error)));
     if (error.code === 'ECONNREFUSED') {
       msgShort = 'can not connect to player';
-      node.error(`${functionName} - ${msgShort} Details: Validate IP address of player.`, msg);
+      node.error(`${functionName} - ${msgShort} :: Details: Validate IP address of player.`, msg);
     } else {
       // Caution: getOwn is neccessary for some error messages eg playmode!
       let errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
@@ -182,7 +182,7 @@ module.exports = class SonosHelper {
         // handle my own error
         errorDetails = error.message.replace('n-r-c-s-p: ', '');
       }
-      node.error(`${functionName} - ${messageShort} Details: ` + errorDetails, msg);
+      node.error(`${functionName} - ${messageShort} :: Details: ` + errorDetails, msg);
     }
     node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
   }
@@ -229,7 +229,7 @@ module.exports = class SonosHelper {
       }
     }
 
-    node.error(`${functionName} - ${msgShort} \n Details: ${msgDetails}`, msg);
+    node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg);
     node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}` });
   }
 
@@ -241,7 +241,7 @@ module.exports = class SonosHelper {
   */
   showWarning (node, functionName, messageShort, messageDetail) {
     node.debug(`Entering warning handling from ${functionName}`);
-    node.warn(`Just a warning: ${functionName} - ${messageShort}. Details: ` + messageDetail);
+    node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail);
     node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
   }
 

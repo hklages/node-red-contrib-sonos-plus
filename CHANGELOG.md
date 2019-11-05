@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## [0.6.0] 2019-11-12
+## [0.6.0] 2019-11-05
 ### Changed
 - rework node Get Status Node !! changes some commands and properties
 - Get Status node: get_state replacing get_stateonly

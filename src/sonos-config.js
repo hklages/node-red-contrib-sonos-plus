@@ -32,7 +32,7 @@ module.exports = function (RED) {
           node.log('Found device ' + data.serialNum);
         })
         .catch(err => {
-          node.error('DeviceDiscovery error! ' + 'Details: ' + JSON.stringify(err));
+          node.error('DeviceDiscovery error! ' + ' :: Details: ' + JSON.stringify(err));
         });
     });
 

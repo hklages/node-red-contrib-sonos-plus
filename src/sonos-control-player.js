@@ -42,7 +42,7 @@ module.exports = function (RED) {
       // no msg available!
       const msgShort = 'setup subscribe - invalid configNode';
       const errorDetails = 'Please modify config node';
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + errorDetails);
+      node.error(`${sonosFunction} - ${msgShort} :: Details: ` + errorDetails);
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
     }
   }

@@ -55,7 +55,9 @@ RED.nodes.registerType('sonos-get-status', {
 
 	<h3>Outputs</h3>
 
-  The commands <b>get_state/volume/muted/name/properties</b> outputs to <code>payload</code>. The other commands use the properties as stated beneath.
+  The commands <b>get_state/volume/muted/name/led/properties/positioninfo/songinfo</b> outputs only to <code>payload</code> only.
+  The command <b>get_songmedia</b> outputs to all of the properties beneath. The command <b>get_mediainof</b> outputs to payload and queueActivated.
+  The command <b>songinfo</b> outputs to payload and albumArtURI, artist, title.
   <dl class="message-properties">
 
       <dt>state <span class="property-type">string | playing/stopped/paused</span> </dt>
@@ -101,12 +103,11 @@ RED.nodes.registerType('sonos-get-status', {
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
-  <br/> • <b>get_basics</b> Outputs current state, volume, muted, player name, ...
-  <br/> • <b>get_state/volume/muted/name</b> Outputs only the playing state/volume/muted/name.
+  <br/> • <b>get_basics</b> Outputs current state, volume, muted, player name, group attributes
+  <br/> • <b>get_state/volume/muted/name/led</b> Outputs only the playing state/volume/muted/name/led status
+  <br/> • <b>get_properties</b> Outputs player properties
   <br/> • <b>get_songmedia</b> Outputs song, media and position info
   <br/> • <b>get_songinfo</b> Outputs song info
   <br/> • <b>get_mediainfo</b> Outputs media info
   <br/> • <b>get_positioninfo</b> Outputs position info
-  <br/> • <b>get_properties</b> Outputs player properties
-
 </script>

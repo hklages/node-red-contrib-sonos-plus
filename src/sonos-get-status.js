@@ -41,7 +41,7 @@ module.exports = function (RED) {
       // no msg available!
       const msgShort = 'setup subscribe - invalid configNode';
       const errorDetails = 'Please modify config node';
-      node.error(`${sonosFunction} - ${msgShort} Details: ` + errorDetails);
+      node.error(`${sonosFunction} - ${msgShort} :: Details: ` + errorDetails);
       node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
     }
   }
@@ -55,7 +55,9 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
+
     const sonosFunction = 'handle input msg';
+
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
       helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
@@ -109,6 +111,7 @@ module.exports = function (RED) {
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer sonos player object
   * @output msg: state, volume, volumeNormalized, muted, name, group
+  * This command will send several api calls and combine the results.
   */
   function getBasicsV1 (node, msg, sonosPlayer) {
     const sonosFunction = 'get basics';
@@ -312,6 +315,7 @@ module.exports = function (RED) {
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer sonos player object
   * @output msg: artist, title, albumArtURL, queueActivated, song, media and position
+  * This command send serveral api requests and combines them.
   */
   function getPlayerSongMediaV1 (node, msg, sonosPlayer) {
     const sonosFunction = 'get songmedia';
@@ -335,7 +339,7 @@ module.exports = function (RED) {
           const port = 1400;
           albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
         }
-        // extract artist and title if available
+        // extract artist and title if available V2
         if (typeof response.artist === 'undefined' || response.artist === null ||
           (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
           // missing artist: TuneIn provides artist and title in title field
@@ -430,7 +434,7 @@ module.exports = function (RED) {
           const port = 1400;
           albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
         }
-        // extract artist and title if available
+        // extract artist and title if available V2
         if (typeof response.artist === 'undefined' || response.artist === null ||
           (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
           // missing artist: TuneIn provides artist and title in title field
