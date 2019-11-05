@@ -1,6 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
 ## [0.6.0] 2019-11-12
 ### Changed
 - rework node Get Status Node !! changes some commands and properties
@@ -15,6 +16,9 @@ All notable changes to this project will be documented in this file.
 ### added
 - Get Status Node: get_led provides the state of the LED
 
+## [0.5.1] 2019-11-03
+### Changed
+- bug fix in manage radio node: play_mysonos does not output msg
 
 ## [0.5.0] 2019-11-02
 ### Addded
