@@ -35,7 +35,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.showError(node, msg, new Error('n-r-c-s-p: Please modify config node'), sonosFunction, 'invalid configNode');
+          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
         }
       });
     } else {
@@ -380,12 +380,6 @@ module.exports = function (RED) {
   * @param  {Object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
-    //  sonosPlayer.getLEDState() // On | Off
-      // .then(response => { console.log('response' + JSON.stringify(response, Object.getOwnPropertyNames(response))); })
-      // .catch(error => { console.log('Error occurred %j', error); });
-    sonosPlayer.setLEDState('Off') // On | Off
-      .then(response => { console.log('response' + JSON.stringify(response, Object.getOwnPropertyNames(response))); })
-      .catch(error => { console.log('Error occurred %j', error); });
   }
 
   /**  LAB: For testing only : Play mp3
