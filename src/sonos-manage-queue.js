@@ -54,10 +54,10 @@ module.exports = function (RED) {
   * @param  {string} ipaddress IP address of sonos player
   */
   function handleInputMsg (node, msg, ipaddress) {
+    const sonosFunction = 'handle input msg';
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    const sonosFunction = 'handle input msg';
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
       helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction);
