@@ -5,39 +5,27 @@ module.exports = class SonosHelper {
 
   /** Validate configNode.
   * @param  {object} configNode corresponding configNode
-  * @return {Boolean} true if: not null, not undefined, either ipaddress or serial exists
-  *                   and ipaddress has correct syntax
+  * @return {Boolean} true if: object not null, not undefined and either ipaddress with corect syntax  or serial exists
   */
   validateConfigNodeV3 (configNode) {
-    if (configNode === undefined || configNode === null) {
+    if (typeof configNode === 'undefined' || configNode === null ||
+      (typeof configNode === 'number' && isNaN(configNode)) || configNode === '') {
       return false;
     }
-
-    const hasSerialNum = (configNode.serialnum !== undefined &&
-                        configNode.serialnum !== null &&
-                        configNode.serialnum.trim().length > 5);
-    const hasIpAddress = (configNode.ipaddress !== undefined &&
-                        configNode.ipaddress !== null);
-
-    const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
-    if (hasIpAddress) {
+    // minimum ip adddres: 1.1.1.1 (lenght 7)
+    if (typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
+      (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || (configNode.ipaddress.trim()).length < 7) {
+      return !(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
+                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19);
+    } else {
+      const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
       if ((configNode.ipaddress.trim()).match(IPREGEX)) {
         // prefered case: valid ip address
         return true;
       } else {
-        if (hasSerialNum) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-    } else {
-      if (hasSerialNum) {
-        // no ip but serial
-        return true;
-      } else {
-        // no ip and no serial
-        return false;
+        // 5C-AA-FD-00-22-36:1 (length 19)
+        return !(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
+                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19);
       }
     }
   }
@@ -100,7 +88,7 @@ module.exports = class SonosHelper {
     let foundMatch = false;
     node.debug('Start find Sonos player.');
     const sonos = require('sonos');
-    // 2 api calls chained, first DeviceDiscovery then deviceDescription
+    // start device discovery
     let search = sonos.DeviceDiscovery(function (device) {
       device.deviceDescription()
         .then(data => {
@@ -159,32 +147,6 @@ module.exports = class SonosHelper {
         search = null;
       }
     }, 5000);
-  }
-
-  /** show error status and error message.
-  * @param  {Object} node current node
-  * @param  {Object} msg current msg
-  * @param  {Error object} error  error object from response
-  * @param  {string} functionName name of calling function
-  * @param  {string} messageShort  short message for status
-  */
-  showError (node, msg, error, functionName, messageShort) {
-    let msgShort = messageShort;
-    node.debug(`Entering error handling from ${functionName}`);
-    node.debug('Error Object: ' + JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    if (error.code === 'ECONNREFUSED') {
-      msgShort = 'can not connect to player';
-      node.error(`${functionName} - ${msgShort} :: Details: Validate IP address of player.`, msg);
-    } else {
-      // Caution: getOwn is neccessary for some error messages eg playmode!
-      let errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
-      if (errorDetails.indexOf('n-r-c-s-p:') > -1) {
-        // handle my own error
-        errorDetails = error.message.replace('n-r-c-s-p: ', '');
-      }
-      node.error(`${functionName} - ${messageShort} :: Details: ` + errorDetails, msg);
-    }
-    node.status({ fill: 'red', shape: 'dot', text: `error:${functionName} - ${msgShort}` });
   }
 
   /** show error status and error message - Version 2

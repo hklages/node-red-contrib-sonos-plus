@@ -2,53 +2,58 @@
 module.exports = function (RED) {
   'use strict';
 
+  let node = {}; // used for sending node.error, node.debug
+
   function SonosPlayerNode (config) {
     RED.nodes.createNode(this, config);
 
-    this.serialnum = config.serialnum;
-    this.ipaddress = config.ipaddress;
+    node = this;
+    node.serialnum = config.serialnum;
+    node.ipaddress = config.ipaddress;
   }
 
   // Build API to auto detect IP Addresses
-  RED.httpAdmin.get('/sonosSearch', function (req, res) {
-    discoverSonos(function (devices) {
-      res.json(devices);
+  RED.httpAdmin.get('/sonosSearch', function (req, response) {
+    discoverSonosPlayer(function (playerList) {
+      response.json(playerList);
     });
   });
-  const node = this;
-  function discoverSonos (discoveryCallback) {
+
+  function discoverSonosPlayer (discoveryCallback) {
     const sonos = require('sonos');
 
-    const devices = []; // list of all discovered devices
+    const playerList = []; // list of all discovered SONOS players
 
-    // define discovery and store outcome in devices
-    const search = sonos.DeviceDiscovery(function (device) {
-      device.deviceDescription()
+    if (!discoveryCallback) {
+      node.error('No callback defined in discoverSonosPlayer');
+      return;
+    }
+
+    // define discovery and store in devices
+    const searchTime = 4000; // in miliseconds
+    node.debug('Start searching for players');
+    const search = sonos.DeviceDiscovery({ timeout: searchTime });
+
+    // listener for DeviceDiscovery
+    search.on('DeviceAvailable', (sonosPlayer, model) => {
+      sonosPlayer.deviceDescription()
         .then(data => {
-          devices.push({
-            label: data.friendlyName + ' in room ' + data.roomName,
+          playerList.push({
+            label: data.friendlyName + '::' + data.roomName,
             value: data.serialNum
           });
-          node.log('Found device ' + data.serialNum);
+          node.debug('Found SONOS player ' + data.serialNum);
         })
         .catch(err => {
-          node.error('DeviceDiscovery error! ' + ' :: Details: ' + JSON.stringify(err));
+          node.error('DeviceDiscovery error:: Details: ' + JSON.stringify(err));
         });
     });
 
-    search.setMaxListeners(Infinity);
-
-    // destroy after 5 seconds
-    setTimeout(function () {
-      search.destroy();
-    }, 5000);
-
-    // Add a bit of delay and return the list of all discovered devices
-    if (discoveryCallback) {
-      setTimeout(function () {
-        discoveryCallback(devices);
-      }, 5000);
-    }
+    // after timeout return values
+    setTimeout(() => {
+      node.debug('Returning results from search');
+      discoveryCallback(playerList);
+    }, searchTime + 10);
   }
 
   RED.nodes.registerType('sonos-config', SonosPlayerNode);

@@ -28,7 +28,7 @@ module.exports = function (RED) {
             if (typeof ipAddress === 'undefined' || ipAddress === null ||
               (typeof ipAddress === 'number' && isNaN(ipAddress)) || ipAddress === '') {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
-              node.debug('Did NOT found thoe sonos player');
+              node.debug('Did NOT found the sonos player');
             } else {
               node.debug('Found sonos player');
               handleInputMsg(node, msg, ipAddress);

@@ -2,7 +2,7 @@
 
 <!-- Registering Node - caution config -->
 <script type="text/javascript">
-/* global  RED */
+/* global  RED,$ */
 /* eslint no-undef: "error" */
 RED.nodes.registerType('sonos-config', {
   category: 'config',
@@ -23,30 +23,30 @@ RED.nodes.registerType('sonos-config', {
   },
   oneditprepare: function () {
     try {
-      $("#node-config-input-serialnum").autocomplete('destroy');
+      $('#node-config-input-serialnum').autocomplete('destroy');
     } catch (err) {}
-    $("#node-config-lookup-serialnum").click(function() {
-      $("#node-config-lookup-serialnum-icon").removeClass('fa-search');
-      $("#node-config-lookup-serialnum-icon").addClass('spinner');
-      $("#node-config-lookup-serialnum").addClass('disabled');
-      $.getJSON('sonosSearch', function(data) {
-        $("#node-config-lookup-serialnum-icon").addClass('fa-search');
-        $("#node-config-lookup-serialnum-icon").removeClass('spinner');
-        $("#node-config-lookup-serialnum").removeClass('disabled');
+    $('#node-config-lookup-serialnum').click(function () {
+      $('#node-config-lookup-serialnum-icon').removeClass('fa-search');
+      $('#node-config-lookup-serialnum-icon').addClass('spinner');
+      $('#node-config-lookup-serialnum').addClass('disabled');
+      $.getJSON('sonosSearch', function (sonosPlayer) {
+        $('#node-config-lookup-serialnum-icon').addClass('fa-search');
+        $('#node-config-lookup-serialnum-icon').removeClass('spinner');
+        $('#node-config-lookup-serialnum').removeClass('disabled');
         var dataArray = [];
-        $.each(data, function (i, element) {
+        $.each(sonosPlayer, function (i, element) {
           dataArray.push(element);
         });
-        $("#node-config-input-serialnum").autocomplete({
+        $('#node-config-input-serialnum').autocomplete({
           source: dataArray,
           minLength: 0,
-          close: function(event, ui) {
-            $("#node-config-input-serialnum").autocomplete("destroy");
+          close: function (event, ui) {
+            $('#node-config-input-serialnum').autocomplete('destroy');
           }
         }).autocomplete('search', '');
       });
     });
-  },
+  }
 });
 </script>
 
@@ -54,7 +54,7 @@ RED.nodes.registerType('sonos-config', {
 
   <div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-config-input-name" placeholder="This Node Name">
+        <input type="text" id="node-config-input-name" placeholder="This Node Name"/>
   </div>
 
   <div class="form-row">
@@ -66,7 +66,7 @@ RED.nodes.registerType('sonos-config', {
   <div><p></p></div>
 
   <div class="form-tips">Sonos devices are identified by their fixed <strong>Serial Number</strong>. Hit the <i class="fa fa-search"></i> button and pick a device from the list.
-    Alternatively, you can enter its IP Address below. It is recommended to enter the (static) IP address</div>
+    It is recommended to enter the (static) IP address.</div>
 
   <div><p></p></div>
 
