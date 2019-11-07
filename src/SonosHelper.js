@@ -36,117 +36,117 @@ module.exports = class SonosHelper {
   * @param  {Object} msg received message
   * @param  {function} callback callback function with paramenter ipaddress - can be null
   * prereq: expecting that configNode has been validated for this input message
+  * In case callback is missing or not a function -> return
   */
   identifyPlayerProcessInputMsg (node, configNode, msg, callback) {
     // use IP Address if user set it
     const sonosFunction = 'identify player';
-    const hasIpAddress = configNode.ipaddress !== undefined && configNode.ipaddress !== null && configNode.ipaddress.trim().length > 5;
-    if (hasIpAddress) {
+    let msgShort = 'unknown';
+    let msgDetails = 'unknown';
+
+    if (!(typeof callback === 'function')) {
+      this.showErrorV2(node, msg, new Error('n-r-c-s-p: Programming error - no callback', sonosFunction));
+      return;
+    }
+
+    if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
+      (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
       // exisiting ip address - fastes solutions, no discovery necessary
-      node.debug('Found IP address');
-      if (typeof callback === 'function') {
-        callback(configNode.ipaddress);
-      }
+      node.debug('using IP address of config node');
+      callback(configNode.ipaddress);
     } else {
       // get ip address from serialnumber: start discovery returns ipaddress or null
-      node.status({ fill: 'green', shape: 'dot', text: 'error:check ip address - missing ip address' });
-      this.showWarning(node, sonosFunction, 'Missing IP address', 'It is recommended to set IP Address in config node');
+      this.showWarning(node, sonosFunction, 'Missing IP address in config node', 'It is recommended to set IP Address in config node');
 
-      this.findSonos(node, configNode.serialnum, function (err, playerInfo) {
+      this.findSonos(node, configNode.serialnum, function (err, ipAddress) {
         if (err) {
-          node.status({ fill: 'red', shape: 'dot', text: 'error:findSonos - Discoery went wrong' });
-          node.error('findSonos - Discoery went wrong :: Details: ' + JSON.stringify(err));
-          if (typeof callback === 'function') {
-            callback(null);
-          }
+          // can not use showError
+          msgShort = 'Dicovery went wrong';
+          msgDetails = 'see debug';
+          node.error(`${sonosFunction} - ${msgShort} :: Details: ${msgDetails}`, msg);
+          node.status({ fill: 'red', shape: 'dot', text: `error: ${sonosFunction} - ${msgShort}` });
+          node.debug(JSON.stringify(err));
+          callback(null);
           return;
         }
-        if (playerInfo === null || playerInfo.ipaddress === null) {
-          node.status({ fill: 'red', shape: 'dot', text: 'error:findSonos - Could not find player' });
-          node.error('findSonos - Could not find player with given serial Details: time out:' + configNode.serialnum);
-          if (typeof callback === 'function') {
-            callback(null);
-          }
+        if (ipAddress === null) {
+          msgShort = 'Could not find player';
+          msgDetails = 'none';
+          node.error(`${sonosFunction} - ${msgShort} :: Details: ${msgDetails}`, msg);
+          node.status({ fill: 'red', shape: 'dot', text: `error: ${sonosFunction} - ${msgShort}` });
+          callback(null);
         } else {
-          if (typeof callback === 'function') {
-            // setting of nodestatus is dann in following call handelIpuntMessage
-            callback(playerInfo.ipaddress);
-          }
+          // setting of nodestatus is done in following call handelIpuntMessage
+          callback(ipAddress);
         }
       });
     }
   }
 
-  /** Starts async discovery of sonos player and selecte the one with given serial.
+  /** Starts async discovery of sonos player and returns ipAddress - used in callback.
   * @param  {Object} node current node
   * @param  {string} serialNumber player serial number
-  * @param  {function} callback function with parameter err, data from type object
-  * data.ipaddress provides ip-address
+  * @param  {function} callback function with parameter err, ipAddress
+  * provides ipAddress or null (not found) and calls callback handling that.
   */
-  // TODO in callback only return ipaddress and not data
   findSonos (node, serialNumber, callback) {
-    let foundMatch = false;
-    node.debug('Start find Sonos player.');
     const sonos = require('sonos');
-    // start device discovery
-    let search = sonos.DeviceDiscovery(function (device) {
-      device.deviceDescription()
-        .then(data => {
-          if (data.friendlyName !== undefined && data.friendlyName !== null) {
-            node.debug('Got ipaddres from friendlyName.');
-            data.ipaddress = data.friendlyName.split('-')[0].trim();
-          }
-          if (device.host) {
-            node.debug('Got ipaddres from device.host.');
-            data.ipaddress = device.host;
-          }
 
-          // 2 different ways to obtain serialnum
-          if (data.serialNum !== undefined && data.serialNum !== null) {
+    node.debug('Start find Sonos player.');
+    let ipAddress = null;
+
+    // define discovery, find matching player and return ip
+    const searchTime = 5000; // in miliseconds
+    node.debug('Start searching for players');
+    let discovery = sonos.DeviceDiscovery({ timeout: searchTime });
+
+    discovery.on('DeviceAvailable', (sonosPlayer) => {
+      // serial number is in deviceDescription serialNum
+      // ipAddress is in sonosPlayer.host
+      sonosPlayer.deviceDescription()
+        .then(data => {
+          // compary serial numbers
+          if (!(typeof data.serialNum === 'undefined' || data.serialNum === null)) {
             if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
               node.debug('Found sonos player based on serialnumber in device description.');
-              foundMatch = true;
+              if (!(typeof sonosPlayer.host === 'undefined' || sonosPlayer.host === null)) {
+                // success
+                node.debug('Got ipaddres from device.host.');
+                ipAddress = sonosPlayer.host;
+                callback(null, ipAddress);
+                node.debug('Cleanup disovery');
+                if (!(typeof discovery === 'undefined' || discovery === null)) {
+                  discovery.destroy();
+                  discovery = null;
+                }
+              } else {
+                // failure
+                throw new Error('Found player but invalid ip address');
+              }
+            } else {
+              // continue awaiting next players
             }
+          } else {
+            // failure but ignore and awaiting next player
           }
-          if (device.serialNumber !== undefined && device.serialNumber !== null) {
-            if (device.serialNumber.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-              node.debug('Found sonos player based on serialnumber in device property.');
-              foundMatch = true;
-            }
-          }
-
-          // found matching device: call back and stop search
-          if (foundMatch && (typeof callback === 'function')) {
-            // return "no error" and data object
-            callback(null, data);
-          }
-          if (foundMatch) {
-            if (search !== null && search !== undefined) {
-              search.destroy();
-            }
-            search = null;
-          }
+          return true;
         })
-        .catch({
-          if (err) {
-            // error handling in call back
-            callback(err, null);
+        .catch((error) => {
+          callback(error, null);
+          node.debug('Cleanup disovery - error');
+          if (!(typeof discovery === 'undefined' || discovery === null)) {
+            discovery.destroy();
+            discovery = null;
           }
         });
     });
-    search.setMaxListeners(Infinity);
 
-    // In case there is no match
-    setTimeout(function () {
-      if (!foundMatch && (typeof callback === 'function')) {
-        node.debug('SetTimeOut - did not find sonos player');
-        callback(null, null);
-      }
-      if (search !== null && search !== undefined) {
-        search.destroy();
-        search = null;
-      }
-    }, 5000);
+    // listener 'timeout' only once
+    discovery.once('timeout', () => {
+      node.debug('Received time out without finding any matching (serialnumber) sonos player');
+      // error messages in calling function
+      callback(null, null);
+    });
   }
 
   /** show error status and error message - Version 2

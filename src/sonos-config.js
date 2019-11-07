@@ -29,31 +29,35 @@ module.exports = function (RED) {
       return;
     }
 
-    // define discovery and store in devices
-    const searchTime = 4000; // in miliseconds
-    node.debug('Start searching for players');
-    const search = sonos.DeviceDiscovery({ timeout: searchTime });
+    // define discovery and store in playerList
+    const searchTime = 5000; // in miliseconds
+    node.debug('OK Start searching for players');
+    const discovery = sonos.DeviceDiscovery({ timeout: searchTime });
 
-    // listener for DeviceDiscovery
-    search.on('DeviceAvailable', (sonosPlayer, model) => {
+    // listener  'DeviceAvailable'
+    discovery.on('DeviceAvailable', (sonosPlayer) => {
       sonosPlayer.deviceDescription()
         .then(data => {
           playerList.push({
             label: data.friendlyName + '::' + data.roomName,
             value: data.serialNum
           });
-          node.debug('Found SONOS player ' + data.serialNum);
+          node.debug('OK Found SONOS player ' + data.serialNum);
         })
         .catch(err => {
-          node.error('DeviceDiscovery error:: Details: ' + JSON.stringify(err));
+          node.error('DeviceDiscovery description error:: Details: ' + JSON.stringify(err));
         });
     });
 
-    // after timeout return values
-    setTimeout(() => {
-      node.debug('Returning results from search');
+    // listener 'timeout' only once
+    discovery.once('timeout', () => {
+      if (playerList.length === 0) {
+        node.error('Did not find any sonos any player');
+      } else {
+        node.debug('OK Found player, returning result');
+      }
       discoveryCallback(playerList);
-    }, searchTime + 10);
+    });
   }
 
   RED.nodes.registerType('sonos-config', SonosPlayerNode);

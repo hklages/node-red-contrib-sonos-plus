@@ -10,7 +10,7 @@ module.exports = function (RED) {
     */
 
     RED.nodes.createNode(this, config);
-    const sonosFunction = 'create node manage radio';
+    const sonosFunction = 'setup subscribe';
     // validate config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
@@ -28,6 +28,7 @@ module.exports = function (RED) {
             if (typeof ipAddress === 'undefined' || ipAddress === null ||
               (typeof ipAddress === 'number' && isNaN(ipAddress)) || ipAddress === '') {
               // error handling node status, node error is done in identifyPlayerProcessInputMsg
+              node.debug('Did NOT find the sonos player');
             } else {
               node.debug('Found sonos player');
               handleInputMsg(node, msg, ipAddress);
