@@ -4,47 +4,56 @@ const helper = new SonosHelper();
 module.exports = function (RED) {
   'use strict';
 
-  /**  Create Get Status Node and subscribe to messages
+  /**  Create Get Status Node and subscribe to messages.
   * @param  {object} config current node configuration data
   */
   function SonosGetStatusNode (config) {
     RED.nodes.createNode(this, config);
+    const sonosFunction = 'setup subscribe';
 
-    // validate config node. if valid then set status and subscribe to messages
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
-    const isValid = helper.validateConfigNodeV3(configNode);
-    const sonosFunction = 'setup subscribe';
-    if (isValid) {
-      // clear node status
-      node.status({});
-      // subscribe and handle input message (the different requests are chained)
-      node.on('input', function (msg) {
-        node.debug('node on - msg received');
-        // check again configNode - in the meantime it might have changed
-        const isStillValid = helper.validateConfigNodeV3(configNode);
-        if (isStillValid) {
-          helper.identifyPlayerProcessInputMsg(node, configNode, msg, function (ipAddress) {
-            if (typeof ipAddress === 'undefined' || ipAddress === null ||
-              (typeof ipAddress === 'number' && isNaN(ipAddress)) || ipAddress === '') {
-            // error handling node status, node error is done in identifyPlayerProcessInputMsg
-              node.debug('Did NOT find the sonos player');
+
+    if (!helper.validateConfigNode(configNode)) {
+      helper.showErrorMsg(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+      return;
+    }
+
+    // clear node status
+    node.status({});
+    // subscribe and handle input message
+    node.on('input', function (msg) {
+      node.debug('node - msg received');
+
+      // if ip address exist use it or get it via discovery based on serialNum
+      if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
+        (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
+        // exisiting ip address - fastes solution, no discovery necessary
+        node.debug('using IP address of config node');
+        handleInputMsg(node, msg, configNode.ipaddress);
+      } else {
+        // have to get ip address via disovery with serial numbers
+        helper.showWarning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
+        if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
+                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
+          helper.findSonos(node, configNode.serialnum, (err, ipAddress) => {
+            if (err) {
+              helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
+              return;
+            }
+            if (ipAddress === null) {
+              helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
             } else {
+              // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
               handleInputMsg(node, msg, ipAddress);
             }
           });
         } else {
-          helper.showErrorV2(node, msg, new Error('n-r-c-s-p: invalid config node', sonosFunction));
+          helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
         }
-      });
-    } else {
-      // no msg available!
-      const msgShort = 'setup subscribe - invalid configNode';
-      const errorDetails = 'Please modify config node';
-      node.error(`${sonosFunction} - ${msgShort} :: Details: ` + errorDetails);
-      node.status({ fill: 'red', shape: 'dot', text: `error:${sonosFunction} - ${msgShort}` });
-    }
+      }
+    });
   }
 
   /**  Validate sonos player and input message then dispatch further.
@@ -61,14 +70,14 @@ module.exports = function (RED) {
 
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
+      helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.showErrorV2(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
+      helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
 
@@ -169,7 +178,7 @@ module.exports = function (RED) {
         msg.state = state; msg.volume = volume; msg.volumeNormalized = normalizedVolume; msg.muted = muted; msg.name = sonosName; msg.group = sonosGroup;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player state and outputs.
@@ -192,7 +201,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player volume and outputs.
@@ -218,7 +227,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player muted state and outputs.
@@ -241,7 +250,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player name and outputs.
@@ -263,7 +272,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player LED light status and outputs to payload.
@@ -286,7 +295,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player properties and outputs to payload.
@@ -308,7 +317,7 @@ module.exports = function (RED) {
         msg.payload = response;
         node.send(msg);
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song, media and position and outputs.
@@ -404,7 +413,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song and outputs.
@@ -474,7 +483,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the media info and outputs.
@@ -506,7 +515,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   /** Get the position info and outputs.
@@ -532,7 +541,7 @@ module.exports = function (RED) {
         node.send(msg);
         return true;
       })
-      .catch(error => helper.showErrorV2(node, msg, error, sonosFunction));
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

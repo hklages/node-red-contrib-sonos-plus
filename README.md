@@ -7,8 +7,8 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
-## NEWS 0.7.0 in work
-Overwork configuration node and helper.
+## NEWS
+Overwork/ clean up all modules
 
 Overwork Get Status node, changing some output properties name: sonosName, sonosGroup, normalized_volume, queue_active
 

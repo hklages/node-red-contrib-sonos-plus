@@ -6,8 +6,9 @@ module.exports = class SonosHelper {
   /** Validate configNode.
   * @param  {object} configNode corresponding configNode
   * @return {Boolean} true if: object not null, not undefined and either ipaddress with corect syntax  or serial exists
+  * for ip: uses length >= 7 and regex, for serial number only length >= 20
   */
-  validateConfigNodeV3 (configNode) {
+  validateConfigNode (configNode) {
     if (typeof configNode === 'undefined' || configNode === null ||
       (typeof configNode === 'number' && isNaN(configNode)) || configNode === '') {
       return false;
@@ -27,59 +28,6 @@ module.exports = class SonosHelper {
         return !(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19);
       }
-    }
-  }
-
-  /** Returns sonos player object in callback.
-  * @param  {Object} node current node to set status and send error
-  * @param  {Object} configNode corresponding configNode
-  * @param  {Object} msg received message
-  * @param  {function} callback callback function with paramenter ipaddress - can be null
-  * prereq: expecting that configNode has been validated for this input message
-  * In case callback is missing or not a function -> return
-  */
-  identifyPlayerProcessInputMsg (node, configNode, msg, callback) {
-    // use IP Address if user set it
-    const sonosFunction = 'identify player';
-    let msgShort = 'unknown';
-    let msgDetails = 'unknown';
-
-    if (!(typeof callback === 'function')) {
-      this.showErrorV2(node, msg, new Error('n-r-c-s-p: Programming error - no callback', sonosFunction));
-      return;
-    }
-
-    if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
-      (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
-      // exisiting ip address - fastes solutions, no discovery necessary
-      node.debug('using IP address of config node');
-      callback(configNode.ipaddress);
-    } else {
-      // get ip address from serialnumber: start discovery returns ipaddress or null
-      this.showWarning(node, sonosFunction, 'Missing IP address in config node', 'It is recommended to set IP Address in config node');
-
-      this.findSonos(node, configNode.serialnum, function (err, ipAddress) {
-        if (err) {
-          // can not use showError
-          msgShort = 'Dicovery went wrong';
-          msgDetails = 'see debug';
-          node.error(`${sonosFunction} - ${msgShort} :: Details: ${msgDetails}`, msg);
-          node.status({ fill: 'red', shape: 'dot', text: `error: ${sonosFunction} - ${msgShort}` });
-          node.debug(JSON.stringify(err));
-          callback(null);
-          return;
-        }
-        if (ipAddress === null) {
-          msgShort = 'Could not find player';
-          msgDetails = 'none';
-          node.error(`${sonosFunction} - ${msgShort} :: Details: ${msgDetails}`, msg);
-          node.status({ fill: 'red', shape: 'dot', text: `error: ${sonosFunction} - ${msgShort}` });
-          callback(null);
-        } else {
-          // setting of nodestatus is done in following call handelIpuntMessage
-          callback(ipAddress);
-        }
-      });
     }
   }
 
@@ -156,7 +104,7 @@ module.exports = class SonosHelper {
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
   */
-  showErrorV2 (node, msg, error, functionName) {
+  showErrorMsg (node, msg, error, functionName) {
     let msgShort = 'unknown'; // default text
     let msgDetails = 'unknown'; // default text
     node.debug(`Entering error handling from ${functionName}`);
