@@ -72,20 +72,6 @@ RED.nodes.registerType('sonos-manage-queue', {
       <dd>Array of songs or playlists in case of <i>get</i> command.</dd>
   </dl>
 
-  <dl class="message-properties">
-      <dt>queue_length
-          <span class="property-type">number</span>
-      </dt>
-      <dd>Number of songs in the SONOS queue</i></dd>
-  </dl>
-
-  <dl class="message-properties">
-      <dt>available_playlists
-          <span class="property-type">number</span>
-      </dt>
-      <dd>Number of SONOS playlists</i></dd>
-  </dl>
-
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
@@ -103,7 +89,7 @@ RED.nodes.registerType('sonos-manage-queue', {
   <li><b>get_queue</b> Outputs the current queue as output</li>
   <li><b>get_queuemode</b> Gets the current queue mode</li>
   <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
-  <li><b>get_prime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists</li>
+  <li><b>get_amazonprime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists</li>
   <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>
   </ul>
 The scope for the search string is:

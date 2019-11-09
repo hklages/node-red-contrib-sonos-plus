@@ -95,6 +95,8 @@ module.exports = function (RED) {
       insertPrimePlaylistURI(node, msg, sonosPlayer);
     } else if (command === 'insert_amazonprime_playlist') {
       insertMySonosAmazonPrimePlaylist(node, msg, sonosPlayer);
+    } else if (command === 'insert_spotify_playlist') {
+      insertMySonosSpotifyPlaylist(node, msg, sonosPlayer);
     } else if (command === 'insert_musiclibrary_playlist') {
       insertMusicLibraryPlaylist(node, msg, sonosPlayer);
     } else if (command === 'activate_queue') {
@@ -480,6 +482,7 @@ module.exports = function (RED) {
         }
         const newUri = String(uri).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
         const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1);
+        node.debug('new uri ' + JSON.stringify(newUri));
         // TODO Region? Does that work everywhere?
         const region = 51463;
         const title = 'Amazon Prime Playlist';
@@ -492,6 +495,122 @@ module.exports = function (RED) {
           </item>
           </DIDL-Lite>`;
         return sonosPlayer.queue({ uri, metadata });
+      })
+      .then((response) => {
+        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
+        helper.showSuccess(node, sonosFunction);
+        node.send(msg);
+      })
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
+  }
+
+  /**  Insert all songs from matching My Sonos Spotify playlist  (first match, topic string) into SONOS queue.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  *        topic: part of the title name; is search string
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {Object} Success: msg, no modification
+  */
+  function insertMySonosSpotifyPlaylist (node, msg, sonosPlayer) {
+    const sonosFunction = 'insert spotify playlist';
+
+    // validate msg.topic
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+
+    sonosPlayer.getFavorites()
+      .then(response => {
+        // get array of playlists and return
+        const SPOTIFY_IDENTIFIER = 'spotify%3aplaylist';
+        const spotifyPlaylistList = []; // will hold all playlist items
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined getFavorites response received');
+        }
+        if (response === false) {
+          throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable');
+        }
+        if (typeof response.items === 'undefined' || response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
+          throw new Error('n-r-c-s-p: undefined favorite list received');
+        }
+        if (!Array.isArray(response.items)) {
+          throw new Error('n-r-c-s-p: did not receive a list');
+        }
+        let spotifyPlaylistUri = '';
+        // node.debug('favorites:' + JSON.stringify(response.items));
+        let itemTitle;
+        for (let i = 0; i < parseInt(response.items.length); i++) {
+          if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
+            (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
+            helper.showWarning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
+          } else {
+            spotifyPlaylistUri = response.items[i].uri;
+            if (spotifyPlaylistUri.indexOf(SPOTIFY_IDENTIFIER) > 0) {
+              // found prime playlist
+              spotifyPlaylistUri = response.items[i].uri;
+              if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
+                (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
+                helper.showWarning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
+                itemTitle = 'unknown';
+              } else {
+                itemTitle = response.items[i].title;
+              }
+              spotifyPlaylistList.push({ title: itemTitle, uri: spotifyPlaylistUri });
+            }
+          }
+        }
+        if (spotifyPlaylistList.length === 0) {
+          throw new Error('n-r-c-s-p: could not find any amazon prime playlist');
+        }
+        return spotifyPlaylistList;
+      })
+      .then((playlistArray) => {
+        // find topic in title and return uri
+        node.debug('playlist array: ' + JSON.stringify(playlistArray));
+        let position = -1;
+        for (let i = 0; i < playlistArray.length; i++) {
+          if ((playlistArray[i].title).indexOf(msg.topic) > -1) {
+            position = i;
+            break;
+          }
+        }
+        if (position === -1) {
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists');
+        } else {
+          return playlistArray[position].uri;
+        }
+      })
+      .then((uri) => {
+        if (!uri.startsWith('x-rincon-cpcontainer:')) {
+          throw new Error('n-r-c-s-p: invalid prime playlist');
+        }
+        // TODO extract
+
+        const Sonos = require('sonos');
+        sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU);
+        node.debug('sonosPlayer' + JSON.stringify(sonosPlayer));
+
+        // does not work
+        // const newUri = 'spotify:playlist:3a37i9dQZEVXbMDoHDwVN2tF';
+        // const newUri = 'spotify:user:spotify:playlist:3a37i9dQZEVXbMDoHDwVN2tF';
+        // const newUri = 'x-rincon-cpcontainer:1006206cspotify%3aplaylist%3a37i9dQZEVXbMDoHDwVN2tF';
+        // const newUri = 'x-rincon-cpcontainer:1006206cspotify:playlist:37i9dQZEVXbMDoHDwVN2tF';
+
+        // does work
+        // const newUri = 'spotify:track:5AdoS3gS47x40nBNlNmPQ8';
+        // const newUri = 'spotify:track:0aersVHlGGXcHeRvHtuaSt';
+        // const newUri = 'spotify:album:1TSZDcvlPtAnekTaItI3qO';
+        // const newUri = 'spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d';
+        // const newUri = 'spotify:user:spotify:playlist:37i9dQZF1DWSBi5svWQ9Nk';
+        // const newUri = 'spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF';
+        // Test
+        const newUri = 'spotify:album:1TSZDcvlPtAnekTaItI3qO';
+        node.debug('uri submitted' + JSON.stringify(newUri));
+        return sonosPlayer.queue(newUri);
       })
       .then((response) => {
         // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
@@ -708,7 +827,7 @@ module.exports = function (RED) {
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, msg.payload: array of songs, msg.queue_length: number of songs
+  * @output {Object} Success: msg, msg.payload: array of songs
   */
   function getQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'get queue';
@@ -719,10 +838,8 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         let songsArray;
-        let queueSize;
         if (response === false) {
           // queue is empty
-          queueSize = 0;
           songsArray = [];
         } else {
           if (typeof response.returned === 'undefined' || response.returned === null ||
@@ -730,7 +847,6 @@ module.exports = function (RED) {
             throw new Error('n-r-c-s-p: undefined queue size received');
           }
           node.debug(JSON.stringify(response));
-          queueSize = parseInt(response.returned);
           songsArray = response.items;
           // message albumArtURL
           songsArray.forEach(function (songsArray) {
@@ -748,7 +864,6 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         // send message data
         msg.payload = songsArray;
-        msg.queue_length = queueSize;
         node.send(msg);
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
@@ -759,7 +874,7 @@ module.exports = function (RED) {
   * @param  {Object} msg incoming message
   *        size: optional, maximum amount of playlists being loaded from SONOS player
   * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, msg.payload = list of SONOS playlists,  msg.available_playlists = amount of playlists
+  * @output {Object} Success: msg, msg.payload = list of SONOS playlists
   */
   function getSonosPlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get SONOS playlists';
@@ -828,7 +943,6 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         // send message data
         msg.payload = playlistArray;
-        msg.available_playlists = playlistArray.length;
         node.send(msg);
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
@@ -957,7 +1071,6 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         // send message data
         msg.payload = playlistArray;
-        msg.available_playlists = playlistArray.length;
         node.send(msg);
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));

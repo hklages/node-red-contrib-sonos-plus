@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] planned 2019-12-01
+### Changed
+- Manage Queue: removed output property queue_length, available_playlists (not necessary)
+
+### added
+- Manage Queue: Support for Spotify: tracks, album, playlists from My Sonos or direct insertion
+
 ## [0.8.0] planned 2019-11-11
 ### Changed
 - overwork Manage Radio node

@@ -8,6 +8,10 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
 ## NEWS
+Support for Spotify in Manage Queue: tracks, album, playlists from My Sonos or direct insertion
+
+Node Manage Queue: removed property: queue_length, available_playlists
+
 Overwork/ clean up all modules
 
 Overwork Get Status node, changing some output properties name: sonosName, sonosGroup, normalized_volume, queue_active
