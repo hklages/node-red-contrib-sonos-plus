@@ -37,7 +37,7 @@ module.exports = class SonosHelper {
   * @param  {function} callback function with parameter err, ipAddress
   * provides ipAddress or null (not found) and calls callback handling that.
   */
-  findSonos (node, serialNumber, callback) {
+  discoverSonosPlayerBySerial (node, serialNumber, callback) {
     const sonos = require('sonos');
 
     node.debug('Start find Sonos player.');

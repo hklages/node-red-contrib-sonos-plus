@@ -45,8 +45,6 @@ For more information - also examples - see the [Wiki](https://github.com/hklages
 
 ## Credentials
 
-This package uses code from **node-red-contrib-better-sonos**. I created this new package since the former package hasn't been maintained for more then a year.
-
 [node-sonos api team](https://github.com/bencevans/node-sonos)
 
 [node-red-better-sonos team](https://github.com/originallyus/node-red-contrib-better-sonos)

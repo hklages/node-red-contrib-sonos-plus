@@ -36,8 +36,7 @@ RED.nodes.registerType('sonos-manage-radio', {
 
 	<div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="This Node Name">
-
+        <input type="text" id="node-input-name" placeholder="This Node Name"/>
   </div>
 
 </script>
@@ -75,8 +74,9 @@ RED.nodes.registerType('sonos-manage-radio', {
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
-  <br/> • <b>play_mysonos</b> and as topic a part of the title (unique search string)
-  <br/> • <b>play_tunein</b> and as topic the TuneIn radio id (eg s12345)
-  <br/> • <b>get_mysonos</b> Outputs the array of all My Sonos radio stations from TuneIn, Prime
-  <br/> • <b>get_mysonosall</b> Outputs the array of all My Sonos items
+  <ul>
+  <li><b>play_mysonos</b> and as topic a part of the title (unique search string)</li>
+  <li><b>play_tunein</b> and as topic the TuneIn radio id (eg s12345)</li>
+  <li><b>get_mysonos</b> Outputs the array of all My Sonos radio stations from TuneIn, Amazon Prime and MP3 stations</li>
+  </ul>
 </script>

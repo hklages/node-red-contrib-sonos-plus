@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] planned 2019-11-11
+### Changed
+- overwork Manage Radio node
+- moved command get_mysonosall to node Get Status as get_mysonos
+- overwork all modules - consistent coding, html, ...
+
 ## [0.7.0] 2019-11-08
 ### Changed
 - rework Configuration Node and Helper.

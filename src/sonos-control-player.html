@@ -64,22 +64,24 @@ RED.nodes.registerType('sonos-control-player', {
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
-    <br/> • <b>play/stop/pause/mute/ummute/next_song/previous_song</b> Obvious. For play: <code>volume</code> may contain the volume in the range from 1 to 99.
-    <br/> • <b>toggleplayback</b> Toggles play/stop
-    <br/> • <b>number</b>: 1...99 Set volume
-    <br/> • <b>+number</b>: +1...+29 Increase volume CAUTION: use string not number format!
-    <br/> • <b>-number</b>: -29...-1 Decrease volume
-    <br/> • <b>play_notification</b> Plays a given notification. Notification must be specified in <code>topic</code>. <code>volume</code> may contain the notificaiton volume in the range from 1 to 99. Default is 40.
-    <br/> • <b>leave_group</b> Leave group
-    <br/> • <b>join_group</b> Join group. Group name must be specified in <code>topic</code>
-    <br/> • <b>set_led</b> Sets the LED light - <code>topic</code> is On|Off
-    <br/> • <b>activate_avtransport</b> Activates a specific stream - e.g. line in. URI must be specified in <code>topic</code>. <code>volume</code> may contain the volume in the range from 1 to 99.
-
-
-<br/><br/>The commands <b>next_song/previous_song</b> don't work with TuneIn radio stations. Amazon Prime radion stations support <b>next_song</b> but not <b>previous_song</b>.
-
-<br/><br/> <b>Play a notification</b> is NOT a build in SONOS function. Instead the currenst state is stored, then the notification beeing played and then the previous state restored.
+  <ul>
+  <li><b>play/stop/pause/mute/ummute/next_song/previous_song</b> Obvious. For play: <code>volume</code> may contain the volume in the range from 1 to 99.</li>
+  <li><b>toggleplayback</b> Toggles play/stop</li>
+  <li><b>number</b>: 1...99 Set volume</li>
+  <li><b>+number</b>: +1...+29 Increase volume CAUTION: use string not number format!</li>
+  <li><b>-number</b>: -29...-1 Decrease volume</li>
+  <li><b>play_notification</b> Plays a given notification. Notification must be specified in <code>topic</code>. <code>volume</code> may contain the notificaiton volume in the range from 1 to 99. Default is 40.</li>
+  <li><b>leave_group</b> Leave group</li>
+  <li><b>join_group</b> Join group. Group name must be specified in <code>topic</code></li>
+  <li><b>set_led</b> Sets the LED light - <code>topic</code> is On|Off</li>
+  <li><b>activate_avtransport</b> Activates a specific stream - e.g. line in. URI must be specified in <code>topic</code>. <code>volume</code> may contain the volume in the range from 1 to 99.</li>
+  </ul>
+The commands <b>next_song/previous_song</b> don't work with TuneIn radio stations. Amazon Prime radion stations support <b>next_song</b> but not <b>previous_song</b>.
+<br/><br/><b>Play a notification</b> is NOT a build in SONOS function. Instead the currenst state is stored, then the notification beeing played and then the previous state restored.
 This works with the following restrictions:
-<br/> • Do NOT play another notification while one is playing.
-<br/> • If a Amazon Prime stations is playing, the next song will start after notification has ended.
+<ul>
+<li>Do NOT play another notification while one is playing.</li>
+<li>If a Amazon Prime stations is playing, the next song will start after notification has ended.  </li>
+</ul>
+
 </script>

@@ -89,26 +89,27 @@ RED.nodes.registerType('sonos-manage-queue', {
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
-  <br/> • <b>activate_queue</b> Starts playing songs from queue (checks queue is not empty). <code>volume</code> may contain the volume in the range from 1 to 99.
-  <br/> • <b>insert_uri</b> Inserts a song or a complete playlist into queue. <code>topic</code> provides uri
-  <br/> • <b>insert_prime_playlisturi</b> Inserts all songs of a Amazon Prime playlist into queue. <code>topic</code> provides uri
-  <br/> • <b>insert_amazonprime_playlist</b> Inserts all songs of a My Sonos Amazon Prime playlist into queue. <code>topic</code> provides search string
-  <br/> • <b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string
-  <br/> • <b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string
-  <br/> • <b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index
-  <br/> • <b>remove_song</b> Removes a specific song from queue. <code>topic</code> provides search index
-  <br/> • <b>flush_queue</b> Erases the queue and stops playing!
-  <br/> • <b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE
-  <br/> • <b>get_queue</b> Outputs the current queue as output
-  <br/> • <b>get_queuemode</b> Gets the current queue mode
-  <br/> • <b>get_sonos_playlists</b> Outputs an array of all Sonos playlists
-  <br/> • <b>get_prime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists
-  <br/> • <b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists
-<br/><br/>
+  <ul>
+    <li><b>activate_queue</b> Starts playing songs from queue (checks queue is not empty). <code>volume</code> may contain the volume in the range from 1 to 99.</li>
+  <li><b>insert_uri</b> Inserts a song or a complete playlist into queue. <code>topic</code> provides uri</li>
+  <li><b>insert_prime_playlisturi</b> Inserts all songs of a Amazon Prime playlist into queue. <code>topic</code> provides uri</li>
+  <li><b>insert_amazonprime_playlist</b> Inserts all songs of a My Sonos Amazon Prime playlist into queue. <code>topic</code> provides search string</li>
+  <li><b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string</li>
+  <li><b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string</li>
+  <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
+  <li><b>remove_song</b> Removes a specific song from queue. <code>topic</code> provides search index</li>
+  <li><b>flush_queue</b> Erases the queue and stops playing!</li>
+  <li><b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE</li>
+  <li><b>get_queue</b> Outputs the current queue as output</li>
+  <li><b>get_queuemode</b> Gets the current queue mode</li>
+  <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
+  <li><b>get_prime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists</li>
+  <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>
+  </ul>
 The scope for the search string is:
 <ul>
 <li>all imported Music Library playlists for insert_musiclibrary_playlist/ get</li>
-<li>all SONOS playlists for insert_sonos_playlist/ get</li>  
+<li>all SONOS playlists for insert_sonos_playlist/ get</li>
 <li>all My Sonos Amazon Prime playlists for insert_amazonprime_playlist /get </li>
 </ul>
 

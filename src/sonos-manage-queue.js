@@ -30,13 +30,13 @@ module.exports = function (RED) {
         (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
         // exisiting ip address - fastes solution, no discovery necessary
         node.debug('using IP address of config node');
-        handleInputMsg(node, msg, configNode.ipaddress);
+        processInputMsg(node, msg, configNode.ipaddress);
       } else {
         // have to get ip address via disovery with serial numbers
         helper.showWarning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
         if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
-          helper.findSonos(node, configNode.serialnum, (err, ipAddress) => {
+          helper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
               helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
               return;
@@ -46,7 +46,7 @@ module.exports = function (RED) {
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
-              handleInputMsg(node, msg, ipAddress);
+              processInputMsg(node, msg, ipAddress);
             }
           });
         } else {
@@ -63,7 +63,7 @@ module.exports = function (RED) {
   * @param  {Object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
-  function handleInputMsg (node, msg, ipaddress) {
+  function processInputMsg (node, msg, ipaddress) {
     const sonosFunction = 'handle input msg';
     // get sonos player
     const { Sonos } = require('sonos');

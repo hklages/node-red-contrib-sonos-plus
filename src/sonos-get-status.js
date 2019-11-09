@@ -30,13 +30,13 @@ module.exports = function (RED) {
         (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
         // exisiting ip address - fastes solution, no discovery necessary
         node.debug('using IP address of config node');
-        handleInputMsg(node, msg, configNode.ipaddress);
+        processInputMsg(node, msg, configNode.ipaddress);
       } else {
         // have to get ip address via disovery with serial numbers
         helper.showWarning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
         if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
-          helper.findSonos(node, configNode.serialnum, (err, ipAddress) => {
+          helper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
               helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
               return;
@@ -46,7 +46,7 @@ module.exports = function (RED) {
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
-              handleInputMsg(node, msg, ipAddress);
+              processInputMsg(node, msg, ipAddress);
             }
           });
         } else {
@@ -61,7 +61,7 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
-  function handleInputMsg (node, msg, ipaddress) {
+  function processInputMsg (node, msg, ipaddress) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -107,6 +107,8 @@ module.exports = function (RED) {
       getMediaInfoV1(node, msg, sonosPlayer);
     } else if (command === 'get_positioninfo') {
       getPositionInfoV1(node, msg, sonosPlayer);
+    } else if (command === 'get_mysonos') {
+      getMySonosAll(node, msg, sonosPlayer);
     } else {
       helper.showWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -540,6 +542,40 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         node.send(msg);
         return true;
+      })
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
+  }
+
+  /**  Get list of all My Sonos items.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * change msg.payload to array of all My Sonos items
+  */
+  function getMySonosAll (node, msg, sonosPlayer) {
+    // get list of My Sonos items
+    const sonosFunction = 'get my sonos all';
+    sonosPlayer.getFavorites()
+      .then((response) => {
+        // validate response
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined getFavorites response received');
+        }
+        if (typeof response.items === 'undefined' || response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
+          throw new Error('n-r-c-s-p: undefined favorite list received');
+        }
+        if (!Array.isArray(response.items)) {
+          throw new Error('n-r-c-s-p: did not receive a list');
+        }
+        const list = response.items;
+        if (list.length === 0) {
+          throw new Error('n-r-c-s-p: no my sonos items found');
+        }
+        helper.showSuccess(node, sonosFunction);
+        msg.payload = list;
+        node.send(msg);
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
