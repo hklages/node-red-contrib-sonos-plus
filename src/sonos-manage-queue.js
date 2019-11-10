@@ -87,12 +87,15 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'insert_uri') {
       insertUri(node, msg, sonosPlayer);
+    } else if (command === 'insert_spotify_uri') {
+      insertSpotifyUri(node, msg, sonosPlayer);
+    } else if (command === 'insert_prime_playlisturi') {
+      insertPrimePlaylistURI(node, msg, sonosPlayer);
     } else if (command === 'insert_sonos_playlist') {
       insertSonosPlaylist(node, msg, sonosPlayer);
     } else if (command === 'insert_prime_playlist') {
+      // TODO Remove in future
       helper.showWarning(node, sonosFunction, 'Command depreciated', 'Please use insert_prime_playlisturi');
-    } else if (command === 'insert_prime_playlisturi') {
-      insertPrimePlaylistURI(node, msg, sonosPlayer);
     } else if (command === 'insert_amazonprime_playlist') {
       insertMySonosAmazonPrimePlaylist(node, msg, sonosPlayer);
     } else if (command === 'insert_spotify_playlist') {
@@ -144,6 +147,45 @@ module.exports = function (RED) {
       return;
     }
     const uri = msg.topic;
+
+    sonosPlayer.queue(uri)
+      .then(response => {
+        // will response something like {"FirstTrackNumberEnqueued":"1","NumTracksAdded":"1","NewQueueLength":"1"}
+        node.debug('response:' + JSON.stringify(response));
+        helper.showSuccess(node, sonosFunction);
+        node.send(msg);
+      })
+      .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
+  }
+
+  /**  Insert Spotify uri at end of SONOS queue. Can be used for single songs, albumg, playlists, .... Does NOT activate queue.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message with msg.topic
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {Object} Success: msg, no modifications!
+  * Valid examples
+  * spotify:track:5AdoS3gS47x40nBNlNmPQ8
+  * spotify:album:1TSZDcvlPtAnekTaItI3qO
+  * spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d
+  * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
+  */
+  function insertSpotifyUri (node, msg, sonosPlayer) {
+    const Sonos = require('sonos');
+    sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU);
+    const sonosFunction = 'insert uri';
+
+    // validate msg.topic
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+    const uri = msg.topic;
+    if (!(uri.startsWith('spotify:track:') || uri.startsWith('spotify:album:') ||
+        uri.startsWith('spotify:artistTopTracks:') || uri.startsWith('spotify:user:spotify:playlist:'))) {
+      helper.showErrorMsg(node, msg, new Error('n-r-c-s-p: topic must be track, album, artistTopTracks or playlist'), sonosFunction);
+      return;
+    }
 
     sonosPlayer.queue(uri)
       .then(response => {
@@ -588,15 +630,29 @@ module.exports = function (RED) {
         if (!uri.startsWith('x-rincon-cpcontainer:')) {
           throw new Error('n-r-c-s-p: invalid prime playlist');
         }
+        // x-rincon-cpcontainer:1006206cspotify%3aplaylist%3a37i9dQZEVXbMDoHDwVN2tF?sid=9&flags=8300&sn=16
         // TODO extract
+        const START = 'spotify%3aplaylist%3a';
+        const END = '?sid=';
+        let id = '';
+        let idStart = uri.indexOf(START);
+        if (idStart > -1) {
+          idStart += START.length;
+        } else {
+          throw new Error('n-r-c-s-p: wrong uri - cound not find id (start)');
+        }
+        const idEnd = uri.indexOf(END);
+        if (idEnd > -1) {
+          id = uri.slice(idStart, idEnd);
+        } else {
+          throw new Error('n-r-c-s-p: wrong uri - cound not find id (end)');
+        }
 
         const Sonos = require('sonos');
         sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU);
         node.debug('sonosPlayer' + JSON.stringify(sonosPlayer));
 
         // does not work
-        // const newUri = 'spotify:playlist:3a37i9dQZEVXbMDoHDwVN2tF';
-        // const newUri = 'spotify:user:spotify:playlist:3a37i9dQZEVXbMDoHDwVN2tF';
         // const newUri = 'x-rincon-cpcontainer:1006206cspotify%3aplaylist%3a37i9dQZEVXbMDoHDwVN2tF';
         // const newUri = 'x-rincon-cpcontainer:1006206cspotify:playlist:37i9dQZEVXbMDoHDwVN2tF';
 
@@ -607,9 +663,10 @@ module.exports = function (RED) {
         // const newUri = 'spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d';
         // const newUri = 'spotify:user:spotify:playlist:37i9dQZF1DWSBi5svWQ9Nk';
         // const newUri = 'spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF';
+
         // Test
-        const newUri = 'spotify:album:1TSZDcvlPtAnekTaItI3qO';
-        node.debug('uri submitted' + JSON.stringify(newUri));
+        const newUri = `spotify:user:spotify:playlist:${id}`;
+        node.debug('uri> ' + JSON.stringify(newUri));
         return sonosPlayer.queue(newUri);
       })
       .then((response) => {
