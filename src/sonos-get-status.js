@@ -179,6 +179,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.state = state; msg.volume = volume; msg.volumeNormalized = normalizedVolume; msg.muted = muted; msg.name = sonosName; msg.group = sonosGroup;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -202,6 +203,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = response;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -228,6 +230,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = response;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -251,6 +254,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = response;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -273,6 +277,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = response;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -296,6 +301,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = response;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -318,6 +324,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = response;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
@@ -576,6 +583,7 @@ module.exports = function (RED) {
         helper.showSuccess(node, sonosFunction);
         msg.payload = list;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }

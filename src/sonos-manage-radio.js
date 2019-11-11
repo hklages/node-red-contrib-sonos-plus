@@ -152,7 +152,7 @@ module.exports = function (RED) {
             throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
           }
         })
-        .then(() => { // show success
+        .then(() => {
           helper.showSuccess(node, sonosFunction);
           node.send(msg);
           return true;
@@ -412,9 +412,13 @@ module.exports = function (RED) {
         if (list.length === 0) {
           throw new Error('n-r-c-s-p: no my sonos items found');
         }
+        return list;
+      })
+      .then((list) => {
         helper.showSuccess(node, sonosFunction);
         msg.payload = list;
         node.send(msg);
+        return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
   }
