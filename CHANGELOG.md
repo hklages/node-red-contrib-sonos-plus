@@ -3,20 +3,21 @@ All notable changes to this project will be documented in this file.
 
 ## [1.0.0] planned 2019-12-01
 ### Changed
-- Manage Queue: removed output property queue_length, available_playlists (not necessary)
+- Manage Queue: Removed output property queue_length, available_playlists (not necessary)
 
 ### added
 - Manage Queue: Support for Spotify: tracks, album, playlists from My Sonos or direct insertion
+- Get Status: Added test command to check whether player is reachable.
 
 ## [0.8.0] planned 2019-11-11
 ### Changed
-- overwork Manage Radio node
+- revised Manage Radio node
 - moved command get_mysonosall to node Get Status as get_mysonos
-- overwork all modules - consistent coding, html, ...
+- revised all modules - consistent coding, html, ...
 
 ## [0.7.0] 2019-11-08
 ### Changed
-- rework Configuration Node and Helper.
+- revised Configuration Node and Helper.
 - coding clean up in all modules, especially in SonosHelper
 
 ## [0.6.0] 2019-11-05

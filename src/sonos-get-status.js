@@ -109,6 +109,8 @@ module.exports = function (RED) {
       getPositionInfoV1(node, msg, sonosPlayer);
     } else if (command === 'get_mysonos') {
       getMySonosAll(node, msg, sonosPlayer);
+    } else if (command === 'test') {
+      test(node, msg, sonosPlayer);
     } else {
       helper.showWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -586,6 +588,36 @@ module.exports = function (RED) {
         return true;
       })
       .catch(error => helper.showErrorMsg(node, msg, error, sonosFunction));
+  }
+
+  /** Test SONOS player: reachable true/false
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer sonos player object
+  * @output changes msg.payload to boolean true otherwise false
+  */
+  function test (node, msg, sonosPlayer) {
+    const sonosFunction = 'test';
+    let result = false;
+    sonosPlayer.getCurrentState()
+      .then((response) => {
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined player state received', sonosFunction);
+        }
+        node.debug('player reachable');
+        helper.showSuccess(node, sonosFunction);
+        result = true;
+        return true;
+      })
+      .catch(error => {
+        node.debug('test command - error ignored' + JSON.stringify(error));
+        node.status({ fill: 'green', shape: 'dot', text: 'test command - error ingnored' });
+      })
+      .finally(() => {
+        msg.payload = result;
+        node.send(msg);
+      });
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);
