@@ -16,7 +16,7 @@ RED.nodes.registerType('sonos-control-player', {
     }
   },
   inputs: 1, // set the number of inputs - only 0 or 1
-  outputs: 0, // set the number of outputs - 0 to n
+  outputs: 1, // set the number of outputs - 0 to n
   icon: 'sonos.png', // saved in  icons/myicon.png
   color: '#f1e9e3',
   label: function () {
@@ -58,6 +58,15 @@ RED.nodes.registerType('sonos-control-player', {
 
       <dt>volume <span class="property-type">string</span> </dt>
       <dd>Volume beeing used together with <b>play, activate_avtransport, play_notification</b></dd>
+
+  </dl>
+
+  <h3>Outputs</h3>
+
+  <dl class="message-properties">
+
+      <dt>payload <span class="property-type">string | playing/stopped/paused</span> </dt>
+      <dd>outpus true in case of success</dd>
 
   </dl>
 

@@ -15,6 +15,8 @@ Node Manage Queue: Removed property: queue_length, available_playlists
 
 Node Get Status: Added command test to check whether player is reachable
 
+Node Control Player: Now with output to be able to chain commands
+
 All Nodes: Revised, code simplification, ...
 
 Node Get Status: Revised, changing some output properties name: sonosName, sonosGroup, normalized_volume, queue_active

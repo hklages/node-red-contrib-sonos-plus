@@ -97,14 +97,14 @@ module.exports = class SonosHelper {
     });
   }
 
-  /** show error status and error message - Version 2
+  /** processing of msg with failure.
   * @param  {Object} node current node
   * @param  {Object} msg current msg
   * @param  {Error object} error  error object from response
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
   */
-  showErrorMsg (node, msg, error, functionName) {
+  nrcspFailure (node, msg, error, functionName) {
     let msgShort = 'unknown'; // default text
     let msgDetails = 'unknown'; // default text
     node.debug(`Entering error handling from ${functionName}`);
@@ -149,17 +149,19 @@ module.exports = class SonosHelper {
   * @param  {string} messageShort  short message for status
   * @param  {string} messageDetail  details
   */
-  showWarning (node, functionName, messageShort, messageDetail) {
+  nrcspWarning (node, functionName, messageShort, messageDetail) {
     node.debug(`Entering warning handling from ${functionName}`);
     node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail);
     node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
   }
 
-  /** show successful completion.
+  /** processing of msg was successful
   * @param  {Object} node current node
+  * @param  {Object} msg current msg (maybe null)
   * @param  {string} functionName name of calling function
   */
-  showSuccess (node, functionName) {
+  nrcspSuccess (node, msg, functionName) {
+    node.send(msg);
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
     node.debug(`ok:${functionName}`);
   }
