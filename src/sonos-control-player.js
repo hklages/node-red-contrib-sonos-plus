@@ -441,6 +441,22 @@ module.exports = function (RED) {
   * @param  {Object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
+    const sonosFunction = 'lab test';
+    // Check msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
+      return;
+    }
+    const uri = String(msg.topic).trim();
+    node.debug('starting setAVTransportURI');
+    sonosPlayer.setAVTransportURI(uri)
+      .then(() => {
+        msg.payload = true;
+        helper.nrcspSuccess(node, msg, sonosFunction);
+        return true;
+      })
+      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
   }
 
   /**  LAB: For testing only : Play mp3

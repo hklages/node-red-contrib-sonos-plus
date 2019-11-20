@@ -109,8 +109,8 @@ module.exports = function (RED) {
       getPositionInfoV1(node, msg, sonosPlayer);
     } else if (command === 'get_mysonos') {
       getMySonosAll(node, msg, sonosPlayer);
-    } else if (command === 'test') {
-      test(node, msg, sonosPlayer);
+    } else if (command === 'test_connected') {
+      testConnected(node, msg, sonosPlayer);
     } else {
       helper.nrcspWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -588,7 +588,7 @@ module.exports = function (RED) {
   * @param  {Object} sonosPlayer sonos player object
   * @output changes msg.payload to boolean true otherwise false
   */
-  function test (node, msg, sonosPlayer) {
+  function testConnected (node, msg, sonosPlayer) {
     const sonosFunction = 'test';
     sonosPlayer.getCurrentState()
       .then((response) => {

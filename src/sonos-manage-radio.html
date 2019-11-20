@@ -58,7 +58,7 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dd>Parameter - either the TuneIn radio id or a part of the My Sonos radio station title.</dd>
 
       <dt>volume <span class="property-type">string</span> </dt>
-      <dd>Volume beeing used together with <b>play_mysonos and play_tunein</b></dd>
+      <dd>Volume beeing used together with <b>play_mysonos, play_tunein, play_httpradio</b></dd>
 
   </dl>
 
@@ -77,6 +77,7 @@ RED.nodes.registerType('sonos-manage-radio', {
   <ul>
   <li><b>play_mysonos</b> and as topic a part of the title (unique search string)</li>
   <li><b>play_tunein</b> and as topic the TuneIn radio id (eg s12345)</li>
+  <li><b>play_httpradio</b> and as topic the http string</li>
   <li><b>get_mysonos</b> Outputs the array of all My Sonos radio stations from TuneIn, Amazon Prime and MP3 stations</li>
   </ul>
 </script>

@@ -7,8 +7,9 @@ All notable changes to this project will be documented in this file.
 
 ### added
 - Manage Queue: Support for Spotify: tracks, album, playlists from My Sonos or direct insertion
-- Get Status: Added test command to check whether player is reachable.
+- Get Status: Added test_connected command to check whether player is reachable.
 - Control Player: Now with output to be able to chain commands
+- Manage Radio: play_httpradio for using simple http stream address
 
 ## [0.8.0] 2019-11-11  (not published)
 ### Changed

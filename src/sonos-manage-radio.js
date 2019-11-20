@@ -93,6 +93,8 @@ module.exports = function (RED) {
       playMySonos(node, msg, sonosPlayer);
     } else if (command === 'play_tunein') {
       playTuneIn(node, msg, sonosPlayer);
+    } else if (command === 'play_httpradio') {
+      playHttpRadio(node, msg, sonosPlayer);
     } else if (command === 'get_mysonos') {
       getMySonosStations(node, msg, sonosPlayer);
     } else if (command === 'get_mysonosall') {
@@ -293,6 +295,60 @@ module.exports = function (RED) {
       })
       .then(() => {
         msg.payload = stationTitleFinal;
+        helper.nrcspSuccess(node, msg, sonosFunction);
+        return true;
+      })
+      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+  }
+
+  /**  Play http radio from internet.
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  *                 topic: valid http address of radio MP3Stream
+  *                 volume: volume 1 .. 99
+  * @param  {object} sonosPlayer Sonos Player
+  * @output msg with msg.payload = true
+  */
+  function playHttpRadio (node, msg, sonosPlayer) {
+    const sonosFunction = 'play http radio';
+
+    // validate msg.topic
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
+      return;
+    }
+
+    if (!msg.topic.startsWith('http')) {
+      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: topic should start with http', sonosFunction));
+      return;
+    }
+
+    sonosPlayer.setAVTransportURI(msg.topic)
+      .then(() => { // optionally change volume
+        // validate volume: integer, betweent 1 and 99
+        if (typeof msg.volume === 'undefined' || msg.volume === null ||
+        (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+          // do NOT change volume - just return
+          return true;
+        }
+        const newVolume = parseInt(msg.volume);
+        if (Number.isInteger(newVolume)) {
+          if (newVolume > 0 && newVolume < 100) {
+            // change volume
+            node.debug('msg.volume is in range 1...99: ' + newVolume);
+            return sonosPlayer.setVolume(newVolume);
+          } else {
+            node.debug('msg.volume is not in range: ' + newVolume);
+            throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+          }
+        } else {
+          node.debug('msg.volume is not number');
+          throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+        }
+      })
+      .then(() => {
+        msg.payload = true;
         helper.nrcspSuccess(node, msg, sonosFunction);
         return true;
       })
