@@ -95,7 +95,9 @@ module.exports = function (RED) {
       // TODO Remove in future
       helper.nrcspWarning(node, sonosFunction, 'Command depreciated', 'Please use insert_prime_playlisturi');
     } else if (command === 'insert_spotify') {
-      insertMySonosSpotify(node, msg, sonosPlayer);
+      insertMySonosSpotify(node, msg, sonosPlayer, false);
+    } else if (command === 'insert_spotify_playlist') {
+      insertMySonosSpotify(node, msg, sonosPlayer, true);
     } else if (command === 'insert_amazonprime_playlist') {
       insertMySonosAmazonPrimePlaylist(node, msg, sonosPlayer);
     } else if (command === 'insert_sonos_playlist') {
@@ -269,11 +271,14 @@ module.exports = function (RED) {
   *        topic: part of the title name; is search string
   *        region: valid region, 4 digits EU 2311, US 3079. DEFAULT is EU
   * @param  {Object} sonosPlayer Sonos Player
+  * @param  {Boolean} onlyPlaylists yes if only playlists should be searched
   * @output {Object} Success: msg, no modification
   */
-  function insertMySonosSpotify (node, msg, sonosPlayer) {
-    const sonosFunction = 'insert spotify playlist';
-
+  function insertMySonosSpotify (node, msg, sonosPlayer, onlyPlaylists) {
+    let sonosFunction = 'insert spotify';
+    if (onlyPlaylists) {
+      sonosFunction = 'insert spotify playlist';
+    }
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
@@ -339,7 +344,7 @@ module.exports = function (RED) {
           }
         }
         if (playlistArray.length === 0) {
-          throw new Error('n-r-c-s-p: could not find any amazon prime playlist');
+          throw new Error('n-r-c-s-p: could not find any spotify item');
         }
         return playlistArray;
       })
@@ -388,10 +393,18 @@ module.exports = function (RED) {
             newUri = `spotify:user:spotify:playlist:${spotifyId}`;
             break;
           case 'album':
-            newUri = `spotify:album:${spotifyId}`;
+            if (onlyPlaylists) {
+              throw new Error('n-r-c-s-p: album found but no playlist');
+            } else {
+              newUri = `spotify:album:${spotifyId}`;
+            }
             break;
           case 'track':
-            newUri = `spotify:track:${spotifyId}`;
+            if (onlyPlaylists) {
+              throw new Error('n-r-c-s-p: album found but no playlist');
+            } else {
+              newUri = `spotify:track:${spotifyId}`;
+            }
             break;
           default:
             throw new Error('n-r-c-s-p: invalid spotify type: ' + spotifyType);
@@ -985,6 +998,7 @@ module.exports = function (RED) {
         let songsArray;
         if (response === false) {
           // queue is empty
+          node.debug('response -> ' + JSON.stringify(response));
           songsArray = [];
         } else {
           if (typeof response.returned === 'undefined' || response.returned === null ||

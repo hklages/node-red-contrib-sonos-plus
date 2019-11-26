@@ -129,9 +129,9 @@ module.exports = class SonosHelper {
         }
       }
     } else {
-      if (error.code === 'ECONNREFUSED') {
+      if (error.code === 'ECONNREFUSED' || error.code === 'EHOSTUNREACH') {
         msgShort = 'can not connect to player';
-        msgDetails = 'Validate IP adress of player';
+        msgDetails = 'Validate IP adress of player / power on';
       } else {
         // Caution: getOwn is neccessary for some error messages eg playmode!
         msgShort = 'sonos-node / exception';

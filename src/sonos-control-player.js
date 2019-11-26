@@ -93,20 +93,18 @@ module.exports = function (RED) {
       handlePlayNotification(node, msg, sonosPlayer);
     } else if (command.startsWith('+')) {
       commandWithParam = { cmd: 'volume_increase', parameter: command };
-      handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else if (command.startsWith('-')) {
       commandWithParam = { cmd: 'volume_decrease', parameter: command };
-      handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else if (!isNaN(parseInt(command))) {
       commandWithParam = { cmd: 'volume_set', parameter: command };
-      handleNewVolumeCommand(node, msg, sonosPlayer, commandWithParam);
+      handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else if (command === 'set_led') {
       handleSetLed(node, msg, sonosPlayer);
       // TODO lab_ function - remove
     } else if (command === 'lab_test') {
       labTest(node, msg, sonosPlayer);
-    } else if (command === 'lab_play_uri') {
-      handleLabPlayUri(node, msg, sonosPlayer);
     } else {
       helper.nrcspWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(commandWithParam));
     }
@@ -307,7 +305,7 @@ module.exports = function (RED) {
   * @param  {Object} commandObject command - cmd and parameter both as string or volume as integer
   * special: volume range 1.. 99, adjust volume rage -29 ..  +29
   */
-  function handleNewVolumeCommand (node, msg, sonosPlayer, commandObject) {
+  function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
     const sonosFunction = commandObject.cmd;
     const volumeValue = parseInt(commandObject.parameter); // convert to integer
     switch (commandObject.cmd) {
@@ -451,30 +449,6 @@ module.exports = function (RED) {
     const uri = String(msg.topic).trim();
     node.debug('starting setAVTransportURI');
     sonosPlayer.setAVTransportURI(uri)
-      .then(() => {
-        msg.payload = true;
-        helper.nrcspSuccess(node, msg, sonosFunction);
-        return true;
-      })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
-  }
-
-  /**  LAB: For testing only : Play mp3
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * uses msg.topic
-  */
-  function handleLabPlayUri (node, msg, sonosPlayer) {
-    const sonosFunction = 'lab play uri';
-    // Check msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
-      return;
-    }
-    const uri = String(msg.topic).trim();
-    sonosPlayer.play(uri)
       .then(() => {
         msg.payload = true;
         helper.nrcspSuccess(node, msg, sonosFunction);

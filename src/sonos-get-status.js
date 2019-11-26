@@ -340,6 +340,7 @@ module.exports = function (RED) {
 
     sonosPlayer.currentTrack()
       .then(response => {
+        msg.song = response;
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined current song received', sonosFunction);
@@ -360,6 +361,8 @@ module.exports = function (RED) {
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
             helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+            msg.artist = artist;
+            msg.title = title;
             return;
           } else {
             if (response.title.indexOf(' - ') > 0) {
@@ -368,8 +371,8 @@ module.exports = function (RED) {
               title = response.title.split(' - ')[1];
             } else {
               helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
-              artist = '';
-              title = response.title;
+              msg.artist = artist;
+              msg.title = response.title;
               return;
             }
           }
@@ -384,7 +387,7 @@ module.exports = function (RED) {
           }
         }
         node.debug('got valid song info');
-        msg.song = response;
+        // msg.song = response already set before
         msg.albumArtURL = albumArtURL;
         msg.artist = artist;
         msg.title = title;
@@ -436,6 +439,7 @@ module.exports = function (RED) {
 
     sonosPlayer.currentTrack()
       .then(response => {
+        msg.payload = response;
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined current song received', sonosFunction);
@@ -456,6 +460,8 @@ module.exports = function (RED) {
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
             helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+            msg.artist = artist;
+            msg.title = title;
             return;
           } else {
             if (response.title.indexOf(' - ') > 0) {
@@ -464,8 +470,8 @@ module.exports = function (RED) {
               title = response.title.split(' - ')[1];
             } else {
               helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
-              artist = '';
-              title = response.title;
+              msg.artist = artist;
+              msg.title = response.title;
               return;
             }
           }
@@ -480,7 +486,7 @@ module.exports = function (RED) {
           }
         }
         node.debug('got valid song info');
-        msg.payload = response;
+        // msg.payload = response already done above
         msg.albumArtURL = albumArtURL;
         msg.artist = artist;
         msg.title = title;

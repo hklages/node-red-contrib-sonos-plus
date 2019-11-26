@@ -29,7 +29,6 @@ Node Manage Queue: Added insert_amazonprime_playlist, get_amazonprime_playlists
 
 Node Control Player: Added set_led command
 
-
 ## Installation
 
 Install directly from your NodeRED's setting pallete.
@@ -37,13 +36,13 @@ Install directly from your NodeRED's setting pallete.
 ## Major Functions
 
 - SONOS Player: Simply select the SONOS player in ConfigNode by search button (recommendation: enter IP address, processing is faster)
-- Basic functions: play, stop, pause, mute, group, ...
-- Stations: Convenient selection of "My Sonos" radio station from TuneIn and Amazon Prime by name (search string in station title).
+- Basic functions: play, stop, pause, mute, group, activate line in, ...
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
-- Spotify: Insert playlists, album, songs from My Sonos via search string or direct as uri
-- Playlists: Insert Amazon Prime playlist from My Sonos by using name (search string in playlist name)
-- Playlists: Insert Music Library playlist or Sonos playlist by name (search string in playlist name)
-- Notification: Interrupt current song and play an notification
+- Stations: Convenient selection of "My Sonos" radio station from TuneIn and Amazon Prime by name (search string in station name).
+- Spotify: Insert playlists, album, songs from My Sonos - using search string in playlist name - or direct with uri
+- Playlists: Insert Amazon Prime playlist from My Sonos - using search string in playlist name
+- Playlists: Insert Music Library playlist or Sonos playlist - using search string in playlist name
+- Notification: Interrupt current song and play a notification
 - Test: Test command to check whether SONOS player is reachable ( means on and really a SONOS player)
 - Information: Provides many kinds of current song information: artist, title, media information and radio station name
 
