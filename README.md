@@ -7,7 +7,7 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
 
-## NEWS - will be available in npm / Node-RED on 2019-12-01
+## NEWS
 
 Node Manage Queue: Support for Spotify: tracks, album, playlists from My Sonos or direct insertion
 

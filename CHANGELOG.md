@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] planned 2019-12-01  Caution: last published release was 0.5.1!!
+## [1.0.0] 2019-11-30 Caution: last published release was 0.5.1!!
 ### Changed
 - Manage Queue: Removed output property queue_length, available_playlists (not necessary)
 
