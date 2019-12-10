@@ -860,6 +860,8 @@ module.exports = function (RED) {
     const sonosFunction = 'remove song from queue';
 
     let validatedPosition;
+    let validatedNumberofSongs;
+
     sonosPlayer.getQueue()
       .then(response => {
         // get queue size - ensure not empty
@@ -886,6 +888,7 @@ module.exports = function (RED) {
           (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
           throw new Error('n-r-c-s-p: undefined topic');
         }
+
         let position = String(msg.topic).trim();
         if (position === 'last') {
           position = queueSize;
@@ -903,9 +906,24 @@ module.exports = function (RED) {
         }
         // position is in range 1 ... queueSize
         validatedPosition = position;
+        if (typeof msg.numberOfSongs === 'undefined' || msg.numberOfSongs === null ||
+          (typeof msg.numberOfSongs === 'number' && isNaN(msg.numberOfSongs)) || msg.numberOfSongs === '') {
+          validatedNumberofSongs = 1;
+        }
+        // Check isInteger - also for validated Pos
+        const numberOfSongs = parseInt(String(msg.numberOfSongs).trim());
+        if (numberOfSongs < 1) {
+          throw new Error('n-r-c-s-p: numberOfSongs is out of range - less than 1');
+        }
+        if (numberOfSongs > (queueSize - validatedPosition + 1)) {
+          validatedNumberofSongs = queueSize - validatedPosition + 1;
+        } else {
+          validatedNumberofSongs = numberOfSongs;
+        }
+
         return true;
       })
-      .then(() => { return sonosPlayer.removeTracksFromQueue(validatedPosition, 1); })
+      .then(() => { return sonosPlayer.removeTracksFromQueue(validatedPosition, validatedNumberofSongs); })
       .then(response => {
         node.debug('result from remove track: ' + JSON.stringify(response));
         helper.nrcspSuccess(node, msg, sonosFunction);
