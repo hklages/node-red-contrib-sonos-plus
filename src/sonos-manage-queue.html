@@ -64,6 +64,9 @@ RED.nodes.registerType('sonos-manage-queue', {
 
       <dt>region (optional)<span class="property-type">string - 4 digits</span> </dt>
       <dd>Spotify region (4 digits) to overwrite the default region which is EU 2311. It is used in <b>insert_spotify_uri, insert_spotify_playlist</b></dd>
+
+      <dt>numberOfSongs (optional)<span class="property-type">positive number</span> </dt>
+      <dd>Number of songs beeing removed. Default is 1. It is used in <b>remove_song</b></dd>
   </dl>
 
   <h3>Outputs</h3>
@@ -91,7 +94,7 @@ RED.nodes.registerType('sonos-manage-queue', {
     <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
     <br/>
     <li><b>flush_queue</b> Erases the queue and stops playing!</li>
-    <li><b>remove_song</b> Removes a specific song from queue. <code>topic</code> provides index</li>
+    <li><b>remove_song</b> Removes several (numberOfSongs) songs from queue. <code>topic</code> provides start index</li>
     <br/>
     <li><b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE</li>
     <br/>

@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.0.1] 2019-12-12
 ### Changed
-- Manage Queue: remove_song got propoerty "numberOfSongs" to specify the number of songs to be removed. Default is 1.
+- Manage Queue: remove_song got property "numberOfSongs" to specify the number of songs to be removed.
 
 ## [1.0.0] 2019-11-30 Caution: last published release was 0.5.1!!
 ### Changed

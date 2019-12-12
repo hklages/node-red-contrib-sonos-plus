@@ -849,15 +849,16 @@ module.exports = function (RED) {
       .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
   }
 
-  /** Removes song with specified index (msg.topic) from SONOS queue.
+  /** Removes several (msg.numberOfSong) songs starting at pecified index (msg.topic) from SONOS queue.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   *        topic: index between 1 and length of queue, or first, last
+  *        numberOfSongs: number of songs being removed
   * @param  {Object} sonosPlayer Sonos Player
   * @output {Object} Success: msg, no modifications!
   */
   function removeSongFromQueue (node, msg, sonosPlayer) {
-    const sonosFunction = 'remove song from queue';
+    const sonosFunction = 'remove songs from queue';
 
     let validatedPosition;
     let validatedNumberofSongs;
@@ -906,12 +907,17 @@ module.exports = function (RED) {
         }
         // position is in range 1 ... queueSize
         validatedPosition = position;
+
+        // validate numberOfSongs
         if (typeof msg.numberOfSongs === 'undefined' || msg.numberOfSongs === null ||
           (typeof msg.numberOfSongs === 'number' && isNaN(msg.numberOfSongs)) || msg.numberOfSongs === '') {
           validatedNumberofSongs = 1;
         }
-        // Check isInteger - also for validated Pos
+        // Convert to integer and check
         const numberOfSongs = parseInt(String(msg.numberOfSongs).trim());
+        if (!Number.isInteger(numberOfSongs)) {
+          throw new Error('n-r-c-s-p: numberOfSongs is not a number');
+        }
         if (numberOfSongs < 1) {
           throw new Error('n-r-c-s-p: numberOfSongs is out of range - less than 1');
         }
@@ -925,7 +931,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.removeTracksFromQueue(validatedPosition, validatedNumberofSongs); })
       .then(response => {
-        node.debug('result from remove track: ' + JSON.stringify(response));
+        node.debug('result: ' + JSON.stringify(response));
         helper.nrcspSuccess(node, msg, sonosFunction);
         return true;
       })
