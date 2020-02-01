@@ -5,30 +5,11 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hklages/node-red-contrib-sonos-plus/master/LICENSE)
 
-A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md)
+A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
-Node Manage Queue: remove_song has property "numberOfSongs
+Node Get Status: Added command get_groups to provide information about groups, members in groups
 
-Node Manage Queue: Support for Spotify: tracks, album, playlists from My Sonos or direct insertion
-
-Node Manage Queue: Removed property: queue_length, available_playlists
-
-Node Get Status: Added command test_connected to check whether player is reachable
-
-Node Control Player: Now with output to be able to chain commands
-
-Node Radio Player: added play_httpradio to play an internet stream
-
-All Nodes: Revised, code simplification, ...
-
-Node Get Status: Revised, changing some output properties name: sonosName, sonosGroup, normalized_volume, queue_active
-
-Node Manage Radio: Bug fix - no output for play_mysonos
-
-Node Manage Queue: Added insert_amazonprime_playlist, get_amazonprime_playlists
-
-Node Control Player: Added set_led command
 
 ## Installation
 

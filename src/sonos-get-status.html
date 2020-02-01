@@ -78,6 +78,9 @@ RED.nodes.registerType('sonos-get-status', {
       <dt>group <span class="property-type">Object</span></dt>
       <dd> SONOS player group attributes</dd>
 
+      <dt>role <span class="property-type">string</span></dt>
+      <dd> SONOS player role (master, client or independent)</dd>
+
       <dt>song  <span class="property-type">object</span></dt>
       <dd> full song info object</dd>
 
@@ -108,6 +111,7 @@ RED.nodes.registerType('sonos-get-status', {
     <li><b>get_basics</b> Outputs current state, volume, muted, player name, group attributes</li>
     <li><b>get_state/volume/muted/name/led</b> Outputs only the playing state/volume/muted/name/led status</li>
     <li><b>get_properties</b> Outputs player properties</li>
+    <li><b>get_groups</b> Outputs group information - the players role, array of groups with members, etc</li>
     <li><b>get_songmedia</b> Outputs song, media and position info</li>
     <li><b>get_songinfo</b> Outputs song info</li>
     <li><b>get_mediainfo</b> Outputs media info</li>

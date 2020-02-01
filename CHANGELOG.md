@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] 2020-02-01
+### Added
+- Node Get Status: Command get_groups to provide information about the topology, groups, members in groups
+
+### Changed
+- Dependencies: updated
+
 ## [1.0.1] 2019-12-12
 ### Changed
 - Manage Queue: remove_song got property "numberOfSongs" to specify the number of songs to be removed.

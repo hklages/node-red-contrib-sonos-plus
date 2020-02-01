@@ -109,8 +109,12 @@ module.exports = function (RED) {
       getPositionInfoV1(node, msg, sonosPlayer);
     } else if (command === 'get_mysonos') {
       getMySonosAll(node, msg, sonosPlayer);
+    } else if (command === 'get_groups') {
+      getGroupsInfo(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
+    } else if (command === 'lab_newfunction') {
+      labNewFunction(node, msg, sonosPlayer);
     } else {
       helper.nrcspWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -614,6 +618,59 @@ module.exports = function (RED) {
         msg.payload = false;
         node.send(msg);
       });
+  }
+
+  /** getGroupsInfo: get all available data about the topology = group
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer sonos player object
+  * @output {Object} payload topology and group current group information
+  */
+  function getGroupsInfo (node, msg, sonosPlayer) {
+    const sonosFunction = 'get_groups';
+
+    sonosPlayer.getAllGroups()
+      .then(response => {
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined all group information received', sonosFunction);
+        }
+        node.debug('got valid all group info');
+        msg.payload = response;
+        return true;
+      })
+      .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
+      .then(response => {
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined zone group attributes received', sonosFunction);
+        }
+        node.debug('got zone group attribures info');
+        msg.sonosGroup = response;
+        if (typeof response.CurrentZoneGroupName === 'undefined' || response.CurrentZoneGroupName === null ||
+          (typeof response.CurrentZoneGroupName === 'number' && isNaN(response.CurrentZoneGroupName))) {
+          throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received', sonosFunction);
+        }
+        if (response.CurrentZoneGroupName === '') {
+          msg.role = 'client';
+        } else if (response.CurrentZoneGroupName.includes('+')) {
+          msg.role = 'master';
+        } else {
+          msg.role = 'independent';
+        }
+        helper.nrcspSuccess(node, msg, sonosFunction);
+      })
+      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+  }
+
+  /** labNewFunction: sandbox to test new commands
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer sonos player object
+  * @output
+  */
+  function labNewFunction (node, msg, sonosPlayer) {
+
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);
