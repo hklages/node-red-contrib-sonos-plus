@@ -111,6 +111,8 @@ module.exports = function (RED) {
       getMySonosAll(node, msg, sonosPlayer);
     } else if (command === 'get_groups') {
       getGroupsInfo(node, msg, sonosPlayer);
+    } else if (command === 'get_eq') {
+      getEQInfo(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
     } else if (command === 'lab_newfunction') {
@@ -342,6 +344,17 @@ module.exports = function (RED) {
     let title = 'unknown'; // as default
     let albumArtURL = '';
 
+    let suppressWarnings = false; // default
+    if (typeof msg.suppressWarnings === 'undefined' || msg.suppressWarnings === null ||
+    (typeof msg.suppressWarnings === 'number' && isNaN(msg.suppressWarnings)) || msg.suppressWarnings === '') {
+      suppressWarnings = false;
+    } else {
+      if (typeof msg.suppressWarnings === 'boolean') {
+        suppressWarnings = msg.suppressWarnings;
+      } else {
+        throw new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean', sonosFunction);
+      }
+    }
     sonosPlayer.currentTrack()
       .then(response => {
         msg.song = response;
@@ -364,7 +377,7 @@ module.exports = function (RED) {
           // missing artist: TuneIn provides artist and title in title field
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+            if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
             msg.artist = artist;
             msg.title = title;
             return;
@@ -374,7 +387,7 @@ module.exports = function (RED) {
               artist = response.title.split(' - ')[0];
               title = response.title.split(' - ')[1];
             } else {
-              helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
               msg.artist = artist;
               msg.title = response.title;
               return;
@@ -431,6 +444,7 @@ module.exports = function (RED) {
   /** Get the sonos player current song and outputs.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
+            msg.suppressWarnings  will suppress warning if exist and true
   * @param  {Object} sonosPlayer sonos player object
   * @output msg:  artist, title, albumArtURL and song
   */
@@ -440,6 +454,18 @@ module.exports = function (RED) {
     let artist = 'unknown'; // as default
     let title = 'unknown'; // as default
     let albumArtURL = '';
+
+    let suppressWarnings = false; // default
+    if (typeof msg.suppressWarnings === 'undefined' || msg.suppressWarnings === null ||
+    (typeof msg.suppressWarnings === 'number' && isNaN(msg.suppressWarnings)) || msg.suppressWarnings === '') {
+      suppressWarnings = false;
+    } else {
+      if (typeof msg.suppressWarnings === 'boolean') {
+        suppressWarnings = msg.suppressWarnings;
+      } else {
+        throw new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean', sonosFunction);
+      }
+    }
 
     sonosPlayer.currentTrack()
       .then(response => {
@@ -463,7 +489,7 @@ module.exports = function (RED) {
           // missing artist: TuneIn provides artist and title in title field
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+            if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
             msg.artist = artist;
             msg.title = title;
             return;
@@ -473,7 +499,7 @@ module.exports = function (RED) {
               artist = response.title.split(' - ')[0];
               title = response.title.split(' - ')[1];
             } else {
-              helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
               msg.artist = artist;
               msg.title = response.title;
               return;
@@ -599,7 +625,7 @@ module.exports = function (RED) {
   * @output changes msg.payload to boolean true otherwise false
   */
   function testConnected (node, msg, sonosPlayer) {
-    const sonosFunction = 'test';
+    const sonosFunction = 'test connected';
     sonosPlayer.getCurrentState()
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
@@ -627,7 +653,7 @@ module.exports = function (RED) {
   * @output {Object} payload topology and group current group information
   */
   function getGroupsInfo (node, msg, sonosPlayer) {
-    const sonosFunction = 'get_groups';
+    const sonosFunction = 'get groups info';
 
     sonosPlayer.getAllGroups()
       .then(response => {
@@ -659,6 +685,35 @@ module.exports = function (RED) {
           msg.role = 'independent';
         }
         helper.nrcspSuccess(node, msg, sonosFunction);
+      })
+      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+  }
+  /** getEQinfo: get eqinfo eg NightMode, Speech Enhancement and SubGain
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer sonos player object
+  * @output {Object} payload with nightMode, SpeechEnhancement, subGain
+  */
+  function getEQInfo (node, msg, sonosPlayer) {
+    const sonosFunction = 'get eq info';
+    const playerWithTV = ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'];
+
+    sonosPlayer.deviceDescription()
+      .then(response => {
+        if (typeof response === 'undefined' || response === null ||
+            (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined device description received', sonosFunction);
+        }
+        if (typeof response.modelName === 'undefined' || response.modelName === null ||
+            (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
+          throw new Error('n-r-c-s-p: undefined model name received', sonosFunction);
+        }
+        if (!playerWithTV.includes(response.modelName)) {
+          throw new Error('n-r-c-s-p: your player does not support TV', sonosFunction);
+        }
+        msg.payload = response;
+        helper.nrcspSuccess(node, msg, sonosFunction);
+        return true;
       })
       .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
   }
