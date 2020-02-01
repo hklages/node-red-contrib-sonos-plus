@@ -51,6 +51,9 @@ RED.nodes.registerType('sonos-get-status', {
 	<dl class="message-properties">
 			<dt>payload <span class="property-type">string</span> </dt>
       <dd>A command. Valid commands see Details.</dd>
+
+      <dt>suppressWarnings <span class="property-type">boolean, optional</span> </dt>
+      <dd>if true suppresses the warning message for missing title or author in get_songmedia, get_songinfo</dd>
 	</dl>
 
 	<h3>Outputs</h3>

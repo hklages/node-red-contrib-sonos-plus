@@ -3,7 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [1.1.0] 2020-02-01
 ### Added
-- Node Get Status: Command get_groups to provide information about the topology, groups, members in groups
+- Node Get Status: New command get_groups to provide information about the topology, groups, members in groups
+- Node Get Status: New msg.suppressWarnings for get_songmedia, get_songinfo to suppress warnings
 
 ### Changed
 - Dependencies: updated

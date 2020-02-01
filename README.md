@@ -9,6 +9,7 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 ## NEWS
 Node Get Status: Added command get_groups to provide information about groups, members in groups
+Node Get Status: Added msg.suppressWarnings for get_songmedia, get_songinfo to suppress warnings
 
 
 ## Installation
