@@ -1,5 +1,7 @@
 const SonosHelper = require('./SonosHelper.js');
 const helper = new SonosHelper();
+const NodesonosHelpers = require('sonos/lib/helpers');
+const request = require('axios');
 
 module.exports = function (RED) {
   'use strict';
@@ -688,7 +690,7 @@ module.exports = function (RED) {
       })
       .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
   }
-  /** getEQinfo: get eqinfo eg NightMode, Speech Enhancement and SubGain
+  /** getEQinfo: get eqinfo eg NightMode, Speech Enhancement (DialogLevel) and SubGain
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer sonos player object
@@ -696,7 +698,30 @@ module.exports = function (RED) {
   */
   function getEQInfo (node, msg, sonosPlayer) {
     const sonosFunction = 'get eq info';
+
     const playerWithTV = ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'];
+    const EQTYPES = ['SubGain', 'SubCrossover', 'SubEnabled', 'DialogLevel', 'NightMode'];
+
+    const sonosHost = sonosPlayer.host;
+    const sonosPort = sonosPlayer.port;
+    const name = 'RenderingControl';
+    const controlURL = '/MediaRenderer/RenderingControl/Control';
+
+    const action = 'GetEQ';
+    const responseTag = `u:${action}Response`;
+
+    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
+
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+    const eqType = msg.topic;
+    if (!EQTYPES.includes(eqType)) {
+      throw new Error('n-r-c-s-p: invalid topic', sonosFunction);
+    }
+    const variables = { InstanceID: 0, EQType: eqType };
 
     sonosPlayer.deviceDescription()
       .then(response => {
@@ -711,9 +736,50 @@ module.exports = function (RED) {
         if (!playerWithTV.includes(response.modelName)) {
           throw new Error('n-r-c-s-p: your player does not support TV', sonosFunction);
         }
-        msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
         return true;
+      })
+      .then(() => {
+        node.debug('here to process ');
+
+        let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
+        if (variables) {
+          Object.keys(variables).forEach(key => {
+            messageBody += `<${key}>${variables[key]}</${key}>`;
+          });
+        }
+        messageBody += `</u:${action}>`;
+
+        return request({
+          baseURL: 'http://' + sonosHost + ':' + sonosPort,
+          url: controlURL,
+          method: 'post',
+          headers: {
+            SOAPAction: messageAction,
+            'Content-type': 'text/xml; charset=utf8'
+          },
+          data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
+        });
+      })
+      .then(response => {
+        return NodesonosHelpers.ParseXml(response.data);
+      })
+      .then(result => {
+        if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
+          throw new Error('Invalid response for ' + action + ': ' + result);
+        } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
+          // SOAP exception handling - does that ever happen?
+          console.log('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+          throw new Error('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+        } else if (typeof result['s:Envelope']['s:Body'][responseTag] !== 'undefined') {
+          const output = result['s:Envelope']['s:Body'][responseTag];
+          // Remove namespace from result
+          delete output['xmlns:u'];
+          msg.payload = output.CurrentValue;
+          helper.nrcspSuccess(node, msg, sonosFunction);
+        } else {
+          console.log('Error: Missing responase tag for ' + action + ': ' + result);
+          throw new Error('Missing responase tag for ' + action + ': ' + result);
+        }
       })
       .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
   }

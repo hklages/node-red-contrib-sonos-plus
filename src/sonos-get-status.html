@@ -54,6 +54,9 @@ RED.nodes.registerType('sonos-get-status', {
 
       <dt>suppressWarnings <span class="property-type">boolean, optional</span> </dt>
       <dd>if true suppresses the warning message for missing title or author in get_songmedia, get_songinfo</dd>
+
+      <dt>topic <span class="property-type">string</span> </dt>
+      <dd>Specifies the EQType in command get_eq. Currently NightMode, DialogLevel, SubEnabled and SubGain are supported.</dd>
 	</dl>
 
 	<h3>Outputs</h3>
@@ -118,7 +121,8 @@ RED.nodes.registerType('sonos-get-status', {
     <li><b>get_songmedia</b> Outputs song, media and position info</li>
     <li><b>get_songinfo</b> Outputs song info</li>
     <li><b>get_mediainfo</b> Outputs media info</li>
-    <li><b>get_positioninfo</b> Outputs position info</li
+    <li><b>get_positioninfo</b> Outputs position info</li>
+    <li><b>get_eq</b> Outputs EQType value. EQType has to be specified in msg.topic</li>
     <li><b>get_mysonos</b> Outputs an array of all My Sonos items</li>
     <br/>
     <li><b>test_connected</b> Outputs boolean true, if player is reachable</li>
