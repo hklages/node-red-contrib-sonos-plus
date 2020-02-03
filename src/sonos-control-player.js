@@ -1,5 +1,4 @@
-const SonosHelper = require('./SonosHelper.js');
-const NrcspHelpers = new SonosHelper();
+const NrcspHelpers = require('./Helper.js');
 
 module.exports = function (RED) {
   'use strict';

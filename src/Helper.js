@@ -1,6 +1,11 @@
 'use strict';
 
-module.exports = class SonosHelper {
+module.exports = {
+
+  // data to be used in other modules
+  PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
+  EQ_TYPES: ['SubGain', 'SubCrossover', 'SubEnabled', 'DialogLevel', 'NightMode'],
+
   // functions to be used in other modules
 
   /** Validate configNode.
@@ -8,7 +13,7 @@ module.exports = class SonosHelper {
   * @return {Boolean} true if: object not null, not undefined and either ipaddress with corect syntax  or serial exists
   * for ip: uses length >= 7 and regex, for serial number only length >= 20
   */
-  validateConfigNode (configNode) {
+  validateConfigNode: (configNode) => {
     if (typeof configNode === 'undefined' || configNode === null ||
       (typeof configNode === 'number' && isNaN(configNode)) || configNode === '') {
       return false;
@@ -29,7 +34,7 @@ module.exports = class SonosHelper {
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19);
       }
     }
-  }
+  },
 
   /** Starts async discovery of sonos player and returns ipAddress - used in callback.
   * @param  {Object} node current node
@@ -37,7 +42,7 @@ module.exports = class SonosHelper {
   * @param  {function} callback function with parameter err, ipAddress
   * provides ipAddress or null (not found) and calls callback handling that.
   */
-  discoverSonosPlayerBySerial (node, serialNumber, callback) {
+  discoverSonosPlayerBySerial: (node, serialNumber, callback) => {
     const sonos = require('sonos');
 
     node.debug('Start find Sonos player.');
@@ -95,7 +100,7 @@ module.exports = class SonosHelper {
       // error messages in calling function
       callback(null, null);
     });
-  }
+  },
 
   /** processing of msg with failure.
   * @param  {Object} node current node
@@ -104,7 +109,7 @@ module.exports = class SonosHelper {
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
   */
-  failure (node, msg, error, functionName) {
+  failure: (node, msg, error, functionName) => {
     let msgShort = 'unknown'; // default text
     let msgDetails = 'unknown'; // default text
     node.debug(`Entering error handling from ${functionName}`);
@@ -141,7 +146,7 @@ module.exports = class SonosHelper {
 
     node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg);
     node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}` });
-  }
+  },
 
   /** show warning status and warn message
   * @param  {Object} node current node
@@ -149,18 +154,19 @@ module.exports = class SonosHelper {
   * @param  {string} messageShort  short message for status
   * @param  {string} messageDetail  details
   */
-  warning (node, functionName, messageShort, messageDetail) {
+  warning: (node, functionName, messageShort, messageDetail) => {
     node.debug(`Entering warning handling from ${functionName}`);
     node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail);
     node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
-  }
+  },
 
   /** processing of msg was successful
   * @param  {Object} node current node
   * @param  {Object} msg current msg (maybe null)
   * @param  {string} functionName name of calling function
   */
-  success (node, msg, functionName) {
+
+  success: (node, msg, functionName) => {
     node.send(msg);
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
     node.debug(`ok:${functionName}`);

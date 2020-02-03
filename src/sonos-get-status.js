@@ -1,5 +1,4 @@
-const SonosHelper = require('./SonosHelper.js');
-const NrcspHelpers = new SonosHelper();
+const NrcspHelpers = require('./Helper.js');
 const NodesonosHelpers = require('sonos/lib/helpers');
 const request = require('axios');
 
@@ -700,9 +699,6 @@ module.exports = function (RED) {
   function getEQInfo (node, msg, sonosPlayer) {
     const sonosFunction = 'get eq info';
 
-    const PLAYER_WITH_TV = ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'];
-    const EQ_TYPES = ['SubGain', 'SubCrossover', 'SubEnabled', 'DialogLevel', 'NightMode'];
-
     // get valid eqType from msg.topic to define body
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
@@ -710,7 +706,7 @@ module.exports = function (RED) {
       return;
     }
     const eqType = msg.topic;
-    if (!EQ_TYPES.includes(eqType)) {
+    if (!NrcspHelpers.EQ_TYPES.includes(eqType)) {
       throw new Error('n-r-c-s-p: invalid topic', sonosFunction);
     }
 
@@ -739,7 +735,7 @@ module.exports = function (RED) {
             (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
           throw new Error('n-r-c-s-p: undefined model name received', sonosFunction);
         }
-        if (!PLAYER_WITH_TV.includes(response.modelName)) {
+        if (!NrcspHelpers.PLAYER_WITH_TV.includes(response.modelName)) {
           throw new Error('n-r-c-s-p: your player does not support TV', sonosFunction);
         }
         return true;
