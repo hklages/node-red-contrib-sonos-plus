@@ -1,5 +1,5 @@
 const SonosHelper = require('./SonosHelper.js');
-const helper = new SonosHelper();
+const NrcspHelpers = new SonosHelper();
 
 module.exports = function (RED) {
   'use strict';
@@ -14,8 +14,8 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!helper.validateConfigNode(configNode)) {
-      helper.nrcspFailure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!NrcspHelpers.validateConfigNode(configNode)) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
       return;
     }
 
@@ -33,16 +33,16 @@ module.exports = function (RED) {
         processInputMsg(node, msg, configNode.ipaddress);
       } else {
         // have to get ip address via disovery with serial numbers
-        helper.nrcspWarning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
+        NrcspHelpers.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
         if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
-          helper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
+          NrcspHelpers.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
-              helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
+              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
               return;
             }
             if (ipAddress === null) {
-              helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
+              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
@@ -50,7 +50,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
         }
       }
     });
@@ -70,14 +70,14 @@ module.exports = function (RED) {
     const sonosPlayer = new Sonos(ipaddress);
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined payload'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined payload'), sonosFunction);
       return;
     }
 
@@ -93,7 +93,7 @@ module.exports = function (RED) {
       insertPrimePlaylistUri(node, msg, sonosPlayer);
     } else if (command === 'insert_prime_playlist') {
       // TODO Remove in future
-      helper.nrcspWarning(node, sonosFunction, 'Command depreciated', 'Please use insert_prime_playlisturi');
+      NrcspHelpers.warning(node, sonosFunction, 'Command depreciated', 'Please use insert_prime_playlisturi');
     } else if (command === 'insert_spotify') {
       insertMySonosSpotify(node, msg, sonosPlayer, false);
     } else if (command === 'insert_spotify_playlist') {
@@ -127,7 +127,7 @@ module.exports = function (RED) {
     } else if (command === 'get_queuemode') {
       getQueuemode(node, msg, sonosPlayer);
     } else {
-      helper.nrcspWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
+      NrcspHelpers.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
   }
 
@@ -148,7 +148,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     const uri = msg.topic;
@@ -157,10 +157,10 @@ module.exports = function (RED) {
       .then(response => {
         // will response something like {"FirstTrackNumberEnqueued":"1","NumTracksAdded":"1","NewQueueLength":"1"}
         node.debug('response:' + JSON.stringify(response));
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Insert Spotify uri at end of SONOS queue. Can be used for single songs, album, playlists, .... Does NOT activate queue.
@@ -182,13 +182,13 @@ module.exports = function (RED) {
     // validate msg.topic as spotify uri
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     const uri = msg.topic;
     if (!(uri.startsWith('spotify:track:') || uri.startsWith('spotify:album:') ||
         uri.startsWith('spotify:artistTopTracks:') || uri.startsWith('spotify:user:spotify:playlist:'))) {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: topic must be track, album, artistTopTracks or playlist'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: topic must be track, album, artistTopTracks or playlist'), sonosFunction);
       return;
     }
 
@@ -204,7 +204,7 @@ module.exports = function (RED) {
       if ((msg.region).match(regex)) {
         sonosPlayer.setSpotifiyRegion(msg.region);
       } else {
-        helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction);
         return;
       }
     }
@@ -213,10 +213,10 @@ module.exports = function (RED) {
       .then(response => {
         // will response something like {"FirstTrackNumberEnqueued":"1","NumTracksAdded":"1","NewQueueLength":"1"}
         node.debug('response:' + JSON.stringify(response));
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs of specified Amazon Prime playlist (URI format) into SONOS queue.
@@ -233,11 +233,11 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
       return;
     }
     if (!msg.topic.startsWith('x-rincon-cpcontainer:')) {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid prime playlist'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid prime playlist'), sonosFunction);
       return;
     }
 
@@ -259,10 +259,10 @@ module.exports = function (RED) {
       .then(response => {
         // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
         node.debug('response:' + JSON.stringify(response));
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Insert all songs from matching My Sonos Spotify items (first match, topic string) into SONOS queue.
@@ -282,7 +282,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -296,7 +296,7 @@ module.exports = function (RED) {
       if ((msg.region).match(regex)) {
         sonosPlayer.setSpotifiyRegion(msg.region);
       } else {
-        helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction);
         return;
       }
     }
@@ -326,7 +326,7 @@ module.exports = function (RED) {
         for (let i = 0; i < parseInt(response.items.length); i++) {
           if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
             (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            helper.nrcspWarning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
+            NrcspHelpers.warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
           } else {
             playlistUri = response.items[i].uri;
             if (playlistUri.indexOf(SERVICE_IDENTIFIER) > 0) {
@@ -334,7 +334,7 @@ module.exports = function (RED) {
               playlistUri = response.items[i].uri;
               if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
                 (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-                helper.nrcspWarning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
+                NrcspHelpers.warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
                 itemTitle = 'unknown';
               } else {
                 itemTitle = response.items[i].title;
@@ -415,10 +415,10 @@ module.exports = function (RED) {
       .then((newUri) => { return sonosPlayer.queue(newUri); })
       .then((response) => {
         // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
   /**  Insert all songs from matching My Sonos Amazon Prime Playlist  (first match, topic string) into SONOS queue.
   * @param  {Object} node current node
@@ -433,7 +433,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -462,7 +462,7 @@ module.exports = function (RED) {
         for (let i = 0; i < parseInt(response.items.length); i++) {
           if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
             (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            helper.nrcspWarning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
+            NrcspHelpers.warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
           } else {
             playlistUri = response.items[i].uri;
             if (playlistUri.indexOf(SERVICE_IDENTIFIER) > 0) {
@@ -470,7 +470,7 @@ module.exports = function (RED) {
               playlistUri = response.items[i].uri;
               if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
                 (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-                helper.nrcspWarning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
+                NrcspHelpers.warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
                 itemTitle = 'unknown';
               } else {
                 itemTitle = response.items[i].title;
@@ -524,10 +524,10 @@ module.exports = function (RED) {
       .then((obj) => { return sonosPlayer.queue(obj); })
       .then((response) => {
         // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs from matching SONOS playlist (first match, topic string) into SONOS queue.
@@ -544,7 +544,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -559,11 +559,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -592,7 +592,7 @@ module.exports = function (RED) {
         }
         node.debug('length:' + playlistArray.length);
         if (playlistArray.length === listDimension) {
-          helper.nrcspWarning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
+          NrcspHelpers.warning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
         }
         return playlistArray;
       })
@@ -616,10 +616,10 @@ module.exports = function (RED) {
       })
       .then((uri) => { return sonosPlayer.queue(uri); })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs from matching Music Libary playlist (first match, topic string) into SONOS queue.
@@ -636,7 +636,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -651,11 +651,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not positve:' + msg.size), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not positve:' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -684,7 +684,7 @@ module.exports = function (RED) {
         }
         node.debug('length:' + playlistArray.length);
         if (playlistArray.length === listDimension) {
-          helper.nrcspWarning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
+          NrcspHelpers.warning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
         }
         return playlistArray;
       })
@@ -708,10 +708,10 @@ module.exports = function (RED) {
       })
       .then((uri) => { return sonosPlayer.queue(uri); })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Activate SONOS queue and start playing first song, optionally set volume
@@ -762,10 +762,10 @@ module.exports = function (RED) {
         }
       })
       .then(() => { // show success
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Play song with specified index (msg.topic) in SONOS queue. Activates also SONOS Queue.
@@ -827,10 +827,10 @@ module.exports = function (RED) {
       .then(() => { return sonosPlayer.selectTrack(validatedPosition); })
       .then((response) => {
         node.debug('result from select track: ' + JSON.stringify(response));
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Flushes queue - removes all songs from queue.
@@ -843,10 +843,10 @@ module.exports = function (RED) {
     const sonosFunction = 'flush queue';
     sonosPlayer.flush()
       .then(response => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Removes several (msg.numberOfSong) songs starting at pecified index (msg.topic) from SONOS queue.
@@ -932,10 +932,10 @@ module.exports = function (RED) {
       .then(() => { return sonosPlayer.removeTracksFromQueue(validatedPosition, validatedNumberofSongs); })
       .then(response => {
         node.debug('result: ' + JSON.stringify(response));
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
@@ -950,12 +950,12 @@ module.exports = function (RED) {
     // check topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     const playmodes = ['NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'];
     if (playmodes.indexOf(msg.topic) === -1) {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: this topic is not allowed ' + msg.topic), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: this topic is not allowed ' + msg.topic), sonosFunction);
       return;
     }
 
@@ -999,10 +999,10 @@ module.exports = function (RED) {
         }
       })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get the list of current songs in queue.
@@ -1045,9 +1045,9 @@ module.exports = function (RED) {
           });
         }
         msg.payload = songsArray;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of all My Sonos Spotify items and output.
@@ -1083,7 +1083,7 @@ module.exports = function (RED) {
         for (let i = 0; i < parseInt(response.items.length); i++) {
           if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
             (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            helper.nrcspWarning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
+            NrcspHelpers.warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
           } else {
             spotifyPlaylistUri = response.items[i].uri;
             if (spotifyPlaylistUri.indexOf(SPOTIFY_IDENTIFIER) > 0) {
@@ -1091,7 +1091,7 @@ module.exports = function (RED) {
               spotifyPlaylistUri = response.items[i].uri;
               if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
                 (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-                helper.nrcspWarning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
+                NrcspHelpers.warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
                 itemTitle = 'unknown';
               } else {
                 itemTitle = response.items[i].title;
@@ -1108,9 +1108,9 @@ module.exports = function (RED) {
       .then((response) => {
         // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of My Sonos Amazon Playlist (only standards).
@@ -1146,7 +1146,7 @@ module.exports = function (RED) {
         for (let i = 0; i < parseInt(response.items.length); i++) {
           if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
             (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            helper.nrcspWarning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
+            NrcspHelpers.warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored');
           } else {
             primePlaylistUri = response.items[i].uri;
             if (primePlaylistUri.indexOf(PRIME_IDENTIFIER) > 0) {
@@ -1154,7 +1154,7 @@ module.exports = function (RED) {
               primePlaylistUri = response.items[i].uri;
               if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
                 (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) || response.items[i].title === '') {
-                helper.nrcspWarning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
+                NrcspHelpers.warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored');
                 itemTitle = 'unknown';
               } else {
                 itemTitle = response.items[i].title;
@@ -1167,9 +1167,9 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: could not find any amazon prime playlist');
         }
         msg.payload = playlistArray;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of SONOS playlists. Dont mix up with My Sonos playlists.
@@ -1193,11 +1193,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -1226,7 +1226,7 @@ module.exports = function (RED) {
         }
         node.debug('length:' + playlistArray.length);
         if (playlistArray.length === listDimension) {
-          helper.nrcspWarning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
+          NrcspHelpers.warning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
         }
         playlistArray.forEach(function (songsArray) {
           if (typeof songsArray.albumArtURL === 'undefined' || songsArray.albumArtURL === null ||
@@ -1243,9 +1243,9 @@ module.exports = function (RED) {
       })
       .then((playlistArray) => {
         msg.payload = playlistArray;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of music library playlists (imported).
@@ -1270,11 +1270,11 @@ module.exports = function (RED) {
         if (listDimension > 0) {
           node.debug('msg.size will be used: ' + listDimension);
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction);
           return;
         }
       } else {
-        helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction);
         return;
       }
     }
@@ -1303,15 +1303,15 @@ module.exports = function (RED) {
         }
         node.debug('length:' + playlistArray.length);
         if (playlistArray.length === listDimension) {
-          helper.nrcspWarning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
+          NrcspHelpers.warning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size');
         }
         return playlistArray;
       })
       .then((playlistArray) => {
         msg.payload = playlistArray;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
@@ -1329,9 +1329,9 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: could not get queue mode from player');
         }
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch((error) => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-manage-queue', SonosManageQueueNode);

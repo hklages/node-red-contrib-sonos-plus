@@ -1,5 +1,5 @@
 const SonosHelper = require('./SonosHelper.js');
-const helper = new SonosHelper();
+const NrcspHelpers = new SonosHelper();
 const NodesonosHelpers = require('sonos/lib/helpers');
 const request = require('axios');
 
@@ -16,8 +16,8 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!helper.validateConfigNode(configNode)) {
-      helper.nrcspFailure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!NrcspHelpers.validateConfigNode(configNode)) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
       return;
     }
 
@@ -35,16 +35,16 @@ module.exports = function (RED) {
         processInputMsg(node, msg, configNode.ipaddress);
       } else {
         // have to get ip address via disovery with serial numbers
-        helper.nrcspWarning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
+        NrcspHelpers.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
         if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
-          helper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
+          NrcspHelpers.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
-              helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
+              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
               return;
             }
             if (ipAddress === null) {
-              helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
+              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
@@ -52,7 +52,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
         }
       }
     });
@@ -72,14 +72,14 @@ module.exports = function (RED) {
 
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
 
@@ -120,7 +120,7 @@ module.exports = function (RED) {
     } else if (command === 'lab_newfunction') {
       labNewFunction(node, msg, sonosPlayer);
     } else {
-      helper.nrcspWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
+      NrcspHelpers.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
   }
 
@@ -187,10 +187,10 @@ module.exports = function (RED) {
       })
       .then(() => {
         msg.state = state; msg.volume = volume; msg.volumeNormalized = normalizedVolume; msg.muted = muted; msg.name = sonosName; msg.group = sonosGroup;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player state and outputs.
@@ -210,10 +210,10 @@ module.exports = function (RED) {
         }
         node.debug('got valid player state');
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player volume and outputs.
@@ -236,10 +236,10 @@ module.exports = function (RED) {
         }
         node.debug('got valid player volume');
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player muted state and outputs.
@@ -259,10 +259,10 @@ module.exports = function (RED) {
         }
         node.debug('got valid mute state');
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player name and outputs.
@@ -281,10 +281,10 @@ module.exports = function (RED) {
         }
         node.debug('got valid player name');
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player LED light status and outputs to payload.
@@ -304,10 +304,10 @@ module.exports = function (RED) {
         // should be On or Off
         node.debug('got valid LED status');
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player properties and outputs to payload.
@@ -326,10 +326,10 @@ module.exports = function (RED) {
         }
         node.debug('got valid group attributes');
         msg.payload = response;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song, media and position and outputs.
@@ -379,7 +379,7 @@ module.exports = function (RED) {
           // missing artist: TuneIn provides artist and title in title field
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+            if (!suppressWarnings) NrcspHelpers.warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
             msg.artist = artist;
             msg.title = title;
             return;
@@ -389,7 +389,7 @@ module.exports = function (RED) {
               artist = response.title.split(' - ')[0];
               title = response.title.split(' - ')[1];
             } else {
-              if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              if (!suppressWarnings) NrcspHelpers.warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
               msg.artist = artist;
               msg.title = response.title;
               return;
@@ -437,10 +437,10 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song and outputs.
@@ -491,7 +491,7 @@ module.exports = function (RED) {
           // missing artist: TuneIn provides artist and title in title field
           if (typeof response.title === 'undefined' || response.title === null ||
               (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+            if (!suppressWarnings) NrcspHelpers.warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
             msg.artist = artist;
             msg.title = title;
             return;
@@ -501,7 +501,7 @@ module.exports = function (RED) {
               artist = response.title.split(' - ')[0];
               title = response.title.split(' - ')[1];
             } else {
-              if (!suppressWarnings) helper.nrcspWarning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              if (!suppressWarnings) NrcspHelpers.warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
               msg.artist = artist;
               msg.title = response.title;
               return;
@@ -524,10 +524,10 @@ module.exports = function (RED) {
         msg.title = title;
       })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the media info and outputs.
@@ -555,10 +555,10 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the position info and outputs.
@@ -580,10 +580,10 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => {
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of all My Sonos items.
@@ -614,10 +614,10 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: no my sonos items found');
         }
         msg.payload = list;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Test SONOS player: reachable true/false
@@ -636,7 +636,7 @@ module.exports = function (RED) {
         }
         node.debug('player reachable');
         msg.payload = true;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
 
         return true;
       })
@@ -686,45 +686,51 @@ module.exports = function (RED) {
         } else {
           msg.role = 'independent';
         }
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
-  /** getEQinfo: get eqinfo eg NightMode, Speech Enhancement (DialogLevel) and SubGain
+  /** getEQinfo: get different info for EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level) for player with TV
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
+  *                 msg.topic specifies EQtype
   * @param  {Object} sonosPlayer sonos player object
   * @output {Object} payload with nightMode, SpeechEnhancement, subGain
   */
   function getEQInfo (node, msg, sonosPlayer) {
     const sonosFunction = 'get eq info';
 
-    const playerWithTV = ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'];
-    const EQTYPES = ['SubGain', 'SubCrossover', 'SubEnabled', 'DialogLevel', 'NightMode'];
+    const PLAYER_WITH_TV = ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'];
+    const EQ_TYPES = ['SubGain', 'SubCrossover', 'SubEnabled', 'DialogLevel', 'NightMode'];
 
-    const sonosHost = sonosPlayer.host;
-    const sonosPort = sonosPlayer.port;
-    const name = 'RenderingControl';
-    const controlURL = '/MediaRenderer/RenderingControl/Control';
-
-    const action = 'GetEQ';
-    const responseTag = `u:${action}Response`;
-
-    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
-
+    // get valid eqType from msg.topic to define body
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     const eqType = msg.topic;
-    if (!EQTYPES.includes(eqType)) {
+    if (!EQ_TYPES.includes(eqType)) {
       throw new Error('n-r-c-s-p: invalid topic', sonosFunction);
     }
+
+    // prepare parameter for request
+    const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    const controlURL = '/MediaRenderer/RenderingControl/Control';
+    const name = 'RenderingControl';
+    const action = 'GetEQ';
+    const responseTag = `u:${action}Response`;
+    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
+
     const variables = { InstanceID: 0, EQType: eqType };
+    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
+    Object.keys(variables).forEach(key => {
+      messageBody += `<${key}>${variables[key]}</${key}>`;
+    });
+    messageBody += `</u:${action}>`;
 
     sonosPlayer.deviceDescription()
-      .then(response => {
+      .then(response => { // ensure that SONOS player has TV mode
         if (typeof response === 'undefined' || response === null ||
             (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined device description received', sonosFunction);
@@ -733,24 +739,14 @@ module.exports = function (RED) {
             (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
           throw new Error('n-r-c-s-p: undefined model name received', sonosFunction);
         }
-        if (!playerWithTV.includes(response.modelName)) {
+        if (!PLAYER_WITH_TV.includes(response.modelName)) {
           throw new Error('n-r-c-s-p: your player does not support TV', sonosFunction);
         }
         return true;
       })
-      .then(() => {
-        node.debug('here to process ');
-
-        let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
-        if (variables) {
-          Object.keys(variables).forEach(key => {
-            messageBody += `<${key}>${variables[key]}</${key}>`;
-          });
-        }
-        messageBody += `</u:${action}>`;
-
+      .then(() => { // send request to SONOS player
         return request({
-          baseURL: 'http://' + sonosHost + ':' + sonosPort,
+          baseURL: baseURL,
           url: controlURL,
           method: 'post',
           headers: {
@@ -760,11 +756,12 @@ module.exports = function (RED) {
           data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
         });
       })
-      .then(response => {
+      .then(response => { // parse SONOS player response
         return NodesonosHelpers.ParseXml(response.data);
       })
-      .then(result => {
+      .then(result => { // verify response, extract value and output
         if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
+          console.log('SOAP missing response');
           throw new Error('Invalid response for ' + action + ': ' + result);
         } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
           // SOAP exception handling - does that ever happen?
@@ -775,13 +772,13 @@ module.exports = function (RED) {
           // Remove namespace from result
           delete output['xmlns:u'];
           msg.payload = output.CurrentValue;
-          helper.nrcspSuccess(node, msg, sonosFunction);
-        } else {
-          console.log('Error: Missing responase tag for ' + action + ': ' + result);
-          throw new Error('Missing responase tag for ' + action + ': ' + result);
+          NrcspHelpers.success(node, msg, sonosFunction);
+        } else { // missing response tag
+          console.log('Error: Missing response tag for ' + action + ': ' + result);
+          throw new Error('Missing response tag for ' + action + ': ' + result);
         }
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** labNewFunction: sandbox to test new commands

@@ -104,7 +104,7 @@ module.exports = class SonosHelper {
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
   */
-  nrcspFailure (node, msg, error, functionName) {
+  failure (node, msg, error, functionName) {
     let msgShort = 'unknown'; // default text
     let msgDetails = 'unknown'; // default text
     node.debug(`Entering error handling from ${functionName}`);
@@ -149,7 +149,7 @@ module.exports = class SonosHelper {
   * @param  {string} messageShort  short message for status
   * @param  {string} messageDetail  details
   */
-  nrcspWarning (node, functionName, messageShort, messageDetail) {
+  warning (node, functionName, messageShort, messageDetail) {
     node.debug(`Entering warning handling from ${functionName}`);
     node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail);
     node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
@@ -160,7 +160,7 @@ module.exports = class SonosHelper {
   * @param  {Object} msg current msg (maybe null)
   * @param  {string} functionName name of calling function
   */
-  nrcspSuccess (node, msg, functionName) {
+  success (node, msg, functionName) {
     node.send(msg);
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
     node.debug(`ok:${functionName}`);

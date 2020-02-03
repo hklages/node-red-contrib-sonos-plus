@@ -1,5 +1,5 @@
 const SonosHelper = require('./SonosHelper.js');
-const helper = new SonosHelper();
+const NrcspHelpers = new SonosHelper();
 
 module.exports = function (RED) {
   'use strict';
@@ -14,8 +14,8 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!helper.validateConfigNode(configNode)) {
-      helper.nrcspFailure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!NrcspHelpers.validateConfigNode(configNode)) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
       return;
     }
 
@@ -33,16 +33,16 @@ module.exports = function (RED) {
         processInputMsg(node, msg, configNode.ipaddress);
       } else {
         // have to get ip address via disovery with serial numbers
-        helper.nrcspWarning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
+        NrcspHelpers.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
         if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
                 (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
-          helper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
+          NrcspHelpers.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
-              helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
+              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
               return;
             }
             if (ipAddress === null) {
-              helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
+              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
@@ -50,7 +50,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
         }
       }
     });
@@ -72,14 +72,14 @@ module.exports = function (RED) {
 
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
     if (typeof msg.payload === 'undefined' || msg.payload === null ||
       (typeof msg.payload === 'number' && isNaN(msg.payload)) || msg.payload === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
 
@@ -98,10 +98,10 @@ module.exports = function (RED) {
       getMySonosStations(node, msg, sonosPlayer);
     } else if (command === 'get_mysonosall') {
       // TODO please remove in releases 2020
-      helper.nrcspWarning(node, sonosFunction, 'command depreciated', 'please use similar command in get status node');
+      NrcspHelpers.warning(node, sonosFunction, 'command depreciated', 'please use similar command in get status node');
       getMySonosAll(node, msg, sonosPlayer);
     } else {
-      helper.nrcspWarning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
+      NrcspHelpers.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
   }
 
@@ -122,7 +122,7 @@ module.exports = function (RED) {
 
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
       return;
     }
 
@@ -154,13 +154,13 @@ module.exports = function (RED) {
           }
         })
         .then(() => {
-          helper.nrcspSuccess(node, msg, sonosFunction);
+          NrcspHelpers.success(node, msg, sonosFunction);
           return true;
         })
-        .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+        .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
     } else {
       node.debug('invalid TuneIn radio id: ' + JSON.stringify(msg.topic));
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: invalid TuneIn radio id: ' + JSON.stringify(msg.topic)), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid TuneIn radio id: ' + JSON.stringify(msg.topic)), sonosFunction);
     }
   }
 
@@ -178,12 +178,12 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
 
     if (!msg.topic.startsWith('http')) {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: topic should start with http', sonosFunction));
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: topic should start with http', sonosFunction));
       return;
     }
 
@@ -212,10 +212,10 @@ module.exports = function (RED) {
       })
       .then(() => {
         msg.payload = true;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Play a specific My Sonos station (must be TuneIn, AmazonPrime, MP3 station), start playing and optionally set volume.
@@ -232,7 +232,7 @@ module.exports = function (RED) {
     // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      helper.nrcspFailure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
@@ -293,7 +293,7 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: no TuneIn/Amazon/MP3Radio station in My Sonos');
         }
         if (ingnoredItems > 0) {
-          helper.nrcspWarning(node, sonosFunction, 'Some My Sonos items do not contain an uri', 'Count: ' + String(ingnoredItems));
+          NrcspHelpers.warning(node, sonosFunction, 'Some My Sonos items do not contain an uri', 'Count: ' + String(ingnoredItems));
         }
         node.debug('successfully extracted relevant station list');
         return stationArray;
@@ -338,10 +338,10 @@ module.exports = function (RED) {
       })
       .then(() => {
         msg.payload = stationTitleFinal;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of My Sonos radio station (only TuneIn, AmazonPrime, MP3 stations).
@@ -414,17 +414,17 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: no TuneIn/Amazon/MP3Radio station in My Sonos');
         }
         if (ingnoredItems > 0) {
-          helper.nrcspWarning(node, sonosFunction, 'Some My Sonos items do not contain an uri', 'Count: ' + String(ingnoredItems));
+          NrcspHelpers.warning(node, sonosFunction, 'Some My Sonos items do not contain an uri', 'Count: ' + String(ingnoredItems));
         }
         node.debug('successfully extracted relevant station list');
         return stationArray;
       })
       .then((stations) => {
         msg.payload = stations;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   // Please remove in 2020 - is now in Get Status
@@ -459,10 +459,10 @@ module.exports = function (RED) {
       })
       .then((list) => {
         msg.payload = list;
-        helper.nrcspSuccess(node, msg, sonosFunction);
+        NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => helper.nrcspFailure(node, msg, error, sonosFunction));
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
   RED.nodes.registerType('sonos-manage-radio', SonosManageRadioNode);
 };
