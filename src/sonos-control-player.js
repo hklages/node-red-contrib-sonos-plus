@@ -1,4 +1,6 @@
 const NrcspHelpers = require('./Helper.js');
+const NodesonosHelpers = require('sonos/lib/helpers');
+const request = require('axios');
 
 module.exports = function (RED) {
   'use strict';
@@ -101,6 +103,8 @@ module.exports = function (RED) {
       handleVolumeCommand(node, msg, sonosPlayer, commandWithParam);
     } else if (command === 'set_led') {
       handleSetLed(node, msg, sonosPlayer);
+    } else if (command === 'set_crossfade') {
+      handleSetCrossfade(node, msg, sonosPlayer);
       // TODO lab_ function - remove
     } else if (command === 'lab_test') {
       labTest(node, msg, sonosPlayer);
@@ -428,6 +432,86 @@ module.exports = function (RED) {
         msg.payload = true;
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
+      })
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  Set CrossfadeMode
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {String} msg.payload = OK in case of success
+  */
+  function handleSetCrossfade (node, msg, sonosPlayer) {
+    const sonosFunction = 'set crossfade';
+    // validate msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be On or Off'), sonosFunction);
+      return;
+    }
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
+      return;
+    }
+    const newValue = (msg.topic === 'On' ? 1 : 0);
+
+    // set parameter for request
+    const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    const controlURL = '/MediaRenderer/AVTransport/Control';
+    const name = 'AVTransport';
+    const action = 'SetCrossfadeMode';
+    const options = { InstanceID: 0, CrossfadeMode: newValue };
+
+    // define header
+    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
+
+    // create body
+    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
+    Object.keys(options).forEach(key => {
+      messageBody += `<${key}>${options[key]}</${key}>`;
+    });
+    messageBody += `</u:${action}>`;
+
+    // create tag to handel response from SONOS player
+    const responseTag = `u:${action}Response`;
+
+    node.debug('starting request now');
+    request({
+      baseURL: baseURL,
+      url: controlURL,
+      method: 'post',
+      headers: {
+        SOAPAction: messageAction,
+        'Content-type': 'text/xml; charset=utf8'
+      },
+      data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
+    })
+      .then(response => { // parse SONOS player response
+        node.debug('response received');
+        return NodesonosHelpers.ParseXml(response.data);
+      })
+      .then(result => { // verify response, extract value and output
+        node.debug('Parsed: ' + JSON.stringify(result));
+        if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
+          console.log('SOAP missing response');
+          throw new Error('Invalid response for ' + action + ': ' + result);
+        } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
+          // SOAP exception handling - does that ever happen?
+          console.log('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+          throw new Error('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+        } else if (typeof result['s:Envelope']['s:Body'][responseTag] !== 'undefined') {
+          const output = result['s:Envelope']['s:Body'][responseTag];
+          // Remove namespace from result
+          delete output['xmlns:u'];
+          // response does not include any confirmation
+          msg.payload = 'OK';
+          NrcspHelpers.success(node, msg, sonosFunction);
+          return true;
+        } else { // missing response tag
+          console.log('Error: Missing response tag for ' + action + ': ' + result);
+          throw new Error('Missing response tag for ' + action + ': ' + result);
+        }
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }

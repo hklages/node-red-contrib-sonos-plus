@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] 2020-02-07
+### Added
+-Node Get Status: Added get_crossfademode to get the mode (0: Off, 1: On)
+- Node Control Player: Added set_crossfademode (On/Off)
+
+### Changed
+- Helper Code revised
+
 ## [1.1.0] 2020-02-01
 ### Added
 - Node Get Status: New get_eq to get information about NightMode, DialogLevel, GainSub, ...

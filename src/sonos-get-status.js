@@ -114,6 +114,8 @@ module.exports = function (RED) {
       getGroupsInfo(node, msg, sonosPlayer);
     } else if (command === 'get_eq') {
       getEQInfo(node, msg, sonosPlayer);
+    } else if (command === 'get_crossfademode') {
+      getCrossfadeMode(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
     } else if (command === 'lab_newfunction') {
@@ -710,20 +712,26 @@ module.exports = function (RED) {
       throw new Error('n-r-c-s-p: invalid topic', sonosFunction);
     }
 
-    // prepare parameter for request
+    // set parameter for request
     const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const controlURL = '/MediaRenderer/RenderingControl/Control';
     const name = 'RenderingControl';
     const action = 'GetEQ';
-    const responseTag = `u:${action}Response`;
+    const options = { InstanceID: 0, EQType: eqType };
+    const propertyName = 'CurrentValue';
+
+    // define header
     const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
 
-    const variables = { InstanceID: 0, EQType: eqType };
+    // create body
     let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
-    Object.keys(variables).forEach(key => {
-      messageBody += `<${key}>${variables[key]}</${key}>`;
+    Object.keys(options).forEach(key => {
+      messageBody += `<${key}>${options[key]}</${key}>`;
     });
     messageBody += `</u:${action}>`;
+
+    // create tag to handle response from SONOS player
+    const responseTag = `u:${action}Response`;
 
     sonosPlayer.deviceDescription()
       .then(response => { // ensure that SONOS player has TV mode
@@ -767,7 +775,75 @@ module.exports = function (RED) {
           const output = result['s:Envelope']['s:Body'][responseTag];
           // Remove namespace from result
           delete output['xmlns:u'];
-          msg.payload = output.CurrentValue;
+          msg.payload = output[propertyName];
+          NrcspHelpers.success(node, msg, sonosFunction);
+        } else { // missing response tag
+          console.log('Error: Missing response tag for ' + action + ': ' + result);
+          throw new Error('Missing response tag for ' + action + ': ' + result);
+        }
+      })
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  Get current CrossfadeMode
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {String} 0 or 1
+  */
+  function getCrossfadeMode (node, msg, sonosPlayer) {
+    const sonosFunction = 'get crossfade';
+
+    // set parameter for request
+    const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    const controlURL = '/MediaRenderer/AVTransport/Control'; // SOAP endpoint
+    const name = 'AVTransport';
+    const action = 'GetCrossfadeMode';
+    const options = { InstanceID: 0 };
+    const propertyName = 'CrossfadeMode';
+
+    // define header
+    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
+
+    // create body
+    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
+    Object.keys(options).forEach(key => {
+      messageBody += `<${key}>${options[key]}</${key}>`;
+    });
+    messageBody += `</u:${action}>`;
+
+    // create tag to handle response from SONOS player
+    const responseTag = `u:${action}Response`;
+
+    node.debug('starting request now');
+    request({
+      baseURL: baseURL,
+      url: controlURL,
+      method: 'post',
+      headers: {
+        SOAPAction: messageAction,
+        'Content-type': 'text/xml; charset=utf8'
+      },
+      data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
+    })
+      .then(response => { // parse SONOS player response
+        node.debug('response received');
+        return NodesonosHelpers.ParseXml(response.data);
+      })
+      .then(result => { // verify response, extract value and output
+        node.debug('Parsed: ' + JSON.stringify(result));
+        if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
+          console.log('SOAP missing response');
+          throw new Error('Invalid response for ' + action + ': ' + result);
+        } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
+          // SOAP exception handling - does that ever happen?
+          console.log('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+          throw new Error('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+        } else if (typeof result['s:Envelope']['s:Body'][responseTag] !== 'undefined') {
+          const output = result['s:Envelope']['s:Body'][responseTag];
+          // Remove namespace from result
+          delete output['xmlns:u'];
+          msg.payload = output[propertyName];
           NrcspHelpers.success(node, msg, sonosFunction);
         } else { // missing response tag
           console.log('Error: Missing response tag for ' + action + ': ' + result);
