@@ -3,6 +3,7 @@
 module.exports = {
 
   // data to be used in other modules
+
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
   EQ_TYPES: ['SubGain', 'SubCrossover', 'SubEnabled', 'DialogLevel', 'NightMode'],
 
