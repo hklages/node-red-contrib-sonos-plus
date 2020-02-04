@@ -144,7 +144,7 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player state received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player state received');
         }
         state = response;
         return true;
@@ -153,7 +153,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player volume received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player volume received');
         }
         volume = response;
         normalizedVolume = response / 100.0;
@@ -163,7 +163,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player muted state received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player muted state received');
         }
         muted = response;
         return true;
@@ -172,7 +172,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player name received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player name received');
         }
         sonosName = response;
         return true;
@@ -181,7 +181,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined zone group attributes received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined zone group attributes received');
         }
         sonosGroup = response;
         return true;
@@ -207,7 +207,7 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player state received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player state received');
         }
         node.debug('got valid player state');
         msg.payload = response;
@@ -230,10 +230,10 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '' || isNaN(response)) {
-          throw new Error('n-r-c-s-p: undefined player volume received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player volume received');
         }
         if (!Number.isInteger(response)) {
-          throw new Error('n-r-c-s-p: invalid volume received', sonosFunction);
+          throw new Error('n-r-c-s-p: invalid volume received');
         }
         node.debug('got valid player volume');
         msg.payload = response;
@@ -256,7 +256,7 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined mute state received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined mute state received');
         }
         node.debug('got valid mute state');
         msg.payload = response;
@@ -278,7 +278,7 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player name received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player name received');
         }
         node.debug('got valid player name');
         msg.payload = response;
@@ -295,12 +295,12 @@ module.exports = function (RED) {
   * @output changes msg.payload in On or Off
   */
   function getPlayerLedStatus (node, msg, sonosPlayer) {
-    const sonosFunction = 'get player LED status';
+    const sonosFunction = 'get LED status';
     sonosPlayer.getLEDState()
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player properties received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player properties received');
         }
         // should be On or Off
         node.debug('got valid LED status');
@@ -323,7 +323,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player properties received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player properties received');
         }
         node.debug('got valid group attributes');
         msg.payload = response;
@@ -355,7 +355,8 @@ module.exports = function (RED) {
       if (typeof msg.suppressWarnings === 'boolean') {
         suppressWarnings = msg.suppressWarnings;
       } else {
-        throw new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean', sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction);
+        return;
       }
     }
     sonosPlayer.currentTrack()
@@ -363,7 +364,7 @@ module.exports = function (RED) {
         msg.song = response;
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined current song received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined current song received');
         }
         // modify albumArtURL property
         if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
@@ -417,11 +418,11 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined media info received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined media info received');
         }
         if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
           (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
-          throw new Error('n-r-c-s-p: undefined CurrentURI received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined CurrentURI received');
         }
         const uri = response.CurrentURI;
         msg.queueActivated = (uri.startsWith('x-rincon-queue'));
@@ -432,7 +433,7 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined position info received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined position info received');
         }
         msg.position = response;
         return true;
@@ -466,7 +467,8 @@ module.exports = function (RED) {
       if (typeof msg.suppressWarnings === 'boolean') {
         suppressWarnings = msg.suppressWarnings;
       } else {
-        throw new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean', sonosFunction);
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction);
+        return;
       }
     }
 
@@ -475,7 +477,7 @@ module.exports = function (RED) {
         msg.payload = response;
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined current song received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined current song received');
         }
         // modify albumArtURL property
         if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
@@ -544,11 +546,11 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined media info received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined media info received');
         }
         if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
           (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
-          throw new Error('n-r-c-s-p: undefined CurrentURI received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined CurrentURI received');
         }
         const uri = response.CurrentURI;
         msg.queueActivated = (uri.startsWith('x-rincon-queue'));
@@ -575,7 +577,7 @@ module.exports = function (RED) {
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined position info received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined position info received');
         }
         msg.payload = response;
         return true;
@@ -628,23 +630,34 @@ module.exports = function (RED) {
   * @output changes msg.payload to boolean true otherwise false
   */
   function testConnected (node, msg, sonosPlayer) {
-    const sonosFunction = 'test connected';
+    const sonosFunction = 'test is player reachable';
     sonosPlayer.getCurrentState()
       .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined player state received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined player state received');
         }
         node.debug('player reachable');
         msg.payload = true;
         NrcspHelpers.success(node, msg, sonosFunction);
-
         return true;
       })
       .catch(error => {
         node.debug('test command - error ignored' + JSON.stringify(error));
-        node.status({ fill: 'green', shape: 'dot', text: 'test command - error ingnored' });
+        let msgShort = 'no further information';
+        if (!(typeof error.code === 'undefined' || error.code === null ||
+          (typeof error.code === 'number' && isNaN(error.code)) || error.code === '')) {
+          if (error.code === 'ECONNREFUSED') {
+            msgShort = 'can not connect to player - refused';
+          } else if (error.code === 'EHOSTUNREACH') {
+            msgShort = 'can not connect to player- unreach';
+          } else if (error.code === 'ETIMEDOUT') {
+            msgShort = 'can not connect to player- time out';
+          }
+        }
+        node.status({ fill: 'green', shape: 'dot', text: 'test command - ' });
         msg.payload = false;
+        msg.info = msgShort;
         node.send(msg);
       });
   }
@@ -662,7 +675,7 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined all group information received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined all group information received');
         }
         node.debug('got valid all group info');
         msg.payload = response;
@@ -672,13 +685,13 @@ module.exports = function (RED) {
       .then(response => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined zone group attributes received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined zone group attributes received');
         }
         node.debug('got zone group attribures info');
         msg.sonosGroup = response;
         if (typeof response.CurrentZoneGroupName === 'undefined' || response.CurrentZoneGroupName === null ||
           (typeof response.CurrentZoneGroupName === 'number' && isNaN(response.CurrentZoneGroupName))) {
-          throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
         }
         if (response.CurrentZoneGroupName === '') {
           msg.role = 'client';
@@ -691,7 +704,7 @@ module.exports = function (RED) {
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
-  /** getEQinfo: get different info for EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level) for player with TV
+  /** getEQinfo: get EQ info (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   *                 msg.topic specifies EQtype
@@ -699,7 +712,7 @@ module.exports = function (RED) {
   * @output {Object} payload with nightMode, SpeechEnhancement, subGain
   */
   function getEQInfo (node, msg, sonosPlayer) {
-    const sonosFunction = 'get eq info';
+    const sonosFunction = 'get EQ info';
 
     // get valid eqType from msg.topic to define body
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
@@ -709,7 +722,8 @@ module.exports = function (RED) {
     }
     const eqType = msg.topic;
     if (!NrcspHelpers.EQ_TYPES.includes(eqType)) {
-      throw new Error('n-r-c-s-p: invalid topic', sonosFunction);
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid topic'), sonosFunction);
+      return;
     }
 
     // set parameter for request
@@ -737,14 +751,14 @@ module.exports = function (RED) {
       .then(response => { // ensure that SONOS player has TV mode
         if (typeof response === 'undefined' || response === null ||
             (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined device description received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined device description received');
         }
         if (typeof response.modelName === 'undefined' || response.modelName === null ||
             (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
-          throw new Error('n-r-c-s-p: undefined model name received', sonosFunction);
+          throw new Error('n-r-c-s-p: undefined model name received');
         }
         if (!NrcspHelpers.PLAYER_WITH_TV.includes(response.modelName)) {
-          throw new Error('n-r-c-s-p: your player does not support TV', sonosFunction);
+          throw new Error('n-r-c-s-p: your player does not support TV');
         }
         return true;
       })
@@ -860,7 +874,20 @@ module.exports = function (RED) {
   * @output
   */
   function labNewFunction (node, msg, sonosPlayer) {
-
+    const sonosFunction = 'get spotify info';
+    sonosPlayer.getSpotifyConnectInfo()
+      .then(response => {
+        if (typeof response === 'undefined' || response === null ||
+          (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined player properties received');
+        }
+        // should be On or Off
+        node.debug('got valid spotify infos');
+        msg.payload = response;
+        NrcspHelpers.success(node, msg, sonosFunction);
+        return true;
+      })
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

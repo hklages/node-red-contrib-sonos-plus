@@ -52,11 +52,11 @@ RED.nodes.registerType('sonos-get-status', {
 			<dt>payload <span class="property-type">string</span> </dt>
       <dd>A command. Valid commands see Details.</dd>
 
-      <dt>suppressWarnings <span class="property-type">boolean, optional</span> </dt>
-      <dd>if true suppresses the warning message for missing title or author in get_songmedia, get_songinfo</dd>
-
       <dt>topic <span class="property-type">string</span> </dt>
       <dd>Specifies the EQType in command get_eq. Currently NightMode, DialogLevel, SubEnabled and SubGain are supported.</dd>
+
+      <dt>suppressWarnings <span class="property-type">boolean, optional</span> </dt>
+      <dd>if true suppresses the warning message for missing title or author in get_songmedia, get_songinfo</dd>
 	</dl>
 
 	<h3>Outputs</h3>
@@ -107,6 +107,9 @@ RED.nodes.registerType('sonos-get-status', {
 
       <dt>position <span class="property-type">Object</span></dt>
       <dd> more info - for instance duration, radio station name </dd>
+
+      <dt>info <span class="property-type">String</span></dt>
+      <dd> provides more info for test_connected</dd>
 
   </dl>
 

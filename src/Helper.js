@@ -135,9 +135,15 @@ module.exports = {
         }
       }
     } else {
-      if (error.code === 'ECONNREFUSED' || error.code === 'EHOSTUNREACH') {
-        msgShort = 'can not connect to player';
-        msgDetails = 'Validate IP adress of player / power on';
+      if (error.code === 'ECONNREFUSED') {
+        msgShort = 'can not connect to player - refused';
+        msgDetails = 'Validate ip address of player';
+      } else if (error.code === 'EHOSTUNREACH') {
+        msgShort = 'can not connect to player- unreach';
+        msgDetails = 'Validate ip address of player / power on';
+      } else if (error.code === 'ETIMEDOUT') {
+        msgShort = 'can not connect to player- time out';
+        msgDetails = 'Validate IP address of player / power on';
       } else {
         // Caution: getOwn is neccessary for some error messages eg playmode!
         msgShort = 'sonos-node / exception';

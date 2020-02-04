@@ -3,11 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.0] 2020-02-07
 ### Added
--Node Get Status: Added get_crossfademode to get the mode (0: Off, 1: On)
+- Node Get Status: Added get_crossfademode to get the mode (0: Off, 1: On)
 - Node Control Player: Added set_crossfademode (On/Off)
 
 ### Changed
+- Node Get Status, test_connected provides now msg.info for additional infos in case of not reachable
 - Helper Code revised
+- Error handling revised
 
 ## [1.1.0] 2020-02-01
 ### Added

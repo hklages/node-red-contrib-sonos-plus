@@ -158,7 +158,6 @@ module.exports = function (RED) {
         })
         .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
     } else {
-      node.debug('invalid TuneIn radio id: ' + JSON.stringify(msg.topic));
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid TuneIn radio id: ' + JSON.stringify(msg.topic)), sonosFunction);
     }
   }
