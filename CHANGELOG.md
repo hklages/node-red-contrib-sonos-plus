@@ -1,13 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] 2020-02-07
+## [1.2.0] 2020-02-06
 ### Added
-- Node Get Status: Added get_crossfademode to get the mode (0: Off, 1: On)
+- Node Control Player: Added set_eq to set NightMode, DialogLevel, SubGain
+- Node Get Status: Added get_crossfademode (On/Off)
 - Node Control Player: Added set_crossfademode (On/Off)
 
 ### Changed
-- Node Get Status, test_connected provides now msg.info for additional infos in case of not reachable
+- Node Get Status, test_connected provides now msg.info for additional infos if not reachable
+- Node Control Player, set_led now does not change msg (before payload was set to true)
 - Helper Code revised
 - Error handling revised
 

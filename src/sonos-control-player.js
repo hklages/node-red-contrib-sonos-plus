@@ -105,6 +105,8 @@ module.exports = function (RED) {
       handleSetLed(node, msg, sonosPlayer);
     } else if (command === 'set_crossfade') {
       handleSetCrossfade(node, msg, sonosPlayer);
+    } else if (command === 'set_eq') {
+      handleSetEQ(node, msg, sonosPlayer);
       // TODO lab_ function - remove
     } else if (command === 'lab_test') {
       labTest(node, msg, sonosPlayer);
@@ -412,7 +414,7 @@ module.exports = function (RED) {
   * @param  {Object} msg incoming message
   *             topic: On | Off
   * @param  {Object} sonosPlayer Sonos Player
-  * @output none
+  * @output {Object} msg not changeed
   */
   function handleSetLed (node, msg, sonosPlayer) {
     const sonosFunction = 'set LED';
@@ -429,7 +431,7 @@ module.exports = function (RED) {
 
     sonosPlayer.setLEDState(msg.topic)
       .then(() => {
-        msg.payload = true;
+        // msg not changed
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
@@ -440,7 +442,7 @@ module.exports = function (RED) {
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
-  * @output {String} msg.payload = OK in case of success
+  * @output {String} msg.payload not changed
   */
   function handleSetCrossfade (node, msg, sonosPlayer) {
     const sonosFunction = 'set crossfade';
@@ -505,9 +507,135 @@ module.exports = function (RED) {
           // Remove namespace from result
           delete output['xmlns:u'];
           // response does not include any confirmation
-          msg.payload = 'OK';
           NrcspHelpers.success(node, msg, sonosFunction);
           return true;
+        } else { // missing response tag
+          console.log('Error: Missing response tag for ' + action + ': ' + result);
+          throw new Error('Missing response tag for ' + action + ': ' + result);
+        }
+      })
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
+  /** handleSetEQ: set EQ (for specified EQTypes eg NightMode, DialogLevel (aka Speech Enhancement) and SubGain (aka sub Level)) for player with TV
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  *                 msg.topic specifies EQtype
+                    msg.eqvalue specifies the new value (On/Off or level)
+  * @param  {Object} sonosPlayer sonos player object
+  * @output {Object} payload with nightMode, SpeechEnhancement, subGain
+  */
+  function handleSetEQ (node, msg, sonosPlayer) {
+    const sonosFunction = 'set EQ';
+
+    // validate eqType from msg.topic
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+    const eqType = msg.topic;
+    if (!NrcspHelpers.EQ_TYPES.includes(eqType)) {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + NrcspHelpers.EQ_TYPES.toString()), sonosFunction);
+      return;
+    }
+
+    // validate value from msg.value
+    if (typeof msg.eqvalue === 'undefined' || msg.eqvalue === null ||
+      (typeof msg.eqvalue === 'number' && isNaN(msg.eqvalue)) || msg.eqvalue === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined new value'), sonosFunction);
+      return;
+    }
+    let newValue = msg.eqvalue;
+    if (eqType === 'SubGain') {
+      // validate integer in range -15 to 15
+      if (Number.isInteger(newValue)) {
+        if (newValue < -15 || newValue > 15) {
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.eqvalue must be in range -15 to +15'), sonosFunction);
+          return;
+        }
+      } else {
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.eqvalue must be of type integer'), sonosFunction);
+        return;
+      }
+    } else if (eqType === 'NightMode' || eqType === 'DialogLevel') {
+      // validate: On/Off
+      if (newValue === 'On') {
+        newValue = 1;
+      } else if (newValue === 'Off') {
+        newValue = 0;
+      } else {
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: eqvalue must be On or Off'), sonosFunction);
+        return;
+      }
+    } else {
+      // not yet supported
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: EQType in msg.topic is not yet supported'), sonosFunction);
+      return;
+    }
+
+    // set parameter for request
+    const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    const controlURL = '/MediaRenderer/RenderingControl/Control';
+    const name = 'RenderingControl';
+    const action = 'SetEQ';
+    const options = { InstanceID: 0, EQType: eqType, DesiredValue: newValue };
+
+    // define header
+    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
+
+    // create body
+    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
+    Object.keys(options).forEach(key => {
+      messageBody += `<${key}>${options[key]}</${key}>`;
+    });
+    messageBody += `</u:${action}>`;
+
+    // create tag to handle response from SONOS player
+    const responseTag = `u:${action}Response`;
+
+    sonosPlayer.deviceDescription()
+      .then(response => { // ensure that SONOS player has TV mode
+        if (typeof response === 'undefined' || response === null ||
+            (typeof response === 'number' && isNaN(response)) || response === '') {
+          throw new Error('n-r-c-s-p: undefined device description received');
+        }
+        if (typeof response.modelName === 'undefined' || response.modelName === null ||
+            (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
+          throw new Error('n-r-c-s-p: undefined model name received');
+        }
+        if (!NrcspHelpers.PLAYER_WITH_TV.includes(response.modelName)) {
+          throw new Error('n-r-c-s-p: your player does not support TV');
+        }
+        return true;
+      })
+      .then(() => { // send request to SONOS player
+        return request({
+          baseURL: baseURL,
+          url: controlURL,
+          method: 'post',
+          headers: {
+            SOAPAction: messageAction,
+            'Content-type': 'text/xml; charset=utf8'
+          },
+          data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
+        });
+      })
+      .then(response => { // parse SONOS player response
+        return NodesonosHelpers.ParseXml(response.data);
+      })
+      .then(result => { // verify response, extract value and output
+        node.debug('reponse: ' + JSON.stringify(result));
+        if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
+          console.log('SOAP missing response');
+          throw new Error('Invalid response for ' + action + ': ' + result);
+        } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
+          // SOAP exception handling - does that ever happen?
+          console.log('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+          throw new Error('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
+        } else if (typeof result['s:Envelope']['s:Body'][responseTag] !== 'undefined') {
+          // msg not changed
+          NrcspHelpers.success(node, msg, sonosFunction);
         } else { // missing response tag
           console.log('Error: Missing response tag for ' + action + ': ' + result);
           throw new Error('Missing response tag for ' + action + ': ' + result);

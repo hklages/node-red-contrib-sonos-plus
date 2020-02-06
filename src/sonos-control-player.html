@@ -59,6 +59,9 @@ RED.nodes.registerType('sonos-control-player', {
       <dt>volume <span class="property-type">string</span> </dt>
       <dd>Volume beeing used together with <b>play, activate_avtransport, play_notification</b></dd>
 
+      <dt>eqvalue <span class="property-type">string (On|Off) or number</span> </dt>
+      <dd>Value to be set for specific EQType (NightMode, SubGain, ...) beeing used with <b>set_eq</b></dd>
+
   </dl>
 
   <h3>Outputs</h3>
@@ -83,7 +86,8 @@ RED.nodes.registerType('sonos-control-player', {
   <li><b>leave_group</b> Leave group</li>
   <li><b>join_group</b> Join group. Group name must be specified in <code>topic</code></li>
   <li><b>set_led</b> Sets the LED light - <code>topic</code> is On|Off</li>
-  <li><b>set_crossfademode</b> Sets the crossfademode - <code>topic</code> is On|Off</li>
+  <li><b>set_crossfademode</b> Sets the crossfademode - <code>topic</code> On|Off</li>. On only if current state supports this mode.
+  <li><b>set_eq</b> Sets the EQType - <code>topic</code> NightMode, DialogLevel, SubGain</li>. <code>eqvalue</code> either On|Off or integer -15 .. +15.
   <li><b>activate_avtransport</b> Activates a specific stream - e.g. line in. URI must be specified in <code>topic</code>. <code>volume</code> may contain the volume in the range from 1 to 99.</li>
   </ul>
 The commands <b>next_song/previous_song</b> don't work with TuneIn radio stations. Amazon Prime radion stations support <b>next_song</b> but not <b>previous_song</b>.

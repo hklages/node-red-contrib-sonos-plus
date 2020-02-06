@@ -29,7 +29,7 @@
     "url": "https://github.com/hklages/node-red-contrib-sonos-plus/issues"
   },
   "homepage": "https://github.com/hklages/node-red-contrib-sonos-plus",
-  "author": "Henning Klages",
+  "author": "hklages",
   "license": "MIT",
   "dependencies": {
     "sonos": "1.12.6"

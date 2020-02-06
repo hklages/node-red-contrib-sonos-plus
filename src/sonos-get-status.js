@@ -789,7 +789,11 @@ module.exports = function (RED) {
           const output = result['s:Envelope']['s:Body'][responseTag];
           // Remove namespace from result
           delete output['xmlns:u'];
-          msg.payload = output[propertyName];
+          if (eqType === 'SubGain') {
+            msg.payload = output[propertyName];
+          } else {
+            msg.payload = (output[propertyName] === '1' ? 'On' : 'Off');
+          }
           NrcspHelpers.success(node, msg, sonosFunction);
         } else { // missing response tag
           console.log('Error: Missing response tag for ' + action + ': ' + result);
@@ -857,7 +861,7 @@ module.exports = function (RED) {
           const output = result['s:Envelope']['s:Body'][responseTag];
           // Remove namespace from result
           delete output['xmlns:u'];
-          msg.payload = output[propertyName];
+          msg.payload = (output[propertyName] === '1' ? 'On' : 'Off');
           NrcspHelpers.success(node, msg, sonosFunction);
         } else { // missing response tag
           console.log('Error: Missing response tag for ' + action + ': ' + result);

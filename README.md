@@ -8,10 +8,16 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
-- Node Control Player: Added set_crossfademode (On/Off)
-- Node Get Status: Added get_crossfademode (0: Off, 1: On)
-- Node Get Status: Added get_eq to get information about NightMode, DialogLevel, GainSub, ...
+- Node Control Player: added set_eq to set NightMode, DialogLevel (Speech Enhancement), SubGain
+
+- Node Control Player: added set_crossfademode (On/Off)
+
+- Node Get Status: Added get_crossfademode (On/Off)
+
+- Node Get Status: Added get_eq to get information about NightMode, DialogLevel (aka Speech Enhancement), GainSub (aka SubLevel), ...
+
 - Node Get Status: Added command get_groups to provide information about groups, members in groups
+
 - Node Get Status: Added msg.suppressWarnings for get_songmedia, get_songinfo to suppress warnings
 
 ## Installation
@@ -28,6 +34,7 @@ Install directly from your NodeRED's setting pallete.
 - Playlists: Insert Amazon Prime playlist from My Sonos - using search string in playlist name
 - Playlists: Insert Music Library playlist or Sonos playlist - using search string in playlist name
 - Notification: Interrupt current song and play a notification
+- Special options: Set Crossface, NightLevel, SpeechEnhancement mode
 - Test: Test command to check whether SONOS player is reachable ( means on and really a SONOS player)
 - Information: Provides many kinds of current song information: artist, title, media information and radio station name
 
