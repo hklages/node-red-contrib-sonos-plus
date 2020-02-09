@@ -394,10 +394,17 @@ module.exports = function (RED) {
             }
             stationTitle = response.items[i].title;
             if (stationUri.startsWith(TUNEIN_PREFIX)) {
-            // get stationId
+            // get stationId and logo
               radioId = stationUri.split('?')[0];
               radioId = radioId.substr(TUNEIN_PREFIX.length);
-              stationArray.push({ title: stationTitle, radioId: radioId, uri: stationUri, source: 'TuneIn' });
+              let stationLogo;
+              if (typeof response.items[i].albumArtURI === 'undefined' || response.items[i].albumArtURI === null ||
+                (typeof response.items[i].albumArtURI === 'number' && isNaN(response.items[i].albumArtURI)) || response.items[i].albumArtURI === '') {
+                stationLogo = '';
+              } else {
+                stationLogo = response.items[i].albumArtURI;
+              }
+              stationArray.push({ title: stationTitle, radioId: radioId, uri: stationUri, logo: stationLogo, source: 'TuneIn' });
             }
             if (stationUri.startsWith(AMAZON_PREFIX)) {
               stationArray.push({ title: stationTitle, uri: stationUri, source: 'AmazonPrime' });
