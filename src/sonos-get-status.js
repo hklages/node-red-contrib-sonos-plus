@@ -429,6 +429,11 @@ module.exports = function (RED) {
         }
         const uri = response.CurrentURI;
         msg.queueActivated = (uri.startsWith('x-rincon-queue'));
+        if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
+          const end = uri.indexOf('?sid=254');
+          const start = 'x-sonosapi-stream:'.length;
+          msg.radioId = uri.substring(start, end);
+        }
         msg.media = response;
         return true;
       })
@@ -557,6 +562,11 @@ module.exports = function (RED) {
         }
         const uri = response.CurrentURI;
         msg.queueActivated = (uri.startsWith('x-rincon-queue'));
+        if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
+          const end = uri.indexOf('?sid=254');
+          const start = 'x-sonosapi-stream:'.length;
+          msg.radioId = uri.substring(start, end);
+        }
         msg.payload = response;
         return true;
       })

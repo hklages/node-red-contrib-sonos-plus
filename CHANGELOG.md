@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Node Get Status: Added get_sleeptimer
 
 ### Changed
+- Node Get Status: get_songmedia an get_mediainfo now outputs the TuneIn Radio Id
 - Error handling revised
 
 ## [1.2.0] 2020-02-06
