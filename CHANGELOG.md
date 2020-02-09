@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] 2020-02-13
+### Added
+- Node Control Player: Added set_sleeptimer
+- Node Get Status: Added get_sleeptimer
+
+### Changed
+- Error handling revised
+
 ## [1.2.0] 2020-02-06
 ### Added
 - Node Control Player: Added set_eq to set NightMode, DialogLevel, SubGain

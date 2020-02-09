@@ -6,6 +6,7 @@ module.exports = {
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
   EQ_TYPES: ['SubGain', 'DialogLevel', 'NightMode'],
+  REGEXSTRING_TIME: '([0-1][0-9]):([0-5][0-9]):([0-5][0-9])', // Only hh:mm:ss and hours from 0 to 19
 
   // functions to be used in other modules
 

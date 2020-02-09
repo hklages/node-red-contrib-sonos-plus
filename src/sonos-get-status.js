@@ -1,4 +1,5 @@
 const NrcspHelpers = require('./Helper.js');
+const NrcsSoap = require('./Soap.js');
 const NodesonosHelpers = require('sonos/lib/helpers');
 const request = require('axios');
 
@@ -116,6 +117,8 @@ module.exports = function (RED) {
       getEQInfo(node, msg, sonosPlayer);
     } else if (command === 'get_crossfademode') {
       getCrossfadeMode(node, msg, sonosPlayer);
+    } else if (command === 'get_sleeptimer') {
+      getRemainingSleepTimerDuration(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
     } else if (command === 'lab_newfunction') {
@@ -867,6 +870,45 @@ module.exports = function (RED) {
           console.log('Error: Missing response tag for ' + action + ': ' + result);
           throw new Error('Missing response tag for ' + action + ': ' + result);
         }
+      })
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  getRemainingSleepTimerDuration sets the sleep timer.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {Object} msg.payload sleep timer duration
+  */
+  function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
+    const sonosFunction = 'get remainig sleep timer';
+
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getRemainingSleepTimerDuration;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+
+    node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
+    NrcsSoap.sendToPlayer(actionParameter)
+      .then(response => { // parse body to XML
+        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+        }
+      })
+      .then(bodyXML => { // extract value, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        let result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (typeof result === 'string') { // Caution: this check does only work for primitive values (not objects)
+          result = (result === '' ? 'no time set' : result);
+          msg.payload = result;
+          NrcspHelpers.success(node, msg, sonosFunction);
+        } else {
+          throw new Error('n-r-c-s-p: could get value from player');
+        }
+        return true;
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }

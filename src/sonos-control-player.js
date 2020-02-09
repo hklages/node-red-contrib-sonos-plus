@@ -1,5 +1,8 @@
 const NrcspHelpers = require('./Helper.js');
+const NrcsSoap = require('./Soap.js');
+
 const NodesonosHelpers = require('sonos/lib/helpers');
+
 const request = require('axios');
 
 module.exports = function (RED) {
@@ -107,6 +110,8 @@ module.exports = function (RED) {
       handleSetCrossfade(node, msg, sonosPlayer);
     } else if (command === 'set_eq') {
       handleSetEQ(node, msg, sonosPlayer);
+    } else if (command === 'set_sleeptimer') {
+      configureSleepTimer(node, msg, sonosPlayer);
       // TODO lab_ function - remove
     } else if (command === 'lab_test') {
       labTest(node, msg, sonosPlayer);
@@ -644,24 +649,90 @@ module.exports = function (RED) {
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
+  /**  configureSleepTimer sets the sleep timer.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+            {String} msg.topic format hh:mm:ss hh < 20
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output: {Object} msg unmodified / stopped in case of error
+  */
+  function configureSleepTimer (node, msg, sonosPlayer) {
+    const sonosFunction = 'set/configure sleep timer';
+
+    // validate msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be in format hh:mm:ss, hh < 20'), sonosFunction);
+      return;
+    }
+    const newValue = msg.topic;
+    const regex = new RegExp(NrcspHelpers.REGEXSTRING_TIME);
+    if (!regex.test(newValue)) {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction);
+      return;
+    }
+
+    // get parameter for configureSleepTimer (set)
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.configureSleepTimer;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    actionParameter.options[actionParameter.optionsValueName] = newValue;
+
+    node.debug('starting request now, parameters are:  ' + JSON.stringify(actionParameter));
+    NrcsSoap.sendToPlayer(actionParameter)
+      .then(response => {
+        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+        }
+      })
+      .then(bodyXML => { // verify response, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (result === actionParameter.responseValue) {
+          NrcspHelpers.success(node, msg, sonosFunction);
+        } else {
+          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
+        }
+        return true;
+      })
+      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
   /**  LAB: Test new features, error messsages, ...
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
-    const sonosFunction = 'lab test';
-    // Check msg.topic.
+    const sonosFunction = 'set crossfade';
+    // validate msg.topic.
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be On or Off'), sonosFunction);
       return;
     }
-    const uri = String(msg.topic).trim();
-    node.debug('starting setAVTransportURI');
-    sonosPlayer.setAVTransportURI(uri)
-      .then(() => {
-        msg.payload = true;
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
+      return;
+    }
+    const newValue = (msg.topic === 'On' ? 1 : 0);
+
+    const parameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setCrossfademode;
+    parameter.baseUrl = `http://${sonosPlayer.host}`;
+    parameter.options.CrossfadeMode = newValue;
+    // create tag to handel response from SONOS player
+    // const responseTag = `u:${parameter.action}Response`;
+
+    node.debug('starting request now, parameter are:  ' + JSON.stringify(parameter));
+
+    NrcsSoap.sendToPlayer(parameter)
+      .then(response => { // verify response, extract value and output
+        node.debug('Parsed: ' + JSON.stringify(response));
+        // response does not include any confirmation
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })

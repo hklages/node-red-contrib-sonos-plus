@@ -8,17 +8,17 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
+- Node Control Player: added set_sleeptimer
+
+- Node Get Stats: added get_sleeptimer
+
 - Node Control Player: added set_eq to set NightMode, DialogLevel (Speech Enhancement), SubGain
 
 - Node Control Player: added set_crossfademode (On/Off)
 
-- Node Get Status: Added get_crossfademode (On/Off)
+- Node Get Status: added get_crossfademode (On/Off)
 
 - Node Get Status: Added get_eq to get information about NightMode, DialogLevel (aka Speech Enhancement), GainSub (aka SubLevel), ...
-
-- Node Get Status: Added command get_groups to provide information about groups, members in groups
-
-- Node Get Status: Added msg.suppressWarnings for get_songmedia, get_songinfo to suppress warnings
 
 ## Installation
 
@@ -50,6 +50,8 @@ For more information - also examples - see the [Wiki](https://github.com/hklages
 
 ## Credentials
 
-[node-sonos api team](https://github.com/bencevans/node-sonos)
+[node-sonos api team](https://github.com/bencevans/node-sonos) for the base API
 
-[node-red-better-sonos team](https://github.com/originallyus/node-red-contrib-better-sonos)
+[node-red-sonos team](https://github.com/shbert/node-red-contrib-sonos) shbert, jstrobel, Rolf-M: original package
+
+[node-red-better-sonos team](https://github.com/originallyus/node-red-contrib-better-sonos) for adding IP address search function
