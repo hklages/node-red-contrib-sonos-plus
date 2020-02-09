@@ -1,13 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.3.0] 2020-02-13
+## [1.3.0] 2020-02-09
 ### Added
 - Node Control Player: Added set_sleeptimer
 - Node Get Status: Added get_sleeptimer
 
 ### Changed
 - Node Get Status: get_songmedia an get_mediainfo now outputs the TuneIn Radio Id
+- Node Manage Radio: get_mysonos now outputs station logo
 - Error handling revised
 
 ## [1.2.0] 2020-02-06
