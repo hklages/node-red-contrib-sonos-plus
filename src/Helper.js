@@ -114,8 +114,8 @@ module.exports = {
   failure: (node, msg, error, functionName) => {
     let msgShort = 'unknown'; // default text
     let msgDetails = 'unknown'; // default text
-    node.debug(`Entering error handling from ${functionName}`);
-
+    node.debug(`Entering error handling from ${functionName}.`);
+    node.debug('Complete error message>' + JSON.stringify(error, Object.getOwnPropertyNames(error)));
     // validate .code and check for ECONNREFUSED
     if (typeof error.code === 'undefined' || error.code === null ||
       (typeof error.code === 'number' && isNaN(error.code)) || error.code === '') {
@@ -131,8 +131,8 @@ module.exports = {
           msgShort = error.message.replace('n-r-c-s-p: ', '');
         } else {
           // Caution: getOwn is neccessary for some error messages eg playmode!
-          msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
           msgShort = error.message;
+          msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
         }
       }
     } else {

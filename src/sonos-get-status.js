@@ -1,7 +1,5 @@
 const NrcspHelpers = require('./Helper.js');
 const NrcsSoap = require('./Soap.js');
-const NodesonosHelpers = require('sonos/lib/helpers');
-const request = require('axios');
 
 module.exports = function (RED) {
   'use strict';
@@ -114,7 +112,7 @@ module.exports = function (RED) {
     } else if (command === 'get_groups') {
       getGroupsInfo(node, msg, sonosPlayer);
     } else if (command === 'get_eq') {
-      getEQInfo(node, msg, sonosPlayer);
+      getEQ(node, msg, sonosPlayer);
     } else if (command === 'get_crossfademode') {
       getCrossfadeMode(node, msg, sonosPlayer);
     } else if (command === 'get_sleeptimer') {
@@ -153,7 +151,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { return sonosPlayer.getVolume(); })
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined player volume received');
@@ -163,7 +161,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { return sonosPlayer.getMuted(); })
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined player muted state received');
@@ -172,7 +170,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { return sonosPlayer.getName(); })
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined player name received');
@@ -181,7 +179,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined zone group attributes received');
@@ -194,7 +192,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player state and outputs.
@@ -217,7 +215,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player volume and outputs.
@@ -230,7 +228,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get player volume';
 
     sonosPlayer.getVolume()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '' || isNaN(response)) {
           throw new Error('n-r-c-s-p: undefined player volume received');
@@ -243,7 +241,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player muted state and outputs.
@@ -717,15 +715,19 @@ module.exports = function (RED) {
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
-  /** getEQinfo: get EQ info (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV
+
+  /** Get EQ information (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV-
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   *                 msg.topic specifies EQtype
   * @param  {Object} sonosPlayer sonos player object
   * @output {Object} payload with nightMode, SpeechEnhancement, subGain
   */
-  function getEQInfo (node, msg, sonosPlayer) {
-    const sonosFunction = 'get EQ info';
+  function getEQ (node, msg, sonosPlayer) {
+    const sonosFunction = 'get EQ';
+
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getEQ;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // get valid eqType from msg.topic to define body
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
@@ -734,31 +736,12 @@ module.exports = function (RED) {
       return;
     }
     const eqType = msg.topic;
-    if (!NrcspHelpers.EQ_TYPES.includes(eqType)) {
+    if (!actionParameter.eqTypeValues.includes(eqType)) {
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid topic'), sonosFunction);
       return;
     }
-
-    // set parameter for request
-    const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const controlURL = '/MediaRenderer/RenderingControl/Control';
-    const name = 'RenderingControl';
-    const action = 'GetEQ';
-    const options = { InstanceID: 0, EQType: eqType };
-    const propertyName = 'CurrentValue';
-
-    // define header
-    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
-
-    // create body
-    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
-    Object.keys(options).forEach(key => {
-      messageBody += `<${key}>${options[key]}</${key}>`;
-    });
-    messageBody += `</u:${action}>`;
-
-    // create tag to handle response from SONOS player
-    const responseTag = `u:${action}Response`;
+    node.debug(JSON.stringify(actionParameter));
+    actionParameter.options.EQType = eqType;
 
     sonosPlayer.deviceDescription()
       .then(response => { // ensure that SONOS player has TV mode
@@ -776,42 +759,35 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // send request to SONOS player
-        return request({
-          baseURL: baseURL,
-          url: controlURL,
-          method: 'post',
-          headers: {
-            SOAPAction: messageAction,
-            'Content-type': 'text/xml; charset=utf8'
-          },
-          data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
-        });
+        node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
+        return NrcsSoap.sendToPlayer(actionParameter);
       })
-      .then(response => { // parse SONOS player response
-        return NodesonosHelpers.ParseXml(response.data);
-      })
-      .then(result => { // verify response, extract value and output
-        if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
-          console.log('SOAP missing response');
-          throw new Error('Invalid response for ' + action + ': ' + result);
-        } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
-          // SOAP exception handling - does that ever happen?
-          console.log('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
-          throw new Error('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
-        } else if (typeof result['s:Envelope']['s:Body'][responseTag] !== 'undefined') {
-          const output = result['s:Envelope']['s:Body'][responseTag];
-          // Remove namespace from result
-          delete output['xmlns:u'];
-          if (eqType === 'SubGain') {
-            msg.payload = output[propertyName];
-          } else {
-            msg.payload = (output[propertyName] === '1' ? 'On' : 'Off');
-          }
-          NrcspHelpers.success(node, msg, sonosFunction);
-        } else { // missing response tag
-          console.log('Error: Missing response tag for ' + action + ': ' + result);
-          throw new Error('Missing response tag for ' + action + ': ' + result);
+      .then(response => { // parse body to XML
+        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
+      })
+      .then(bodyXML => { // extract value, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        node.debug(JSON.stringify(bodyXML));
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
+          throw new Error('n-r-c-s-p: could not get value from player');
+        }
+        return result;
+      })
+      .then((result) => {
+        if (eqType === 'SubGain') {
+          msg.payload = result;
+        } else {
+          msg.payload = (result === '1' ? 'On' : 'Off');
+        }
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
@@ -820,71 +796,42 @@ module.exports = function (RED) {
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
-  * @output {String} 0 or 1
+  * @output {String} msg.payload On Off
   */
   function getCrossfadeMode (node, msg, sonosPlayer) {
-    const sonosFunction = 'get crossfade';
+    const sonosFunction = 'get crossfade mode';
 
-    // set parameter for request
-    const baseURL = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const controlURL = '/MediaRenderer/AVTransport/Control'; // SOAP endpoint
-    const name = 'AVTransport';
-    const action = 'GetCrossfadeMode';
-    const options = { InstanceID: 0 };
-    const propertyName = 'CrossfadeMode';
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getCrossfadeMode;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
-    // define header
-    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
-
-    // create body
-    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
-    Object.keys(options).forEach(key => {
-      messageBody += `<${key}>${options[key]}</${key}>`;
-    });
-    messageBody += `</u:${action}>`;
-
-    // create tag to handle response from SONOS player
-    const responseTag = `u:${action}Response`;
-
-    node.debug('starting request now');
-    request({
-      baseURL: baseURL,
-      url: controlURL,
-      method: 'post',
-      headers: {
-        SOAPAction: messageAction,
-        'Content-type': 'text/xml; charset=utf8'
-      },
-      data: NodesonosHelpers.CreateSoapEnvelop(messageBody)
-    })
-      .then(response => { // parse SONOS player response
-        node.debug('response received');
-        return NodesonosHelpers.ParseXml(response.data);
-      })
-      .then(result => { // verify response, extract value and output
-        node.debug('Parsed: ' + JSON.stringify(result));
-        if (!result || !result['s:Envelope'] || !result['s:Envelope']['s:Body']) {
-          console.log('SOAP missing response');
-          throw new Error('Invalid response for ' + action + ': ' + result);
-        } else if (typeof result['s:Envelope']['s:Body']['s:Fault'] !== 'undefined') {
-          // SOAP exception handling - does that ever happen?
-          console.log('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
-          throw new Error('SOAP s:Fault: ' + result['s:Envelope']['s:Body']['s:Fault']);
-        } else if (typeof result['s:Envelope']['s:Body'][responseTag] !== 'undefined') {
-          const output = result['s:Envelope']['s:Body'][responseTag];
-          // Remove namespace from result
-          delete output['xmlns:u'];
-          msg.payload = (output[propertyName] === '1' ? 'On' : 'Off');
-          NrcspHelpers.success(node, msg, sonosFunction);
-        } else { // missing response tag
-          console.log('Error: Missing response tag for ' + action + ': ' + result);
-          throw new Error('Missing response tag for ' + action + ': ' + result);
+    node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
+    NrcsSoap.sendToPlayer(actionParameter)
+      .then(response => { // parse body to XML
+        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
+      })
+      .then(bodyXML => { // extract value, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
+          throw new Error('n-r-c-s-p: could not get value from player');
+        }
+        return result;
+      })
+      .then((result) => {
+        msg.payload = (result === '1' ? 'On' : 'Off');
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
-  /**  getRemainingSleepTimerDuration sets the sleep timer.
+  /**  Get remaining sleep timer duration sets the sleep timer.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
@@ -908,17 +855,17 @@ module.exports = function (RED) {
       .then(bodyXML => { // extract value, now in JSON format
         // safely access property,  Oliver Steele's pattern
         const paths = actionParameter.responsePath;
-        let result = paths.reduce((object, path) => {
+        const result = paths.reduce((object, path) => {
           return (object || {})[path];
         }, bodyXML);
-        if (typeof result === 'string') { // Caution: this check does only work for primitive values (not objects)
-          result = (result === '' ? 'no time set' : result);
-          msg.payload = result;
-          NrcspHelpers.success(node, msg, sonosFunction);
-        } else {
-          throw new Error('n-r-c-s-p: could get value from player');
+        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
+          throw new Error('n-r-c-s-p: could not get value from player');
         }
-        return true;
+        return result;
+      })
+      .then((result) => {
+        msg.payload = (result === '' ? 'no time set' : result);
+        NrcspHelpers.success(node, msg, sonosFunction);
       })
       .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
