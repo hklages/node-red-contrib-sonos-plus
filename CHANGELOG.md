@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] 2020-02-0x
+### Added
+- Manage Queue: seek command
+
+### Changed
+- JSON file for all SOAP action definitions (Knowledge Capture in re usable JSON format)
+- Error handling revised (for all direct SOAP calls)
+
 ## [1.3.0] 2020-02-09
 ### Added
 - Node Control Player: Added set_sleeptimer

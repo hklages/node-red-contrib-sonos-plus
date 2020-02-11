@@ -156,7 +156,7 @@ module.exports = function (RED) {
           NrcspHelpers.success(node, msg, sonosFunction);
           return true;
         })
-        .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+        .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
     } else {
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid TuneIn radio id: ' + JSON.stringify(msg.topic)), sonosFunction);
     }
@@ -213,7 +213,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Play a specific My Sonos station (must be TuneIn, AmazonPrime, MP3 station), start playing and optionally set volume.
@@ -339,7 +339,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of My Sonos radio station (only TuneIn, AmazonPrime, MP3 stations).
@@ -429,7 +429,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   // Please remove in 2020 - is now in Get Status
@@ -467,7 +467,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
   RED.nodes.registerType('sonos-manage-radio', SonosManageRadioNode);
 };

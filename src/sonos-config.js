@@ -37,14 +37,14 @@ module.exports = function (RED) {
     // listener  'DeviceAvailable'
     discovery.on('DeviceAvailable', (sonosPlayer) => {
       sonosPlayer.deviceDescription()
-        .then(data => {
+        .then((data) => {
           playerList.push({
             label: data.friendlyName + '::' + data.roomName,
             value: data.serialNum
           });
           node.debug('OK Found SONOS player ' + data.serialNum);
         })
-        .catch(err => {
+        .catch((err) => {
           node.error('DeviceDiscovery description error:: Details: ' + JSON.stringify(err));
         });
     });

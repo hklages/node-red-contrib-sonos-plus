@@ -7,74 +7,7 @@ module.exports = {
 
   // SOAP related data
 
-  SOAP_ACTION_TEMPLATE: { // provides all relevant SOAP information for given action
-
-    setEQ: {
-      path: '/MediaRenderer/RenderingControl/Control',
-      name: 'RenderingControl',
-      action: 'SetEQ',
-      optionsValueName: '', // not used because 2 TODO use as array or forget
-      dataType: 'string / string / integer', // not used
-      options: { InstanceID: 0, EQType: 'DialogLevel', DesiredValue: '1' },
-      eqTypeValues: ['DialogLevel', 'NightMode', 'SubGain'],
-      responsePath: ['s:Envelope', 's:Body', 'u:SetEQResponse', 'xmlns:u'],
-      responseValue: 'urn:schemas-upnp-org:service:RenderingControl:1',
-      info: 'Set EQType and DesiredValue have to be defined. DesiredValue depend on EQType'
-    },
-
-    getEQ: {
-      path: '/MediaRenderer/RenderingControl/Control',
-      name: 'RenderingControl',
-      action: 'GetEQ',
-      options: { InstanceID: 0, EQType: 'DialogLevel' },
-      eqTypeValues: ['DialogLevel', 'NightMode', 'SubGain'],
-      responsePath: ['s:Envelope', 's:Body', 'u:GetEQResponse', 'CurrentValue'],
-      info: 'EQType have to be defined. Current value 0|1 or -15 to 15 for SubGain'
-    },
-
-    setCrossfadeMode: {
-      path: '/MediaRenderer/AVTransport/Control',
-      name: 'AVTransport',
-      action: 'SetCrossfadeMode',
-      optionsValueName: 'CrossfadeMode',
-      dataType: 'string', // not used
-      options: { InstanceID: 0, CrossfadeMode: '1' },
-      responsePath: ['s:Envelope', 's:Body', 'u:SetCrossfadeModeResponse', 'xmlns:u'],
-      responseValue: 'urn:schemas-upnp-org:service:AVTransport:1',
-      info: 'Set CrossfadeMode 0 or 1'
-    },
-
-    getCrossfadeMode: {
-      path: '/MediaRenderer/AVTransport/Control',
-      name: 'AVTransport',
-      action: 'GetCrossfadeMode',
-      options: { InstanceID: 0 },
-      responsePath: ['s:Envelope', 's:Body', 'u:GetCrossfadeModeResponse', 'CrossfadeMode'],
-      info: 'will return 0 or 1 and might be converted to On Off'
-    },
-
-    configureSleepTimer: {
-      path: '/MediaRenderer/AVTransport/Control',
-      name: 'AVTransport',
-      action: 'ConfigureSleepTimer',
-      optionsValueName: 'NewSleepTimerDuration',
-      dataType: 'string', // not used
-      options: { InstanceID: 0, NewSleepTimerDuration: '00:05:00' },
-      responsePath: ['s:Envelope', 's:Body', 'u:ConfigureSleepTimerResponse', 'xmlns:u'],
-      responseValue: 'urn:schemas-upnp-org:service:AVTransport:1',
-      info: 'Duration in format hh:mm:ss'
-    },
-
-    getRemainingSleepTimerDuration: {
-      path: '/MediaRenderer/AVTransport/Control',
-      name: 'AVTransport',
-      action: 'GetRemainingSleepTimerDuration',
-      options: { InstanceID: 0 },
-      responsePath: ['s:Envelope', 's:Body', 'u:GetRemainingSleepTimerDurationResponse', 'RemainingSleepTimerDuration'],
-      dataType: 'string',
-      info: 'returns duration in format hh:mm:ss - if empty string means no timer'
-    }
-  },
+  SOAP_ACTION_TEMPLATE: require('./soap.json'),
 
   SOAP_ERROR_CODES: [ // from https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtag/b7a8430b-d621-40e7-a591-dbfb60244e3f
     { code: 401, message: 'Invalid Action' },
@@ -193,11 +126,11 @@ module.exports = {
         // In case of an SOAP error error.reponse helds the details.
         // That goes usually together with status code 500 - triggering catch
         // Experience: When using reject(error) the error.reponse get lost.
-        // Thats why error.response is checked and handled.
+        // Thats why error.response is checked and handled here!
         let myError;
         if (error.response) { // Indicator for SOAP Error
           if (error.message.startsWith('Request failed with status code 500')) {
-            const errorCode = (function (data) {
+            const errorCode = ((data) => {
               // TODO check '' and xml parser to get value
               const start = data.indexOf('<errorCode>');
               if (start > 0) {

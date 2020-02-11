@@ -264,7 +264,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player name and outputs.
@@ -286,7 +286,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player LED light status and outputs to payload.
@@ -298,7 +298,7 @@ module.exports = function (RED) {
   function getPlayerLedStatus (node, msg, sonosPlayer) {
     const sonosFunction = 'get LED status';
     sonosPlayer.getLEDState()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined player properties received');
@@ -309,7 +309,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player properties and outputs to payload.
@@ -321,7 +321,7 @@ module.exports = function (RED) {
   function getPlayerProperties (node, msg, sonosPlayer) {
     const sonosFunction = 'get player properties';
     sonosPlayer.deviceDescription()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined player properties received');
@@ -331,7 +331,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song, media and position and outputs.
@@ -361,7 +361,7 @@ module.exports = function (RED) {
       }
     }
     sonosPlayer.currentTrack()
-      .then(response => {
+      .then((response) => {
         msg.song = response;
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -448,7 +448,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song and outputs.
@@ -479,7 +479,7 @@ module.exports = function (RED) {
     }
 
     sonosPlayer.currentTrack()
-      .then(response => {
+      .then((response) => {
         msg.payload = response;
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -536,7 +536,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the media info and outputs.
@@ -572,7 +572,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get the position info and outputs.
@@ -597,7 +597,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of all My Sonos items.
@@ -631,7 +631,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Test SONOS player: reachable true/false
@@ -653,7 +653,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => {
+      .catch((error) => {
         node.debug('test command - error ignored' + JSON.stringify(error));
         let msgShort = 'no further information';
         if (!(typeof error.code === 'undefined' || error.code === null ||
@@ -683,7 +683,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get groups info';
 
     sonosPlayer.getAllGroups()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined all group information received');
@@ -693,7 +693,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined zone group attributes received');
@@ -713,7 +713,7 @@ module.exports = function (RED) {
         }
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Get EQ information (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV-
@@ -744,7 +744,7 @@ module.exports = function (RED) {
     actionParameter.options.EQType = eqType;
 
     sonosPlayer.deviceDescription()
-      .then(response => { // ensure that SONOS player has TV mode
+      .then((response) => { // ensure that SONOS player has TV mode
         if (typeof response === 'undefined' || response === null ||
             (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined device description received');
@@ -762,14 +762,14 @@ module.exports = function (RED) {
         node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
         return NrcsSoap.sendToPlayer(actionParameter);
       })
-      .then(response => { // parse body to XML
+      .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
       })
-      .then(bodyXML => { // extract value, now in JSON format
+      .then((bodyXML) => { // extract value, now in JSON format
         // safely access property,  Oliver Steele's pattern
         node.debug(JSON.stringify(bodyXML));
         const paths = actionParameter.responsePath;
@@ -789,7 +789,7 @@ module.exports = function (RED) {
         }
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get current CrossfadeMode
@@ -806,14 +806,14 @@ module.exports = function (RED) {
 
     node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
     NrcsSoap.sendToPlayer(actionParameter)
-      .then(response => { // parse body to XML
+      .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
       })
-      .then(bodyXML => { // extract value, now in JSON format
+      .then((bodyXML) => { // extract value, now in JSON format
         // safely access property,  Oliver Steele's pattern
         const paths = actionParameter.responsePath;
         const result = paths.reduce((object, path) => {
@@ -828,7 +828,7 @@ module.exports = function (RED) {
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get remaining sleep timer duration sets the sleep timer.
@@ -845,14 +845,14 @@ module.exports = function (RED) {
 
     node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
     NrcsSoap.sendToPlayer(actionParameter)
-      .then(response => { // parse body to XML
+      .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
       })
-      .then(bodyXML => { // extract value, now in JSON format
+      .then((bodyXML) => { // extract value, now in JSON format
         // safely access property,  Oliver Steele's pattern
         const paths = actionParameter.responsePath;
         const result = paths.reduce((object, path) => {
@@ -867,7 +867,7 @@ module.exports = function (RED) {
         msg.payload = (result === '' ? 'no time set' : result);
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** labNewFunction: sandbox to test new commands
@@ -879,7 +879,7 @@ module.exports = function (RED) {
   function labNewFunction (node, msg, sonosPlayer) {
     const sonosFunction = 'get spotify info';
     sonosPlayer.getSpotifyConnectInfo()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined player properties received');
@@ -890,7 +890,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

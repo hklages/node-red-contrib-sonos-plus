@@ -1,4 +1,5 @@
 const NrcspHelpers = require('./Helper.js');
+const NrcsSoap = require('./Soap.js');
 
 module.exports = function (RED) {
   'use strict';
@@ -113,6 +114,8 @@ module.exports = function (RED) {
       removeSongFromQueue(node, msg, sonosPlayer);
     } else if (command === 'set_queuemode') {
       setQueuemode(node, msg, sonosPlayer);
+    } else if (command === 'seek') {
+      seek(node, msg, sonosPlayer);
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
     } else if (command === 'get_spotify') {
@@ -153,13 +156,13 @@ module.exports = function (RED) {
     const uri = msg.topic;
 
     sonosPlayer.queue(uri)
-      .then(response => {
+      .then((response) => {
         // will response something like {"FirstTrackNumberEnqueued":"1","NumTracksAdded":"1","NewQueueLength":"1"}
         node.debug('response:' + JSON.stringify(response));
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Insert Spotify uri at end of SONOS queue. Can be used for single songs, album, playlists, .... Does NOT activate queue.
@@ -209,13 +212,13 @@ module.exports = function (RED) {
     }
 
     sonosPlayer.queue(uri)
-      .then(response => {
+      .then((response) => {
         // will response something like {"FirstTrackNumberEnqueued":"1","NumTracksAdded":"1","NewQueueLength":"1"}
         node.debug('response:' + JSON.stringify(response));
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs of specified Amazon Prime playlist (URI format) into SONOS queue.
@@ -255,13 +258,13 @@ module.exports = function (RED) {
       </item>
       </DIDL-Lite>`;
     sonosPlayer.queue({ uri, metadata })
-      .then(response => {
+      .then((response) => {
         // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
         node.debug('response:' + JSON.stringify(response));
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Insert all songs from matching My Sonos Spotify items (first match, topic string) into SONOS queue.
@@ -301,7 +304,7 @@ module.exports = function (RED) {
     }
 
     sonosPlayer.getFavorites()
-      .then(response => {
+      .then((response) => {
         // get array of all Spotify playlists and return
         const SERVICE_IDENTIFIER = 'spotify%3a';
         const playlistArray = []; // will hold all playlist items
@@ -417,7 +420,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
   /**  Insert all songs from matching My Sonos Amazon Prime Playlist  (first match, topic string) into SONOS queue.
   * @param  {Object} node current node
@@ -437,7 +440,7 @@ module.exports = function (RED) {
     }
 
     sonosPlayer.getFavorites()
-      .then(response => {
+      .then((response) => {
         // get array of playlists and return
         const SERVICE_IDENTIFIER = 'prime_playlist';
         const playlistArray = []; // will hold all playlist items
@@ -526,7 +529,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs from matching SONOS playlist (first match, topic string) into SONOS queue.
@@ -569,7 +572,7 @@ module.exports = function (RED) {
     // listDimension is either 100 (default) or a positive integer
 
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: listDimension })
-      .then(response => {
+      .then((response) => {
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -618,7 +621,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Insert all songs from matching Music Libary playlist (first match, topic string) into SONOS queue.
@@ -661,7 +664,7 @@ module.exports = function (RED) {
     // listDimension is either 100 (default) or a positive integer
 
     sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
-      .then(response => {
+      .then((response) => {
         // get array of playlists and return
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -710,7 +713,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Activate SONOS queue and start playing first song, optionally set volume
@@ -723,7 +726,7 @@ module.exports = function (RED) {
   function activateQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'activate queue';
     sonosPlayer.getQueue()
-      .then(response => {
+      .then((response) => {
         // validiate queue ist not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -764,7 +767,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Play song with specified index (msg.topic) in SONOS queue. Activates also SONOS Queue.
@@ -778,7 +781,7 @@ module.exports = function (RED) {
 
     let validatedPosition;
     sonosPlayer.getQueue()
-      .then(response => {
+      .then((response) => {
         // get queue size - ensure not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -829,7 +832,7 @@ module.exports = function (RED) {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Flushes queue - removes all songs from queue.
@@ -841,11 +844,11 @@ module.exports = function (RED) {
   function flushQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'flush queue';
     sonosPlayer.flush()
-      .then(response => {
+      .then((response) => {
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /** Removes several (msg.numberOfSong) songs starting at pecified index (msg.topic) from SONOS queue.
@@ -863,7 +866,7 @@ module.exports = function (RED) {
     let validatedNumberofSongs;
 
     sonosPlayer.getQueue()
-      .then(response => {
+      .then((response) => {
         // get queue size - ensure not empty
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -929,12 +932,12 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { return sonosPlayer.removeTracksFromQueue(validatedPosition, validatedNumberofSongs); })
-      .then(response => {
+      .then((response) => {
         node.debug('result: ' + JSON.stringify(response));
         NrcspHelpers.success(node, msg, sonosFunction);
         return true;
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
@@ -959,7 +962,7 @@ module.exports = function (RED) {
     }
 
     sonosPlayer.getQueue()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: could not get queue data from player'); // promise implicitly rejected
@@ -971,7 +974,7 @@ module.exports = function (RED) {
         return true; // promise implicitly resolved
       })
       .then(() => { return sonosPlayer.avTransportService().GetMediaInfo(); })
-      .then(mediaInfo => {
+      .then((mediaInfo) => {
         if (typeof mediaInfo === 'undefined' || mediaInfo === null ||
           (typeof mediaInfo === 'number' && isNaN(mediaInfo)) || mediaInfo === '') {
           throw new Error('n-r-c-s-p: undefined response from get media info');
@@ -989,7 +992,7 @@ module.exports = function (RED) {
         }
       })
       .then(() => { return sonosPlayer.setPlayMode(msg.topic); })
-      .then(plresp => {
+      .then((plresp) => {
         if (typeof plresp === 'undefined' || plresp === null ||
           (typeof plresp === 'number' && isNaN(plresp)) || plresp === '') {
           throw new Error('n-r-c-s-p: undefined response from setPlayMode');
@@ -1013,7 +1016,7 @@ module.exports = function (RED) {
   function getQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'get queue';
     sonosPlayer.getQueue()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: undefined getqueue response received');
@@ -1046,7 +1049,7 @@ module.exports = function (RED) {
         msg.payload = songsArray;
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of all My Sonos Spotify items and output.
@@ -1059,7 +1062,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get spotify playlist';
 
     sonosPlayer.getFavorites()
-      .then(response => {
+      .then((response) => {
         // get array of playlists and return
         const SPOTIFY_IDENTIFIER = 'spotify%3a';
         const playlistArray = []; // will hold all playlist items
@@ -1109,7 +1112,7 @@ module.exports = function (RED) {
         msg.payload = response;
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of My Sonos Amazon Playlist (only standards).
@@ -1121,7 +1124,7 @@ module.exports = function (RED) {
   function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get amazon prime playlist';
     sonosPlayer.getFavorites()
-      .then(response => {
+      .then((response) => {
         // validate response and send output
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -1168,7 +1171,7 @@ module.exports = function (RED) {
         msg.payload = playlistArray;
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of SONOS playlists. Dont mix up with My Sonos playlists.
@@ -1203,7 +1206,7 @@ module.exports = function (RED) {
     // listDimension is either 100 (default) or a positive integer
 
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: listDimension })
-      .then(response => {
+      .then((response) => {
         // validate response and change albumArtUri
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -1244,7 +1247,7 @@ module.exports = function (RED) {
         msg.payload = playlistArray;
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  Get list of music library playlists (imported).
@@ -1280,7 +1283,7 @@ module.exports = function (RED) {
     // listDimension is either 100 (default) or a positive integer
 
     sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
-      .then(response => {
+      .then((response) => {
         // validate response
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
@@ -1310,7 +1313,7 @@ module.exports = function (RED) {
         msg.payload = playlistArray;
         NrcspHelpers.success(node, msg, sonosFunction);
       })
-      .catch(error => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
   /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
@@ -1322,12 +1325,66 @@ module.exports = function (RED) {
   function getQueuemode (node, msg, sonosPlayer) {
     const sonosFunction = 'get queuemode';
     sonosPlayer.getPlayMode()
-      .then(response => {
+      .then((response) => {
         if (typeof response === 'undefined' || response === null ||
           (typeof response === 'number' && isNaN(response)) || response === '') {
           throw new Error('n-r-c-s-p: could not get queue mode from player');
         }
         msg.payload = response;
+        NrcspHelpers.success(node, msg, sonosFunction);
+      })
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+  /**  seek means forwared in current song.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+            {String} msg.topic format hh:mm:ss hh < 20
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output: {Object} msg unmodified / stopped in case of error
+  */
+  function seek (node, msg, sonosPlayer) {
+    const sonosFunction = 'seek / move forward in song';
+
+    // validate msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be in format hh:mm:ss, hh < 20'), sonosFunction);
+      return;
+    }
+    const newValue = msg.topic;
+    const regex = new RegExp(NrcspHelpers.REGEXSTRING_TIME);
+    if (!regex.test(newValue)) {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction);
+      return;
+    }
+
+    // copy action parameter and update
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.seek;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    actionParameter.options[actionParameter.optionsValueName] = newValue;
+
+    node.debug('starting request now, parameters are:  ' + JSON.stringify(actionParameter));
+    NrcsSoap.sendToPlayer(actionParameter)
+      .then((response) => {
+        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+        }
+      })
+      .then((bodyXML) => { // verify response, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (result !== actionParameter.responseValue) {
+          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
+        }
+        return true;
+      })
+      .then(() => {
+        // msg not modified
         NrcspHelpers.success(node, msg, sonosFunction);
       })
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));

@@ -1,0 +1,73 @@
+{
+    "seek": {
+      "path": "/MediaRenderer/AVTransport/Control",
+      "name": "AVTransport",
+      "action": "Seek",
+      "optionsValueName": "Target",
+      "dataType": "string",
+      "options": { "InstanceID": 0, "Unit": "REL_TIME", "Target": "00:01:00" },
+      "responsePath": ["s:Envelope", "s:Body", "u:SeekResponse", "xmlns:u"],
+      "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+      "info": "Seek with REL_TIME moves forwar in curren song, relative from now"
+    },
+    "setEQ": {
+      "path": "/MediaRenderer/RenderingControl/Control",
+      "name": "RenderingControl",
+      "action": "SetEQ",
+      "optionsValueName": "",
+      "dataType": "string / string / integer",
+      "options": { "InstanceID": 0, "EQType": "DialogLevel", "DesiredValue": "1" },
+      "eqTypeValues": ["DialogLevel", "NightMode", "SubGain"],
+      "responsePath": ["s:Envelope", "s:Body", "u:SetEQResponse", "xmlns:u"],
+      "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+      "info": "Set EQType and DesiredValue have to be defined. DesiredValue depend on EQType"
+    },
+    "getEQ": {
+      "path": "/MediaRenderer/RenderingControl/Control",
+      "name": "RenderingControl",
+      "action": "GetEQ",
+      "options": { "InstanceID": 0, "EQType": "DialogLevel" },
+      "eqTypeValues": ["DialogLevel", "NightMode", "SubGain"],
+      "responsePath": ["s:Envelope", "s:Body", "u:GetEQResponse", "CurrentValue"],
+      "info": "EQType have to be defined. Current value 0|1 or -15 to 15 for SubGain"
+    },
+    "setCrossfadeMode": {
+      "path": "/MediaRenderer/AVTransport/Control",
+      "name": "AVTransport",
+      "action": "SetCrossfadeMode",
+      "optionsValueName": "CrossfadeMode",
+      "dataType": "string",
+      "options": { "InstanceID": 0, "CrossfadeMode": "1" },
+      "responsePath": ["s:Envelope", "s:Body", "u:SetCrossfadeModeResponse", "xmlns:u"],
+      "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+      "info": "Set CrossfadeMode 0 or 1"
+    },
+    "getCrossfadeMode": {
+      "path": "/MediaRenderer/AVTransport/Control",
+      "name": "AVTransport",
+      "action": "GetCrossfadeMode",
+      "options": { "InstanceID": 0 },
+      "responsePath": ["s:Envelope", "s:Body", "u:GetCrossfadeModeResponse", "CrossfadeMode"],
+      "info": "will return 0 or 1 and might be converted to On Off"
+    },
+    "configureSleepTimer": {
+      "path": "/MediaRenderer/AVTransport/Control",
+      "name": "AVTransport",
+      "action": "ConfigureSleepTimer",
+      "optionsValueName": "NewSleepTimerDuration",
+      "dataType": "string",
+      "options": { "InstanceID": 0, "NewSleepTimerDuration": "00:05:00" },
+      "responsePath": ["s:Envelope", "s:Body", "u:ConfigureSleepTimerResponse", "xmlns:u"],
+      "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+      "info": "Duration in format hh:mm:ss"
+    },
+    "getRemainingSleepTimerDuration": {
+      "path": "/MediaRenderer/AVTransport/Control",
+      "name": "AVTransport",
+      "action": "GetRemainingSleepTimerDuration",
+      "options": { "InstanceID": 0 },
+      "responsePath": ["s:Envelope", "s:Body", "u:GetRemainingSleepTimerDurationResponse", "RemainingSleepTimerDuration"],
+      "dataType": "string",
+      "info": "returns duration in format hh:mm:ss - if empty string means no timer"
+    }
+  }
