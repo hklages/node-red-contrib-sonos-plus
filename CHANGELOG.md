@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+<<<<<<< HEAD
 ## [1.4.0] 2020-02-18
+=======
+## [1.4.0] 2020-02-10
+>>>>>>> 89310379f6719d674c0b2c3814dcd28825a18765
 ### Added
 - Manage Queue: seek command
 - Manage Queue: support for Napster tracks, album, playlists in My Sonos
