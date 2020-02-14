@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.4.0] 2020-02-0y
+## [1.4.0] 2020-02-10
 ### Added
 - Manage Queue: seek command
 
