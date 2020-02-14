@@ -8,7 +8,7 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
-- Node Manage Queue: addes support for Napster tracks, album, playlist in My Sonos
+- Node Manage Queue: added support for Napster tracks, album, playlist in My Sonos
 
 - Node Manage Queue: added seek command (move to position in song)
 

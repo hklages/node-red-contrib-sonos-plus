@@ -1362,7 +1362,7 @@ module.exports = function (RED) {
     }
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.seek;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.seek;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
@@ -1424,7 +1424,7 @@ module.exports = function (RED) {
     const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"> <item id="100e004c382494011" parentID="100e004cexplore%3aplaylist%3a" restricted="true"><dc:title></dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_X_#Svc51975-0-Token</desc></item></DIDL-Lite>';
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.addURIToQueue;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.addURIToQueue;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcsSoap.encodeXml(newUri);
     actionParameter.args.EnqueuedURIMetaData = NrcsSoap.encodeXml(newMetadata);

@@ -1,0 +1,274 @@
+{
+   "UPNP_CODES":[
+      {
+         "code":400,
+         "message":"Bad Request"
+      },
+      {
+         "code":401,
+         "message":"Invalid Action"
+      },
+      {
+         "code":402,
+         "message":"Invalid Args"
+      },
+      {
+         "code":403,
+         "message":"Out of Sync"
+      },
+      {
+         "code":404,
+         "message":"Invalid Var"
+      },
+      {
+         "code":405,
+         "message":"Invalid Path"
+      },
+      {
+         "code":412,
+         "message":"Precondition failed"
+      },
+      {
+         "code":501,
+         "message":"Action Failed"
+      },
+      {
+         "code":600,
+         "message":"Argument Value Invalid"
+      },
+      {
+         "code":601,
+         "message":"Argument Value Out of Range"
+      },
+      {
+         "code":602,
+         "message":"Optional Action Not Implemented"
+      },
+      {
+         "code":603,
+         "message":"Out Of Memory"
+      },
+      {
+         "code":604,
+         "message":"Human Intervention Required"
+      },
+      {
+         "code":605,
+         "message":"String Argument Too Long"
+      },
+      {
+         "code":606,
+         "message":"Action Not Authorized"
+      },
+      {
+         "code":607,
+         "message":"Signature Failure"
+      },
+      {
+         "code":608,
+         "message":"Signature Missing"
+      },
+      {
+         "code":609,
+         "message":"Not Encrypted"
+      },
+      {
+         "code":610,
+         "message":"Invalid Sequence"
+      },
+      {
+         "code":611,
+         "message":"Invalid Control URL"
+      },
+      {
+         "code":612,
+         "message":"No Such Session"
+      },
+      {
+         "code":801,
+         "message":"Invalid Endpoint"
+      },
+      {
+         "code":802,
+         "message":"Invalid Certificate"
+      },
+      {
+         "code":803,
+         "message":"Invalid Nonce (authentication)"
+      }
+   ],
+   "AVTRANSPORT_CODES":[
+      {
+         "code":701,
+         "message":"Transition not available"
+      },
+      {
+         "code":702,
+         "message":"No contents"
+      },
+      {
+         "code":703,
+         "message":"Read error"
+      },
+      {
+         "code":704,
+         "message":"Format not supported for playback"
+      },
+      {
+         "code":705,
+         "message":"Transport is locked"
+      },
+      {
+         "code":706,
+         "message":"Write error"
+      },
+      {
+         "code":707,
+         "message":"Media is protected or not writeable"
+      },
+      {
+         "code":708,
+         "message":"Format not supported for recording"
+      },
+      {
+         "code":709,
+         "message":"Media is full"
+      },
+      {
+         "code":710,
+         "message":"Seek mode not supported"
+      },
+      {
+         "code":711,
+         "message":"Illegal seek target"
+      },
+      {
+         "code":712,
+         "message":"Play mode not supported"
+      },
+      {
+         "code":713,
+         "message":"Record quality not supported"
+      },
+      {
+         "code":714,
+         "message":"Illegal MIME-Type"
+      },
+      {
+         "code":715,
+         "message":"Content busy"
+      },
+      {
+         "code":716,
+         "message":"Resource Not found"
+      },
+      {
+         "code":717,
+         "message":"Play speed not supported"
+      },
+      {
+         "code":718,
+         "message":"Invalid InstanceID"
+      },
+      {
+         "code":737,
+         "message":"No DNS Server"
+      },
+      {
+         "code":738,
+         "message":"Bad Domain Name"
+      },
+      {
+         "code":739,
+         "message":"Server Error"
+      }
+   ],
+   "RENDERINGCONTROL_CODES":[
+      {
+         "code":701,
+         "message":"Invalid preset name"
+      },
+      {
+         "code":702,
+         "message":"Invalid instance id"
+      }
+   ],
+   "CONTENTDIRECTORY_CODES":[
+      {
+         "code":701,
+         "message":"No such object"
+      },
+      {
+         "code":702,
+         "message":"Invalid CurrentTagValue"
+      },
+      {
+         "code":703,
+         "message":"Invalid NewTagValue"
+      },
+      {
+         "code":704,
+         "message":"Required tag"
+      },
+      {
+         "code":705,
+         "message":"Read only tag"
+      },
+      {
+         "code":706,
+         "message":"Parameter Mismatch"
+      },
+      {
+         "code":708,
+         "message":"Unsupported or invalid search criteria"
+      },
+      {
+         "code":709,
+         "message":"Unsupported or invalid sort criteria"
+      },
+      {
+         "code":710,
+         "message":"No such containerR"
+      },
+      {
+         "code":711,
+         "message":"Restricted object"
+      },
+      {
+         "code":712,
+         "message":"Bad metadata"
+      },
+      {
+         "code":713,
+         "message":"Restricted parent object"
+      },
+      {
+         "code":714,
+         "message":"No such source resource"
+      },
+      {
+         "code":715,
+         "message":"Resource access denied"
+      },
+      {
+         "code":716,
+         "message":"Transfer busy"
+      },
+      {
+         "code":717,
+         "message":"No such file transfer"
+      },
+      {
+         "code":718,
+         "message":"No such destination resource"
+      },
+      {
+         "code":719,
+         "message":"Destination resource access denied"
+      },
+      {
+         "code":720,
+         "message":"Cannot process the request"
+      }
+   ]
+}

@@ -726,7 +726,7 @@ module.exports = function (RED) {
   function getEQ (node, msg, sonosPlayer) {
     const sonosFunction = 'get EQ';
 
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getEQ;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getEQ;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // get valid eqType from msg.topic to define body
@@ -801,7 +801,7 @@ module.exports = function (RED) {
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
 
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getCrossfadeMode;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
@@ -839,7 +839,7 @@ module.exports = function (RED) {
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
 
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getRemainingSleepTimerDuration;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getRemainingSleepTimerDuration;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)

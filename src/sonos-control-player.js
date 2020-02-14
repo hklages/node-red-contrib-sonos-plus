@@ -461,7 +461,7 @@ module.exports = function (RED) {
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setCrossfadeMode;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
@@ -508,7 +508,7 @@ module.exports = function (RED) {
     const sonosFunction = 'set EQ';
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setEQ;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setEQ;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // validate msg.topic (eg type)
@@ -630,7 +630,7 @@ module.exports = function (RED) {
     }
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.configureSleepTimer;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.configureSleepTimer;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
@@ -679,7 +679,7 @@ module.exports = function (RED) {
     }
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
-    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setCrossfademode;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setCrossfademode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}`;
     actionParameter.args.CrossfadeMode = newValue;
     // create tag to handel response from SONOS player
