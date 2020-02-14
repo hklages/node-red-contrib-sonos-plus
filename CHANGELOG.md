@@ -1,9 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.4.0] 2020-02-0x
+## [1.4.0] 2020-02-18
 ### Added
 - Manage Queue: seek command
+- Manage Queue: support for Napster tracks, album, playlists in My Sonos
 
 ### Changed
 - JSON file for all SOAP action definitions (Knowledge Capture in re usable JSON format)

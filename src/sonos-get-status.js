@@ -741,7 +741,7 @@ module.exports = function (RED) {
       return;
     }
     node.debug(JSON.stringify(actionParameter));
-    actionParameter.options.EQType = eqType;
+    actionParameter.args.EQType = eqType;
 
     sonosPlayer.deviceDescription()
       .then((response) => { // ensure that SONOS player has TV mode
@@ -759,8 +759,8 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // send request to SONOS player
-        node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
-        return NrcsSoap.sendToPlayer(actionParameter);
+        const { baseUrl, path, name, action, args } = actionParameter;
+        return NrcsSoap.sendToPlayer(baseUrl, path, name, action, args);
       })
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
@@ -803,9 +803,8 @@ module.exports = function (RED) {
 
     const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-
-    node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
-    NrcsSoap.sendToPlayer(actionParameter)
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
@@ -842,9 +841,8 @@ module.exports = function (RED) {
 
     const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.getRemainingSleepTimerDuration;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-
-    node.debug('starting request now, parameter are:  ' + JSON.stringify(actionParameter));
-    NrcsSoap.sendToPlayer(actionParameter)
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);

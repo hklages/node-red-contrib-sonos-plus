@@ -463,9 +463,9 @@ module.exports = function (RED) {
     // copy action parameter and update
     const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.options[actionParameter.optionsValueName] = newValue;
-
-    NrcsSoap.sendToPlayer(actionParameter)
+    actionParameter.args[actionParameter.argsValueName] = newValue;
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
       .then((response) => {
         node.debug('start xml to JSON');
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
@@ -557,9 +557,9 @@ module.exports = function (RED) {
       return;
     }
 
-    // update options
-    actionParameter.options.EQType = eqType;
-    actionParameter.options.DesiredValue = newValue;
+    // update args
+    actionParameter.args.EQType = eqType;
+    actionParameter.args.DesiredValue = newValue;
 
     sonosPlayer.deviceDescription()
       .then((response) => { // ensure that SONOS player has TV mode
@@ -577,8 +577,8 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // send request to SONOS player
-        node.debug('starting request now, parameters are:  ' + JSON.stringify(actionParameter));
-        return NrcsSoap.sendToPlayer(actionParameter);
+        const { baseUrl, path, name, action, args } = actionParameter;
+        return NrcsSoap.sendToPlayer(baseUrl, path, name, action, args);
       })
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
@@ -632,10 +632,9 @@ module.exports = function (RED) {
     // copy action parameter and update
     const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.configureSleepTimer;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.options[actionParameter.optionsValueName] = newValue;
-
-    node.debug('starting request now, parameters are:  ' + JSON.stringify(actionParameter));
-    NrcsSoap.sendToPlayer(actionParameter)
+    actionParameter.args[actionParameter.argsValueName] = newValue;
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
@@ -680,15 +679,14 @@ module.exports = function (RED) {
     }
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
-    const parameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setCrossfademode;
-    parameter.baseUrl = `http://${sonosPlayer.host}`;
-    parameter.options.CrossfadeMode = newValue;
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.setCrossfademode;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}`;
+    actionParameter.args.CrossfadeMode = newValue;
     // create tag to handel response from SONOS player
     // const responseTag = `u:${parameter.action}Response`;
 
-    node.debug('starting request now, parameter are:  ' + JSON.stringify(parameter));
-
-    NrcsSoap.sendToPlayer(parameter)
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
       .then(response => { // verify response, extract value and output
         node.debug('Parsed: ' + JSON.stringify(response));
         // response does not include any confirmation

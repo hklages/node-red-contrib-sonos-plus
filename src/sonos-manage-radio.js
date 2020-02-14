@@ -95,10 +95,6 @@ module.exports = function (RED) {
       playMySonos(node, msg, sonosPlayer);
     } else if (command === 'get_mysonos') {
       getMySonosStations(node, msg, sonosPlayer);
-    } else if (command === 'get_mysonosall') {
-      // TODO please remove in releases 2020
-      NrcspHelpers.warning(node, sonosFunction, 'command depreciated', 'please use similar command in get status node');
-      getMySonosAll(node, msg, sonosPlayer);
     } else {
       NrcspHelpers.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -432,42 +428,5 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
-  // Please remove in 2020 - is now in Get Status
-  /**  Get list of all My Sonos items.
-  * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * change msg.payload to array of all My Sonos items
-  */
-  function getMySonosAll (node, msg, sonosPlayer) {
-    // get list of My Sonos items
-    const sonosFunction = 'get my sonos all';
-    sonosPlayer.getFavorites()
-      .then((response) => {
-        // validate response
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received');
-        }
-        if (typeof response.items === 'undefined' || response.items === null ||
-          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined favorite list received');
-        }
-        if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list');
-        }
-        const list = response.items;
-        if (list.length === 0) {
-          throw new Error('n-r-c-s-p: no my sonos items found');
-        }
-        return list;
-      })
-      .then((list) => {
-        msg.payload = list;
-        NrcspHelpers.success(node, msg, sonosFunction);
-        return true;
-      })
-      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
-  }
   RED.nodes.registerType('sonos-manage-radio', SonosManageRadioNode);
 };

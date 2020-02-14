@@ -116,6 +116,8 @@ module.exports = function (RED) {
       setQueuemode(node, msg, sonosPlayer);
     } else if (command === 'seek') {
       seek(node, msg, sonosPlayer);
+    } else if (command === 'lab_test') {
+      labTestFunction(node, msg, sonosPlayer);
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
     } else if (command === 'get_spotify') {
@@ -507,6 +509,7 @@ module.exports = function (RED) {
         if (!uri.startsWith('x-rincon-cpcontainer:')) {
           throw new Error('n-r-c-s-p: invalid prime playlist');
         }
+        node.debug('original uri: ' + JSON.stringify(uri));
         const newUri = String(uri).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
         const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1);
         node.debug('new uri ' + JSON.stringify(newUri));
@@ -1361,10 +1364,72 @@ module.exports = function (RED) {
     // copy action parameter and update
     const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.seek;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.options[actionParameter.optionsValueName] = newValue;
+    actionParameter.args[actionParameter.argsValueName] = newValue;
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+      .then((response) => {
+        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+        }
+      })
+      .then((bodyXML) => { // verify response, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (result !== actionParameter.responseValue) {
+          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
+        }
+        return true;
+      })
+      .then(() => {
+        // msg not modified
+        NrcspHelpers.success(node, msg, sonosFunction);
+      })
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
 
-    node.debug('starting request now, parameters are:  ' + JSON.stringify(actionParameter));
-    NrcsSoap.sendToPlayer(actionParameter)
+  /**  lab test function: add uri to queue.
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+            {String} msg.topic uri
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output: {Object} msg unmodified / stopped in case of error
+  */
+  function labTestFunction (node, msg, sonosPlayer) {
+    const sonosFunction = 'add uri to queue';
+
+    // validate msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+    // Track examples: 290276864 401982375
+    // From mysonos: x-sonos-http:ondemand_track%3a%3atra.290276864%7cv1%7cPLAYLIST%7cpp.382494011.mp4?sid=203&flags=8224&sn=1
+    // const newUri = 'x-sonos-http:ondemand_track%3a%3atra.290276864%7cv1%7cALBUM%7calb.mp4?sid=203&flags=8224&sn=13';
+    // const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"><item id="10032020ondemand_track%3a%3atra.290276864" parentID="100420ecexplore%3a" restricted="true"><dc:title></dc:title><upnp:class>object.item.audioItem.musicTrack</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_X_#Svc51975-0-Token</desc></item></DIDL-Lite>';
+
+    // Album examples 441376240
+    // From mysonos: x-rincon-cpcontainer:100420ecexplore%3aalbum%3a%3aAlb.441376240?sid=203&flags=8428&sn=1
+    // const newUri = 'x-rincon-cpcontainer:100420ecexplore%3aalbum%3a%3aAlb.441376240?sid=203&flags=8428&sn=1';
+    // const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"> <item id="100420ec441376240" parentID="100420ecexplore%3aalbum%3a" restricted="true"><dc:title></dc:title><upnp:class>object.container.album.musicAlbum</upnp:class> <desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_X_#Svc51975-0-Token</desc></item></DIDL-Lite>`';
+
+    // object.container.playlistContainer
+    // playlist example: 382494011
+    const newUri = 'x-rincon-cpcontainer:100e004cexplore%3aplaylist%3a%3app.382494011?sid=203&flags=76&sn=1';
+    const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"> <item id="100e004c382494011" parentID="100e004cexplore%3aplaylist%3a" restricted="true"><dc:title></dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_X_#Svc51975-0-Token</desc></item></DIDL-Lite>';
+
+    // copy action parameter and update
+    const actionParameter = NrcsSoap.SOAP_ACTION_TEMPLATE.addURIToQueue;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    actionParameter.args.EnqueuedURI = NrcsSoap.encodeXml(newUri);
+    actionParameter.args.EnqueuedURIMetaData = NrcsSoap.encodeXml(newMetadata);
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);

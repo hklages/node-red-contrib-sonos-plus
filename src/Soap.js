@@ -13,6 +13,7 @@ module.exports = {
     { code: 401, message: 'Invalid Action' },
     { code: 402, messsage: 'Invalid Args' },
     { code: 403, message: 'Out of Sync' },
+    { code: 405, message: 'Invalid Path' },
     { code: 501, message: 'Action Failed' },
     { code: 801, message: 'Invalid Endpoint' },
     { code: 802, message: 'Invalid Certificate' },
@@ -69,34 +70,37 @@ module.exports = {
 
   // SOAP related functions
 
-  /** sendToPlayer sends a http request in SOAP format to specific player.
-  * @param  {Object} functionParameters object
-  *           {String} baseUrl http address including property e.g 'http://192.168.178.30:1400'
-  *           {String} path the path (SOAP endpoint) e. g. '/MediaRenderer/RenderingControl/Control'
-  *           {String} name e.g. 'RenderingControl'
-  *           {String} action e.g 'SetEQ'
-  *           {Object} options e.g.  { InstanceID: 0, EQType: '' },
+  encodeXml: (xmlData) => {
+    return xmlData.replace(/[<>&'"]/g, function (c) {
+      switch (c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '&': return '&amp;';
+        case '\'': return '&apos;';
+        case '"': return '&quot;';
+      }
+    });
+  },
+
+  /** Sends a http request in SOAP format to specific player.
+  * @param  {String} baseUrl http address including port e.g 'http://192.168.178.30:1400'
+  * @param  {String} path SOAP endpoint e. g. '/MediaRenderer/RenderingControl/Control'
+  * @param  {String} name e.g. 'RenderingControl'
+  * @param  {String} action e.g 'SetEQ'
+  * @param  {Object} args e.g.  { InstanceID: 0, EQType: '' },
   * @return {promise}
-  * based on https://medium.com/better-programming/how-to-perform-soap-requests-with-node-js-4a9627070eb6
   */
-  sendToPlayer: (functionParameters = {
-    baseUrl: '',
-    path: '',
-    name: '',
-    action: '',
-    options: {}
-  }) => {
-    // setting default, overwrite with given parameter
-    const { baseUrl, path, name, action, options = { InstanceID: 0 } } = functionParameters;
+  sendToPlayer: (baseUrl, path, name, action, args) => {
+    console.log('start send to player');
 
     // create header data
     const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
 
     // create body data
     let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
-    if (options) {
-      Object.keys(options).forEach(key => {
-        messageBody += `<${key}>${options[key]}</${key}>`;
+    if (args) {
+      Object.keys(args).forEach(key => {
+        messageBody += `<${key}>${args[key]}</${key}>`;
       });
     }
     messageBody += `</u:${action}>`;
@@ -104,7 +108,7 @@ module.exports = {
       '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
       '<s:Body>' + messageBody + '</s:Body>',
       '</s:Envelope>'].join('');
-
+    console.log('start axio request');
     return new Promise((resolve, reject) => {
       request({
         method: 'post',
