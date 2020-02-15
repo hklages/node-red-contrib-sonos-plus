@@ -1429,8 +1429,9 @@ module.exports = function (RED) {
     actionParameter.args.EnqueuedURI = NrcsSoap.encodeXml(newUri);
     actionParameter.args.EnqueuedURIMetaData = NrcsSoap.encodeXml(newMetadata);
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => {
+        console.log(JSON.stringify(response));
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
         } else {

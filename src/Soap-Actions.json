@@ -16,7 +16,7 @@
          "s:Envelope",
          "s:Body",
          "u:BrowseResponse",
-         "xmlns:u"
+         "Result"
       ],
       "responseValue":"urn:schemas-upnp-org:service:AVTransport:1",
       "info":"ObjectID: FV:2 = Get the My Sonos",

@@ -666,34 +666,7 @@ module.exports = function (RED) {
   * @param  {Object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
-    const sonosFunction = 'set crossfade';
-    // validate msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be On or Off'), sonosFunction);
-      return;
-    }
-    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
-      return;
-    }
-    const newValue = (msg.topic === 'On' ? 1 : 0);
 
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setCrossfademode;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}`;
-    actionParameter.args.CrossfadeMode = newValue;
-    // create tag to handel response from SONOS player
-    // const responseTag = `u:${parameter.action}Response`;
-
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
-      .then(response => { // verify response, extract value and output
-        node.debug('Parsed: ' + JSON.stringify(response));
-        // response does not include any confirmation
-        NrcspHelpers.success(node, msg, sonosFunction);
-        return true;
-      })
-      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
   RED.nodes.registerType('sonos-control-player', SonosControlPlayerNode);
 };
