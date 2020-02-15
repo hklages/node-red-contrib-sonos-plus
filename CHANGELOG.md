@@ -1,14 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.4.0] 2020-02-18
+## [1.4.0] 2020-02-15
 ### Added
 - Manage Queue: seek command
-- Manage Queue: support for Napster tracks, albums, playlists in My Sonos
-- Several JSON files actions, error codes and service ids
+- Get Status: get_loudness
+- Control Player: set_loudness
 
 ### Changed
+- Get Status: get_crossfademode changed to get_crossfade
 - Error handling revised (for all direct SOAP calls)
+- Several data structures moved into JSON files
 
 ## [1.3.0] 2020-02-09
 ### Added

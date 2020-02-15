@@ -144,6 +144,45 @@
       ],
       "info":"will return 0 or 1 and might be converted to On Off"
    },
+   "setLoudness":{
+      "path":"/MediaRenderer/RenderingControl/Control",
+      "name":"RenderingControl",
+      "action":"SetLoudness",
+      "argsValueName":"DesiredLoudness",
+      "dataType":"string",
+      "args":{
+         "InstanceID":0,
+         "Channel":"Master",
+         "DesiredLoudness":"1"
+      },
+      "responsePath":[
+         "s:Envelope",
+         "s:Body",
+         "u:SetLoudnessResponse",
+         "xmlns:u"
+      ],
+      "responseValue":"urn:schemas-upnp-org:service:RenderingControl:1",
+      "info":"Set Loudness 0 or 1"
+   },
+   "getLoudness":{
+      "path":"/MediaRenderer/RenderingControl/Control",
+      "name":"RenderingControl",
+      "action":"GetLoudness",
+      "argsValueName":"CurrentLoudness",
+      "dataType":"string",
+      "args":{
+         "InstanceID":0,
+         "Channel":"Master"
+      },
+      "responsePath":[
+         "s:Envelope",
+         "s:Body",
+         "u:GetLoudnessResponse",
+         "CurrentLoudness"
+      ],
+      "responseValue":"urn:schemas-upnp-org:service:RenderingControl:1",
+      "info":"Get Loudness 0 or 1"
+   },
    "configureSleepTimer":{
       "path":"/MediaRenderer/AVTransport/Control",
       "name":"AVTransport",

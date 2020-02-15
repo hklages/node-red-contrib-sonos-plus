@@ -41,7 +41,6 @@ RED.nodes.registerType('sonos-manage-queue', {
 
 </script>
 
-
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-queue">
   <p> Incoming message is being converted to valid command and send to SONOS player. The <i>get ... </i> provides information about the current queue or playlists.</p>
@@ -92,6 +91,7 @@ RED.nodes.registerType('sonos-manage-queue', {
     <br/>
     <li><b>activate_queue</b> Starts playing songs from queue (checks queue is not empty). <code>volume</code> may contain the volume in the range from 1 to 99.</li>
     <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
+    <li><b>seek</b> Moves inside current (QUEUE) song to specified time. <code>topic</code> provides time in hh:mm:ss format</li>
     <br/>
     <li><b>flush_queue</b> Erases the queue and stops playing!</li>
     <li><b>remove_song</b> Removes several (numberOfSongs) songs from queue. <code>topic</code> provides start index</li>

@@ -104,6 +104,8 @@ module.exports = function (RED) {
       handleSetLed(node, msg, sonosPlayer);
     } else if (command === 'set_crossfade') {
       setCrossfadeMode(node, msg, sonosPlayer);
+    } else if (command === 'set_loudness') {
+      setLoudness(node, msg, sonosPlayer);
     } else if (command === 'set_eq') {
       setEQ(node, msg, sonosPlayer);
     } else if (command === 'set_sleeptimer') {
@@ -462,6 +464,63 @@ module.exports = function (RED) {
 
     // copy action parameter and update
     const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setCrossfadeMode;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    actionParameter.args[actionParameter.argsValueName] = newValue;
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+      .then((response) => {
+        node.debug('start xml to JSON');
+        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+        }
+      })
+      .then((bodyXML) => { // verify response, now in JSON format
+        node.debug('check success');
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (result !== actionParameter.responseValue) {
+          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
+        }
+        return true;
+      })
+      .then(() => {
+        // msg not modified
+        NrcspHelpers.success(node, msg, sonosFunction);
+      })
+      .catch((error) => {
+        node.debug('start catch error');
+        NrcspHelpers.failure(node, msg, error, sonosFunction);
+      });
+  }
+
+  /**  Set loudness
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {String} msg.payload not changed
+  */
+  function setLoudness (node, msg, sonosPlayer) {
+    const sonosFunction = 'set loudness';
+
+    // validate msg.topic.
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be On or Off'), sonosFunction);
+      return;
+    }
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
+      return;
+    }
+    const newValue = (msg.topic === 'On' ? 1 : 0);
+
+    // copy action parameter and update
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setLoudness;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;

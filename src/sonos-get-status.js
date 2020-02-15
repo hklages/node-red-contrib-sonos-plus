@@ -113,8 +113,10 @@ module.exports = function (RED) {
       getGroupsInfo(node, msg, sonosPlayer);
     } else if (command === 'get_eq') {
       getEQ(node, msg, sonosPlayer);
-    } else if (command === 'get_crossfademode') {
+    } else if (command === 'get_crossfade') {
       getCrossfadeMode(node, msg, sonosPlayer);
+    } else if (command === 'get_loudness') {
+      getLoudnessMode(node, msg, sonosPlayer);
     } else if (command === 'get_sleeptimer') {
       getRemainingSleepTimerDuration(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
@@ -830,6 +832,45 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
+  /**  Get current Loudness mode
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {String} msg.payload On Off
+  */
+  function getLoudnessMode (node, msg, sonosPlayer) {
+    const sonosFunction = 'get loudness mode';
+
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getLoudness;
+    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    const { baseUrl, path, name, action, args } = actionParameter;
+    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+      .then((response) => { // parse body to XML
+        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+          return NrcsSoap.parseSoapBody(response.body);
+        } else {
+          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+        }
+      })
+      .then((bodyXML) => { // extract value, now in JSON format
+        // safely access property,  Oliver Steele's pattern
+        const paths = actionParameter.responsePath;
+        const result = paths.reduce((object, path) => {
+          return (object || {})[path];
+        }, bodyXML);
+        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
+          throw new Error('n-r-c-s-p: could not get value from player');
+        }
+        return result;
+      })
+      .then((result) => {
+        console.log(result);
+        msg.payload = (result === '1' ? 'On' : 'Off');
+        NrcspHelpers.success(node, msg, sonosFunction);
+      })
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
   /**  Get remaining sleep timer duration sets the sleep timer.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
@@ -896,11 +937,11 @@ module.exports = function (RED) {
         return result;
       })
       .then((result) => {
-        const cleanXML = result.replace('\\"', '');
-        // msg.payload = cleanXML;
-        NrcsSoap.parseSoapBody(cleanXML)
-          .then((result) => { msg.payload = result['DIDL-Lite'].item; });
-        NrcspHelpers.success(node, msg, sonosFunction);
+        NrcsSoap.parseBrowseFavoritesResults(result)
+          .then((items) => {
+            msg.payload = items;
+            NrcspHelpers.success(node, msg, sonosFunction);
+          });
       })
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }

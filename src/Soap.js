@@ -179,6 +179,24 @@ module.exports = {
     }
   },
 
+  /** Extract list with title, albumArt, uri and metadata from given input
+  * @param  {Object} body response from SONOS player on a SOAP request
+  * @return {promise} JSON format
+  */
+  parseBrowseFavoritesResults: async function (body) {
+    // clean xml: masked apostrophe
+
+    // TODO error handling, empty list,...
+    const cleanXML = body.replace('\\"', '');
+    const result = await xml2js.parseStringPromise(cleanXML, { mergeAttrs: true, explicitArray: false, charkey: 'chartag' });
+    const list = [];
+    const original = result['DIDL-Lite'].item;
+    for (var i = 0; i < original.length; i++) {
+      list.push({ title: original[i]['dc:title'], albumArt: original[i]['upnp:albumArtURI'], uri: original[i].res.chartag, metaData: original[i]['r:resMD'] });
+    }
+    return list;
+  },
+
   /** parseSoapBody transforms soap response to simple JSON format
   * @param  {Object} body response from SONOS player on a SOAP request
   * @return {promise} JSON format

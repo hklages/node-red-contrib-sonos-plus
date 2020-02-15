@@ -1421,7 +1421,10 @@ module.exports = function (RED) {
     // object.container.playlistContainer
     // playlist example: 382494011
     const newUri = 'x-rincon-cpcontainer:100e004cexplore%3aplaylist%3a%3app.382494011?sid=203&flags=76&sn=1';
-    const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"> <item id="100e004c382494011" parentID="100e004cexplore%3aplaylist%3a" restricted="true"><dc:title></dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_X_#Svc51975-0-Token</desc></item></DIDL-Lite>';
+    // const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"> <item id="100e004c382494011" parentID="100e004cexplore%3aplaylist%3a" restricted="true"><dc:title></dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_X_#Svc51975-0-Token</desc></item></DIDL-Lite>';
+
+    // from My Sonos extract
+    const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"><item id="100e004cexplore%3aplaylist%3a%3app.382494011" parentID="10fe2064explore%3atag%3a%3atag.382553059" restricted="true"><dc:title>20 Jahre Napster: 1999</dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_heklaf@gmail.com</desc></item></DIDL-Lite>';
 
     // copy action parameter and update
     const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.addURIToQueue;

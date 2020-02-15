@@ -8,15 +8,17 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
-- Node Manage Queue: added support for Napster tracks, album, playlist in My Sonos
+- CAUTION: Changed get/set_crossfademode to get/set_crossfade  (now without mode)
+
+- Node Control Player: added set_loudness
+
+- Node Get Status: addes get_loudness
 
 - Node Manage Queue: added seek command (move to position in song)
 
 - Node Control Player: added set_sleeptimer
 
 - Node Get Stats: added get_sleeptimer
-
-- Node Control Player: added set_eq to set NightMode, DialogLevel (Speech Enhancement), SubGain
 
 ## Installation
 
