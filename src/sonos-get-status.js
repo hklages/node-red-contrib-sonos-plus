@@ -916,7 +916,8 @@ module.exports = function (RED) {
   * @output
   */
   function labNewFeature (node, msg, sonosPlayer) {
-    const sonosFunction = 'lab new feature';
+    const sonosFunction = 'get my sonos - labNewFeature';
+
     const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.browse;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.ObjectID = 'FV:2'; // My Sonos

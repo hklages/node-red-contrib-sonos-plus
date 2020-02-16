@@ -1,26 +1,26 @@
 [
-   {
-     "Spotify":9
-   },
-   {
-     "SiriusXM":37
-   },
-   {
-      "Soundcloud":160
-   },
-   {
-      "Amazon":201
-   },
-   {
-      "Napster":203
-   },
-   {
-      "Napster":204
-   },
-   {
-      "Napster":236
-   },
-   {
-      "Tunein":254
-   }
+  {
+    "Spotify": 9
+  },
+  {
+    "SiriusXM": 37
+  },
+  {
+    "Soundcloud": 160
+  },
+  {
+    "Amazon": 201
+  },
+  {
+    "Napster": 203
+  },
+  {
+    "Napster": 204
+  },
+  {
+    "Napster": 236
+  },
+  {
+    "Tunein": 254
+  }
 ]
