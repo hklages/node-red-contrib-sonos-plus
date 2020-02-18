@@ -31,7 +31,7 @@ module.exports = function (RED) {
         (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
         // exisiting ip address - fastes solution, no discovery necessary
         node.debug('using IP address of config node');
-        processInputMsg(node, msg, configNode.ipaddress);
+        processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
         NrcspHelpers.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
@@ -47,7 +47,7 @@ module.exports = function (RED) {
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
-              processInputMsg(node, msg, ipAddress);
+              processInputMsg(node, msg, ipAddress, configNode.serialnum);
             }
           });
         } else {
@@ -64,7 +64,7 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
-  function processInputMsg (node, msg, ipaddress) {
+  function processInputMsg (node, msg, ipaddress, serial) {
     // get sonos player object
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
@@ -93,6 +93,14 @@ module.exports = function (RED) {
       getMySonos(node, msg, sonosPlayer);
     } else if (command === 'add') {
       addToQueue(node, msg, sonosPlayer);
+    } else if (command === 'play_stream') {
+      playStream(node, msg, sonosPlayer);
+    } else if (command === 'lab_test') {
+      NrcspSonos.play(sonosPlayer)
+        .then((result) => {
+          NrcspHelpers.success(node, msg, sonosFunction);
+        })
+        .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
     } else {
       NrcspHelpers.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -127,7 +135,63 @@ module.exports = function (RED) {
   * @output: {Object} msg unmodified / stopped in case of error
   */
   function addToQueue (node, msg, sonosPlayer) {
-    const sonosFunction = '+ mysonos item to queue';
+    const sonosFunction = 'add mysonos item to queue';
+
+    // validate msg.topic an
+    if (typeof msg.topic === 'undefined' || msg.topic === null ||
+      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+      return;
+    }
+
+    // create filter for not stream and type
+    const filter = { stream: false }; // no streams!
+    // validate msg.filter
+    if (!(typeof msg.filter === 'undefined' || msg.filter === null ||
+      (typeof msg.filter === 'number' && isNaN(msg.filter)) || msg.filter === '')) {
+      const filterString = msg.filter;
+      if (filterString.startsWith('type')) {
+        const type = filterString.susbstring('type'.length); // because of :
+        if (NrcspSonos.FILTER_TYPES.includes(type)) {
+          filter.type = type;
+        } else {
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter parameter'), sonosFunction);
+          return;
+        }
+      } else {
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter - must start with keyword type'), sonosFunction);
+        return;
+      }
+    } else {
+      filter.type = 'all';
+    }
+
+    NrcspSonos.getAllMySonosItems(sonosPlayer)
+      .then((items) => {
+        return NrcspSonos.filterMySonosItems(items, filter);
+      })
+      .then((filteredItems) => {
+        return NrcspSonos.findInArray(filteredItems, msg.topic);
+      })
+      .then((found) => {
+        console.log(JSON.stringify(found));
+        return NrcspSonos.addToQueue(sonosPlayer, found.uri, found.metaData);
+      })
+      .then((result) => {
+        NrcspHelpers.success(node, msg, sonosFunction);
+      })
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  play My Sonos stream
+  * @param  {Object} node current node
+  * @param  {Object} msg incoming message
+            {String} msg.topic title
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output: {Object} msg unmodified / stopped in case of error
+  */
+  function playStream (node, msg, sonosPlayer) {
+    const sonosFunction = 'play my sonos stream';
 
     // validate msg.topic.
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
@@ -136,16 +200,64 @@ module.exports = function (RED) {
       return;
     }
 
+    const filter = { stream: true }; // only streams
+    // validate msg.filter
+    if (!(typeof msg.filter === 'undefined' || msg.filter === null ||
+      (typeof msg.filter === 'number' && isNaN(msg.filter)) || msg.filter === '')) {
+      const filterString = msg.filter;
+      if (filterString.startsWith('type')) {
+        const type = filterString.susbstring('type'.length); // because of :
+        if (NrcspSonos.FILTER_TYPES.includes(type)) {
+          filter.type = type;
+        } else {
+          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter parameter'), sonosFunction);
+          return;
+        }
+      } else {
+        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter - must start with keyword type'), sonosFunction);
+        return;
+      }
+    } else {
+      filter.type = 'all';
+    }
+
     NrcspSonos.getAllMySonosItems(sonosPlayer)
       .then((items) => {
-        return NrcspSoap.findInArray(items, msg.topic);
+        return NrcspSonos.filterMySonosItems(items, filter);
+      })
+      .then((filteredItems) => {
+        return NrcspSonos.findInArray(filteredItems, msg.topic);
       })
       .then((found) => {
         console.log(JSON.stringify(found));
-        return NrcspSonos.addToQueue(sonosPlayer, found.uri, found.metaData);
+        console.log(found.uri);
+        console.log(found.metaData);
+        return sonosPlayer.setAVTransportURI(found.uri, found.metaData);
+        // return NrcspSonos.setAVTransportURI(sonosPlayer, found.uri, NrcspSoap.encodeXml(found.metaData));
       })
       .then((result) => {
         NrcspHelpers.success(node, msg, sonosFunction);
+      })
+      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  start queue
+  * @param  {Object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * change msg.payload to current array of my Sonos items
+  */
+  function startQueue (node, msg, sonosPlayer, serial) {
+    const sonosFunction = 'start queue';
+    const mac = serial.split(':')[0];
+    const uri = `x-rincon-queue:RINCON_${mac}0${sonosPlayer.port}#0`;
+    console.log(JSON.stringify(uri));
+    NrcspSonos.setAVTransportURI(sonosPlayer, uri, '')
+      .then((result) => {
+        NrcspSonos.play(sonosFunction);
+      })
+      .then((result) => {
+        NrcspHelpers.success(node, msg, sonosPlayer);
       })
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }

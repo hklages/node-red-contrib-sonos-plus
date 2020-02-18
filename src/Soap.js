@@ -177,25 +177,6 @@ module.exports = {
     }
   },
 
-  /** Find item with property title matching serach string in array
-  * @param  {Array} items array of objects with property title
-    * @param  {Array} searchString string of objects with property title
-  * @return {promise} object {title, uri, meta} or null if not found
-  */
-
-  findInArray: async function (items, searchString) {
-    console.log('started findInArray');
-    for (var i = 0; i < items.length; i++) {
-      console.log(items[i].title);
-      if (items[i].title.includes(searchString)) {
-        console.log('found item');
-        return { title: items[i].title, uri: items[i].uri, metaData: items[i].metaData };
-      }
-    }
-    // not found
-    throw new Error('No title machting msg.topic found. Modify msg.topci');
-  },
-
   /** Extract list with title, albumArt, uri and metadata from given input
   * @param  {Object} body response from SONOS player on a SOAP request
   * @return {promise} JSON format

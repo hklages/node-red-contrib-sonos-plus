@@ -18,7 +18,7 @@ RED.nodes.registerType('sonos-manage-mysonos', {
   inputs: 1, // set the number of inputs - only 0 or 1
   outputs: 1, // set the number of outputs - 0 to n
   icon: 'sonos.png', // saved in  icons/myicon.png
-  color: '#edb88a',
+  color: '#95c292',
   label: function () {
     return this.name || 'Manage My Sonos';
   },
@@ -72,7 +72,7 @@ RED.nodes.registerType('sonos-manage-mysonos', {
 
   Accepted values for <code>payload</code> are:
   <ul>
-  <li><b>play</b> and as topic a part of the title (unique search string)</li>
+  <li><b>add</b> and as topic the search string (part of title)</li>
   <li><b>get_items</b> Outputs the array of all My Sonos items</li>
   </ul>
 </script>

@@ -19,7 +19,59 @@
       "Result"
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
-    "info": "ObjectID: FV:2 = Get the My Sonos",
+    "info": "ObjectID: FV:2 = Get the My Sonos"
+  },
+  "setAVTransportURI": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "SetAVTransportURI",
+    "args": {
+      "InstanceID": 0,
+      "CurrentURI": "",
+      "CurrentURIMetaData": ""
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetAVTransportURIResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "set the player to specific playing mode: queue (x-rincon-queue:<macaddress>0<port>#0), stream, tv, ...",
+    "status": "in work"
+  },
+  "play": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "Play",
+    "args": {
+      "InstanceID": 0,
+      "Speed": 1
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:PlayResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "start playing"
+  },
+  "removeAllTracksFromQueue": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "RemoveAllTracksFromQueue",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:RemoveAllTracksFromQueueResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "flush queue",
     "status": "in work"
   },
   "addURIToQueue": {
@@ -40,8 +92,7 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
-    "info": "Add uri to queue, Enqueued meta data in DIDL light format",
-    "status": "in work"
+    "info": "Add uri to queue, Enqueued meta data in DIDL light format"
   },
   "seek": {
     "path": "/MediaRenderer/AVTransport/Control",
