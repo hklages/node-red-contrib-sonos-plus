@@ -1,26 +1,30 @@
 [
   {
-    "Spotify": 9
+    "name": "Spotify",
+    "sid": 9
   },
   {
-    "SiriusXM": 37
+    "name": "SiriusXM",
+    "sid": 37
   },
   {
-    "Soundcloud": 160
+    "name": "Soundcloud",
+    "sid": 160
   },
   {
-    "Amazon": 201
+    "name": "Amazon",
+    "sid": 201
   },
   {
-    "Napster": 203
+    "name": "Napster",
+    "sid": 203
   },
   {
-    "Napster": 204
+    "name": "Antenne",
+    "sid": 269
   },
   {
-    "Napster": 236
-  },
-  {
-    "Tunein": 254
+    "name": "TuneIn",
+    "sid": 254
   }
 ]

@@ -1,6 +1,5 @@
 const NrcspHelpers = require('./Helper.js');
 const NrcspSonos = require('./Sonos-Commands.js');
-const NrcspSoap = require('./Soap.js');
 
 module.exports = function (RED) {
   'use strict';
@@ -110,68 +109,74 @@ module.exports = function (RED) {
   // Commands
   // -----------------------------------------------------
 
-  /**  Get list of My Sonos items.
+  /**  Get array of My Sonos items.
   * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * change msg.payload to current array of my Sonos items
+  * @param  {Object} msg incoming message
+  * @param  {Object} sonosPlayer Sonos Player
+  * @output {Object} msg.payload  = array of my Sonos items with title, albumArt,uri, metaData, sid, upnpClass, processingType
+  * uri, metadata, sid, upnpclass: empty string are allowed
   */
   function getMySonos (node, msg, sonosPlayer) {
-    const sonosFunction = 'get items';
+    const sonosFunction = 'get My Sonos items';
 
     NrcspSonos.getAllMySonosItems(sonosPlayer)
       .then((items) => {
+        if (items.length === 0) {
+          throw new Error('n-r-c-s-p: could not find any My Sonos items');
+        }
         msg.payload = items;
         NrcspHelpers.success(node, msg, sonosFunction);
       })
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
-  /**  add My Sonos item to queue
+  /**  add first My Sonos item - matching search string and filter - to SONOS queue.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
-            {String} msg.topic title
+  * @param  {String} msg.topic search string
+  * @param  {Object} msg.filter example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
   * @param  {Object} sonosPlayer Sonos Player
   * @output: {Object} msg unmodified / stopped in case of error
+  * Info:  content valdidation of mediaType, serviceName in NrcspSonos.findStringInMySonosTitle
   */
   function addToQueue (node, msg, sonosPlayer) {
-    const sonosFunction = 'add mysonos item to queue';
+    const sonosFunction = 'add my sonos item to queue';
 
-    // validate msg.topic an
+    // validate msg.topic
     if (typeof msg.topic === 'undefined' || msg.topic === null ||
       (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
-    // create filter for not stream and type
-    const filter = { stream: false }; // no streams!
-    // validate msg.filter
+    // create filter object with processingType queue
+    const filter = { processingType: 'queue' }; // no streams!
+
     if (!(typeof msg.filter === 'undefined' || msg.filter === null ||
       (typeof msg.filter === 'number' && isNaN(msg.filter)) || msg.filter === '')) {
-      const filterString = msg.filter;
-      if (filterString.startsWith('type')) {
-        const type = filterString.susbstring('type'.length); // because of :
-        if (NrcspSonos.FILTER_TYPES.includes(type)) {
-          filter.type = type;
-        } else {
-          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter parameter'), sonosFunction);
-          return;
-        }
+      // check existens and value of media type
+      if (!(typeof msg.filter.mediaType === 'undefined' || msg.filter.mediaType === null ||
+          (typeof msg.filter.mediaType === 'number' && isNaN(msg.filter.mediaType)) || msg.filter.mediaType === '')) {
+        filter.mediaType = msg.filter.mediaType;
       } else {
-        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter - must start with keyword type'), sonosFunction);
-        return;
+        throw new Error('n-r-c-s-p: missing media type' + JSON.stringify(msg.filter.mediaType));
       }
-    } else {
-      filter.type = 'all';
+      // check existens of service name
+      if (!(typeof msg.filter.serviceName === 'undefined' || msg.filter.serviceName === null ||
+          (typeof msg.filter.serviceName === 'number' && isNaN(msg.filter.serviceName)) || msg.filter.serviceName === '')) {
+        filter.serviceName = msg.filter.serviceName;
+      } else {
+        throw new Error('n-r-c-s-p: missing service name' + JSON.stringify(msg.filter.serviceName));
+      }
+    } else { // default
+      filter.serviceName = 'all';
+      filter.mediaType = 'all';
     }
+    node.debug('filter value >>>' + JSON.stringify(filter));
 
     NrcspSonos.getAllMySonosItems(sonosPlayer)
       .then((items) => {
-        return NrcspSonos.filterMySonosItems(items, filter);
-      })
-      .then((filteredItems) => {
-        return NrcspSonos.findInArray(filteredItems, msg.topic);
+        return NrcspSonos.findStringInMySonosTitle(items, msg.topic, filter);
       })
       .then((found) => {
         console.log(JSON.stringify(found));
@@ -183,12 +188,12 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
 
-  /**  play My Sonos stream
+  /** play stream from My Sonos streams matching search string in msg.topic
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
-            {String} msg.topic title
+  * @param  {String} msg.topic search string for title
   * @param  {Object} sonosPlayer Sonos Player
-  * @output: {Object} msg unmodified / stopped in case of error
+  * @output {Object} msg unmodified / stopped in case of error
   */
   function playStream (node, msg, sonosPlayer) {
     const sonosFunction = 'play my sonos stream';
@@ -199,65 +204,21 @@ module.exports = function (RED) {
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
-
-    const filter = { stream: true }; // only streams
-    // validate msg.filter
-    if (!(typeof msg.filter === 'undefined' || msg.filter === null ||
-      (typeof msg.filter === 'number' && isNaN(msg.filter)) || msg.filter === '')) {
-      const filterString = msg.filter;
-      if (filterString.startsWith('type')) {
-        const type = filterString.susbstring('type'.length); // because of :
-        if (NrcspSonos.FILTER_TYPES.includes(type)) {
-          filter.type = type;
-        } else {
-          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter parameter'), sonosFunction);
-          return;
-        }
-      } else {
-        NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid filter - must start with keyword type'), sonosFunction);
-        return;
-      }
-    } else {
-      filter.type = 'all';
-    }
+    // TODO similiar to addURI, get service provider!
+    const filter = { processingType: 'stream', mediaType: 'all', serviceName: 'all' }; // only streams
 
     NrcspSonos.getAllMySonosItems(sonosPlayer)
       .then((items) => {
-        return NrcspSonos.filterMySonosItems(items, filter);
-      })
-      .then((filteredItems) => {
-        return NrcspSonos.findInArray(filteredItems, msg.topic);
+        return NrcspSonos.findStringInMySonosTitle(items, msg.topic, filter);
       })
       .then((found) => {
         console.log(JSON.stringify(found));
-        console.log(found.uri);
-        console.log(found.metaData);
         return sonosPlayer.setAVTransportURI(found.uri, found.metaData);
-        // return NrcspSonos.setAVTransportURI(sonosPlayer, found.uri, NrcspSoap.encodeXml(found.metaData));
+        // TODO switch to NrcspSonos.set...
+        // return NrcspSonos.setAVTransportURI(sonosPlayer, found.uri, found.metaData);
       })
       .then((result) => {
         NrcspHelpers.success(node, msg, sonosFunction);
-      })
-      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
-  }
-
-  /**  start queue
-  * @param  {Object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * change msg.payload to current array of my Sonos items
-  */
-  function startQueue (node, msg, sonosPlayer, serial) {
-    const sonosFunction = 'start queue';
-    const mac = serial.split(':')[0];
-    const uri = `x-rincon-queue:RINCON_${mac}0${sonosPlayer.port}#0`;
-    console.log(JSON.stringify(uri));
-    NrcspSonos.setAVTransportURI(sonosPlayer, uri, '')
-      .then((result) => {
-        NrcspSonos.play(sonosFunction);
-      })
-      .then((result) => {
-        NrcspHelpers.success(node, msg, sonosPlayer);
       })
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
   }
