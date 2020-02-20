@@ -5,7 +5,7 @@ const NrcspSoap = require('./Soap.js');
 module.exports = {
 
   // SONOS related data
-  MEDIA_TYPES: ['all', 'playlist', 'Album', 'Track'],
+  MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
 
   // SONOS Functions
 
@@ -16,7 +16,7 @@ module.exports = {
   */
   getAllMySonosItems: async function (sonosPlayer) {
     // receive data from player
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.browse;
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.Browse;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.ObjectID = 'FV:2'; // My Sonos
     const { baseUrl, path, name, action, args } = actionParameter;
@@ -47,7 +47,7 @@ module.exports = {
   */
   addToQueue: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.addURIToQueue;
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.AddURIToQueue;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(uri);
     actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
@@ -80,7 +80,7 @@ module.exports = {
   */
   setAVTransportURI: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.setAVTransportURI;
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.SetAVTransportURI;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(uri);
     actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
@@ -111,7 +111,7 @@ module.exports = {
   */
   play: async function (sonosPlayer) {
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.play;
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.Play;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     console.log(actionParameter.baseUrl);
     const { baseUrl, path, name, action, args } = actionParameter;
@@ -162,12 +162,12 @@ module.exports = {
     if (!this.MEDIA_TYPES.includes(filter.mediaType)) {
       throw new Error('n-r-c-s-p: invalid media type ' + filter.mediaType);
     }
-
+    const correctedMediaType = (filter.mediaType === 'playlist' ? 'Playlist' : filter.mediaType);
     for (var i = 0; i < items.length; i++) {
       if ((items[i].title.includes(searchString)) &&
         (items[i].processingType === filter.processingType) &&
         (items[i].sid === service.sid || filter.serviceName === 'all') &&
-        (items[i].upnpClass.includes(filter.mediaType) || filter.mediaType === 'all')) {
+        (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all')) {
         return { title: items[i].title, uri: items[i].uri, metaData: items[i].metaData };
       }
     }

@@ -26,16 +26,14 @@ module.exports = function (RED) {
       node.debug('node - msg received');
 
       // if ip address exist use it or get it via discovery based on serialNum
-      if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
-        (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
-        // exisiting ip address - fastes solution, no discovery necessary
+      if (!NrcspHelpers.isInvalidProperty(configNode, ['ipaddress']) && configNode.ipaddress.trim().length >= 7) {
+        // TODO should here do a regex test
         node.debug('using IP address of config node');
         processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
         NrcspHelpers.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
-        if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
-                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
+        if (!NrcspHelpers.isInvalidProperty(configNode, ['serialnum']) && configNode.serialnum.trim().length >= 19) {
           NrcspHelpers.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
               NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
@@ -90,10 +88,10 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'get_items') {
       getMySonos(node, msg, sonosPlayer);
-    } else if (command === 'add') {
-      addToQueue(node, msg, sonosPlayer);
-    } else if (command === 'play_stream') {
-      playStream(node, msg, sonosPlayer);
+    } else if (command === 'queue') {
+      queue(node, msg, sonosPlayer);
+    } else if (command === 'stream') {
+      stream(node, msg, sonosPlayer);
     } else if (command === 'lab_test') {
       NrcspSonos.play(sonosPlayer)
         .then((result) => {
@@ -139,7 +137,7 @@ module.exports = function (RED) {
   * @output: {Object} msg unmodified / stopped in case of error
   * Info:  content valdidation of mediaType, serviceName in NrcspSonos.findStringInMySonosTitle
   */
-  function addToQueue (node, msg, sonosPlayer) {
+  function queue (node, msg, sonosPlayer) {
     const sonosFunction = 'add my sonos item to queue';
 
     // validate msg.topic
@@ -195,7 +193,7 @@ module.exports = function (RED) {
   * @param  {Object} sonosPlayer Sonos Player
   * @output {Object} msg unmodified / stopped in case of error
   */
-  function playStream (node, msg, sonosPlayer) {
+  function stream (node, msg, sonosPlayer) {
     const sonosFunction = 'play my sonos stream';
 
     // validate msg.topic.

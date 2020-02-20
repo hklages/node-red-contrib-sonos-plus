@@ -178,5 +178,29 @@ module.exports = {
     node.send(msg);
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
     node.debug(`ok:${functionName}`);
+  },
+
+  // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
+  // pass in your object structure as array elements
+  // const name = getNestedObject(user, ['personalInfo', 'name']);
+  // to access nested array, just pass in array index as an element the path array.
+  // const city = getNestedObject(user, ['personalInfo', 'addresses', 0, 'city']);
+  // this will return the city from the first address item.
+
+  getNestedObject: (nestedObj, pathArray) => {
+    return pathArray.reduce((obj, key) =>
+      (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+  },
+
+  isInvalidProperty: (nestedObj, pathArray) => {
+    const property = module.exports.getNestedObject(nestedObj, pathArray);
+    return typeof property === 'undefined' || property === null ||
+      (typeof property === 'number' && isNaN(property));
+  },
+
+  isInvalidPropertyOrEmpty: (nestedObj, pathArray) => {
+    const property = module.exports.getNestedObject(nestedObj, pathArray);
+    return typeof property === 'undefined' || property === null ||
+      (typeof property === 'number' && isNaN(property)) || property === '';
   }
 };

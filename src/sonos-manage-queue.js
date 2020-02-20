@@ -1362,11 +1362,11 @@ module.exports = function (RED) {
     }
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.seek;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.Seek;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
@@ -1427,7 +1427,7 @@ module.exports = function (RED) {
     const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"><item id="100e004cexplore%3aplaylist%3a%3app.382494011" parentID="10fe2064explore%3atag%3a%3atag.382553059" restricted="true"><dc:title>20 Jahre Napster: 1999</dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_heklaf@gmail.com</desc></item></DIDL-Lite>';
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.addURIToQueue;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.AddURIToQueue;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcsSoap.encodeXml(newUri);
     actionParameter.args.EnqueuedURIMetaData = NrcsSoap.encodeXml(newMetadata);

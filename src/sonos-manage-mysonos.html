@@ -55,7 +55,7 @@ RED.nodes.registerType('sonos-manage-mysonos', {
       <dd>A command. Valid commands see Details.</dd>
 
       <dt>topic <span class="property-type">string</span> </dt>
-      <dd>Parameter - part of the My Sonos title.</dd>
+      <dd>Parameter - part of the My Sonos title. CASE SENSITIVE!</dd>
 
   </dl>
 
@@ -72,7 +72,8 @@ RED.nodes.registerType('sonos-manage-mysonos', {
 
   Accepted values for <code>payload</code> are:
   <ul>
-  <li><b>add</b> and as topic the search string (part of title)</li>
+  <li><b>queue</b> queue the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive</li>
+  <li><b>stream</b> stream the found item (stream, radio). msg.topic is title search string - case sensitive</li>
   <li><b>get_items</b> Outputs the array of all My Sonos items</li>
   </ul>
 </script>
