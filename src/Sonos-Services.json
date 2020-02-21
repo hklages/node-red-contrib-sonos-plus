@@ -20,11 +20,15 @@
     "sid": 203
   },
   {
-    "name": "Antenne",
-    "sid": 269
+    "name": "Radioplayer",
+    "sid": 232
   },
   {
     "name": "TuneIn",
     "sid": 254
+  },
+  {
+    "name": "Antenne",
+    "sid": 269
   }
 ]

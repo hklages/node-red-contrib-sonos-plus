@@ -1,6 +1,7 @@
 'use strict';
 
 const NrcspSoap = require('./Soap.js');
+const NrcspHelpers = require('./Helper.js');
 
 module.exports = {
 
@@ -14,7 +15,7 @@ module.exports = {
   * @returns {promise} array of My Sonos items
   *
   * Restrictions: Sonos Favorites itmes are missing.
-  * Restrictions: MusicLibrary without ervice id.
+  * Restrictions: MusicLibrary without service id.
   * Restrictions: Audible Audiobooks are missing.
   * Restrictions: Pocket Casts Podcasts without uri, only metaData
   */
@@ -40,6 +41,14 @@ module.exports = {
       return (object || {})[path];
     }, bodyXml);
     const list = await NrcspSoap.parseBrowseFavoritesResults(result);
+
+    list.forEach((item, i) => {
+      if (NrcspHelpers.isValidProperty(item, ['albumArt'])) {
+        if (item.albumArt.startsWith('/getaa')) {
+          item.albumArt = `http://${sonosPlayer.host}:${sonosPlayer.port}` + item.albumArt;
+        }
+      }
+    });
     return list;
   },
 

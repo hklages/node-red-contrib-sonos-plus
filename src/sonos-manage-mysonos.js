@@ -106,7 +106,7 @@ module.exports = function (RED) {
   // Commands
   // -----------------------------------------------------
 
-  /**  output array of My Sonos items as object.
+  /**  outputs array of My Sonos items as object.
   * @param  {Object} node current node
   * @param  {Object} msg incoming message
   * @param  {Object} sonosPlayer Sonos Player
@@ -190,7 +190,7 @@ module.exports = function (RED) {
     const sonosFunction = 'play my sonos stream';
 
     // validate msg.topic.
-    if (NrcspHelpers.isValidPropertyNotEmptyString(msg, ['topic'])) {
+    if (!NrcspHelpers.isValidPropertyNotEmptyString(msg, ['topic'])) {
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -203,9 +203,26 @@ module.exports = function (RED) {
       })
       .then((found) => {
         console.log(JSON.stringify(found));
-        return sonosPlayer.setAVTransportURI(found.uri, found.metaData);
         // TODO switch to NrcspSonos.set...
-        // return NrcspSonos.setAVTransportURI(sonosPlayer, found.uri, found.metaData);
+        return sonosPlayer.setAVTransportURI(found.uri, found.metaData);
+      })
+      .then(() => { // optionally modify change volume
+        if (NrcspHelpers.isValidPropertyNotEmptyString(msg, ['volume'])) {
+          const newVolume = parseInt(msg.volume);
+          if (Number.isInteger(newVolume)) {
+            if (newVolume > 0 && newVolume < 100) {
+              // play and change volume
+              node.debug('msg.volume is in range 1...99: ' + newVolume);
+              return sonosPlayer.setVolume(msg.volume);
+            } else {
+              node.debug('msg.volume is not in range: ' + newVolume);
+              throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+            }
+          } else {
+            node.debug('msg.volume is not number');
+            throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+          }
+        }
       })
       .then((result) => NrcspHelpers.success(node, msg, sonosFunction))
       .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
