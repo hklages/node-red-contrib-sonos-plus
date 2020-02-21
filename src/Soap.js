@@ -7,9 +7,9 @@ module.exports = {
 
   // SOAP related data
 
-  ACTIONS_TEMPLATES: require('./Soap-Actions.json'),
+  ACTIONS_TEMPLATES: require('./Sonos-Actions.json'),
   ERROR_CODES: require('./Soap-Error-Codes.json'),
-  SERVICES: require('./Service-Ids.json'),
+  SERVICES: require('./Sonos-Services.json'),
 
   UNPN_CLASSES_UNSUPPORTED: ['object.container.podcast.#podcastContainer', 'object.container.albumlist'],
   UPNP_CLASSES_STREAM: ['object.item.audioItem.audioBroadcast'],

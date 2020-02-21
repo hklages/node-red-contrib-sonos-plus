@@ -8,17 +8,11 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
+- My Sonos node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks, stream stations - selection via title search string.
+
+- Improved error handling
+
 - CAUTION: Changed get/set_crossfademode to get/set_crossfade  (now without mode)
-
-- Node Control Player: added set_loudness
-
-- Node Get Status: addes get_loudness
-
-- Node Manage Queue: added seek command (move to position in song)
-
-- Node Control Player: added set_sleeptimer
-
-- Node Get Stats: added get_sleeptimer
 
 ## Installation
 
@@ -27,14 +21,14 @@ Install directly from your NodeRED's setting pallete.
 ## Major Functions
 
 - SONOS Player: Simply select the SONOS player in ConfigNode by search button (recommendation: enter IP address, processing is faster)
-- Basic functions: play, stop, pause, mute, group, activate line in, ...
+- QUEUE playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
+- STREAM station from Napster, Amazon, TuneIn, Antenne, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
-- Stations: Convenient selection of "My Sonos" radio station from TuneIn and Amazon Prime by name (search string in station name).
-- Spotify: Insert playlists, album, songs from My Sonos - using search string in playlist name - or direct with uri
-- Playlists: Insert Amazon Prime playlist from My Sonos - using search string in playlist name
+- Basic functions: play, stop, pause, mute, group, activate line in, ...
+- Spotify: Insert playlists, album, songs with uri
 - Playlists: Insert Music Library playlist or Sonos playlist - using search string in playlist name
 - Notification: Interrupt current song and play a notification
-- Special options: Set Crossface, NightLevel, SpeechEnhancement mode
+- Special options: Set Loudness, Crossface, NightMode, SpeechEnhancement mode, ...
 - Test: Test command to check whether SONOS player is reachable ( means on and really a SONOS player)
 - Information: Provides many kinds of current song information: artist, title, media information and radio station name
 

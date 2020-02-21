@@ -14,8 +14,9 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!NrcspHelpers.validateConfigNode(configNode)) {
-      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!((NrcspHelpers.isValidProperty(configNode, ['ipaddress']) && NrcspHelpers.REGEX_IP.test(configNode.ipaddress)) ||
+      (NrcspHelpers.isValidProperty(configNode, ['serialnum']) && NrcspHelpers.REGEX_SERIAL.test(configNode.serialnum)))) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
       return;
     }
 

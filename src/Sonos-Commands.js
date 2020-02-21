@@ -7,12 +7,16 @@ module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
 
-  // SONOS Functions
+  // ======================  SONOS COMBINED COMMANDS
 
-  /**  Get list of all My Sonos items.
+  /**  get array of all My Sonos items as object.
   * @param  {Object} sonosPlayer Sonos Player
-  * @output {promise} items
-  * array of my Sonos items as object.
+  * @returns {promise} array of My Sonos items
+  *
+  * Restrictions: Sonos Favorites itmes are missing.
+  * Restrictions: MusicLibrary without ervice id.
+  * Restrictions: Audible Audiobooks are missing.
+  * Restrictions: Pocket Casts Podcasts without uri, only metaData
   */
   getAllMySonosItems: async function (sonosPlayer) {
     // receive data from player
@@ -39,22 +43,24 @@ module.exports = {
     return list;
   },
 
-  /**  Adds all tracks given uri to SONOS queue: single song, album, playlist
+  /**  queues My Sonos item (aka adds all tracks to SONOS queue): single song, album, playlist
   * @param  {Object} sonosPlayer Sonos Player
   * @param  {string} uri  uri
   * @param  {string} meta  meta data
   * array of my Sonos items as object.
   */
-  addToQueue: async function (sonosPlayer, uri, meta) {
+  queue: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.AddURIToQueue;
+    const ACTION = 'AddURIToQueue';
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES[ACTION];
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(uri);
     actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
     const { baseUrl, path, name, action, args } = actionParameter;
+
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
-    // convert to SOAP XML to JSON
+    // check response - convert XML to JSON
     let bodyXml;
     if (response.statusCode === 200) { // maybe not necessary as promise will throw error
       bodyXml = await NrcspSoap.parseSoapBody(response.body);
@@ -62,7 +68,7 @@ module.exports = {
       throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
     }
 
-    // select/transform item properties
+    // check response - select/transform item properties
     const paths = actionParameter.responsePath;
     const result = paths.reduce((object, path) => {
       return (object || {})[path];
@@ -73,14 +79,18 @@ module.exports = {
     return true;
   },
 
-  /**  set AVTransportURI: plays a stream or changes to different line
+  /**  stream uri
   * @param  {Object} sonosPlayer Sonos Player
   * @param  {string} uri  uri
   * @param  {string} meta  meta data
   */
-  setAVTransportURI: async function (sonosPlayer, uri, meta) {
+
+  // TODO currently not working
+
+  stream: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.SetAVTransportURI;
+    const ACTION = 'SetAVTransportURI';
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES[ACTION];
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(uri);
     actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
@@ -88,7 +98,7 @@ module.exports = {
     const { baseUrl, path, name, action, args } = actionParameter;
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
-    // convert to SOAP XML to JSON
+    // check response - select/transform item properties
     let bodyXml;
     if (response.statusCode === 200) { // maybe not necessary as promise will throw error
       bodyXml = await NrcspSoap.parseSoapBody(response.body);
@@ -96,7 +106,7 @@ module.exports = {
       throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
     }
 
-    // select/transform item properties
+    // check response - select/transform item properties
     const paths = actionParameter.responsePath;
     const result = paths.reduce((object, path) => {
       return (object || {})[path];
@@ -106,18 +116,21 @@ module.exports = {
     }
     return true;
   },
-  /**  play
+
+  // ======================  SONOS BASE COMMANDS TODO TEMPLATE!
+
+  /**  play (content must be available)
   * @param  {Object} sonosPlayer Sonos Player
   */
   play: async function (sonosPlayer) {
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.Play;
+    const ACTION = 'Play';
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES[ACTION];
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    console.log(actionParameter.baseUrl);
     const { baseUrl, path, name, action, args } = actionParameter;
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
-    // convert to SOAP XML to JSON
+    // check response - select/transform item properties
     let bodyXml;
     if (response.statusCode === 200) { // maybe not necessary as promise will throw error
       bodyXml = await NrcspSoap.parseSoapBody(response.body);
@@ -125,7 +138,7 @@ module.exports = {
       throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
     }
 
-    // select/transform item properties
+    // check response - select/transform item properties
     const paths = actionParameter.responsePath;
     const result = paths.reduce((object, path) => {
       return (object || {})[path];
@@ -135,6 +148,8 @@ module.exports = {
     }
     return true;
   },
+
+  // ======================  HELPERS
 
   /** find searchString in My Sonos items, property title
   * @param  {Array} items array of objects with property title, ...
@@ -151,23 +166,26 @@ module.exports = {
     console.log(JSON.stringify(filter));
 
     // get service id from filter.serviceName or set '' if all.
-    let service;
-    if (filter.serviceName !== 'all') {
+    let service = { name: 'unknown', sid: '' };
+    // Why: Apart from service there can also be My Sonos item from Music Library
+    if (filter.serviceName !== 'all' && filter.serviceName !== 'MusicLibrary') {
       service = NrcspSoap.SERVICES.find(o => o.name === filter.serviceName);
       if (!service) {
         throw new Error('n-r-c-s-p: service currently not supported > ' + filter.serviceName);
       }
     }
-
-    if (!this.MEDIA_TYPES.includes(filter.mediaType)) {
+    console.log('service: ' + JSON.stringify(service));
+    if (!module.exports.MEDIA_TYPES.includes(filter.mediaType)) {
       throw new Error('n-r-c-s-p: invalid media type ' + filter.mediaType);
     }
-    const correctedMediaType = (filter.mediaType === 'playlist' ? 'Playlist' : filter.mediaType);
+    // Why: In upnp class playlist has small letters Album, Track but playlist
+    const correctedMediaType = (filter.mediaType === 'Playlist' ? 'playlist' : filter.mediaType);
     for (var i = 0; i < items.length; i++) {
+      console.log(items[i].title);
       if ((items[i].title.includes(searchString)) &&
         (items[i].processingType === filter.processingType) &&
-        (items[i].sid === service.sid || filter.serviceName === 'all') &&
-        (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all')) {
+        (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all') &&
+        (items[i].sid === service.sid || filter.serviceName === 'all' || (filter.serviceName === 'MusicLibrary' && items[i].sid === ''))) {
         return { title: items[i].title, uri: items[i].uri, metaData: items[i].metaData };
       }
     }

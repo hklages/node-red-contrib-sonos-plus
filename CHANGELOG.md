@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] 2020-02-22
+### Added
+- My Sonos node: get_items outputs all My Sonos items (except Sonos Favorites, Audible audiobooks, ... )
+- My Sonos node: stream stations from Amazon, Napster, TuneIn, Antenna, ....
+- My Sonos node: queue playlists, albums, tracks from Spotify, Amazon, Napster, ....
+
+### Changed
+- Error handling revised
+
 ## [1.4.0] 2020-02-15
 ### Added
 - Manage Queue: seek command

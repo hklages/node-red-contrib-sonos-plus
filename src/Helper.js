@@ -6,37 +6,12 @@ module.exports = {
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
   EQ_TYPES: ['SubGain', 'DialogLevel', 'NightMode'],
-  REGEXSTRING_TIME: '([0-1][0-9]):([0-5][0-9]):([0-5][0-9])', // Only hh:mm:ss and hours from 0 to 19
+
+  REGEX_TIME: /([0-1][0-9]):([0-5][0-9]):([0-5][0-9])/, // Only hh:mm:ss and hours from 0 to 19
+  REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
+  REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
 
   // functions to be used in other modules
-
-  /** Validate configNode.
-  * @param  {object} configNode corresponding configNode
-  * @return {Boolean} true if: object not null, not undefined and either ipaddress with corect syntax  or serial exists
-  * for ip: uses length >= 7 and regex, for serial number only length >= 20
-  */
-  validateConfigNode: (configNode) => {
-    if (typeof configNode === 'undefined' || configNode === null ||
-      (typeof configNode === 'number' && isNaN(configNode)) || configNode === '') {
-      return false;
-    }
-    // minimum ip adddres: 1.1.1.1 (lenght 7)
-    if (typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
-      (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || (configNode.ipaddress.trim()).length < 7) {
-      return !(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
-                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19);
-    } else {
-      const IPREGEX = /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/;
-      if ((configNode.ipaddress.trim()).match(IPREGEX)) {
-        // prefered case: valid ip address
-        return true;
-      } else {
-        // 5C-AA-FD-00-22-36:1 (length 19)
-        return !(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
-                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19);
-      }
-    }
-  },
 
   /** Starts async discovery of sonos player and returns ipAddress - used in callback.
   * @param  {Object} node current node
@@ -186,21 +161,18 @@ module.exports = {
   // to access nested array, just pass in array index as an element the path array.
   // const city = getNestedObject(user, ['personalInfo', 'addresses', 0, 'city']);
   // this will return the city from the first address item.
-
   getNestedObject: (nestedObj, pathArray) => {
     return pathArray.reduce((obj, key) =>
       (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
   },
 
-  isInvalidProperty: (nestedObj, pathArray) => {
+  isValidProperty: (nestedObj, pathArray) => {
     const property = module.exports.getNestedObject(nestedObj, pathArray);
-    return typeof property === 'undefined' || property === null ||
-      (typeof property === 'number' && isNaN(property));
+    return typeof property !== 'undefined';
   },
 
-  isInvalidPropertyOrEmpty: (nestedObj, pathArray) => {
+  isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
     const property = module.exports.getNestedObject(nestedObj, pathArray);
-    return typeof property === 'undefined' || property === null ||
-      (typeof property === 'number' && isNaN(property)) || property === '';
+    return typeof property !== 'undefined' && property !== '';
   }
 };
