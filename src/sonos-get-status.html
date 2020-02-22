@@ -61,8 +61,8 @@ RED.nodes.registerType('sonos-get-status', {
 
 	<h3>Outputs</h3>
 
-  The commands <b>get_state/volume/muted/name/led/properties/positioninfo/songinfo/mysonos</b> outputs only to <code>payload</code> only.
-  The command <b>get_songmedia</b> outputs to all of the properties beneath. The command <b>get_mediainof</b> outputs to payload and queueActivated.
+  The commands <b>get_state/volume/muted/name/led/properties/positioninfo/songinfo/mysonos</b> outputs only to <code>payload</code>.
+  The command <b>get_songmedia</b> outputs to all several properties beneath. The command <b>get_mediainfo</b> outputs to payload and queueActivated.
   The command <b>songinfo</b> outputs to payload and albumArtURI, artist, title.
   <dl class="message-properties">
 
@@ -132,7 +132,6 @@ RED.nodes.registerType('sonos-get-status', {
     <li><b>get_crossfade</b> Outputs current crossfade (On/Off)</li>
     <li><b>get_loudness</b> Outputs loundness (On/Off)</li>
     <li><b>get_sleeptimer</b> Outputs remaining sleep timer</li>
-    <li><b>get_mysonos</b> Outputs an array of all My Sonos items</li>
     <br/>
     <li><b>test_connected</b> Outputs boolean true, if player is reachable</li>
   </ul>

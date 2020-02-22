@@ -20,8 +20,20 @@
     "sid": 203
   },
   {
+    "name": "Apple",
+    "sid": 204
+  },
+  {
+    "name": "AldiLife",
+    "sid": 216
+  },
+  {
     "name": "Radioplayer",
     "sid": 232
+  },
+  {
+    "name": "Pandora",
+    "sid": 236
   },
   {
     "name": "TuneIn",

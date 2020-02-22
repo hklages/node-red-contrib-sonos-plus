@@ -8,7 +8,7 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
-- My Sonos node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks, stream stations - selection via title search string.
+- New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.
 
 - Improved error handling
 
@@ -21,8 +21,8 @@ Install directly from your NodeRED's setting pallete.
 ## Major Functions
 
 - SONOS Player: Simply select the SONOS player in ConfigNode by search button (recommendation: enter IP address, processing is faster)
-- QUEUE playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
-- STREAM station from Napster, Amazon, TuneIn, Antenne, ... with My Sonos by using a title search string
+- Queue playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
+- Stream stations from Amazon, Napster, TuneIn, Radioplayer, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
 - Basic functions: play, stop, pause, mute, group, activate line in, ...
 - Spotify: Insert playlists, album, songs with uri

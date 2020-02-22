@@ -65,15 +65,15 @@ RED.nodes.registerType('sonos-manage-mysonos', {
       <dt>payload
           <span class="property-type">string</span>
       </dt>
-      <dd>title of items from my Sonos or in case of <b>get_mysonos</b> the array of itmes.</dd>
+      <dd>In case of <b>get_items</b> the array of items.</dd>
   </dl>
 
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
   <ul>
-  <li><b>queue</b> queue the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive</li>
-  <li><b>stream</b> stream the found item (stream, radio). msg.topic is title search string - case sensitive</li>
+  <li><b>queue</b> queues the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive</li>
+  <li><b>stream</b> streams the found item (stream, radio). msg.topic is title search string - case sensitive</li>
   <li><b>get_items</b> Outputs the array of all My Sonos items</li>
   </ul>
 </script>

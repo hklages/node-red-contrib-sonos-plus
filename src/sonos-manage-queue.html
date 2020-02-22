@@ -85,8 +85,6 @@ RED.nodes.registerType('sonos-manage-queue', {
     <li><b>insert_uri</b> Inserts a song or a complete playlist into queue. <code>topic</code> provides uri</li>
     <li><b>insert_spotify_uri</b> Inserts a spotify song, album, playlist into queue. <code>topic</code> provides uri. <code>region</code> specifies the Spotify region</li>
     <li><b>insert_prime_playlisturi</b> Inserts all songs of a Amazon Prime playlist into queue. <code>topic</code> provides uri</li>
-    <li><b>insert_spotify</b> Inserts all songs of a My Sonos Spotify item into queue. <code>topic</code> provides search string. <code>region</code> specifies the Spotify region</li>
-    <li><b>insert_amazonprime_playlist</b> Inserts all songs of a My Sonos Amazon Prime playlist into queue. <code>topic</code> provides search string</li>
     <li><b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string</li>
     <li><b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string</li>
     <br/>
@@ -101,15 +99,11 @@ RED.nodes.registerType('sonos-manage-queue', {
     <br/>
     <li><b>get_queue</b> Outputs the current queue as output</li>
     <li><b>get_queuemode</b> Gets the current queue mode</li>
-    <li><b>get_spotify</b> Outputs an array of all My Sonos Spotify items</li>
-    <li><b>get_amazonprime_playlists</b> Outputs an array of all My Sonos Amazon Prime playlists</li>
     <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
     <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>
   </ul>
 The scope for the search string is:
 <ul>
-<li>all My Sonos Spotify items (playlist, album, songs) for insert_spotify</li>
-<li>all My Sonos Amazon Prime playlists for insert_amazonprime_playlist /get </li>
 <li>all SONOS playlists for insert_sonos_playlist/ get</li>
 <li>all imported Music Library playlists for insert_musiclibrary_playlist/ get</li>
 </ul>
