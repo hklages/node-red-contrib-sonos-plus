@@ -1,0 +1,271 @@
+{
+  "Browse": {
+    "path": "/MediaServer/ContentDirectory/Control",
+    "name": "ContentDirectory",
+    "action": "Browse",
+    "args": {
+      "InstanceID": 0,
+      "BrowseFlag": "BrowseDirectChildren",
+      "Filter": "*",
+      "StartingIndex": "0",
+      "RequestedCount": "100",
+      "SortCriteria": "",
+      "ObjectID": "FV:2"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:BrowseResponse",
+      "Result"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "ObjectID: FV:2 = Get the My Sonos"
+  },
+  "SetAVTransportURI": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "SetAVTransportURI",
+    "args": {
+      "InstanceID": 0,
+      "CurrentURI": "",
+      "CurrentURIMetaData": ""
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetAVTransportURIResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "set the player to specific playing mode: queue (x-rincon-queue:<macaddress>0<port>#0), stream, tv, ...",
+    "status": "in work"
+  },
+  "Play": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "Play",
+    "args": {
+      "InstanceID": 0,
+      "Speed": 1
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:PlayResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "start playing"
+  },
+  "RemoveAllTracksFromQueue": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "RemoveAllTracksFromQueue",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:RemoveAllTracksFromQueueResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "flush queue",
+    "status": "in work"
+  },
+  "AddURIToQueue": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "AddURIToQueue",
+    "args": {
+      "InstanceID": 0,
+      "EnqueuedURI": "",
+      "EnqueuedURIMetaData": "",
+      "DesiredFirstTrackNumberEnqueued": 0,
+      "EnqueueAsNext": 1
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:AddURIToQueueResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "Add uri to queue, Enqueued meta data in DIDL light format"
+  },
+  "Seek": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "Seek",
+    "argsValueName": "Target",
+    "dataType": "string",
+    "args": {
+      "InstanceID": 0,
+      "Unit": "REL_TIME",
+      "Target": "00:01:00"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SeekResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "Seek with REL_TIME moves forwar in curren song, relative from now"
+  },
+  "SetEQ": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "SetEQ",
+    "argsValueName": "",
+    "dataType": "string / string / integer",
+    "args": {
+      "InstanceID": 0,
+      "EQType": "DialogLevel",
+      "DesiredValue": "1"
+    },
+    "eqTypeValues": [
+      "DialogLevel",
+      "NightMode",
+      "SubGain"
+    ],
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetEQResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+    "info": "Set EQType and DesiredValue have to be defined. DesiredValue depend on EQType"
+  },
+  "GetEQ": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "GetEQ",
+    "args": {
+      "InstanceID": 0,
+      "EQType": "DialogLevel"
+    },
+    "eqTypeValues": [
+      "DialogLevel",
+      "NightMode",
+      "SubGain"
+    ],
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetEQResponse",
+      "CurrentValue"
+    ],
+    "info": "EQType have to be defined. Current value 0|1 or -15 to 15 for SubGain"
+  },
+  "SetCrossfadeMode": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "SetCrossfadeMode",
+    "argsValueName": "CrossfadeMode",
+    "dataType": "string",
+    "args": {
+      "InstanceID": 0,
+      "CrossfadeMode": "1"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetCrossfadeModeResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "Set CrossfadeMode 0 or 1"
+  },
+  "GetCrossfadeMode": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "GetCrossfadeMode",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetCrossfadeModeResponse",
+      "CrossfadeMode"
+    ],
+    "info": "will return 0 or 1 and might be converted to On Off"
+  },
+  "SetLoudness": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "SetLoudness",
+    "argsValueName": "DesiredLoudness",
+    "dataType": "string",
+    "args": {
+      "InstanceID": 0,
+      "Channel": "Master",
+      "DesiredLoudness": "1"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetLoudnessResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+    "info": "Set Loudness 0 or 1"
+  },
+  "GetLoudness": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "GetLoudness",
+    "argsValueName": "CurrentLoudness",
+    "dataType": "string",
+    "args": {
+      "InstanceID": 0,
+      "Channel": "Master"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetLoudnessResponse",
+      "CurrentLoudness"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+    "info": "Get Loudness 0 or 1"
+  },
+  "ConfigureSleepTimer": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "ConfigureSleepTimer",
+    "argsValueName": "NewSleepTimerDuration",
+    "dataType": "string",
+    "args": {
+      "InstanceID": 0,
+      "NewSleepTimerDuration": "00:05:00"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:ConfigureSleepTimerResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "Duration in format hh:mm:ss"
+  },
+  "GetRemainingSleepTimerDuration": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "GetRemainingSleepTimerDuration",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetRemainingSleepTimerDurationResponse",
+      "RemainingSleepTimerDuration"
+    ],
+    "dataType": "string",
+    "info": "returns duration in format hh:mm:ss - if empty string means no timer"
+  }
+}

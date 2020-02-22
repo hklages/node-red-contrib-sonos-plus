@@ -13,8 +13,9 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!NrcspHelpers.validateConfigNode(configNode)) {
-      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!((NrcspHelpers.isValidProperty(configNode, ['ipaddress']) && NrcspHelpers.REGEX_IP.test(configNode.ipaddress)) ||
+      (NrcspHelpers.isValidProperty(configNode, ['serialnum']) && NrcspHelpers.REGEX_SERIAL.test(configNode.serialnum)))) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
       return;
     }
 
@@ -121,6 +122,7 @@ module.exports = function (RED) {
       return;
     }
 
+    // TODO put into helper
     const reg = new RegExp('^[s][0-9]+$'); // example s11111
     if (reg.test(msg.topic)) {
       sonosPlayer.playTuneinRadio(msg.topic)

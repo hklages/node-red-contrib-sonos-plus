@@ -14,8 +14,9 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!NrcspHelpers.validateConfigNode(configNode)) {
-      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!((NrcspHelpers.isValidProperty(configNode, ['ipaddress']) && NrcspHelpers.REGEX_IP.test(configNode.ipaddress)) ||
+      (NrcspHelpers.isValidProperty(configNode, ['serialnum']) && NrcspHelpers.REGEX_SERIAL.test(configNode.serialnum)))) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
       return;
     }
 
@@ -463,11 +464,11 @@ module.exports = function (RED) {
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setCrossfadeMode;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.SetCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => {
         node.debug('start xml to JSON');
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
@@ -520,11 +521,11 @@ module.exports = function (RED) {
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setLoudness;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.SetLoudness;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => {
         node.debug('start xml to JSON');
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
@@ -567,7 +568,7 @@ module.exports = function (RED) {
     const sonosFunction = 'set EQ';
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.setEQ;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.SetEQ;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // validate msg.topic (eg type)
@@ -637,7 +638,7 @@ module.exports = function (RED) {
       })
       .then(() => { // send request to SONOS player
         const { baseUrl, path, name, action, args } = actionParameter;
-        return NrcsSoap.sendToPlayer(baseUrl, path, name, action, args);
+        return NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args);
       })
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
@@ -682,18 +683,17 @@ module.exports = function (RED) {
       return;
     }
     const newValue = msg.topic;
-    const regex = new RegExp(NrcspHelpers.REGEXSTRING_TIME);
-    if (!regex.test(newValue)) {
+    if (!NrcspHelpers.REGEX_TIME.test(newValue)) {
       NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction);
       return;
     }
 
     // copy action parameter and update
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.configureSleepTimer;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.ConfigureSleepTimer;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);

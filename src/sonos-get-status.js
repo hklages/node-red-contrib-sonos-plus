@@ -14,8 +14,9 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!NrcspHelpers.validateConfigNode(configNode)) {
-      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node'), sonosFunction);
+    if (!((NrcspHelpers.isValidProperty(configNode, ['ipaddress']) && NrcspHelpers.REGEX_IP.test(configNode.ipaddress)) ||
+      (NrcspHelpers.isValidProperty(configNode, ['serialnum']) && NrcspHelpers.REGEX_SERIAL.test(configNode.serialnum)))) {
+      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
       return;
     }
 
@@ -728,7 +729,7 @@ module.exports = function (RED) {
   function getEQ (node, msg, sonosPlayer) {
     const sonosFunction = 'get EQ';
 
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getEQ;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.GetEQ;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // get valid eqType from msg.topic to define body
@@ -762,7 +763,7 @@ module.exports = function (RED) {
       })
       .then(() => { // send request to SONOS player
         const { baseUrl, path, name, action, args } = actionParameter;
-        return NrcsSoap.sendToPlayer(baseUrl, path, name, action, args);
+        return NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args);
       })
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
@@ -803,10 +804,10 @@ module.exports = function (RED) {
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
 
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getCrossfadeMode;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.GetCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
@@ -841,10 +842,10 @@ module.exports = function (RED) {
   function getLoudnessMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode';
 
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getLoudness;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.GetLoudness;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
@@ -880,10 +881,10 @@ module.exports = function (RED) {
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
 
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.getRemainingSleepTimerDuration;
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.GetRemainingSleepTimerDuration;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
-    NrcsSoap.sendToPlayer(baseUrl, path, name, action, args)
+    NrcsSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
           return NrcsSoap.parseSoapBody(response.body);
@@ -916,8 +917,9 @@ module.exports = function (RED) {
   * @output
   */
   function labNewFeature (node, msg, sonosPlayer) {
-    const sonosFunction = 'lab new feature';
-    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.browse;
+    const sonosFunction = 'get my sonos - labNewFeature';
+
+    const actionParameter = NrcsSoap.ACTIONS_TEMPLATES.Browse;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.ObjectID = 'FV:2'; // My Sonos
     const { baseUrl, path, name, action, args } = actionParameter;

@@ -69,7 +69,7 @@ RED.nodes.registerType('sonos-control-player', {
   <dl class="message-properties">
 
       <dt>payload <span class="property-type">string | playing/stopped/paused</span> </dt>
-      <dd>outpus true in case of success</dd>
+      <dd>default is: no modification</dd>
 
   </dl>
 
@@ -87,9 +87,9 @@ RED.nodes.registerType('sonos-control-player', {
   <li><b>join_group</b> Join group. Group name must be specified in <code>topic</code></li>
   <li><b>set_led</b> Sets the LED light - <code>topic</code> is On|Off</li>
   <li><b>set_crossfade</b> Sets crossfademode - <code>topic</code> On|Off. On only if current state supports this mode.</li>
-  <li><b>set_loudness</b> Sets loundness - <code>topic</code> On|Off</li>.
+  <li><b>set_loudness</b> Sets loundness - <code>topic</code> On|Off</li>
   <li><b>set_eq</b> Sets the EQType - <code>topic</code> NightMode, DialogLevel, SubGain. <code>eqvalue</code> either On|Off or integer -15 .. +15.</li>
-  <li><b>set_sleeptimer</b> Sets the sleep timer - <code>topic</code> value in format hh:mm:ss hh < 20.
+  <li><b>set_sleeptimer</b> Sets the sleep timer - <code>topic</code> value in format hh:mm:ss and hh < 20.
   <li><b>activate_avtransport</b> Activates a specific stream - e.g. line in. URI must be specified in <code>topic</code>. <code>volume</code> may contain the volume in the range from 1 to 99.</li>
   </ul>
 The commands <b>next_song/previous_song</b> don't work with TuneIn radio stations. Amazon Prime radion stations support <b>next_song</b> but not <b>previous_song</b>.

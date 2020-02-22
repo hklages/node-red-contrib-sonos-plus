@@ -1,10 +1,10 @@
-<!-- Sonos Manage Radio Node -->
+<!-- Sonos Manage My Sonos Node -->
 
 <!-- Registering Node -->
 <script type="text/javascript">
 /* global  RED */
 /* eslint no-undef: "error" */
-RED.nodes.registerType('sonos-manage-radio', {
+RED.nodes.registerType('sonos-manage-mysonos', {
   category: 'SonosPlus',
   defaults: {
     confignode: {
@@ -18,16 +18,16 @@ RED.nodes.registerType('sonos-manage-radio', {
   inputs: 1, // set the number of inputs - only 0 or 1
   outputs: 1, // set the number of outputs - 0 to n
   icon: 'sonos.png', // saved in  icons/myicon.png
-  color: '#edb88a',
+  color: '#95c292',
   label: function () {
-    return this.name || 'Manage Radio';
+    return this.name || 'Manage My Sonos';
   },
-  paletteLabel: 'Mng Radio'
+  paletteLabel: 'My Sonos'
 });
 </script>
 
 <!-- Setting design and inputs for node -->
-<script type="text/x-red" data-template-name="sonos-manage-radio">
+<script type="text/x-red" data-template-name="sonos-manage-mysonos">
 
   <div class="form-row">
         <label for="node-input-confignode"> Config Node</label>
@@ -43,9 +43,9 @@ RED.nodes.registerType('sonos-manage-radio', {
 
 
 <!-- Help Text -->
-<script type="text/x-red" data-help-name="sonos-manage-radio">
+<script type="text/x-red" data-help-name="sonos-manage-mysonos">
   <p>Incoming message is being converted to valid command and send to SONOS player.
-    The <b>get</b> provides information about the My Sonos radio stations.</p>
+    The <b>get</b> provides information about the My Sonos.</p>
 
   <h3>Input (required)</h3>
 
@@ -55,10 +55,7 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dd>A command. Valid commands see Details.</dd>
 
       <dt>topic <span class="property-type">string</span> </dt>
-      <dd>Parameter - either the TuneIn radio id or a part of the My Sonos radio station title.</dd>
-
-      <dt>volume <span class="property-type">string</span> </dt>
-      <dd>Volume beeing used together with <b>play_mysonos, play_tunein, play_httpradio</b></dd>
+      <dd>Parameter - part of the My Sonos title. CASE SENSITIVE!</dd>
 
   </dl>
 
@@ -68,14 +65,15 @@ RED.nodes.registerType('sonos-manage-radio', {
       <dt>payload
           <span class="property-type">string</span>
       </dt>
-      <dd>title of station from my Sonos or in case of <b>get_mysonos</b> the array of radios stations.</dd>
+      <dd>In case of <b>get_items</b> the array of items.</dd>
   </dl>
 
   <h3>Details</h3>
 
   Accepted values for <code>payload</code> are:
   <ul>
-  <li><b>play_tunein</b> and as topic the TuneIn radio id (eg s12345)</li>
-  <li><b>play_httpradio</b> and as topic the http string</li>
+  <li><b>queue</b> queues the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive</li>
+  <li><b>stream</b> streams the found item (stream, radio). msg.topic is title search string - case sensitive</li>
+  <li><b>get_items</b> Outputs the array of all My Sonos items</li>
   </ul>
 </script>
