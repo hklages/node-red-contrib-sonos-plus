@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] 2020-02-27
+### Added
+
+
+### Changed
+- code optimization (use of Helper)
+
 ## [2.0.0] 2020-02-22
 ### Added
 - New node "My Sonos" based on the SONOS App tab "My Sonos"

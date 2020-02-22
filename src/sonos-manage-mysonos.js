@@ -1,4 +1,4 @@
-const NrcspHelpers = require('./Helper.js');
+const NrcspHelper = require('./Helper.js');
 const NrcspSonos = require('./Sonos-Commands.js');
 
 module.exports = function (RED) {
@@ -14,9 +14,9 @@ module.exports = function (RED) {
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!((NrcspHelpers.isValidProperty(configNode, ['ipaddress']) && NrcspHelpers.REGEX_IP.test(configNode.ipaddress)) ||
-      (NrcspHelpers.isValidProperty(configNode, ['serialnum']) && NrcspHelpers.REGEX_SERIAL.test(configNode.serialnum)))) {
-      NrcspHelpers.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
+    if (!((NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) ||
+      (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)))) {
+      NrcspHelper.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
       return;
     }
 
@@ -27,20 +27,20 @@ module.exports = function (RED) {
       node.debug('node - msg received');
 
       // if ip address exist use it or get it via discovery based on serialNum
-      if (NrcspHelpers.isValidProperty(configNode, ['ipaddress']) && NrcspHelpers.REGEX_IP.test(configNode.ipaddress)) {
+      if (NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) {
         node.debug('using IP address of config node');
         processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
-        NrcspHelpers.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
-        if (NrcspHelpers.isValidProperty(configNode, ['serialnum']) && NrcspHelpers.REGEX_SERIAL.test(configNode.serialnum)) {
-          NrcspHelpers.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
+        NrcspHelper.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
+        if (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)) {
+          NrcspHelper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
-              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
+              NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
               return;
             }
             if (ipAddress === null) {
-              NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
+              NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
@@ -48,7 +48,7 @@ module.exports = function (RED) {
             }
           });
         } else {
-          NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
+          NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
         }
       }
     });
@@ -70,13 +70,13 @@ module.exports = function (RED) {
 
     if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
       (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelpers.isValidPropertyNotEmptyString(msg, ['payload'])) {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['payload'])) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
 
@@ -94,11 +94,11 @@ module.exports = function (RED) {
     } else if (command === 'lab_test') {
       NrcspSonos.play(sonosPlayer)
         .then((result) => {
-          NrcspHelpers.success(node, msg, sonosFunction);
+          NrcspHelper.success(node, msg, sonosFunction);
         })
-        .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+        .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
     } else {
-      NrcspHelpers.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
+      NrcspHelper.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
   }
 
@@ -122,9 +122,9 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items');
         }
         msg.payload = items;
-        NrcspHelpers.success(node, msg, sonosFunction);
+        NrcspHelper.success(node, msg, sonosFunction);
       })
-      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
   /**  queue (aka add) first My Sonos item - matching search string and filter - to SONOS queue.
@@ -140,26 +140,26 @@ module.exports = function (RED) {
     const sonosFunction = 'queue my sonos item';
 
     // validate msg.topic
-    if (!NrcspHelpers.isValidPropertyNotEmptyString(msg, ['topic'])) {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
     // create filter object with processingType queue
     const filter = { processingType: 'queue' }; // no streams!
     // check existens and value of media typye/serviceName
-    if (!NrcspHelpers.isValidPropertyNotEmptyString(msg, ['filter'])) {
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['filter'])) {
       // default - no filter
       filter.serviceName = 'all';
       filter.mediaType = 'all';
     } else {
-      if (NrcspHelpers.isValidPropertyNotEmptyString(msg, ['filter', 'mediaType'])) {
+      if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['filter', 'mediaType'])) {
         filter.mediaType = msg.filter.mediaType;
       } else {
         throw new Error('n-r-c-s-p: missing media type' + JSON.stringify(msg.filter));
       }
       // check existens of service name
-      if (NrcspHelpers.isValidPropertyNotEmptyString(msg, ['filter', 'serviceName'])) {
+      if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['filter', 'serviceName'])) {
         filter.serviceName = msg.filter.serviceName;
       } else {
         throw new Error('n-r-c-s-p: missing service name. result msg.filter>>' + JSON.stringify(msg.filter));
@@ -175,8 +175,8 @@ module.exports = function (RED) {
         console.log(JSON.stringify(found));
         return NrcspSonos.queue(sonosPlayer, found.uri, found.metaData);
       })
-      .then((result) => NrcspHelpers.success(node, msg, sonosFunction))
-      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .then((result) => NrcspHelper.success(node, msg, sonosFunction))
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
   /** stream (aka play) first radio/stream in My Sonos streams matching search string in msg.topic
@@ -190,8 +190,8 @@ module.exports = function (RED) {
     const sonosFunction = 'play my sonos stream';
 
     // validate msg.topic.
-    if (!NrcspHelpers.isValidPropertyNotEmptyString(msg, ['topic'])) {
-      NrcspHelpers.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     // TODO similiar to addURI, get service provider!
@@ -207,7 +207,7 @@ module.exports = function (RED) {
         return sonosPlayer.setAVTransportURI(found.uri, found.metaData);
       })
       .then(() => { // optionally modify change volume
-        if (NrcspHelpers.isValidPropertyNotEmptyString(msg, ['volume'])) {
+        if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['volume'])) {
           const newVolume = parseInt(msg.volume);
           if (Number.isInteger(newVolume)) {
             if (newVolume > 0 && newVolume < 100) {
@@ -224,8 +224,8 @@ module.exports = function (RED) {
           }
         }
       })
-      .then((result) => NrcspHelpers.success(node, msg, sonosFunction))
-      .catch((error) => NrcspHelpers.failure(node, msg, error, sonosFunction));
+      .then((result) => NrcspHelper.success(node, msg, sonosFunction))
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-manage-mysonos', SonosManageMySonosNode);

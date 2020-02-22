@@ -1,7 +1,7 @@
 'use strict';
 
 const NrcspSoap = require('./Soap.js');
-const NrcspHelpers = require('./Helper.js');
+const NrcspHelper = require('./Helper.js');
 
 module.exports = {
 
@@ -43,7 +43,7 @@ module.exports = {
     const list = await NrcspSoap.parseBrowseFavoritesResults(result);
 
     list.forEach((item, i) => {
-      if (NrcspHelpers.isValidProperty(item, ['albumArt'])) {
+      if (NrcspHelper.isValidProperty(item, ['albumArt'])) {
         if (item.albumArt.startsWith('/getaa')) {
           item.albumArt = `http://${sonosPlayer.host}:${sonosPlayer.port}` + item.albumArt;
         }
@@ -137,6 +137,41 @@ module.exports = {
     const actionParameter = NrcspSoap.ACTIONS_TEMPLATES[ACTION];
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
+    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
+
+    // check response - select/transform item properties
+    let bodyXml;
+    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+      bodyXml = await NrcspSoap.parseSoapBody(response.body);
+    } else {
+      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+    }
+
+    // check response - select/transform item properties
+    const paths = actionParameter.responsePath;
+    const result = paths.reduce((object, path) => {
+      return (object || {})[path];
+    }, bodyXml);
+    if (result !== actionParameter.responseValue) {
+      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
+    }
+    return true;
+  },
+
+  /**  set action with new value.
+  * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
+  * @param  {string} actionName the action actionName
+  * @param  {string} value new value (optional)
+  */
+  setCmdBasic: async function (baseUrl, actionName, value) {
+    // copy action parameter and update
+    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES[actionName];
+
+    // set value if required
+    if (value) {
+      actionParameter[actionParameter.args.argsValueName] = value;
+    }
+    const { path, name, action, args } = actionParameter;
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
     // check response - select/transform item properties
