@@ -1,12 +1,11 @@
 const NrcspHelper = require('./Helper.js');
-const NrcspSoap = require('./Soap.js');
-// const NcrspSonos = require('./Sonos.js');
+const NrcspSonos = require('./Sonos-Commands.js');
 
 module.exports = function (RED) {
   'use strict';
 
   /**  Create Control Player Node and subscribe to messages.
-  * @param  {Object} config current node configuration data
+  * @param  {object} config current node configuration data
   */
   function SonosControlPlayerNode (config) {
     RED.nodes.createNode(this, config);
@@ -27,7 +26,6 @@ module.exports = function (RED) {
     node.on('input', function (msg) {
       node.debug('node - msg received');
 
-      // if ip address exist use it or get it via discovery based on serialNum
       // if ip address exist use it or get it via discovery based on serialNum
       if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
         (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
@@ -62,8 +60,8 @@ module.exports = function (RED) {
   // ------------------------------------------------------------------------------------
 
   /**  Validate sonos player and input message then dispatch further.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
   function processInputMsg (node, msg, ipaddress) {
@@ -125,10 +123,10 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /**  Handle basic commands to control sonos player.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *                 volume valid volume
-  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {object} sonosPlayer Sonos Player
   * @param  {string} cmd command - no parameter
   * @param msg.payload = true if successful
   */
@@ -309,10 +307,10 @@ module.exports = function (RED) {
   }
 
   /**  Send set/adjust volume command to sonos player.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @param  {Object} commandObject command - cmd and parameter both as string or volume as integer
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @param  {object} commandObject command - cmd and parameter both as string or volume as integer
   * special: volume range 1.. 99, adjust volume rage -29 ..  +29
   */
   function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
@@ -360,11 +358,11 @@ module.exports = function (RED) {
   }
 
   /**  Play Notification.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *                 topic valid topic lab_play_uri
   *                 volume valide volume to set
-  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {object} sonosPlayer Sonos Player
   * uses msg.topic (uri) and optional msg.volume (default is 40)
   */
   function handlePlayNotification (node, msg, sonosPlayer) {
@@ -415,11 +413,11 @@ module.exports = function (RED) {
   }
 
   /**  Set LED On or Off.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *             topic: On | Off
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} msg not changeed
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} msg not changeed
   */
   function handleSetLed (node, msg, sonosPlayer) {
     const sonosFunction = 'set LED';
@@ -443,19 +441,19 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  Set CrossfadeMode
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {String} msg.payload not changed
+  /**  Set crossfade mode.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} msg.topic On or Off
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
   */
   function setCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'set crossfade mode';
 
-    // validate msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be On or Off'), sonosFunction);
+    // validate msg.topic
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
@@ -464,55 +462,29 @@ module.exports = function (RED) {
     }
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
-    // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.SetCrossfadeMode;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args[actionParameter.argsValueName] = newValue;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => {
-        node.debug('start xml to JSON');
-        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // verify response, now in JSON format
-        node.debug('check success');
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (result !== actionParameter.responseValue) {
-          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
-        }
-        return true;
-      })
+    // execute command
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    NrcspSonos.setCmdBasic(baseUrl, 'SetCrossfadeMode', newValue)
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
       })
-      .catch((error) => {
-        node.debug('start catch error');
-        NrcspHelper.failure(node, msg, error, sonosFunction);
-      });
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  Set loudness
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {String} msg.payload not changed
+  /**  Set loudness.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} msg.topic On or Off
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
   */
   function setLoudness (node, msg, sonosPlayer) {
     const sonosFunction = 'set loudness';
 
-    // validate msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be On or Off'), sonosFunction);
+    // validate msg.topic
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
@@ -521,106 +493,68 @@ module.exports = function (RED) {
     }
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
-    // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.SetLoudness;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args[actionParameter.argsValueName] = newValue;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => {
-        node.debug('start xml to JSON');
-        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // verify response, now in JSON format
-        node.debug('check success');
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (result !== actionParameter.responseValue) {
-          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
-        }
-        return true;
-      })
+    // execute command
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    NrcspSonos.setCmdBasic(baseUrl, 'SetLoudness', newValue)
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
       })
-      .catch((error) => {
-        node.debug('start catch error');
-        NrcspHelper.failure(node, msg, error, sonosFunction);
-      });
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /** set EQ (for specified EQTypes eg NightMode, DialogLevel (aka Speech Enhancement) and SubGain (aka sub Level)) for player with TV.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  *                 msg.topic specifies EQtype
-                    msg.eqvalue specifies the new value (On/Off or level -15 .. 15)
-  * @param  {Object} sonosPlayer sonos player object
-  * @output {Object} payload with nightMode, SpeechEnhancement, subGain
+  /** Set EQ (for specified EQTypes eg NightMode, DialogLevel (aka Speech Enhancement) and SubGain (aka sub Level)) for player with TV.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} msg.topic specifies EQtype
+  * @param  {string} msg.eqvalue value On,Off or value -15 .. 15
+  * @param  {object} sonosPlayer sonos player object
+  * @output: {object} msg unmodified / stopped in case of error
   */
   function setEQ (node, msg, sonosPlayer) {
     const sonosFunction = 'set EQ';
 
-    // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.SetEQ;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-
-    // validate msg.topic (eg type)
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    // validate msg.topic
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
-    const eqType = msg.topic;
-    if (!actionParameter.eqTypeValues.includes(eqType)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + NrcspHelper.EQ_TYPES.toString()), sonosFunction);
+    if (!NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()), sonosFunction);
       return;
     }
+    const eqType = msg.topic;
 
     // validate msg.value
-    if (typeof msg.eqvalue === 'undefined' || msg.eqvalue === null ||
-      (typeof msg.eqvalue === 'number' && isNaN(msg.eqvalue)) || msg.eqvalue === '') {
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['eqvalue'])) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined new value'), sonosFunction);
       return;
     }
-    let newValue = msg.eqvalue;
+    let newValue;
     if (eqType === 'SubGain') {
       // validate integer in range -15 to 15
-      if (Number.isInteger(newValue)) {
-        if (newValue < -15 || newValue > 15) {
+      if (Number.isInteger(msg.eqvalue)) {
+        if (msg.eqvalue < -15 || msg.eqvalue > 15) {
           NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.eqvalue must be in range -15 to +15'), sonosFunction);
           return;
         }
+        newValue = msg.eqvalue;
       } else {
         NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.eqvalue must be of type integer'), sonosFunction);
         return;
       }
     } else if (eqType === 'NightMode' || eqType === 'DialogLevel') {
       // validate: On/Off
-      if (newValue === 'On') {
-        newValue = 1;
-      } else if (newValue === 'Off') {
-        newValue = 0;
-      } else {
-        NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: eqvalue must be On or Off'), sonosFunction);
+      if (!(msg.eqvalue === 'On' || msg.eqvalue === 'Off')) {
+        NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
         return;
       }
+      newValue = (msg.eqvalue === 'On' ? 1 : 0);
     } else {
       // not yet supported
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: EQType in msg.topic is not yet supported'), sonosFunction);
       return;
     }
-
-    // update args
-    actionParameter.args.EQType = eqType;
-    actionParameter.args.DesiredValue = newValue;
 
     sonosPlayer.deviceDescription()
       .then((response) => { // ensure that SONOS player has TV mode
@@ -637,28 +571,10 @@ module.exports = function (RED) {
         }
         return true;
       })
-      .then(() => { // send request to SONOS player
-        const { baseUrl, path, name, action, args } = actionParameter;
-        return NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
-      })
-      .then((response) => {
-        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // verify response, now in JSON format
-        node.debug(JSON.stringify(bodyXML));
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (result !== actionParameter.responseValue) {
-          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
-        }
-        return true;
+      .then(() => { // sonos command
+        const args = { InstanceID: 0, EQType: eqType, DesiredValue: newValue };
+        const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+        return NrcspSonos.setCmdComplex(baseUrl, 'SetEQ', args);
       })
       .then(() => {
         // msg not modified
@@ -667,52 +583,30 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  configureSleepTimer sets the sleep timer.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-            {String} msg.topic format hh:mm:ss hh < 20
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output: {Object} msg unmodified / stopped in case of error
+  /**  Configure/Set the sleep timer.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} msg.topic format hh:mm:ss hh < 20
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
   */
   function configureSleepTimer (node, msg, sonosPlayer) {
     const sonosFunction = 'set/configure sleep timer';
 
-    // validate msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic - should be in format hh:mm:ss, hh < 20'), sonosFunction);
+    // validate msg.topic
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
-    const newValue = msg.topic;
-    if (!NrcspHelper.REGEX_TIME.test(newValue)) {
+    if (!NrcspHelper.REGEX_TIME.test(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction);
       return;
     }
+    const newValue = msg.topic;
 
-    // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.ConfigureSleepTimer;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args[actionParameter.argsValueName] = newValue;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => {
-        if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // verify response, now in JSON format
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (result !== actionParameter.responseValue) {
-          throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXML));
-        }
-        return true;
-      })
+    // execute command
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    NrcspSonos.setCmdBasic(baseUrl, 'ConfigureSleepTimer', newValue)
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
@@ -720,40 +614,10 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  Sets the sleep timer.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  *         {String} msg.topic format hh:mm:ss hh < 20
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output: {Object} msg unmodified / stopped in case of error
-  */
-  // function configureSleepTimer (node, msg, sonosPlayer) {
-  //   const sonosFunction = 'set/configure sleep timer';
-  //
-  //   // validate msg.topic
-  //   if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
-  //     NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
-  //     return;
-  //   }
-  //   const newValue = msg.topic;
-  //   if (!NrcspHelper.REGEX_TIME.test(newValue)) {
-  //     NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction);
-  //     return;
-  //   }
-  //   // execute command
-  //   const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-  //   NcrspSonos.setCmdBasic(baseUrl, 'ConfigureSleepTimer', newValue)
-  //     .then(() => {
-  //       // msg not modified
-  //       NrcspHelper.success(node, msg, sonosFunction);
-  //     })
-  //     .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
-  // }
-
   /**  LAB: Test new features, error messsages, ...
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
 

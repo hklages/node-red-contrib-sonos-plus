@@ -57,7 +57,7 @@ module.exports = function (RED) {
   // ------------------------------------------------------------------------------------
 
   /**  Validate sonos player and input message then dispatch further.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
@@ -107,10 +107,10 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /**  outputs array of My Sonos items as object.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} msg.payload  = array of my Sonos items with title, albumArt,uri, metaData, sid, upnpClass, processingType
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} msg.payload  = array of my Sonos items with title, albumArt,uri, metaData, sid, upnpClass, processingType
   * uri, metadata, sid, upnpclass: empty string are allowed
   */
   function getMySonos (node, msg, sonosPlayer) {
@@ -128,12 +128,12 @@ module.exports = function (RED) {
   }
 
   /**  queue (aka add) first My Sonos item - matching search string and filter - to SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   * @param  {String} msg.topic search string
-  * @param  {Object} msg.filter optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output: {Object} msg unmodified / stopped in case of error
+  * @param  {object} msg.filter optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
   * Info:  content valdidation of mediaType, serviceName in NrcspSonos.findStringInMySonosTitle
   */
   function queue (node, msg, sonosPlayer) {
@@ -180,11 +180,11 @@ module.exports = function (RED) {
   }
 
   /** stream (aka play) first radio/stream in My Sonos streams matching search string in msg.topic
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   * @param  {String} msg.topic search string for title
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} msg unmodified / stopped in case of error
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} msg unmodified / stopped in case of error
   */
   function stream (node, msg, sonosPlayer) {
     const sonosFunction = 'play my sonos stream';

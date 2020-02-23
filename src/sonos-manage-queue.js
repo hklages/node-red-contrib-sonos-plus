@@ -1,11 +1,12 @@
 const NrcspHelper = require('./Helper.js');
 const NrcspSoap = require('./Soap.js');
+const NrcspSonos = require('./Sonos-Commands.js');
 
 module.exports = function (RED) {
   'use strict';
 
   /**  Create Manage Queue Node and subscribe to messages.
-  * @param  {Object} config current node configuration data
+  * @param  {object} config current node configuration data
   */
   function SonosManageQueueNode (config) {
     RED.nodes.createNode(this, config);
@@ -60,8 +61,8 @@ module.exports = function (RED) {
   // -------------------------------------------------------------------------
 
   /**  Validate sonos player and input message then dispatch further.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
   function processInputMsg (node, msg, ipaddress) {
@@ -140,11 +141,11 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /**  Insert defined uri at end of SONOS queue. Can be used for single songs, playlists, .... Does NOT activate queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *                 topic valid uri
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modifications!
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modifications!
   */
   function insertUri (node, msg, sonosPlayer) {
     const sonosFunction = 'insert uri';
@@ -168,12 +169,12 @@ module.exports = function (RED) {
   }
 
   /**  Insert Spotify uri at end of SONOS queue. Can be used for single songs, album, playlists, .... Does NOT activate queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *                 topic valid uri see examples
   *                 region valid region, 4 digits EU 2311, US 3079. DEFAULT is EU
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modifications!
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modifications!
   * Valid examples
   * spotify:track:5AdoS3gS47x40nBNlNmPQ8
   * spotify:album:1TSZDcvlPtAnekTaItI3qO
@@ -224,11 +225,11 @@ module.exports = function (RED) {
   }
 
   /** Insert all songs of specified Amazon Prime playlist (URI format) into SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *           topic uri of playlist (very specific format)
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modification
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modification
   */
   function insertPrimePlaylistUri (node, msg, sonosPlayer) {
     // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
@@ -270,13 +271,13 @@ module.exports = function (RED) {
   }
 
   /**  Insert all songs from matching My Sonos Spotify items (first match, topic string) into SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        topic: part of the title name; is search string
   *        region: valid region, 4 digits EU 2311, US 3079. DEFAULT is EU
-  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {object} sonosPlayer Sonos Player
   * @param  {Boolean} onlyPlaylists yes if only playlists should be searched
-  * @output {Object} Success: msg, no modification
+  * @output {object} Success: msg, no modification
   */
   function insertMySonosSpotify (node, msg, sonosPlayer, onlyPlaylists) {
     let sonosFunction = 'insert spotify';
@@ -425,11 +426,11 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
   /**  Insert all songs from matching My Sonos Amazon Prime Playlist  (first match, topic string) into SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        topic: part of the title name; is search string
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modification
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modification
   */
   function insertMySonosAmazonPrimePlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert amazon prime playlist';
@@ -536,12 +537,12 @@ module.exports = function (RED) {
   }
 
   /** Insert all songs from matching SONOS playlist (first match, topic string) into SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        topic: part of the title name; is search string
   *        size: maximum amount of playlists being loaded from SONOS player - optinal, default 100
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg , no modifications!
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg , no modifications!
   */
   function insertSonosPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert sonos playlist';
@@ -628,12 +629,12 @@ module.exports = function (RED) {
   }
 
   /** Insert all songs from matching Music Libary playlist (first match, topic string) into SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        topic: part of the title name; is search string
   *        size: maximum amount of playlists being loaded from SONOS player - optional, default is 100
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modifications!
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modifications!
   */
   function insertMusicLibraryPlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert music library playlist';
@@ -720,11 +721,11 @@ module.exports = function (RED) {
   }
 
   /**  Activate SONOS queue and start playing first song, optionally set volume
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *               volume is optional
-  * @param  {Object} sonosPlayer sonos player Object
-  * @output {Object} Success: msg, no modifications!
+  * @param  {object} sonosPlayer sonos player Object
+  * @output {object} Success: msg, no modifications!
   */
   function activateQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'activate queue';
@@ -774,10 +775,10 @@ module.exports = function (RED) {
   }
 
   /**  Play song with specified index (msg.topic) in SONOS queue. Activates also SONOS Queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message with topic: first, last, <positiv number between 1 and queueSize>
-  * @param  {Object} sonosPlayer sonos player object
-  * @output {Object} Success: msg, no modifications!
+  * @param  {object} node current node
+  * @param  {object} msg incoming message with topic: first, last, <positiv number between 1 and queueSize>
+  * @param  {object} sonosPlayer sonos player object
+  * @output {object} Success: msg, no modifications!
   */
   function playSong (node, msg, sonosPlayer) {
     const sonosFunction = 'play song';
@@ -839,10 +840,10 @@ module.exports = function (RED) {
   }
 
   /**  Flushes queue - removes all songs from queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message with topic
-  * @param  {Object} sonosPlayer sonos player Object
-  * @output {Object} Success: msg, no modifications
+  * @param  {object} node current node
+  * @param  {object} msg incoming message with topic
+  * @param  {object} sonosPlayer sonos player Object
+  * @output {object} Success: msg, no modifications
   */
   function flushQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'flush queue';
@@ -855,12 +856,12 @@ module.exports = function (RED) {
   }
 
   /** Removes several (msg.numberOfSong) songs starting at pecified index (msg.topic) from SONOS queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        topic: index between 1 and length of queue, or first, last
   *        numberOfSongs: number of songs being removed
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modifications!
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modifications!
   */
   function removeSongFromQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'remove songs from queue';
@@ -944,10 +945,10 @@ module.exports = function (RED) {
   }
 
   /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message, msg.payload and msg.topic are beeing used
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg
+  * @param  {object} node current node
+  * @param  {object} msg incoming message, msg.payload and msg.topic are beeing used
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg
   */
   function setQueuemode (node, msg, sonosPlayer) {
     const sonosFunction = 'set queuemode';
@@ -1011,10 +1012,10 @@ module.exports = function (RED) {
   }
 
   /**  Get the list of current songs in queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, msg.payload: array of songs
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, msg.payload: array of songs
   */
   function getQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'get queue';
@@ -1056,10 +1057,10 @@ module.exports = function (RED) {
   }
 
   /**  Get list of all My Sonos Spotify items and output.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, no modification
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, no modification
   */
   function getMySonosSpotify (node, msg, sonosPlayer) {
     const sonosFunction = 'get spotify playlist';
@@ -1119,10 +1120,10 @@ module.exports = function (RED) {
   }
 
   /**  Get list of My Sonos Amazon Playlist (only standards).
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg,  msg.payload to current array of My Sonos Amazon Prime playlist
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg,  msg.payload to current array of My Sonos Amazon Prime playlist
   */
   function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get amazon prime playlist';
@@ -1178,11 +1179,11 @@ module.exports = function (RED) {
   }
 
   /**  Get list of SONOS playlists. Dont mix up with My Sonos playlists.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        size: optional, maximum amount of playlists being loaded from SONOS player
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg, msg.payload = list of SONOS playlists
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg, msg.payload = list of SONOS playlists
   */
   function getSonosPlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get SONOS playlists';
@@ -1254,11 +1255,11 @@ module.exports = function (RED) {
   }
 
   /**  Get list of music library playlists (imported).
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *        size: maximum amount of playlists being loaded from SONOS player
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg,  msg.payload to current array of playlists
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg,  msg.payload to current array of playlists
   * default is 100 entries if not specified msg.size
   */
   function getMusicLibraryPlaylists (node, msg, sonosPlayer) {
@@ -1320,10 +1321,10 @@ module.exports = function (RED) {
   }
 
   /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
-  * @param  {Object} node current node, msg.payload and msg.topic are beeing used
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} Success: msg
+  * @param  {object} node current node, msg.payload and msg.topic are beeing used
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} Success: msg
   */
   function getQueuemode (node, msg, sonosPlayer) {
     const sonosFunction = 'get queuemode';
@@ -1339,11 +1340,11 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
   /**  seek means forwared in current song.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
             {String} msg.topic format hh:mm:ss hh < 20
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output: {Object} msg unmodified / stopped in case of error
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
   */
   function seek (node, msg, sonosPlayer) {
     const sonosFunction = 'seek / move forward in song';
@@ -1361,14 +1362,14 @@ module.exports = function (RED) {
     }
 
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.Seek;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.Seek;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args[actionParameter.argsValueName] = newValue;
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => {
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
@@ -1392,11 +1393,11 @@ module.exports = function (RED) {
   }
 
   /**  lab test function: add uri to queue.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
             {String} msg.topic uri
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output: {Object} msg unmodified / stopped in case of error
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
   */
   function labTestFunction (node, msg, sonosPlayer) {
     const sonosFunction = 'add uri to queue';
@@ -1426,7 +1427,7 @@ module.exports = function (RED) {
     const newMetadata = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"><item id="100e004cexplore%3aplaylist%3a%3app.382494011" parentID="10fe2064explore%3atag%3a%3atag.382553059" restricted="true"><dc:title>20 Jahre Napster: 1999</dc:title><upnp:class>object.container.playlistContainer</upnp:class><desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON51975_heklaf@gmail.com</desc></item></DIDL-Lite>';
 
     // copy action parameter and update
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.AddURIToQueue;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.AddURIToQueue;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(newUri);
     actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(newMetadata);
@@ -1435,7 +1436,7 @@ module.exports = function (RED) {
       .then((response) => {
         console.log(JSON.stringify(response));
         if (response.statusCode === 200) { // // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }

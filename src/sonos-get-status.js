@@ -1,5 +1,6 @@
 const NrcspHelper = require('./Helper.js');
 const NrcspSoap = require('./Soap.js');
+const NrcspSonos = require('./Sonos-Commands.js');
 
 module.exports = function (RED) {
   'use strict';
@@ -58,7 +59,7 @@ module.exports = function (RED) {
   }
 
   /**  Validate sonos player and input message then dispatch further.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
@@ -133,9 +134,9 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /** Get the SONOS basic data and output to msg.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output msg: state, volume, volumeNormalized, muted, name, group
   * This command will send several api calls and combine the results.
   */
@@ -198,9 +199,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player state and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload
   */
   function getPlayerStateV3 (node, msg, sonosPlayer) {
@@ -221,9 +222,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player volume and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload
   */
   function getPlayerVolumeV3 (node, msg, sonosPlayer) {
@@ -247,9 +248,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player muted state and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload
   */
   function getPlayerMutedV3 (node, msg, sonosPlayer) {
@@ -270,9 +271,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player name and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload
   */
   function getPlayerNameV3 (node, msg, sonosPlayer) {
@@ -292,9 +293,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player LED light status and outputs to payload.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload in On or Off
   */
   function getPlayerLedStatus (node, msg, sonosPlayer) {
@@ -315,9 +316,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player properties and outputs to payload.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload
   */
   function getPlayerProperties (node, msg, sonosPlayer) {
@@ -337,9 +338,9 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player current song, media and position and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output msg: artist, title, albumArtURL, queueActivated, song, media and position
   * This command send serveral api requests and combines them.
   */
@@ -454,10 +455,10 @@ module.exports = function (RED) {
   }
 
   /** Get the sonos player current song and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
             msg.suppressWarnings  will suppress warning if exist and true
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} sonosPlayer sonos player object
   * @output msg:  artist, title, albumArtURL and song
   */
   function getPlayerCurrentSongV1 (node, msg, sonosPlayer) {
@@ -542,9 +543,9 @@ module.exports = function (RED) {
   }
 
   /** Get the media info and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output msg: queueActivated, payload = media
   */
   function getMediaInfoV1 (node, msg, sonosPlayer) {
@@ -578,9 +579,9 @@ module.exports = function (RED) {
   }
 
   /** Get the position info and outputs.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output msg: payload = position
   */
   function getPositionInfoV1 (node, msg, sonosPlayer) {
@@ -603,7 +604,7 @@ module.exports = function (RED) {
   }
 
   /**  Get list of all My Sonos items.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
   * change msg.payload to array of all My Sonos items
@@ -637,9 +638,9 @@ module.exports = function (RED) {
   }
 
   /** Test SONOS player: reachable true/false
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output changes msg.payload to boolean true otherwise false
   */
   function testConnected (node, msg, sonosPlayer) {
@@ -676,10 +677,10 @@ module.exports = function (RED) {
   }
 
   /** getGroupsInfo: get all available data about the topology = group
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
-  * @output {Object} payload topology and group current group information
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
+  * @output {object} payload topology and group current group information
   */
   function getGroupsInfo (node, msg, sonosPlayer) {
     const sonosFunction = 'get groups info';
@@ -719,16 +720,16 @@ module.exports = function (RED) {
   }
 
   /** Get EQ information (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV-
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
   *                 msg.topic specifies EQtype
-  * @param  {Object} sonosPlayer sonos player object
-  * @output {Object} payload with nightMode, SpeechEnhancement, subGain
+  * @param  {object} sonosPlayer sonos player object
+  * @output {object} payload with nightMode, SpeechEnhancement, subGain
   */
   function getEQ (node, msg, sonosPlayer) {
     const sonosFunction = 'get EQ';
 
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.GetEQ;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetEQ;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // get valid eqType from msg.topic to define body
@@ -766,7 +767,7 @@ module.exports = function (RED) {
       })
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
@@ -795,21 +796,21 @@ module.exports = function (RED) {
   }
 
   /**  Get current CrossfadeMode
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
   * @output {String} msg.payload On Off
   */
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
 
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.GetCrossfadeMode;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetCrossfadeMode;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
@@ -833,21 +834,21 @@ module.exports = function (RED) {
   }
 
   /**  Get current Loudness mode
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
   * @output {String} msg.payload On Off
   */
   function getLoudnessMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode';
 
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.GetLoudness;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetLoudness;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
@@ -872,21 +873,21 @@ module.exports = function (RED) {
   }
 
   /**  Get remaining sleep timer duration sets the sleep timer.
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer Sonos Player
-  * @output {Object} msg.payload sleep timer duration
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer Sonos Player
+  * @output {object} msg.payload sleep timer duration
   */
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
 
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.GetRemainingSleepTimerDuration;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetRemainingSleepTimerDuration;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }
@@ -910,22 +911,22 @@ module.exports = function (RED) {
   }
 
   /** sandbox to test new commands
-  * @param  {Object} node current node
-  * @param  {Object} msg incoming message
-  * @param  {Object} sonosPlayer sonos player object
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {object} sonosPlayer sonos player object
   * @output
   */
   function labNewFeature (node, msg, sonosPlayer) {
     const sonosFunction = 'get my sonos - labNewFeature';
 
-    const actionParameter = NrcspSoap.ACTIONS_TEMPLATES.Browse;
+    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.Browse;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     actionParameter.args.ObjectID = 'FV:2'; // My Sonos
     const { baseUrl, path, name, action, args } = actionParameter;
     NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
       .then((response) => { // parse body to XML
         if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBody(response.body);
+          return NrcspSoap.parseSoapBodyV1(response.body, '');
         } else {
           throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
         }

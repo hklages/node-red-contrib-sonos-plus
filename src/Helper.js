@@ -5,7 +5,6 @@ module.exports = {
   // data to be used in other modules
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
-  EQ_TYPES: ['SubGain', 'DialogLevel', 'NightMode'],
 
   REGEX_TIME: /([0-1][0-9]):([0-5][0-9]):([0-5][0-9])/, // Only hh:mm:ss and hours from 0 to 19
   REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
@@ -15,7 +14,7 @@ module.exports = {
   // functions to be used in other modules
 
   /** Starts async discovery of sonos player and returns ipAddress - used in callback.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {string} serialNumber player serial number
   * @param  {function} callback function with parameter err, ipAddress
   * provides ipAddress or null (not found) and calls callback handling that.
@@ -81,8 +80,8 @@ module.exports = {
   },
 
   /** processing of msg with failure.
-  * @param  {Object} node current node
-  * @param  {Object} msg current msg
+  * @param  {object} node current node
+  * @param  {object} msg current msg
   * @param  {Error object} error  error object from response
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
@@ -133,7 +132,7 @@ module.exports = {
   },
 
   /** show warning status and warn message
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {string} functionName name of calling function
   * @param  {string} messageShort  short message for status
   * @param  {string} messageDetail  details
@@ -145,8 +144,8 @@ module.exports = {
   },
 
   /** processing of msg was successful
-  * @param  {Object} node current node
-  * @param  {Object} msg current msg (maybe null)
+  * @param  {object} node current node
+  * @param  {object} msg current msg (maybe null)
   * @param  {string} functionName name of calling function
   */
 

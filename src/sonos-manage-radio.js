@@ -56,7 +56,7 @@ module.exports = function (RED) {
   // ------------------------------------------------------------------------------------
 
   /**  Validate sonos player and input message then dispatch further.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {string} ipaddress IP address of sonos player
   */
@@ -102,7 +102,7 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /**  Play TuneIn radio station (via simple TuneIn Radio id) and optional set volume.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message - uses volume if provided
   *           topic TuneIn radio id - example s111111
   *           volume  optional volume in range 1 .. 99
@@ -155,7 +155,7 @@ module.exports = function (RED) {
   }
 
   /**  Play http radio from internet.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
   *                 topic: valid http address of radio MP3Stream
   *                 volume: volume 1 .. 99
@@ -209,7 +209,7 @@ module.exports = function (RED) {
   }
 
   /**  Play a specific My Sonos station (must be TuneIn, AmazonPrime, MP3 station), start playing and optionally set volume.
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
                 topic search string
                 volume volume to be used
@@ -335,7 +335,7 @@ module.exports = function (RED) {
   }
 
   /**  Get list of My Sonos radio station (only TuneIn, AmazonPrime, MP3 stations).
-  * @param  {Object} node current node
+  * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
   * change msg.payload to current array of my Sonos radio stations
