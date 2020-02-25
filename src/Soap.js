@@ -2,6 +2,8 @@
 const request = require('axios');
 const xml2js = require('xml2js');
 
+const NrcspHelper = require('./Helper.js');
+
 module.exports = {
 
   // SOAP related data
@@ -10,13 +12,14 @@ module.exports = {
 
   // SOAP related functions
 
-  /** Sends a http request in SOAP format to specified player.
+  /** Send http request in SOAP format to specified player.
   * @param  {string} baseUrl http address including http prefix and port e.g 'http://192.168.178.30:1400'
   * @param  {string} path SOAP endpoint e. g. '/MediaRenderer/RenderingControl/Control'
   * @param  {string} name e.g. 'RenderingControl'
   * @param  {string} action e.g 'SetEQ'
   * @param  {object} args e.g.  { InstanceID: 0, EQType: '' },
   * @returns {promise} with response from player
+  * All  parameters are required except args.
   */
   sendToPlayerV1: async function (baseUrl, path, name, action, args) {
     // create header
@@ -35,8 +38,7 @@ module.exports = {
       '<s:Body>' + messageBody + '</s:Body>',
       '</s:Envelope>'].join('');
 
-    console.log('start axio request');
-    try {
+    try { // try and catch to be able to modify error message
       const response = await request({
         method: 'post',
         baseURL: baseUrl,
@@ -47,7 +49,6 @@ module.exports = {
         },
         data: messageBody
       });
-      console.log('request: success');
       return {
         headers: response.headers,
         body: response.data,
@@ -61,24 +62,67 @@ module.exports = {
       // Thats why error.response is checked and handled here!
       if (error.response) { // Indicator for SOAP Error
         if (error.message.startsWith('Request failed with status code 500')) {
-          const errorCode = ((data) => {
-            // TODO check '' and xml parser to get value
-            const start = data.indexOf('<errorCode>');
-            if (start > 0) {
-              const end = data.indexOf('</errorCode>');
-              return data.substring(start + '<errorCode>'.length, end);
-            } else {
-              return '';
-            }
-          })(error.response.data);
-          throw new Error('upnp: statusCode:500 & upnpErrorCode:' + errorCode);
+          const errorCode = module.exports.getErrorCode(error.response.data);
+          console.log(name);
+          const errorMessage = module.exports.getErrorMessage(errorCode, name);
+          console.log('errormessage >>' + errorMessage);
+          throw new Error('n-r-c-s-p: statusCode >>500 & upnpErrorCode >>' + errorCode + ' upnpErrorMessage >>' + errorMessage);
         } else {
-          throw new Error('upnp: ' + error.message + '///' + error.response.data);
+          throw new Error('n-r-c-s-p: ' + error.message + '///' + error.response.data);
         }
       } else {
         throw error;
       }
     }
+  },
+
+  /**  Get error message from error code. If not found provide empty string.
+  * @param  {string} errorCode
+  * @param  {string} actionName
+  * @return {string} error message
+  * All parameters are required!
+  */
+
+  getErrorMessage: (errorCode, actionName) => {
+    const defaultMessage = '';
+    if (NrcspHelper.isValidProperty(errorCode, []) && errorCode !== '') {
+      if (NrcspHelper.isValidProperty(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
+        const actionErrorList = module.exports.ERROR_CODES[actionName.toUpperCase()];
+        for (let i = 0; i < actionErrorList.length; i++) {
+          if (actionErrorList[i].code === errorCode) {
+            return actionErrorList[i].message;
+          }
+        }
+      }
+      const npnpErrorList = module.exports.ERROR_CODES.UPNP;
+      for (let i = 0; i < npnpErrorList.length; i++) {
+        if (npnpErrorList[i].code === errorCode) {
+          return npnpErrorList[i].message;
+        }
+      }
+      return defaultMessage;
+    } else {
+      return defaultMessage;
+    }
+  },
+
+  /**  Get error code. If not found provide empty string.
+  * @param  {string} data  must exist!
+  * @return {string} error message
+  * data is required.
+  * prereq: xml  contains tag <errorCode>
+  */
+
+  getErrorCode: (data) => {
+    let errorCode = ''; // default
+    if (!(typeof data === 'undefined' || data === null || (typeof data === 'number' && isNaN(data)))) {
+      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length;
+      const positionEnd = data.indexOf('</errorCode>');
+      if (positionStart > 1 && (positionEnd > (positionStart))) {
+        errorCode = data.substring(positionStart, positionEnd);
+      }
+    }
+    return errorCode.trim();
   },
 
   /** Encodes special XML characters e. g. < to &lt.
@@ -103,7 +147,7 @@ module.exports = {
   * @param  {string} charTag tag string, not used if empty
   * @returns {promise} JSON format
   */
-  parseSoapBodyV1: (body, charTag) => {
+  parseSoapBodyV1: async function (body, charTag) {
     if (charTag === '') {
       return xml2js.parseStringPromise(body, { mergeAttrs: true, explicitArray: false });
     } else {

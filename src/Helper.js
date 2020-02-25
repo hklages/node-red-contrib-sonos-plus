@@ -163,16 +163,32 @@ module.exports = {
   // this will return the city from the first address item.
   getNestedObject: (nestedObj, pathArray) => {
     return pathArray.reduce((obj, key) =>
-      (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+      obj[key], nestedObj);
   },
 
+  /** Validates either the property or the object (if pathArray is [])
+  * @param  {object} nestdObj object
+  * @param  {array} path array with the property chain
+  * @outputs {boolean} property exists
+  */
   isValidProperty: (nestedObj, pathArray) => {
-    const property = module.exports.getNestedObject(nestedObj, pathArray);
-    return typeof property !== 'undefined';
+    if (pathArray.length === 0) {
+      if (typeof nestedObj === 'undefined' || nestedObj === null ||
+        (typeof nestedObj === 'number' && isNaN(nestedObj))) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      const property = pathArray.reduce((obj, key) =>
+        (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+      return typeof property !== 'undefined';
+    }
   },
 
   isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
-    const property = module.exports.getNestedObject(nestedObj, pathArray);
+    const property = pathArray.reduce((obj, key) =>
+      (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
     return typeof property !== 'undefined' && property !== '';
   }
 };

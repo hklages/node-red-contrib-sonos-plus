@@ -732,28 +732,23 @@ module.exports = function (RED) {
     const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetEQ;
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
-    // get valid eqType from msg.topic to define body
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    // validate msg.topic
+    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
-    const eqType = msg.topic;
-    if (!actionParameter.eqTypeValues.includes(eqType)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid topic'), sonosFunction);
+    if (!NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()), sonosFunction);
       return;
     }
+    const eqType = msg.topic;
+
     node.debug(JSON.stringify(actionParameter));
     actionParameter.args.EQType = eqType;
 
     sonosPlayer.deviceDescription()
       .then((response) => { // ensure that SONOS player has TV mode
-        if (typeof response === 'undefined' || response === null ||
-            (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined device description received');
-        }
-        if (typeof response.modelName === 'undefined' || response.modelName === null ||
-            (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
+        if (!NrcspHelper.isValidPropertyNotEmptyString(response, ['modelName'])) {
           throw new Error('n-r-c-s-p: undefined model name received');
         }
         if (!NrcspHelper.PLAYER_WITH_TV.includes(response.modelName)) {
@@ -762,27 +757,8 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // send request to SONOS player
-        const { baseUrl, path, name, action, args } = actionParameter;
-        return NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
-      })
-      .then((response) => { // parse body to XML
-        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBodyV1(response.body, '');
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // extract value, now in JSON format
-        // safely access property,  Oliver Steele's pattern
-        node.debug(JSON.stringify(bodyXML));
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
-          throw new Error('n-r-c-s-p: could not get value from player');
-        }
-        return result;
+        const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+        return NrcspSonos.getCmdBasic(baseUrl, 'SetEQ');
       })
       .then((result) => {
         if (eqType === 'SubGain') {
@@ -795,7 +771,7 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  Get current CrossfadeMode
+  /**  Get current crossfade mode.
   * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
@@ -803,29 +779,8 @@ module.exports = function (RED) {
   */
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
-
-    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetCrossfadeMode;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => { // parse body to XML
-        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBodyV1(response.body, '');
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // extract value, now in JSON format
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
-          throw new Error('n-r-c-s-p: could not get value from player');
-        }
-        return result;
-      })
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    NrcspSonos.getCmdBasic(baseUrl, 'GetCrossfadeMode')
       .then((result) => {
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelper.success(node, msg, sonosFunction);
@@ -833,7 +788,7 @@ module.exports = function (RED) {
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  Get current Loudness mode
+  /**  Get current loudness mode.
   * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
@@ -841,68 +796,25 @@ module.exports = function (RED) {
   */
   function getLoudnessMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode';
-
-    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetLoudness;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => { // parse body to XML
-        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBodyV1(response.body, '');
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // extract value, now in JSON format
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
-          throw new Error('n-r-c-s-p: could not get value from player');
-        }
-        return result;
-      })
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    NrcspSonos.getCmdBasic(baseUrl, 'GetLoudness')
       .then((result) => {
-        console.log(result);
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelper.success(node, msg, sonosFunction);
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
-  /**  Get remaining sleep timer duration sets the sleep timer.
+  /**  Get remaining sleep timer duration.
   * @param  {object} node current node
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
-  * @output {object} msg.payload sleep timer duration
+  * @output {String} msg.payload On Off
   */
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
-
-    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetRemainingSleepTimerDuration;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => { // parse body to XML
-        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBodyV1(response.body, '');
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // extract value, now in JSON format
-        // safely access property,  Oliver Steele's pattern
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
-          throw new Error('n-r-c-s-p: could not get value from player');
-        }
-        return result;
-      })
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    NrcspSonos.getCmdBasic(baseUrl, 'GetRemainingSleepTimerDuration')
       .then((result) => {
         msg.payload = (result === '' ? 'no time set' : result);
         NrcspHelper.success(node, msg, sonosFunction);
@@ -917,35 +829,8 @@ module.exports = function (RED) {
   * @output
   */
   function labNewFeature (node, msg, sonosPlayer) {
-    const sonosFunction = 'get my sonos - labNewFeature';
-
-    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.Browse;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args.ObjectID = 'FV:2'; // My Sonos
-    const { baseUrl, path, name, action, args } = actionParameter;
-    NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args)
-      .then((response) => { // parse body to XML
-        if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-          return NrcspSoap.parseSoapBodyV1(response.body, '');
-        } else {
-          throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-        }
-      })
-      .then((bodyXML) => { // extract value, now in JSON format
-        const paths = actionParameter.responsePath;
-        const result = paths.reduce((object, path) => {
-          return (object || {})[path];
-        }, bodyXML);
-        return result;
-      })
-      .then((result) => {
-        NrcspSoap.parseBrowseFavoritesResults(result)
-          .then((items) => {
-            msg.payload = items;
-            NrcspHelper.success(node, msg, sonosFunction);
-          });
-      })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+    const sonosFunction = 'labNewFeature';
+    return sonosFunction;
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

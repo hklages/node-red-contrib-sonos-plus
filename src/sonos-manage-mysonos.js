@@ -202,9 +202,8 @@ module.exports = function (RED) {
         return NrcspSonos.findStringInMySonosTitle(items, msg.topic, filter);
       })
       .then((found) => {
-        console.log(JSON.stringify(found));
-        // TODO switch to NrcspSonos.set...
-        return sonosPlayer.setAVTransportURI(found.uri, found.metaData);
+        // TODO switch to NrcspSonos.set...  current Metadata not used!
+        return sonosPlayer.setAVTransportURI(found.uri);
       })
       .then(() => { // optionally modify change volume
         if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['volume'])) {

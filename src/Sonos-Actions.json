@@ -192,7 +192,7 @@
       "u:GetCrossfadeModeResponse",
       "CrossfadeMode"
     ],
-    "info": "will return 0 or 1 and might be converted to On Off"
+    "info": "will return 0 or 1"
   },
   "SetLoudness": {
     "path": "/MediaRenderer/RenderingControl/Control",

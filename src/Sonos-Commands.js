@@ -3,6 +3,8 @@
 const NrcspSoap = require('./Soap.js');
 const NrcspHelper = require('./Helper.js');
 
+const xml2js = require('xml2js');
+
 module.exports = {
 
   // SONOS related data
@@ -27,27 +29,12 @@ module.exports = {
   */
   getAllMySonosItems: async function (sonosPlayer) {
     // receive data from player
-    const actionParameter = module.exports.ACTIONS_TEMPLATES.Browse;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args.ObjectID = 'FV:2'; // My Sonos
-    const { baseUrl, path, name, action, args } = actionParameter;
-    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    const result = await module.exports.getCmdBasic(baseUrl, 'Browse');
+    const list = await module.exports.parseBrowseFavoritesResults(result);
 
-    // convert to SOAP XML to JSON
-    let bodyXml;
-    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-      bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-    } else {
-      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-    }
-
-    // select/transform item properties
-    const paths = actionParameter.responsePath;
-    const result = paths.reduce((object, path) => {
-      return (object || {})[path];
-    }, bodyXml);
-    const list = await NrcspSoap.parseBrowseFavoritesResults(result);
-
+    // Music library items have special albumArt, without host
+    // We have to add the baseurl
     list.forEach((item, i) => {
       if (NrcspHelper.isValidProperty(item, ['albumArt'])) {
         if (item.albumArt.startsWith('/getaa')) {
@@ -66,32 +53,9 @@ module.exports = {
   */
   queue: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
-    const ACTION = 'AddURIToQueue';
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[ACTION];
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(uri);
-    actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
-    const { baseUrl, path, name, action, args } = actionParameter;
-
-    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
-
-    // check response - convert XML to JSON
-    let bodyXml;
-    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-      bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-    } else {
-      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-    }
-
-    // check response - select/transform item properties
-    const paths = actionParameter.responsePath;
-    const result = paths.reduce((object, path) => {
-      return (object || {})[path];
-    }, bodyXml);
-    if (result !== actionParameter.responseValue) {
-      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
-    }
-    return true;
+    const modifiedArgs = { EnqueuedURI: NrcspSoap.encodeXml(uri), EnqueuedURIMetaData: NrcspSoap.encodeXml(meta) };
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    return module.exports.setCmd(baseUrl, 'AddURIToQueue', modifiedArgs);
   },
 
   /**  stream uri
@@ -99,116 +63,76 @@ module.exports = {
   * @param  {string} uri  uri
   * @param  {string} meta  meta data
   */
-
-  // TODO currently not working
-
   stream: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
-    const ACTION = 'SetAVTransportURI';
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[ACTION];
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    actionParameter.args.EnqueuedURI = NrcspSoap.encodeXml(uri);
-    actionParameter.args.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
-    console.log('args' + JSON.stringify(actionParameter.args));
-    const { baseUrl, path, name, action, args } = actionParameter;
-    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
-    // check response - select/transform item properties
-    let bodyXml;
-    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-      bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-    } else {
-      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-    }
+    // TODO NOTWORKING
 
-    // check response - select/transform item properties
-    const paths = actionParameter.responsePath;
-    const result = paths.reduce((object, path) => {
-      return (object || {})[path];
-    }, bodyXml);
-    if (result !== actionParameter.responseValue) {
-      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
+    const ACTION_NAME = 'SetAVTransportURI';
+
+    const modifiedArgs = { EnqueuedURI: NrcspSoap.encodeXml(uri) };
+    if (meta !== '') {
+      modifiedArgs.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
     }
-    return true;
+    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+    return module.exports.setCmd(baseUrl, ACTION_NAME, modifiedArgs);
   },
 
-  // ======================  SONOS BASE COMMANDS TODO TEMPLATE!
+  // ======================  TEMPLATE COMMANDS
 
-  /**  play (content must be available)
-  * @param  {object} sonosPlayer Sonos Player
-  */
-  play: async function (sonosPlayer) {
-    // copy action parameter and update
-    const ACTION = 'Play';
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[ACTION];
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const { baseUrl, path, name, action, args } = actionParameter;
-    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
-
-    // check response - select/transform item properties
-    let bodyXml;
-    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-      bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-    } else {
-      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-    }
-
-    // check response - select/transform item properties
-    const paths = actionParameter.responsePath;
-    const result = paths.reduce((object, path) => {
-      return (object || {})[path];
-    }, bodyXml);
-    if (result !== actionParameter.responseValue) {
-      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
-    }
-    return true;
-  },
+  // /**  set action with new arg object
+  // * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
+  // * @param  {string} actionName the action name
+  // * @param  {object} args new args- requried
+  // * @returns {promise} true if succesfull
+  // */
+  // setCmdComplex: async function (baseUrl, actionName, newArgs) {
+  //   // copy action parameter and update
+  //   const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
+  //
+  //   // set value if required
+  //   const { path, name, action } = actionParameter;
+  //   const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, newArgs);
+  //
+  //   // check response - select/transform item properties
+  //   let bodyXml;
+  //   if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+  //     bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
+  //   } else {
+  //     throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+  //   }
+  //
+  //   // TODO should be removed
+  //   // // check response - select/transform item properties
+  //   // const paths = actionParameter.responsePath;
+  //   // const result = paths.reduce((object, path) => {
+  //   //   return (object || {})[path];
+  //   // }, bodyXml);
+  //
+  //   if (!NrcspHelper.isValidProperty(bodyXml, actionParameter.responsePath)) {
+  //     throw new Error('n-r-c-s-p: invalid response from sonos player');
+  //   }
+  //   const result = actionParameter.responsePath.reduce((object, path) => {
+  //     return (object)[path];
+  //   }, bodyXml);
+  //
+  //   if (result !== actionParameter.responseValue) {
+  //     throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
+  //   }
+  //   return true;
+  // },
 
   /**  set action with new arg object
   * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
   * @param  {string} actionName the action name
-  * @param  {object} args new args- requried
+  * @param  {object} modifiedArgs only those properties being modified
+  * @returns {promise} true if succesfull
   */
-  setCmdComplex: async function (baseUrl, actionName, newArgs) {
+  setCmd: async function (baseUrl, actionName, newArgs) {
     // copy action parameter and update
     const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
-
-    // set value if required
-    const { path, name, action } = actionParameter;
-    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, newArgs);
-
-    // check response - select/transform item properties
-    let bodyXml;
-    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-      bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-    } else {
-      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-    }
-
-    // check response - select/transform item properties
-    const paths = actionParameter.responsePath;
-    const result = paths.reduce((object, path) => {
-      return (object || {})[path];
-    }, bodyXml);
-    if (result !== actionParameter.responseValue) {
-      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
-    }
-    return true;
-  },
-
-  /**  set action with new value.
-  * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
-  * @param  {string} actionName the action name
-  * @param  {string} value new value (optional)
-  */
-  setCmdBasic: async function (baseUrl, actionName, value) {
-    // copy action parameter and update
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
-
-    // set value if required
-    if (value) {
-      actionParameter[actionParameter.args.argsValueName] = value;
-    }
+    Object.assign(actionParameter.args, newArgs);
+    console.log('args >>' + JSON.stringify(actionParameter.args));
     const { path, name, action, args } = actionParameter;
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
@@ -220,15 +144,92 @@ module.exports = {
       throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
     }
 
+    // TODO should be removed
+    // // check response - select/transform item properties
+    // const paths = actionParameter.responsePath;
+    // const result = paths.reduce((object, path) => {
+    //   return (object || {})[path];
+    // }, bodyXml);
+
+    if (!NrcspHelper.isValidProperty(bodyXml, actionParameter.responsePath)) {
+      throw new Error('n-r-c-s-p: invalid response from sonos player');
+    }
+    const result = actionParameter.responsePath.reduce((object, path) => {
+      return (object)[path];
+    }, bodyXml);
+
+    if (result !== actionParameter.responseValue) {
+      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
+    }
+    return true;
+  },
+
+  // /**  set action with new value.
+  // * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
+  // * @param  {string} actionName the action name
+  // * @param  {string} value new value (optional)
+  // * @returns {promise} true if succesfull
+  // */
+  // setCmdBasic: async function (baseUrl, actionName, value) {
+  //   // copy action parameter and update
+  //   const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
+  //
+  //   // set value if required
+  //   if (value) {
+  //     actionParameter[actionParameter.args.argsValueName] = value;
+  //   }
+  //   const { path, name, action, args } = actionParameter;
+  //   const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
+  //
+  //   // check response - select/transform item properties
+  //   let bodyXml;
+  //   if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+  //     bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
+  //   } else {
+  //     throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+  //   }
+  //
+  //   // check response - select/transform item properties
+  //   const paths = actionParameter.responsePath;
+  //   const result = paths.reduce((object, path) => {
+  //     return (object || {})[path];
+  //   }, bodyXml);
+  //   if (result !== actionParameter.responseValue) {
+  //     throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
+  //   }
+  //   return true;
+  // },
+
+  /**  set action with new value.
+  * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
+  * @param  {string} actionName the action name
+  * @param  {string} value new value (optional)
+  * @returns {promise} result from action
+  */
+  getCmdBasic: async function (baseUrl, actionName) {
+    // copy action parameter and update
+    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
+    const { path, name, action, args } = actionParameter;
+    const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
+
+    // check response - select/transform item properties
+    let bodyXml;
+    if (response.statusCode === 200) { // maybe not necessary as promise will throw error
+      bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
+      console.log('bodyxml>>' + bodyXml);
+    } else {
+      throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
+    }
+
     // check response - select/transform item properties
     const paths = actionParameter.responsePath;
     const result = paths.reduce((object, path) => {
       return (object || {})[path];
     }, bodyXml);
-    if (result !== actionParameter.responseValue) {
-      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
+    if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
+      throw new Error('n-r-c-s-p: could not get value from player');
     }
-    return true;
+    return result;
   },
 
   // ======================  HELPERS
@@ -240,13 +241,10 @@ module.exports = {
   * @param  {string} filter.processingType
   * @param  {string} filter.mediaType media type Album, Track, playlist
   * @param  {string} filter.serviceName service name according to SERVICE_NAME
-  * @return {promise} object {title, uri, meta} or null if not found
+  * @return {promise} object {title, uri, metaData} or null if not found
   */
 
   findStringInMySonosTitle: async function (items, searchString, filter) {
-    // get sid from name
-    console.log(JSON.stringify(filter));
-
     // get service id from filter.serviceName or set '' if all.
     let service = { name: 'unknown', sid: '' };
     // Why: Apart from service there can also be My Sonos item from Music Library
@@ -256,14 +254,12 @@ module.exports = {
         throw new Error('n-r-c-s-p: service currently not supported > ' + filter.serviceName);
       }
     }
-    console.log('service: ' + JSON.stringify(service));
     if (!module.exports.MEDIA_TYPES.includes(filter.mediaType)) {
       throw new Error('n-r-c-s-p: invalid media type ' + filter.mediaType);
     }
     // Why: In upnp class playlist has small letters Album, Track but playlist
     const correctedMediaType = (filter.mediaType === 'Playlist' ? 'playlist' : filter.mediaType);
     for (var i = 0; i < items.length; i++) {
-      console.log(items[i].title);
       if ((items[i].title.includes(searchString)) &&
         (items[i].processingType === filter.processingType) &&
         (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all') &&
@@ -284,8 +280,9 @@ module.exports = {
   // TODO error handling, empty list,...
 
   parseBrowseFavoritesResults: async function (body) {
-    const cleanXML = body.replace('\\"', '');
-    const result = await NrcspSoap.parseSoapBodyV1(cleanXML, 'chartag');
+    const cleanXml = body.replace('\\"', '');
+    const result = await xml2js.parseStringPromise(cleanXml, { mergeAttrs: true, explicitArray: false, charkey: 'chartag' });
+    // const result = await NrcspSoap.parseSoapBodyV1(cleanXml, 'chartag');
     const list = [];
     let sid, upnpClass, processingType;
     const original = result['DIDL-Lite'].item;
@@ -302,7 +299,7 @@ module.exports = {
       if (module.exports.UPNP_CLASSES_STREAM.includes(upnpClass)) {
         processingType = 'stream';
       }
-      if (exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
+      if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
         processingType = 'queue';
       }
       list.push(
@@ -356,4 +353,5 @@ module.exports = {
     }
     return upnpClass;
   }
+
 };

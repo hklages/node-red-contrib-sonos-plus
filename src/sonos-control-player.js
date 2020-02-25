@@ -464,7 +464,7 @@ module.exports = function (RED) {
 
     // execute command
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmdBasic(baseUrl, 'SetCrossfadeMode', newValue)
+    NrcspSonos.setCmd(baseUrl, 'SetCrossfadeMode', { CrossfadeMode: newValue })
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
@@ -495,7 +495,7 @@ module.exports = function (RED) {
 
     // execute command
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmdBasic(baseUrl, 'SetLoudness', newValue)
+    NrcspSonos.setCmd(baseUrl, 'SetLoudness', { DesiredLoudness: newValue })
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
@@ -558,12 +558,7 @@ module.exports = function (RED) {
 
     sonosPlayer.deviceDescription()
       .then((response) => { // ensure that SONOS player has TV mode
-        if (typeof response === 'undefined' || response === null ||
-            (typeof response === 'number' && isNaN(response)) || response === '') {
-          throw new Error('n-r-c-s-p: undefined device description received');
-        }
-        if (typeof response.modelName === 'undefined' || response.modelName === null ||
-            (typeof response.modelName === 'number' && isNaN(response.modelName)) || response.modelName === '') {
+        if (!NrcspHelper.isValidPropertyNotEmptyString(response, ['modelName'])) {
           throw new Error('n-r-c-s-p: undefined model name received');
         }
         if (!NrcspHelper.PLAYER_WITH_TV.includes(response.modelName)) {
@@ -572,9 +567,9 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // sonos command
-        const args = { InstanceID: 0, EQType: eqType, DesiredValue: newValue };
+        const args = { EQType: eqType, DesiredValue: newValue };
         const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-        return NrcspSonos.setCmdComplex(baseUrl, 'SetEQ', args);
+        return NrcspSonos.setCmd(baseUrl, 'SetEQ', args);
       })
       .then(() => {
         // msg not modified
@@ -606,7 +601,7 @@ module.exports = function (RED) {
 
     // execute command
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmdBasic(baseUrl, 'ConfigureSleepTimer', newValue)
+    NrcspSonos.setCmd(baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: newValue })
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
