@@ -190,5 +190,23 @@ module.exports = {
     const property = pathArray.reduce((obj, key) =>
       (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
     return typeof property !== 'undefined' && property !== '';
+  },
+
+  isTruthy: (input) => {
+    // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+    // all the following are false - same for constants.
+    //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0
+    // but these are true: let input = []; let input = {};
+    return !(typeof input === 'undefined' || input === null ||
+          (typeof input === 'number' && !Number.isFinite(input)));
+  },
+
+  isTruthyAndNotEmptyString: (input) => {
+    // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+    // all the following are false - same for constants.
+    //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
+    // but these are true: let input = []; let input = {};
+    return !(typeof input === 'undefined' || input === null ||
+          (typeof input === 'number' && !Number.isFinite(input)) || input === '');
   }
 };

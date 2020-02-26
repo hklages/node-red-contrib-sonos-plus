@@ -62,20 +62,16 @@ module.exports = function (RED) {
   * @param  {string} ipaddress IP address of sonos player
   */
   function processInputMsg (node, msg, ipaddress, serial) {
-    // get sonos player object
+    const sonosFunction = 'handle input msg';
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
 
-    const sonosFunction = 'handle input msg';
-
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
-      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
-
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['payload'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
@@ -123,6 +119,7 @@ module.exports = function (RED) {
         }
         msg.payload = items;
         NrcspHelper.success(node, msg, sonosFunction);
+        return true;
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
@@ -140,7 +137,7 @@ module.exports = function (RED) {
     const sonosFunction = 'queue my sonos item';
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -148,22 +145,22 @@ module.exports = function (RED) {
     // create filter object with processingType queue
     const filter = { processingType: 'queue' }; // no streams!
     // check existens and value of media typye/serviceName
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['filter'])) {
+    if (NrcspHelper.isTruthyAndNotEmptyString(msg.filter)) {
+      if (NrcspHelper.isTruthyAndNotEmptyString(msg.filter.mediaType)) {
+        filter.mediaType = msg.filter.mediaType;
+      } else {
+        throw new Error('n-r-c-s-p: missing media type or empty string' + JSON.stringify(msg.filter));
+      }
+      // check existens of service name
+      if (NrcspHelper.isTruthyAndNotEmptyString(msg.filter.serviceName)) {
+        filter.serviceName = msg.filter.serviceName;
+      } else {
+        throw new Error('n-r-c-s-p: missing service name or empty string. result msg.filter>>' + JSON.stringify(msg.filter));
+      }
+    } else {
       // default - no filter
       filter.serviceName = 'all';
       filter.mediaType = 'all';
-    } else {
-      if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['filter', 'mediaType'])) {
-        filter.mediaType = msg.filter.mediaType;
-      } else {
-        throw new Error('n-r-c-s-p: missing media type' + JSON.stringify(msg.filter));
-      }
-      // check existens of service name
-      if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['filter', 'serviceName'])) {
-        filter.serviceName = msg.filter.serviceName;
-      } else {
-        throw new Error('n-r-c-s-p: missing service name. result msg.filter>>' + JSON.stringify(msg.filter));
-      }
     }
     node.debug('filter value >>>' + JSON.stringify(filter));
 
@@ -175,7 +172,10 @@ module.exports = function (RED) {
         console.log(JSON.stringify(found));
         return NrcspSonos.queue(sonosPlayer, found.uri, found.metaData);
       })
-      .then((result) => NrcspHelper.success(node, msg, sonosFunction))
+      .then((result) => {
+        NrcspHelper.success(node, msg, sonosFunction);
+        return true;
+      })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 
@@ -205,8 +205,8 @@ module.exports = function (RED) {
         // TODO switch to NrcspSonos.set...  current Metadata not used!
         return sonosPlayer.setAVTransportURI(found.uri);
       })
-      .then(() => { // optionally modify change volume
-        if (NrcspHelper.isValidPropertyNotEmptyString(msg, ['volume'])) {
+      .then(() => { // optionally change volume
+        if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
           const newVolume = parseInt(msg.volume);
           if (Number.isInteger(newVolume)) {
             if (newVolume > 0 && newVolume < 100) {
@@ -221,9 +221,14 @@ module.exports = function (RED) {
             node.debug('msg.volume is not number');
             throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
           }
+        } else {
+          return true; // dont touch volume
         }
       })
-      .then((result) => NrcspHelper.success(node, msg, sonosFunction))
+      .then((result) => {
+        NrcspHelper.success(node, msg, sonosFunction);
+        return true;
+      })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
 

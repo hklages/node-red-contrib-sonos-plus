@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 
 ### Changed
+- CAUTION: In node "Control Player" msg is not anymore changed. Before msg. payload was set to true.
 - code optimization (use of Helper)
 
 ## [2.0.0] 2020-02-22

@@ -27,16 +27,13 @@ module.exports = function (RED) {
       node.debug('node - msg received');
 
       // if ip address exist use it or get it via discovery based on serialNum
-      if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
-        (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
-        // exisiting ip address - fastes solution, no discovery necessary
+      if (NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) {
         node.debug('using IP address of config node');
-        processInputMsg(node, msg, configNode.ipaddress);
+        processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
         NrcspHelper.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
-        if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
-                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
+        if (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)) {
           NrcspHelper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
               NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
@@ -47,7 +44,7 @@ module.exports = function (RED) {
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
-              processInputMsg(node, msg, ipAddress);
+              processInputMsg(node, msg, ipAddress, configNode.serialnum);
             }
           });
         } else {
@@ -66,17 +63,16 @@ module.exports = function (RED) {
   */
   function processInputMsg (node, msg, ipaddress) {
     const sonosFunction = 'handle input msg';
-    // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
-      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction);
+
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['payload'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
@@ -128,7 +124,7 @@ module.exports = function (RED) {
   *                 volume valid volume
   * @param  {object} sonosPlayer Sonos Player
   * @param  {string} cmd command - no parameter
-  * @param msg.payload = true if successful
+  * @output {object} msg unmodified / stopped in case of error
   */
   function handleCommandBasic (node, msg, sonosPlayer, cmd) {
     const sonosFunction = cmd;
@@ -136,30 +132,27 @@ module.exports = function (RED) {
     switch (cmd) {
       case 'play':
         sonosPlayer.play()
-          .then(() => {
-            // validate volume: integer, betweent 1 and 99 and set
-            if (typeof msg.volume === 'undefined' || msg.volume === null ||
-            (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-              // do NOT change volume - just return
-              return true;
-            }
-            const newVolume = parseInt(msg.volume);
-            if (Number.isInteger(newVolume)) {
-              if (newVolume > 0 && newVolume < 100) {
-                // change volume
-                node.debug('msg.volume is in range 1...99: ' + newVolume);
-                return sonosPlayer.setVolume(newVolume);
+          .then(() => { // optionally change volume
+            if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
+              const newVolume = parseInt(msg.volume);
+              if (Number.isInteger(newVolume)) {
+                if (newVolume > 0 && newVolume < 100) {
+                  // play and change volume
+                  node.debug('msg.volume is in range 1...99: ' + newVolume);
+                  return sonosPlayer.setVolume(msg.volume);
+                } else {
+                  node.debug('msg.volume is not in range: ' + newVolume);
+                  throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+                }
               } else {
-                node.debug('msg.volume is not in range: ' + newVolume);
-                throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+                node.debug('msg.volume is not number');
+                throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
               }
             } else {
-              node.debug('msg.volume is not number');
-              throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+              return true; // dont touch volume
             }
           })
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -169,7 +162,6 @@ module.exports = function (RED) {
       case 'stop':
         sonosPlayer.stop()
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -179,7 +171,6 @@ module.exports = function (RED) {
       case 'pause':
         sonosPlayer.pause()
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -189,7 +180,6 @@ module.exports = function (RED) {
       case 'toggleplayback':
         sonosPlayer.togglePlayback()
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -199,7 +189,6 @@ module.exports = function (RED) {
       case 'mute':
         sonosPlayer.setMuted(true)
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -209,7 +198,6 @@ module.exports = function (RED) {
       case 'unmute':
         sonosPlayer.setMuted(false)
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -220,7 +208,6 @@ module.exports = function (RED) {
         //  CAUTION! PRERQ: there should be a next song. Only a few stations support that (example Amazon Prime)
         sonosPlayer.next()
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -231,7 +218,6 @@ module.exports = function (RED) {
         //  CAUTION! PRERQ: there should be a previous song. Only a few stations support that (example Amazon Prime)
         sonosPlayer.previous(false)
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -241,7 +227,6 @@ module.exports = function (RED) {
       case 'leave_group':
         sonosPlayer.leaveGroup()
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -249,8 +234,7 @@ module.exports = function (RED) {
         break;
 
       case 'join_group': {
-        if (typeof msg.topic === 'undefined' || msg.topic === null ||
-          (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
           NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
           return;
         }
@@ -258,7 +242,6 @@ module.exports = function (RED) {
         const deviceToJoing = msg.topic;
         sonosPlayer.joinGroup(deviceToJoing)
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -267,37 +250,33 @@ module.exports = function (RED) {
       }
       case 'activate_avtransport':
         // validate msg.topic
-        if (typeof msg.topic === 'undefined' || msg.topic === null ||
-          (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
           NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
           return;
         }
 
         sonosPlayer.setAVTransportURI(msg.topic)
           .then(() => { // optionally change volume
-            // validate volume: integer, betweent 1 and 99
-            if (typeof msg.volume === 'undefined' || msg.volume === null ||
-            (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-              // do NOT change volume - just return
-              return true;
-            }
-            const newVolume = parseInt(msg.volume);
-            if (Number.isInteger(newVolume)) {
-              if (newVolume > 0 && newVolume < 100) {
-                // change volume
-                node.debug('msg.volume is in range 1...99: ' + newVolume);
-                return sonosPlayer.setVolume(newVolume);
+            if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
+              const newVolume = parseInt(msg.volume);
+              if (Number.isInteger(newVolume)) {
+                if (newVolume > 0 && newVolume < 100) {
+                  // play and change volume
+                  node.debug('msg.volume is in range 1...99: ' + newVolume);
+                  return sonosPlayer.setVolume(msg.volume);
+                } else {
+                  node.debug('msg.volume is not in range: ' + newVolume);
+                  throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+                }
               } else {
-                node.debug('msg.volume is not in range: ' + newVolume);
-                throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+                node.debug('msg.volume is not number');
+                throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
               }
             } else {
-              node.debug('msg.volume is not number');
-              throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+              return true; // dont touch volume
             }
           })
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -311,6 +290,7 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
   * @param  {object} commandObject command - cmd and parameter both as string or volume as integer
+  * @output {object} msg unmodified / stopped in case of error
   * special: volume range 1.. 99, adjust volume rage -29 ..  +29
   */
   function handleVolumeCommand (node, msg, sonosPlayer, commandObject) {
@@ -348,7 +328,6 @@ module.exports = function (RED) {
         }
         sonosPlayer.adjustVolume(volumeValue)
           .then(() => {
-            msg.payload = true;
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
           })
@@ -363,14 +342,14 @@ module.exports = function (RED) {
   *                 topic valid topic lab_play_uri
   *                 volume valide volume to set
   * @param  {object} sonosPlayer Sonos Player
+  * @output {object} msg unmodified / stopped in case of error
   * uses msg.topic (uri) and optional msg.volume (default is 40)
   */
   function handlePlayNotification (node, msg, sonosPlayer) {
     const sonosFunction = 'play notification';
     // validate msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
     // validate msg.volume - use default as backup
@@ -404,7 +383,6 @@ module.exports = function (RED) {
         volume: notificationVolume // Change the volume for the notification, and revert back afterwards.
       })
       .then(() => {
-        msg.payload = true;
         NrcspHelper.success(node, msg, sonosFunction);
         return true;
       })
@@ -417,14 +395,13 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   *             topic: On | Off
   * @param  {object} sonosPlayer Sonos Player
-  * @output {object} msg not changeed
+  * @output {object} msg unmodified / stopped in case of error
   */
   function handleSetLed (node, msg, sonosPlayer) {
     const sonosFunction = 'set LED';
     // validate msg.topic.
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
@@ -434,7 +411,6 @@ module.exports = function (RED) {
 
     sonosPlayer.setLEDState(msg.topic)
       .then(() => {
-        // msg not changed
         NrcspHelper.success(node, msg, sonosFunction);
         return true;
       })
@@ -452,8 +428,8 @@ module.exports = function (RED) {
     const sonosFunction = 'set crossfade mode';
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
@@ -466,7 +442,6 @@ module.exports = function (RED) {
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     NrcspSonos.setCmd(baseUrl, 'SetCrossfadeMode', { CrossfadeMode: newValue })
       .then(() => {
-        // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
@@ -483,10 +458,11 @@ module.exports = function (RED) {
     const sonosFunction = 'set loudness';
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
+
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: topic must be On or Off'), sonosFunction);
       return;
@@ -497,7 +473,6 @@ module.exports = function (RED) {
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     NrcspSonos.setCmd(baseUrl, 'SetLoudness', { DesiredLoudness: newValue })
       .then(() => {
-        // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
@@ -515,10 +490,11 @@ module.exports = function (RED) {
     const sonosFunction = 'set EQ';
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
+
     if (!NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()), sonosFunction);
       return;
@@ -526,7 +502,7 @@ module.exports = function (RED) {
     const eqType = msg.topic;
 
     // validate msg.value
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['eqvalue'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.eqvalue)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined new value'), sonosFunction);
       return;
     }
@@ -551,7 +527,6 @@ module.exports = function (RED) {
       }
       newValue = (msg.eqvalue === 'On' ? 1 : 0);
     } else {
-      // not yet supported
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: EQType in msg.topic is not yet supported'), sonosFunction);
       return;
     }
@@ -572,8 +547,8 @@ module.exports = function (RED) {
         return NrcspSonos.setCmd(baseUrl, 'SetEQ', args);
       })
       .then(() => {
-        // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
+        return true;
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
@@ -589,10 +564,11 @@ module.exports = function (RED) {
     const sonosFunction = 'set/configure sleep timer';
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
+
     if (!NrcspHelper.REGEX_TIME.test(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction);
       return;
@@ -603,7 +579,6 @@ module.exports = function (RED) {
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
     NrcspSonos.setCmd(baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: newValue })
       .then(() => {
-        // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
@@ -615,7 +590,7 @@ module.exports = function (RED) {
   * @param  {object} sonosPlayer Sonos Player
   */
   function labTest (node, msg, sonosPlayer) {
-
   }
+
   RED.nodes.registerType('sonos-control-player', SonosControlPlayerNode);
 };

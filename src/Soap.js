@@ -128,6 +128,7 @@ module.exports = {
   /** Encodes special XML characters e. g. < to &lt.
   * @param  {string} xmlData orignal XML data
   * @returns {string} data without any <, >, &, ', "
+  * All params must exist!
   */
 
   encodeXml: (xmlData) => {
@@ -144,14 +145,16 @@ module.exports = {
 
   /** Transforms soap response to JSON format.
   * @param  {object} body response from SONOS player on a SOAP request
-  * @param  {string} charTag tag string, not used if empty
+  * @param  {string} tag tag string, not used if empty
   * @returns {promise} JSON format
+  * All params must exist!
   */
-  parseSoapBodyV1: async function (body, charTag) {
-    if (charTag === '') {
-      return xml2js.parseStringPromise(body, { mergeAttrs: true, explicitArray: false });
-    } else {
-      xml2js.parseStringPromise(body, { mergeAttrs: true, explicitArray: false, charkey: charTag });
+  parseSoapBodyV1: async function (body, tag) {
+    const arg = { mergeAttrs: true, explicitArray: false };
+
+    if (tag !== '') {
+      arg.charkey = tag;
     }
+    return xml2js.parseStringPromise(body, arg);
   }
 };

@@ -1,5 +1,4 @@
 const NrcspHelper = require('./Helper.js');
-const NrcspSoap = require('./Soap.js');
 const NrcspSonos = require('./Sonos-Commands.js');
 
 module.exports = function (RED) {
@@ -123,7 +122,7 @@ module.exports = function (RED) {
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
     } else if (command === 'lab_test') {
-      labNewFeature(node, msg, sonosPlayer);
+      labtest(node, msg, sonosPlayer);
     } else {
       NrcspHelper.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -758,7 +757,7 @@ module.exports = function (RED) {
       })
       .then(() => { // send request to SONOS player
         const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-        return NrcspSonos.getCmdBasic(baseUrl, 'SetEQ');
+        return NrcspSonos.getCmd(baseUrl, 'GetEQ');
       })
       .then((result) => {
         if (eqType === 'SubGain') {
@@ -780,7 +779,7 @@ module.exports = function (RED) {
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.getCmdBasic(baseUrl, 'GetCrossfadeMode')
+    NrcspSonos.getCmd(baseUrl, 'GetCrossfadeMode')
       .then((result) => {
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelper.success(node, msg, sonosFunction);
@@ -797,7 +796,7 @@ module.exports = function (RED) {
   function getLoudnessMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode';
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.getCmdBasic(baseUrl, 'GetLoudness')
+    NrcspSonos.getCmd(baseUrl, 'GetLoudness')
       .then((result) => {
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelper.success(node, msg, sonosFunction);
@@ -814,7 +813,7 @@ module.exports = function (RED) {
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.getCmdBasic(baseUrl, 'GetRemainingSleepTimerDuration')
+    NrcspSonos.getCmd(baseUrl, 'GetRemainingSleepTimerDuration')
       .then((result) => {
         msg.payload = (result === '' ? 'no time set' : result);
         NrcspHelper.success(node, msg, sonosFunction);
@@ -828,8 +827,51 @@ module.exports = function (RED) {
   * @param  {object} sonosPlayer sonos player object
   * @output
   */
-  function labNewFeature (node, msg, sonosPlayer) {
-    const sonosFunction = 'labNewFeature';
+  function labtest (node, msg, sonosPlayer) {
+    const sonosFunction = 'labtest';
+    let input1;
+    let input2 = null;
+    let input3 = undefined;
+    let input4 = NaN;
+    let input5 = 1 / 0; // result is Infinity
+    let input6 = -1 / 0; // result -Infinity
+    let input7 = [];
+    let input8 = {};
+    let input9 = 'null';
+    let input10 = 'NaN';
+    let input11 = 'undefined';
+    let input12 = '';
+
+    console.log('following should be false');
+    console.log('1>>>' + NrcspHelper.isTruthy(input1));
+    console.log('2>>>' + NrcspHelper.isTruthy(input2));
+    console.log('3>>>' + NrcspHelper.isTruthy(input3));
+    console.log('4>>>' + NrcspHelper.isTruthy(input4));
+    console.log('5>>>' + NrcspHelper.isTruthy(input5));
+    console.log('6>>>' + NrcspHelper.isTruthy(input6));
+    console.log('following should be true');
+    console.log('7>>>' + NrcspHelper.isTruthy(input7));
+    console.log('8>>>' + NrcspHelper.isTruthy(input8));
+    console.log('9>>>' + NrcspHelper.isTruthy(input9));
+    console.log('10>>>' + NrcspHelper.isTruthy(input10));
+    console.log('11>>>' + NrcspHelper.isTruthy(input11));
+    console.log('12>>>' + NrcspHelper.isTruthy(input12));
+
+    console.log('following should be false');
+    console.log('1>>>' + NrcspHelper.isTruthyAndNotEmptyString(input1));
+    console.log('2>>>' + NrcspHelper.isTruthyAndNotEmptyString(input2));
+    console.log('3>>>' + NrcspHelper.isTruthyAndNotEmptyString(input3));
+    console.log('4>>>' + NrcspHelper.isTruthyAndNotEmptyString(input4));
+    console.log('5>>>' + NrcspHelper.isTruthyAndNotEmptyString(input5));
+    console.log('6>>>' + NrcspHelper.isTruthyAndNotEmptyString(input6));
+    console.log('12>>>' + NrcspHelper.isTruthyAndNotEmptyString(input12));
+    console.log('following should be true');
+    console.log('7>>>' + NrcspHelper.isTruthyAndNotEmptyString(input7));
+    console.log('8>>>' + NrcspHelper.isTruthyAndNotEmptyString(input8));
+    console.log('9>>>' + NrcspHelper.isTruthyAndNotEmptyString(input9));
+    console.log('10>>>' + NrcspHelper.isTruthyAndNotEmptyString(input10));
+    console.log('11>>>' + NrcspHelper.isTruthyAndNotEmptyString(input11));
+
     return sonosFunction;
   }
 

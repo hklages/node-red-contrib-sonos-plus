@@ -3,8 +3,6 @@
 const NrcspSoap = require('./Soap.js');
 const NrcspHelper = require('./Helper.js');
 
-const xml2js = require('xml2js');
-
 module.exports = {
 
   // SONOS related data
@@ -30,7 +28,7 @@ module.exports = {
   getAllMySonosItems: async function (sonosPlayer) {
     // receive data from player
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const result = await module.exports.getCmdBasic(baseUrl, 'Browse');
+    const result = await module.exports.getCmd(baseUrl, 'Browse');
     const list = await module.exports.parseBrowseFavoritesResults(result);
 
     // Music library items have special albumArt, without host
@@ -64,63 +62,15 @@ module.exports = {
   * @param  {string} meta  meta data
   */
   stream: async function (sonosPlayer, uri, meta) {
+    // TODO NOT WORKING
     // copy action parameter and update
-
-    // TODO NOTWORKING
-
-    const ACTION_NAME = 'SetAVTransportURI';
-
     const modifiedArgs = { EnqueuedURI: NrcspSoap.encodeXml(uri) };
     if (meta !== '') {
       modifiedArgs.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
     }
     const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    return module.exports.setCmd(baseUrl, ACTION_NAME, modifiedArgs);
+    return module.exports.setCmd(baseUrl, 'SetAVTransportURI', modifiedArgs);
   },
-
-  // ======================  TEMPLATE COMMANDS
-
-  // /**  set action with new arg object
-  // * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
-  // * @param  {string} actionName the action name
-  // * @param  {object} args new args- requried
-  // * @returns {promise} true if succesfull
-  // */
-  // setCmdComplex: async function (baseUrl, actionName, newArgs) {
-  //   // copy action parameter and update
-  //   const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
-  //
-  //   // set value if required
-  //   const { path, name, action } = actionParameter;
-  //   const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, newArgs);
-  //
-  //   // check response - select/transform item properties
-  //   let bodyXml;
-  //   if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-  //     bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-  //   } else {
-  //     throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-  //   }
-  //
-  //   // TODO should be removed
-  //   // // check response - select/transform item properties
-  //   // const paths = actionParameter.responsePath;
-  //   // const result = paths.reduce((object, path) => {
-  //   //   return (object || {})[path];
-  //   // }, bodyXml);
-  //
-  //   if (!NrcspHelper.isValidProperty(bodyXml, actionParameter.responsePath)) {
-  //     throw new Error('n-r-c-s-p: invalid response from sonos player');
-  //   }
-  //   const result = actionParameter.responsePath.reduce((object, path) => {
-  //     return (object)[path];
-  //   }, bodyXml);
-  //
-  //   if (result !== actionParameter.responseValue) {
-  //     throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
-  //   }
-  //   return true;
-  // },
 
   /**  set action with new arg object
   * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
@@ -132,7 +82,6 @@ module.exports = {
     // copy action parameter and update
     const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
     Object.assign(actionParameter.args, newArgs);
-    console.log('args >>' + JSON.stringify(actionParameter.args));
     const { path, name, action, args } = actionParameter;
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 
@@ -143,13 +92,6 @@ module.exports = {
     } else {
       throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
     }
-
-    // TODO should be removed
-    // // check response - select/transform item properties
-    // const paths = actionParameter.responsePath;
-    // const result = paths.reduce((object, path) => {
-    //   return (object || {})[path];
-    // }, bodyXml);
 
     if (!NrcspHelper.isValidProperty(bodyXml, actionParameter.responsePath)) {
       throw new Error('n-r-c-s-p: invalid response from sonos player');
@@ -164,49 +106,13 @@ module.exports = {
     return true;
   },
 
-  // /**  set action with new value.
-  // * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
-  // * @param  {string} actionName the action name
-  // * @param  {string} value new value (optional)
-  // * @returns {promise} true if succesfull
-  // */
-  // setCmdBasic: async function (baseUrl, actionName, value) {
-  //   // copy action parameter and update
-  //   const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
-  //
-  //   // set value if required
-  //   if (value) {
-  //     actionParameter[actionParameter.args.argsValueName] = value;
-  //   }
-  //   const { path, name, action, args } = actionParameter;
-  //   const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
-  //
-  //   // check response - select/transform item properties
-  //   let bodyXml;
-  //   if (response.statusCode === 200) { // maybe not necessary as promise will throw error
-  //     bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-  //   } else {
-  //     throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
-  //   }
-  //
-  //   // check response - select/transform item properties
-  //   const paths = actionParameter.responsePath;
-  //   const result = paths.reduce((object, path) => {
-  //     return (object || {})[path];
-  //   }, bodyXml);
-  //   if (result !== actionParameter.responseValue) {
-  //     throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml));
-  //   }
-  //   return true;
-  // },
-
   /**  set action with new value.
   * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
   * @param  {string} actionName the action name
   * @param  {string} value new value (optional)
   * @returns {promise} result from action
   */
-  getCmdBasic: async function (baseUrl, actionName) {
+  getCmd: async function (baseUrl, actionName) {
     // copy action parameter and update
     const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
     const { path, name, action, args } = actionParameter;
@@ -216,16 +122,16 @@ module.exports = {
     let bodyXml;
     if (response.statusCode === 200) { // maybe not necessary as promise will throw error
       bodyXml = await NrcspSoap.parseSoapBodyV1(response.body, '');
-      console.log('bodyxml>>' + bodyXml);
     } else {
       throw new Error('n-r-c-s-p: status code: ' + response.statusCode + '-- body:' + JSON.stringify(response.body));
     }
 
     // check response - select/transform item properties
     const paths = actionParameter.responsePath;
-    const result = paths.reduce((object, path) => {
-      return (object || {})[path];
+    const result = paths.reduce((object, element) => {
+      return (object || {})[element];
     }, bodyXml);
+    // TODO please verify!
     if (typeof result !== 'string') { // Caution: this check does only work for primitive values (not objects)
       throw new Error('n-r-c-s-p: could not get value from player');
     }
@@ -272,24 +178,23 @@ module.exports = {
     throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic');
   },
 
-  /** Extract list with title, albumArt, uri and metadata from given input-
-  * @param  {object} body response from SONOS player on a SOAP request
-  * @returns {promise} JSON format, if no uri - sid is ser
+  /** Extract list with title, albumArt, uri, metadata, sid, upnpClass and processingType from given input
+  * @param  {object} body is Browse response from SONOS player
+  * @returns {promise} Array of objects (see above) in JSON format. May return empty array
+  * All params must exist!
   */
-
-  // TODO error handling, empty list,...
 
   parseBrowseFavoritesResults: async function (body) {
     const cleanXml = body.replace('\\"', '');
-    const result = await xml2js.parseStringPromise(cleanXml, { mergeAttrs: true, explicitArray: false, charkey: 'chartag' });
-    // const result = await NrcspSoap.parseSoapBodyV1(cleanXml, 'chartag');
+    const tag = 'sidTag';
+    const result = await NrcspSoap.parseSoapBodyV1(cleanXml, tag);
     const list = [];
     let sid, upnpClass, processingType;
     const original = result['DIDL-Lite'].item;
     for (var i = 0; i < original.length; i++) {
       sid = '';
-      if (!NrcspHelper.isValidProperty(original[i], ['res', 'chartag'])) {
-        sid = module.exports.getSid(original[i].res.chartag);
+      if (!NrcspHelper.isValidProperty(original[i], ['res', tag])) {
+        sid = module.exports.getSid(original[i].res[tag]);
       }
       upnpClass = '';
       if (!NrcspHelper.isValidProperty(original[i], ['res', 'resMD'])) {
@@ -353,5 +258,4 @@ module.exports = {
     }
     return upnpClass;
   }
-
 };
