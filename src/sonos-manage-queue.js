@@ -27,16 +27,13 @@ module.exports = function (RED) {
       node.debug('node - msg received');
 
       // if ip address exist use it or get it via discovery based on serialNum
-      if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
-        (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
-        // exisiting ip address - fastes solution, no discovery necessary
+      if (NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) {
         node.debug('using IP address of config node');
-        processInputMsg(node, msg, configNode.ipaddress);
+        processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
         NrcspHelper.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
-        if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
-                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
+        if (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)) {
           NrcspHelper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
               NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
@@ -47,7 +44,7 @@ module.exports = function (RED) {
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
-              processInputMsg(node, msg, ipAddress);
+              processInputMsg(node, msg, ipAddress, configNode.serialnum);
             }
           });
         } else {
@@ -69,14 +66,14 @@ module.exports = function (RED) {
     // get sonos player
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
-      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player. Check configuration'), sonosFunction);
+
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['payload'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
@@ -91,15 +88,6 @@ module.exports = function (RED) {
       insertSpotifyUri(node, msg, sonosPlayer);
     } else if (command === 'insert_prime_playlisturi') {
       insertPrimePlaylistUri(node, msg, sonosPlayer);
-    } else if (command === 'insert_prime_playlist') {
-      // TODO Remove in future
-      NrcspHelper.warning(node, sonosFunction, 'Command depreciated', 'Please use insert_prime_playlisturi');
-    } else if (command === 'insert_spotify') {
-      insertMySonosSpotify(node, msg, sonosPlayer, false);
-    } else if (command === 'insert_spotify_playlist') {
-      insertMySonosSpotify(node, msg, sonosPlayer, true);
-    } else if (command === 'insert_amazonprime_playlist') {
-      insertMySonosAmazonPrimePlaylist(node, msg, sonosPlayer);
     } else if (command === 'insert_sonos_playlist') {
       insertSonosPlaylist(node, msg, sonosPlayer);
     } else if (command === 'insert_musiclibrary_playlist') {
@@ -116,20 +104,28 @@ module.exports = function (RED) {
       setQueuemode(node, msg, sonosPlayer);
     } else if (command === 'seek') {
       seek(node, msg, sonosPlayer);
-    } else if (command === 'lab_test') {
-      labTestFunction(node, msg, sonosPlayer);
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer);
-    } else if (command === 'get_spotify') {
-      getMySonosSpotify(node, msg, sonosPlayer);
-    } else if (command === 'get_amazonprime_playlists') {
-      getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
     } else if (command === 'get_sonos_playlists') {
       getSonosPlaylists(node, msg, sonosPlayer);
     } else if (command === 'get_musiclibrary_playlists') {
       getMusicLibraryPlaylists(node, msg, sonosPlayer);
     } else if (command === 'get_queuemode') {
       getQueuemode(node, msg, sonosPlayer);
+    // depreciated since 2.0.0
+    } else if (command === 'insert_spotify') {
+      insertMySonosSpotify(node, msg, sonosPlayer, false);
+    } else if (command === 'insert_spotify_playlist') {
+      insertMySonosSpotify(node, msg, sonosPlayer, true);
+    } else if (command === 'insert_amazonprime_playlist') {
+      insertMySonosAmazonPrimePlaylist(node, msg, sonosPlayer);
+    } else if (command === 'get_spotify') {
+      getMySonosSpotify(node, msg, sonosPlayer);
+    } else if (command === 'get_amazonprime_playlists') {
+      getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer);
+    // end of depreciated
+    } else if (command === 'lab_test') {
+      labTestFunction(node, msg, sonosPlayer);
     } else {
       NrcspHelper.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
     }
@@ -150,8 +146,7 @@ module.exports = function (RED) {
     const sonosFunction = 'insert uri';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -184,8 +179,7 @@ module.exports = function (RED) {
     const sonosFunction = 'insert spotify uri';
 
     // validate msg.topic as spotify uri
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -199,8 +193,7 @@ module.exports = function (RED) {
     // validate msg.region as region - default is EU 2311. US would be 3079?
     const Sonos = require('sonos');
     sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU);
-    if (typeof msg.region === 'undefined' || msg.region === null ||
-    (typeof msg.region === 'number' && isNaN(msg.region)) || msg.region === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.region)) {
       const Sonos = require('sonos');
       sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU);
     } else {
@@ -235,8 +228,7 @@ module.exports = function (RED) {
     const sonosFunction = 'insert prime playlist';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
       return;
     }
@@ -277,6 +269,8 @@ module.exports = function (RED) {
   * @param  {object} sonosPlayer Sonos Player
   * @param  {Boolean} onlyPlaylists yes if only playlists should be searched
   * @output {object} Success: msg, no modification
+  *
+  *   !!!   D E P R E C I A T E D  - use My Sonos
   */
   function insertMySonosSpotify (node, msg, sonosPlayer, onlyPlaylists) {
     let sonosFunction = 'insert spotify';
@@ -284,15 +278,13 @@ module.exports = function (RED) {
       sonosFunction = 'insert spotify playlist';
     }
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
     // validate msg.region - default is EU 2311. US would be 3079?
-    if (typeof msg.region === 'undefined' || msg.region === null ||
-    (typeof msg.region === 'number' && isNaN(msg.region)) || msg.region === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.region)) {
       const Sonos = require('sonos');
       sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU);
     } else {
@@ -310,8 +302,7 @@ module.exports = function (RED) {
         // get array of all Spotify playlists and return
         const SERVICE_IDENTIFIER = 'spotify%3a';
         const playlistArray = []; // will hold all playlist items
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (response === false) {
@@ -430,13 +421,14 @@ module.exports = function (RED) {
   *        topic: part of the title name; is search string
   * @param  {object} sonosPlayer Sonos Player
   * @output {object} Success: msg, no modification
+  *
+  *   !!!   D E P R E C I A T E D  - use My Sonos
   */
   function insertMySonosAmazonPrimePlaylist (node, msg, sonosPlayer) {
     const sonosFunction = 'insert amazon prime playlist';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -446,8 +438,7 @@ module.exports = function (RED) {
         // get array of playlists and return
         const SERVICE_IDENTIFIER = 'prime_playlist';
         const playlistArray = []; // will hold all playlist items
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (response === false) {
@@ -547,16 +538,14 @@ module.exports = function (RED) {
     const sonosFunction = 'insert sonos playlist';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
     // validate msg.size and use default if not available
     let listDimension = 100; // default
-    if (typeof msg.size === 'undefined' || msg.size === null ||
-    (typeof msg.size === 'number' && isNaN(msg.size)) || msg.size === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.size)) {
       node.debug('msg.size undefined - use default size 100');
     } else {
       listDimension = parseInt(msg.size);
@@ -577,8 +566,7 @@ module.exports = function (RED) {
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: listDimension })
       .then((response) => {
         // validate response
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined playlists list received');
         }
         if (response === false) {
@@ -639,16 +627,14 @@ module.exports = function (RED) {
     const sonosFunction = 'insert music library playlist';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
 
     // validate msg.size and use default if not available
     let listDimension = 100; // default
-    if (typeof msg.size === 'undefined' || msg.size === null ||
-    (typeof msg.size === 'number' && isNaN(msg.size)) || msg.size === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.size)) {
       node.debug('msg.size undefined - use default size 100');
     } else {
       listDimension = parseInt(msg.size);
@@ -669,8 +655,7 @@ module.exports = function (RED) {
     sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
       .then((response) => {
         // get array of playlists and return
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getMusicLibrary response received');
         }
         if (response === false) {
@@ -731,8 +716,7 @@ module.exports = function (RED) {
     sonosPlayer.getQueue()
       .then((response) => {
         // validiate queue ist not empty
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined get queue response received');
         }
         if (response === false) {
@@ -746,24 +730,23 @@ module.exports = function (RED) {
       .then(() => {
         // optionally change volume
         // validate volume: integer, betweent 1 and 99
-        if (typeof msg.volume === 'undefined' || msg.volume === null ||
-        (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-          // do NOT change volume - just return
-          return true;
-        }
-        const newVolume = parseInt(msg.volume);
-        if (Number.isInteger(newVolume)) {
-          if (newVolume > 0 && newVolume < 100) {
-            // change volume
-            node.debug('msg.volume is in range 1...99: ' + newVolume);
-            return sonosPlayer.setVolume(newVolume);
+        if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
+          const newVolume = parseInt(msg.volume);
+          if (Number.isInteger(newVolume)) {
+            if (newVolume > 0 && newVolume < 100) {
+              // play and change volume
+              node.debug('msg.volume is in range 1...99: ' + newVolume);
+              return sonosPlayer.setVolume(msg.volume);
+            } else {
+              node.debug('msg.volume is not in range: ' + newVolume);
+              throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+            }
           } else {
-            node.debug('msg.volume is not in range: ' + newVolume);
-            throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+            node.debug('msg.volume is not number');
+            throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
           }
         } else {
-          node.debug('msg.volume is not number');
-          throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+          return true; // dont touch volume
         }
       })
       .then(() => { // show success
@@ -786,8 +769,7 @@ module.exports = function (RED) {
     sonosPlayer.getQueue()
       .then((response) => {
         // get queue size - ensure not empty
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         if (response === false) {
@@ -805,8 +787,7 @@ module.exports = function (RED) {
       .then((queueSize) => {
         // queueSize is integer!
         // validate message topic. Remark: at this position because we need queue size
-        if (typeof msg.topic === 'undefined' || msg.topic === null ||
-          (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
           throw new Error('n-r-c-s-p: undefined index (msg.topic)');
         }
         let position = String(msg.topic).trim();
@@ -871,8 +852,7 @@ module.exports = function (RED) {
     sonosPlayer.getQueue()
       .then((response) => {
         // get queue size - ensure not empty
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         if (response === false) {
@@ -890,8 +870,7 @@ module.exports = function (RED) {
       .then((queueSize) => {
         // queueSize is integer!
         // validate message topic. Remark: at this position because we need queue size
-        if (typeof msg.topic === 'undefined' || msg.topic === null ||
-          (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
           throw new Error('n-r-c-s-p: undefined topic');
         }
 
@@ -914,8 +893,7 @@ module.exports = function (RED) {
         validatedPosition = position;
 
         // validate numberOfSongs
-        if (typeof msg.numberOfSongs === 'undefined' || msg.numberOfSongs === null ||
-          (typeof msg.numberOfSongs === 'number' && isNaN(msg.numberOfSongs)) || msg.numberOfSongs === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(msg.numberOfSongs)) {
           validatedNumberofSongs = 1;
         }
         // Convert to integer and check
@@ -953,8 +931,7 @@ module.exports = function (RED) {
     const sonosFunction = 'set queuemode';
 
     // check topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -966,8 +943,7 @@ module.exports = function (RED) {
 
     sonosPlayer.getQueue()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: could not get queue data from player'); // promise implicitly rejected
         }
         if (response === false) {
@@ -978,8 +954,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.avTransportService().GetMediaInfo(); })
       .then((mediaInfo) => {
-        if (typeof mediaInfo === 'undefined' || mediaInfo === null ||
-          (typeof mediaInfo === 'number' && isNaN(mediaInfo)) || mediaInfo === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(mediaInfo)) {
           throw new Error('n-r-c-s-p: undefined response from get media info');
         }
         if (typeof mediaInfo.CurrentURI === 'undefined' || mediaInfo.CurrentURI === null ||
@@ -996,8 +971,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.setPlayMode(msg.topic); })
       .then((plresp) => {
-        if (typeof plresp === 'undefined' || plresp === null ||
-          (typeof plresp === 'number' && isNaN(plresp)) || plresp === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(plresp)) {
           throw new Error('n-r-c-s-p: undefined response from setPlayMode');
         } else {
           return true;
@@ -1020,8 +994,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get queue';
     sonosPlayer.getQueue()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getqueue response received');
         }
         let songsArray;
@@ -1060,6 +1033,9 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
   * @output {object} Success: msg, no modification
+  *
+  *     D E P R E C I A T E D since 2.0.0
+  *
   */
   function getMySonosSpotify (node, msg, sonosPlayer) {
     const sonosFunction = 'get spotify playlist';
@@ -1069,8 +1045,7 @@ module.exports = function (RED) {
         // get array of playlists and return
         const SPOTIFY_IDENTIFIER = 'spotify%3a';
         const playlistArray = []; // will hold all playlist items
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (response === false) {
@@ -1123,14 +1098,16 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
   * @output {object} Success: msg,  msg.payload to current array of My Sonos Amazon Prime playlist
+  *
+  *   D E P R E C I A T E D since 2.0.0
+  *
   */
   function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get amazon prime playlist';
     sonosPlayer.getFavorites()
       .then((response) => {
         // validate response and send output
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (response === false) {
@@ -1183,14 +1160,14 @@ module.exports = function (RED) {
   *        size: optional, maximum amount of playlists being loaded from SONOS player
   * @param  {object} sonosPlayer Sonos Player
   * @output {object} Success: msg, msg.payload = list of SONOS playlists
+  *
   */
   function getSonosPlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get SONOS playlists';
 
     // validate msg.size and use default if not available
     let listDimension = 100; // default
-    if (typeof msg.size === 'undefined' || msg.size === null ||
-    (typeof msg.size === 'number' && isNaN(msg.size)) || msg.size === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.size)) {
       node.debug('msg.size undefined - use default size 100');
     } else {
       listDimension = parseInt(msg.size);
@@ -1211,8 +1188,7 @@ module.exports = function (RED) {
     sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: listDimension })
       .then((response) => {
         // validate response and change albumArtUri
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getMusicLibrary response received');
         }
         if (response === false) {
@@ -1266,8 +1242,7 @@ module.exports = function (RED) {
 
     // validate msg.size and use default if not available
     let listDimension = 100; // default
-    if (typeof msg.size === 'undefined' || msg.size === null ||
-    (typeof msg.size === 'number' && isNaN(msg.size)) || msg.size === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.size)) {
       node.debug('msg.size undefined - use default size 100');
     } else {
       listDimension = parseInt(msg.size);
@@ -1288,8 +1263,7 @@ module.exports = function (RED) {
     sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
       .then((response) => {
         // validate response
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getMusicLibrary response received');
         }
         if (response === false) {
@@ -1329,8 +1303,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get queuemode';
     sonosPlayer.getPlayMode()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: could not get queue mode from player');
         }
         msg.payload = response;
@@ -1349,7 +1322,7 @@ module.exports = function (RED) {
     const sonosFunction = 'seek / move forward in song';
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }

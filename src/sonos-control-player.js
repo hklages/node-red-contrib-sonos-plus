@@ -355,8 +355,7 @@ module.exports = function (RED) {
     // validate msg.volume - use default as backup
     let notificationVolume;
     const defaultVolume = 40;
-    if (typeof msg.volume === 'undefined' || msg.volume === null ||
-      (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
       notificationVolume = defaultVolume; // default
     } else {
       notificationVolume = parseInt(msg.volume);

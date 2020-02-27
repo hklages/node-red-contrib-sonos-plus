@@ -27,16 +27,13 @@ module.exports = function (RED) {
       node.debug('node - msg received');
 
       // if ip address exist use it or get it via discovery based on serialNum
-      if (!(typeof configNode.ipaddress === 'undefined' || configNode.ipaddress === null ||
-        (typeof configNode.ipaddress === 'number' && isNaN(configNode.ipaddress)) || configNode.ipaddress.trim().length < 7)) {
-        // exisiting ip address - fastes solution, no discovery necessary
+      if (NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) {
         node.debug('using IP address of config node');
-        processInputMsg(node, msg, configNode.ipaddress);
+        processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
         NrcspHelper.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
-        if (!(typeof configNode.serialnum === 'undefined' || configNode.serialnum === null ||
-                (typeof configNode.serialnum === 'number' && isNaN(configNode.serialnum)) || (configNode.serialnum.trim()).length < 19)) {
+        if (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)) {
           NrcspHelper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
               NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
@@ -47,7 +44,7 @@ module.exports = function (RED) {
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
               node.debug('Found sonos player');
-              processInputMsg(node, msg, ipAddress);
+              processInputMsg(node, msg, ipAddress, configNode.serialnum);
             }
           });
         } else {
@@ -63,20 +60,17 @@ module.exports = function (RED) {
   * @param  {string} ipaddress IP address of sonos player
   */
   function processInputMsg (node, msg, ipaddress) {
-    // get sonos player
+    const sonosFunction = 'handle input msg';
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
 
-    const sonosFunction = 'handle input msg';
-
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
-      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
 
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['payload'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
@@ -107,8 +101,6 @@ module.exports = function (RED) {
       getMediaInfoV1(node, msg, sonosPlayer);
     } else if (command === 'get_positioninfo') {
       getPositionInfoV1(node, msg, sonosPlayer);
-    } else if (command === 'get_mysonos') {
-      getMySonosAll(node, msg, sonosPlayer);
     } else if (command === 'get_groups') {
       getGroupsInfo(node, msg, sonosPlayer);
     } else if (command === 'get_eq') {
@@ -121,6 +113,9 @@ module.exports = function (RED) {
       getRemainingSleepTimerDuration(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
+    // depreciated commands
+    } else if (command === 'get_mysonos') {
+      getMySonosAll(node, msg, sonosPlayer);
     } else if (command === 'lab_test') {
       labtest(node, msg, sonosPlayer);
     } else {
@@ -145,8 +140,7 @@ module.exports = function (RED) {
 
     sonosPlayer.getCurrentState()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player state received');
         }
         state = response;
@@ -154,8 +148,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.getVolume(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player volume received');
         }
         volume = response;
@@ -164,8 +157,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.getMuted(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player muted state received');
         }
         muted = response;
@@ -173,8 +165,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.getName(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player name received');
         }
         sonosName = response;
@@ -182,8 +173,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined zone group attributes received');
         }
         sonosGroup = response;
@@ -208,8 +198,7 @@ module.exports = function (RED) {
 
     sonosPlayer.getCurrentState()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player state received');
         }
         node.debug('got valid player state');
@@ -231,8 +220,7 @@ module.exports = function (RED) {
 
     sonosPlayer.getVolume()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '' || isNaN(response)) {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response) || isNaN(response)) {
           throw new Error('n-r-c-s-p: undefined player volume received');
         }
         if (!Number.isInteger(response)) {
@@ -257,8 +245,7 @@ module.exports = function (RED) {
 
     sonosPlayer.getMuted()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined mute state received');
         }
         node.debug('got valid mute state');
@@ -279,8 +266,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get player name';
     sonosPlayer.getName()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player name received');
         }
         node.debug('got valid player name');
@@ -301,8 +287,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get LED status';
     sonosPlayer.getLEDState()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player properties received');
         }
         // should be On or Off
@@ -324,8 +309,7 @@ module.exports = function (RED) {
     const sonosFunction = 'get player properties';
     sonosPlayer.deviceDescription()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player properties received');
         }
         node.debug('got valid group attributes');
@@ -351,8 +335,7 @@ module.exports = function (RED) {
     let albumArtURL = '';
 
     let suppressWarnings = false; // default
-    if (typeof msg.suppressWarnings === 'undefined' || msg.suppressWarnings === null ||
-    (typeof msg.suppressWarnings === 'number' && isNaN(msg.suppressWarnings)) || msg.suppressWarnings === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.suppressWarnings)) {
       suppressWarnings = false;
     } else {
       if (typeof msg.suppressWarnings === 'boolean') {
@@ -365,8 +348,7 @@ module.exports = function (RED) {
     sonosPlayer.currentTrack()
       .then((response) => {
         msg.song = response;
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined current song received');
         }
         // modify albumArtURL property
@@ -419,8 +401,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.avTransportService().GetMediaInfo(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined media info received');
         }
         if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
@@ -439,8 +420,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.avTransportService().GetPositionInfo(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined position info received');
         }
         msg.position = response;
@@ -468,8 +448,7 @@ module.exports = function (RED) {
     let albumArtURL = '';
 
     let suppressWarnings = false; // default
-    if (typeof msg.suppressWarnings === 'undefined' || msg.suppressWarnings === null ||
-    (typeof msg.suppressWarnings === 'number' && isNaN(msg.suppressWarnings)) || msg.suppressWarnings === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.suppressWarnings)) {
       suppressWarnings = false;
     } else {
       if (typeof msg.suppressWarnings === 'boolean') {
@@ -483,8 +462,7 @@ module.exports = function (RED) {
     sonosPlayer.currentTrack()
       .then((response) => {
         msg.payload = response;
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined current song received');
         }
         // modify albumArtURL property
@@ -552,8 +530,7 @@ module.exports = function (RED) {
 
     sonosPlayer.avTransportService().GetMediaInfo()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined media info received');
         }
         if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
@@ -588,8 +565,7 @@ module.exports = function (RED) {
 
     sonosPlayer.avTransportService().GetPositionInfo()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined position info received');
         }
         msg.payload = response;
@@ -601,6 +577,8 @@ module.exports = function (RED) {
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
+
+  // depreciated command
 
   /**  Get list of all My Sonos items.
   * @param  {object} node current node
@@ -614,8 +592,7 @@ module.exports = function (RED) {
     sonosPlayer.getFavorites()
       .then((response) => {
         // validate response
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
@@ -646,8 +623,7 @@ module.exports = function (RED) {
     const sonosFunction = 'test is player reachable';
     sonosPlayer.getCurrentState()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player state received');
         }
         node.debug('player reachable');
@@ -658,8 +634,7 @@ module.exports = function (RED) {
       .catch((error) => {
         node.debug('test command - error ignored' + JSON.stringify(error));
         let msgShort = 'no further information';
-        if (!(typeof error.code === 'undefined' || error.code === null ||
-          (typeof error.code === 'number' && isNaN(error.code)) || error.code === '')) {
+        if (NrcspHelper.isTruthyAndNotEmptyString(error.code)) {
           if (error.code === 'ECONNREFUSED') {
             msgShort = 'can not connect to player - refused';
           } else if (error.code === 'EHOSTUNREACH') {
@@ -686,8 +661,7 @@ module.exports = function (RED) {
 
     sonosPlayer.getAllGroups()
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined all group information received');
         }
         node.debug('got valid all group info');
@@ -696,8 +670,7 @@ module.exports = function (RED) {
       })
       .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
       .then((response) => {
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined zone group attributes received');
         }
         node.debug('got zone group attribures info');
@@ -732,7 +705,7 @@ module.exports = function (RED) {
     actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // validate msg.topic
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -829,49 +802,6 @@ module.exports = function (RED) {
   */
   function labtest (node, msg, sonosPlayer) {
     const sonosFunction = 'labtest';
-    let input1;
-    let input2 = null;
-    let input3 = undefined;
-    let input4 = NaN;
-    let input5 = 1 / 0; // result is Infinity
-    let input6 = -1 / 0; // result -Infinity
-    let input7 = [];
-    let input8 = {};
-    let input9 = 'null';
-    let input10 = 'NaN';
-    let input11 = 'undefined';
-    let input12 = '';
-
-    console.log('following should be false');
-    console.log('1>>>' + NrcspHelper.isTruthy(input1));
-    console.log('2>>>' + NrcspHelper.isTruthy(input2));
-    console.log('3>>>' + NrcspHelper.isTruthy(input3));
-    console.log('4>>>' + NrcspHelper.isTruthy(input4));
-    console.log('5>>>' + NrcspHelper.isTruthy(input5));
-    console.log('6>>>' + NrcspHelper.isTruthy(input6));
-    console.log('following should be true');
-    console.log('7>>>' + NrcspHelper.isTruthy(input7));
-    console.log('8>>>' + NrcspHelper.isTruthy(input8));
-    console.log('9>>>' + NrcspHelper.isTruthy(input9));
-    console.log('10>>>' + NrcspHelper.isTruthy(input10));
-    console.log('11>>>' + NrcspHelper.isTruthy(input11));
-    console.log('12>>>' + NrcspHelper.isTruthy(input12));
-
-    console.log('following should be false');
-    console.log('1>>>' + NrcspHelper.isTruthyAndNotEmptyString(input1));
-    console.log('2>>>' + NrcspHelper.isTruthyAndNotEmptyString(input2));
-    console.log('3>>>' + NrcspHelper.isTruthyAndNotEmptyString(input3));
-    console.log('4>>>' + NrcspHelper.isTruthyAndNotEmptyString(input4));
-    console.log('5>>>' + NrcspHelper.isTruthyAndNotEmptyString(input5));
-    console.log('6>>>' + NrcspHelper.isTruthyAndNotEmptyString(input6));
-    console.log('12>>>' + NrcspHelper.isTruthyAndNotEmptyString(input12));
-    console.log('following should be true');
-    console.log('7>>>' + NrcspHelper.isTruthyAndNotEmptyString(input7));
-    console.log('8>>>' + NrcspHelper.isTruthyAndNotEmptyString(input8));
-    console.log('9>>>' + NrcspHelper.isTruthyAndNotEmptyString(input9));
-    console.log('10>>>' + NrcspHelper.isTruthyAndNotEmptyString(input10));
-    console.log('11>>>' + NrcspHelper.isTruthyAndNotEmptyString(input11));
-
     return sonosFunction;
   }
 

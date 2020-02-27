@@ -61,20 +61,16 @@ module.exports = function (RED) {
   * @param  {string} ipaddress IP address of sonos player
   */
   function processInputMsg (node, msg, ipaddress) {
-    // get sonos player object
+    const sonosFunction = 'handle input msg';
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
 
-    const sonosFunction = 'handle input msg';
-
-    if (typeof sonosPlayer === 'undefined' || sonosPlayer === null ||
-      (typeof sonosPlayer === 'number' && isNaN(sonosPlayer)) || sonosPlayer === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
-
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['payload'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
       return;
     }
@@ -88,6 +84,7 @@ module.exports = function (RED) {
       playTuneIn(node, msg, sonosPlayer);
     } else if (command === 'play_httpradio') {
       playHttpRadio(node, msg, sonosPlayer);
+    // depreciated
     } else if (command === 'play_mysonos') {
       playMySonos(node, msg, sonosPlayer);
     } else if (command === 'get_mysonos') {
@@ -112,9 +109,8 @@ module.exports = function (RED) {
   function playTuneIn (node, msg, sonosPlayer) {
     const sonosFunction = 'play tunein';
 
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction);
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined TuneIn id'), sonosFunction);
       return;
     }
 
@@ -124,24 +120,23 @@ module.exports = function (RED) {
           // validate volume: integer, betweent 1 and 99
           node.debug('response: ' + JSON.stringify(response));
 
-          if (typeof msg.volume === 'undefined' || msg.volume === null ||
-          (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-            // do NOT change volume - just return
-            return true;
-          }
-          const newVolume = parseInt(msg.volume);
-          if (Number.isInteger(newVolume)) {
-            if (newVolume > 0 && newVolume < 100) {
-              // change volume
-              node.debug('msg.volume is in range 1...99: ' + newVolume);
-              return sonosPlayer.setVolume(newVolume);
+          if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
+            const newVolume = parseInt(msg.volume);
+            if (Number.isInteger(newVolume)) {
+              if (newVolume > 0 && newVolume < 100) {
+                // play and change volume
+                node.debug('msg.volume is in range 1...99: ' + newVolume);
+                return sonosPlayer.setVolume(msg.volume);
+              } else {
+                node.debug('msg.volume is not in range: ' + newVolume);
+                throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+              }
             } else {
-              node.debug('msg.volume is not in range: ' + newVolume);
-              throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+              node.debug('msg.volume is not number');
+              throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
             }
           } else {
-            node.debug('msg.volume is not number');
-            throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+            return true; // dont touch volume
           }
         })
         .then(() => {
@@ -166,8 +161,7 @@ module.exports = function (RED) {
     const sonosFunction = 'play http radio';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic', sonosFunction));
       return;
     }
@@ -180,24 +174,23 @@ module.exports = function (RED) {
     sonosPlayer.setAVTransportURI(msg.topic)
       .then(() => { // optionally change volume
         // validate volume: integer, betweent 1 and 99
-        if (typeof msg.volume === 'undefined' || msg.volume === null ||
-        (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-          // do NOT change volume - just return
-          return true;
-        }
-        const newVolume = parseInt(msg.volume);
-        if (Number.isInteger(newVolume)) {
-          if (newVolume > 0 && newVolume < 100) {
-            // change volume
-            node.debug('msg.volume is in range 1...99: ' + newVolume);
-            return sonosPlayer.setVolume(newVolume);
+        if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
+          const newVolume = parseInt(msg.volume);
+          if (Number.isInteger(newVolume)) {
+            if (newVolume > 0 && newVolume < 100) {
+              // play and change volume
+              node.debug('msg.volume is in range 1...99: ' + newVolume);
+              return sonosPlayer.setVolume(msg.volume);
+            } else {
+              node.debug('msg.volume is not in range: ' + newVolume);
+              throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+            }
           } else {
-            node.debug('msg.volume is not in range: ' + newVolume);
-            throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+            node.debug('msg.volume is not number');
+            throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
           }
         } else {
-          node.debug('msg.volume is not number');
-          throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+          return true; // dont touch volume
         }
       })
       .then(() => {
@@ -215,13 +208,15 @@ module.exports = function (RED) {
                 volume volume to be used
   * @param  {object} sonosPlayer Sonos Player
   * @output msg.payload is stationTitle
+  *
+  *   D E P R E C I A T E D  since 2.0.0
+  *
   */
   function playMySonos (node, msg, sonosPlayer) {
     const sonosFunction = 'play mysonos';
 
     // validate msg.topic
-    if (typeof msg.topic === 'undefined' || msg.topic === null ||
-      (typeof msg.topic === 'number' && isNaN(msg.topic)) || msg.topic === '') {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }
@@ -233,8 +228,7 @@ module.exports = function (RED) {
         // create array of valid stations and return
 
         // validate response
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (typeof response.items === 'undefined' || response.items === null ||
@@ -305,11 +299,10 @@ module.exports = function (RED) {
         // did not find matching stations
         throw new Error('n-r-c-s-p: topic not found in My Sonos list');
       })
-      .then(() => { // optionally modify change volume
-        if (typeof msg.volume === 'undefined' || msg.volume === null ||
-        (typeof msg.volume === 'number' && isNaN(msg.volume)) || msg.volume === '') {
-          // dont change volume
-        } else {
+      .then(() => {
+        // optionally change volume
+        // validate volume: integer, betweent 1 and 99
+        if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
           const newVolume = parseInt(msg.volume);
           if (Number.isInteger(newVolume)) {
             if (newVolume > 0 && newVolume < 100) {
@@ -324,6 +317,8 @@ module.exports = function (RED) {
             node.debug('msg.volume is not number');
             throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
           }
+        } else {
+          return true; // dont touch volume
         }
       })
       .then(() => {
@@ -339,6 +334,9 @@ module.exports = function (RED) {
   * @param  {object} msg incoming message
   * @param  {object} sonosPlayer Sonos Player
   * change msg.payload to current array of my Sonos radio stations
+  *
+  *   D E P R E C I A T E D  since 2.0.0
+  *
   */
   function getMySonosStations (node, msg, sonosPlayer) {
     // get list of My Sonos stations
@@ -349,8 +347,7 @@ module.exports = function (RED) {
         // create array of valid stations and return
 
         // validate response
-        if (typeof response === 'undefined' || response === null ||
-          (typeof response === 'number' && isNaN(response)) || response === '') {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined getFavorites response received');
         }
         if (typeof response.items === 'undefined' || response.items === null ||

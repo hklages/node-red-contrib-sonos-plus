@@ -92,11 +92,9 @@ module.exports = {
     node.debug(`Entering error handling from ${functionName}.`);
     node.debug('Complete error message>' + JSON.stringify(error, Object.getOwnPropertyNames(error)));
     // validate .code and check for ECONNREFUSED
-    if (typeof error.code === 'undefined' || error.code === null ||
-      (typeof error.code === 'number' && isNaN(error.code)) || error.code === '') {
+    if (!module.exports.isTruthyAndNotEmptyString(error.code)) {
       // Caution: getOwn is neccessary for some error messages eg playmode!
-      if (typeof error.message === 'undefined' || error.message === null ||
-        (typeof error.message === 'number' && isNaN(error.message)) || error.message === '') {
+      if (!module.exports.isTruthyAndNotEmptyString(error.message)) {
         msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
         msgShort = 'sonos-node / exception';
       } else {
@@ -173,12 +171,7 @@ module.exports = {
   */
   isValidProperty: (nestedObj, pathArray) => {
     if (pathArray.length === 0) {
-      if (typeof nestedObj === 'undefined' || nestedObj === null ||
-        (typeof nestedObj === 'number' && isNaN(nestedObj))) {
-        return false;
-      } else {
-        return true;
-      }
+      return module.exports.isTruthyAndNotEmptyString(nestedObj);
     } else {
       const property = pathArray.reduce((obj, key) =>
         (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);

@@ -190,7 +190,7 @@ module.exports = function (RED) {
     const sonosFunction = 'play my sonos stream';
 
     // validate msg.topic.
-    if (!NrcspHelper.isValidPropertyNotEmptyString(msg, ['topic'])) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
       return;
     }

@@ -230,7 +230,7 @@ module.exports = {
 
   getSid: (uri) => {
     let sid = ''; // default even if uri undefined.
-    if (!(typeof uri === 'undefined' || uri === null || (typeof uri === 'number' && isNaN(uri)))) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(uri)) {
       const positionStart = uri.indexOf('?sid=') + '$sid='.length;
       const positionEnd = uri.indexOf('&flags=');
       if (positionStart > 1 && (positionEnd > (positionStart))) {
@@ -249,7 +249,7 @@ module.exports = {
 
   getUpnpClass: (metaData) => {
     let upnpClass = ''; // default
-    if (!(typeof metaData === 'undefined' || metaData === null || (typeof metaData === 'number' && isNaN(metaData)))) {
+    if (!NrcspHelper.isTruthyAndNotEmptyString(metaData)) {
       const positionStart = metaData.indexOf('<upnp:class>') + '<upnp:class>'.length;
       const positionEnd = metaData.indexOf('</upnp:class>');
       if (positionStart > 1 && (positionEnd > (positionStart))) {
