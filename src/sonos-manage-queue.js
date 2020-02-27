@@ -71,6 +71,11 @@ module.exports = function (RED) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.host) || !NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.port)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction);
+      return;
+    }
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // Check msg.payload. Store lowercase version in command
     if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
@@ -1016,9 +1021,8 @@ module.exports = function (RED) {
               // ignore this item
               node.debug('albumArtURL not available' + JSON.stringify(songsArray));
             } else {
-              const port = 1400;
               songsArray.albumArtURI = songsArray.albumArtURL;
-              songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
+              songsArray.albumArtURL = sonosPlayer.baseUrl + songsArray.albumArtURI;
             }
           });
         }
@@ -1215,9 +1219,8 @@ module.exports = function (RED) {
             // ignore this item
             node.debug('albumArtURL not available' + JSON.stringify(songsArray));
           } else {
-            const port = 1400;
             songsArray.albumArtURI = songsArray.albumArtURL;
-            songsArray.albumArtURL = 'http://' + sonosPlayer.host + ':' + port + songsArray.albumArtURI;
+            songsArray.albumArtURL = sonosPlayer.baseUrl + songsArray.albumArtURI;
           }
         });
         return playlistArray;
@@ -1333,8 +1336,7 @@ module.exports = function (RED) {
     const newValue = msg.topic;
 
     // execute command
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmd(baseUrl, 'Seek', { Target: newValue })
+    NrcspSonos.setCmd(sonosPlayer.baseUrl, 'Seek', { Target: newValue })
       .then(() => {
         // msg not modified
         NrcspHelper.success(node, msg, sonosFunction);

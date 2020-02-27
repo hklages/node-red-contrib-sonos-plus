@@ -27,8 +27,7 @@ module.exports = {
   */
   getAllMySonosItems: async function (sonosPlayer) {
     // receive data from player
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    const result = await module.exports.getCmd(baseUrl, 'Browse');
+    const result = await module.exports.getCmd(sonosPlayer.baseUrl, 'Browse');
     const list = await module.exports.parseBrowseFavoritesResults(result);
 
     // Music library items have special albumArt, without host
@@ -36,7 +35,7 @@ module.exports = {
     list.forEach((item, i) => {
       if (NrcspHelper.isValidProperty(item, ['albumArt'])) {
         if (item.albumArt.startsWith('/getaa')) {
-          item.albumArt = `http://${sonosPlayer.host}:${sonosPlayer.port}` + item.albumArt;
+          item.albumArt = sonosPlayer.baseUrl + item.albumArt;
         }
       }
     });
@@ -52,8 +51,7 @@ module.exports = {
   queue: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
     const modifiedArgs = { EnqueuedURI: NrcspSoap.encodeXml(uri), EnqueuedURIMetaData: NrcspSoap.encodeXml(meta) };
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    return module.exports.setCmd(baseUrl, 'AddURIToQueue', modifiedArgs);
+    return module.exports.setCmd(sonosPlayer.baseUrl, 'AddURIToQueue', modifiedArgs);
   },
 
   /**  stream uri
@@ -68,8 +66,7 @@ module.exports = {
     if (meta !== '') {
       modifiedArgs.EnqueuedURIMetaData = NrcspSoap.encodeXml(meta);
     }
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    return module.exports.setCmd(baseUrl, 'SetAVTransportURI', modifiedArgs);
+    return module.exports.setCmd(sonosPlayer.baseUrl, 'SetAVTransportURI', modifiedArgs);
   },
 
   /**  set action with new arg object

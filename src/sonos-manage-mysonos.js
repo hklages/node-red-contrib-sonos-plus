@@ -70,6 +70,12 @@ module.exports = function (RED) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.host) || !NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.port)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction);
+      return;
+    }
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
+
     // Check msg.payload. Store lowercase version in command
     if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));

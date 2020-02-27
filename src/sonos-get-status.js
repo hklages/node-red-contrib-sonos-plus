@@ -68,6 +68,11 @@ module.exports = function (RED) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.host) || !NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.port)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction);
+      return;
+    }
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // Check msg.payload. Store lowercase version in command
     if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
@@ -313,6 +318,7 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: undefined player properties received');
         }
         node.debug('got valid group attributes');
+        msg.uuid = response.UDN.substring('uuid:'.length);
         msg.payload = response;
         NrcspHelper.success(node, msg, sonosFunction);
         return true;
@@ -357,8 +363,7 @@ module.exports = function (RED) {
           // TuneIn does not provide AlbumArtURL -so we continue
         } else {
           node.debug('got valid albumArtURI');
-          const port = 1400;
-          albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
+          albumArtURL = sonosPlayer.baseUrl + response.albumArtURI;
         }
         // extract artist and title if available V2
         if (typeof response.artist === 'undefined' || response.artist === null ||
@@ -471,8 +476,7 @@ module.exports = function (RED) {
           // TuneIn does not provide AlbumArtURL -so we continure
         } else {
           node.debug('got valid albumArtURI');
-          const port = 1400;
-          albumArtURL = 'http://' + sonosPlayer.host + ':' + port + response.albumArtURI;
+          albumArtURL = sonosPlayer.baseUrl + response.albumArtURI;
         }
         // extract artist and title if available V2
         if (typeof response.artist === 'undefined' || response.artist === null ||
@@ -675,14 +679,13 @@ module.exports = function (RED) {
         }
         node.debug('got zone group attribures info');
         msg.sonosGroup = response;
-        if (typeof response.CurrentZoneGroupName === 'undefined' || response.CurrentZoneGroupName === null ||
-          (typeof response.CurrentZoneGroupName === 'number' && isNaN(response.CurrentZoneGroupName))) {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response.CurrentZoneGroupName)) {
           throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
         }
         if (response.CurrentZoneGroupName === '') {
           msg.role = 'client';
         } else if (response.CurrentZoneGroupName.includes('+')) {
-          msg.role = 'master';
+          msg.role = 'coordinator';
         } else {
           msg.role = 'independent';
         }
@@ -701,9 +704,6 @@ module.exports = function (RED) {
   function getEQ (node, msg, sonosPlayer) {
     const sonosFunction = 'get EQ';
 
-    const actionParameter = NrcspSonos.ACTIONS_TEMPLATES.GetEQ;
-    actionParameter.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-
     // validate msg.topic
     if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
@@ -714,9 +714,6 @@ module.exports = function (RED) {
       return;
     }
     const eqType = msg.topic;
-
-    node.debug(JSON.stringify(actionParameter));
-    actionParameter.args.EQType = eqType;
 
     sonosPlayer.deviceDescription()
       .then((response) => { // ensure that SONOS player has TV mode
@@ -729,8 +726,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // send request to SONOS player
-        const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-        return NrcspSonos.getCmd(baseUrl, 'GetEQ');
+        return NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetEQ');
       })
       .then((result) => {
         if (eqType === 'SubGain') {
@@ -751,8 +747,7 @@ module.exports = function (RED) {
   */
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.getCmd(baseUrl, 'GetCrossfadeMode')
+    NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetCrossfadeMode')
       .then((result) => {
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelper.success(node, msg, sonosFunction);
@@ -768,8 +763,7 @@ module.exports = function (RED) {
   */
   function getLoudnessMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode';
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.getCmd(baseUrl, 'GetLoudness')
+    NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetLoudness')
       .then((result) => {
         msg.payload = (result === '1' ? 'On' : 'Off');
         NrcspHelper.success(node, msg, sonosFunction);
@@ -785,8 +779,7 @@ module.exports = function (RED) {
   */
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.getCmd(baseUrl, 'GetRemainingSleepTimerDuration')
+    NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetRemainingSleepTimerDuration')
       .then((result) => {
         msg.payload = (result === '' ? 'no time set' : result);
         NrcspHelper.success(node, msg, sonosFunction);

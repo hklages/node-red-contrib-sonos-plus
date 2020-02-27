@@ -36,16 +36,16 @@ module.exports = {
       sonosPlayer.deviceDescription()
         .then(data => {
           // compary serial numbers
-          if (!(typeof data.serialNum === 'undefined' || data.serialNum === null)) {
+          if (module.exports.isTruthyAndNotEmptyString(data.serialNum)) {
             if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
               node.debug('Found sonos player based on serialnumber in device description.');
-              if (!(typeof sonosPlayer.host === 'undefined' || sonosPlayer.host === null)) {
+              if (module.exports.isTruthyAndNotEmptyString(sonosPlayer.host)) {
                 // success
                 node.debug('Got ipaddres from device.host.');
                 ipAddress = sonosPlayer.host;
                 callback(null, ipAddress);
                 node.debug('Cleanup disovery');
-                if (!(typeof discovery === 'undefined' || discovery === null)) {
+                if (module.exports.isTruthyAndNotEmptyString(discovery)) {
                   discovery.destroy();
                   discovery = null;
                 }
@@ -64,7 +64,7 @@ module.exports = {
         .catch((error) => {
           callback(error, null);
           node.debug('Cleanup disovery - error');
-          if (!(typeof discovery === 'undefined' || discovery === null)) {
+          if (module.exports.isTruthyAndNotEmptyString(discovery)) {
             discovery.destroy();
             discovery = null;
           }

@@ -3,10 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.1] 2020-02-27
 ### Added
-
+- Node "Get Status" command get_properties now has msg.uuid
 
 ### Changed
 - CAUTION: In node "Control Player" msg is not anymore changed. Before msg. payload was set to true.
+- CAUTION: In node "Get Status" msg.role is now "Coordinator" in stead of "master
 - code optimization (use of Helper)
 
 ## [2.0.0] 2020-02-22

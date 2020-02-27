@@ -70,6 +70,11 @@ module.exports = function (RED) {
       NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
       return;
     }
+    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.host) || !NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.port)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction);
+      return;
+    }
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // Check msg.payload. Store lowercase version in command
     if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
@@ -438,8 +443,7 @@ module.exports = function (RED) {
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
     // execute command
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmd(baseUrl, 'SetCrossfadeMode', { CrossfadeMode: newValue })
+    NrcspSonos.setCmd(sonosPlayer.baseUrl, 'SetCrossfadeMode', { CrossfadeMode: newValue })
       .then(() => {
         NrcspHelper.success(node, msg, sonosFunction);
       })
@@ -469,8 +473,7 @@ module.exports = function (RED) {
     const newValue = (msg.topic === 'On' ? 1 : 0);
 
     // execute command
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmd(baseUrl, 'SetLoudness', { DesiredLoudness: newValue })
+    NrcspSonos.setCmd(sonosPlayer.baseUrl, 'SetLoudness', { DesiredLoudness: newValue })
       .then(() => {
         NrcspHelper.success(node, msg, sonosFunction);
       })
@@ -542,8 +545,7 @@ module.exports = function (RED) {
       })
       .then(() => { // sonos command
         const args = { EQType: eqType, DesiredValue: newValue };
-        const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-        return NrcspSonos.setCmd(baseUrl, 'SetEQ', args);
+        return NrcspSonos.setCmd(sonosPlayer.baseUrl, 'SetEQ', args);
       })
       .then(() => {
         NrcspHelper.success(node, msg, sonosFunction);
@@ -575,8 +577,7 @@ module.exports = function (RED) {
     const newValue = msg.topic;
 
     // execute command
-    const baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
-    NrcspSonos.setCmd(baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: newValue })
+    NrcspSonos.setCmd(sonosPlayer.baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: newValue })
       .then(() => {
         NrcspHelper.success(node, msg, sonosFunction);
       })
