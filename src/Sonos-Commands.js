@@ -193,11 +193,11 @@ module.exports = {
     const original = result['DIDL-Lite'].item;
     for (var i = 0; i < original.length; i++) {
       sid = '';
-      if (!NrcspHelper.isValidProperty(original[i], ['res', tag])) {
+      if (NrcspHelper.isValidProperty(original[i], ['res', tag])) {
         sid = module.exports.getSid(original[i].res[tag]);
       }
       upnpClass = '';
-      if (!NrcspHelper.isValidProperty(original[i], ['res', 'resMD'])) {
+      if (NrcspHelper.isValidProperty(original[i], ['r:resMD'])) {
         upnpClass = module.exports.getUpnpClass(original[i]['r:resMD']);
       }
       processingType = 'unsupported';
@@ -230,7 +230,7 @@ module.exports = {
 
   getSid: (uri) => {
     let sid = ''; // default even if uri undefined.
-    if (!NrcspHelper.isTruthyAndNotEmptyString(uri)) {
+    if (NrcspHelper.isTruthyAndNotEmptyString(uri)) {
       const positionStart = uri.indexOf('?sid=') + '$sid='.length;
       const positionEnd = uri.indexOf('&flags=');
       if (positionStart > 1 && (positionEnd > (positionStart))) {
@@ -249,7 +249,7 @@ module.exports = {
 
   getUpnpClass: (metaData) => {
     let upnpClass = ''; // default
-    if (!NrcspHelper.isTruthyAndNotEmptyString(metaData)) {
+    if (NrcspHelper.isTruthyAndNotEmptyString(metaData)) {
       const positionStart = metaData.indexOf('<upnp:class>') + '<upnp:class>'.length;
       const positionEnd = metaData.indexOf('</upnp:class>');
       if (positionStart > 1 && (positionEnd > (positionStart))) {

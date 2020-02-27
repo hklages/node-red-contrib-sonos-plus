@@ -115,7 +115,7 @@ module.exports = {
 
   getErrorCode: (data) => {
     let errorCode = ''; // default
-    if (!NrcspHelper.isTruthyAndNotEmptyString(data)) {
+    if (NrcspHelper.isTruthyAndNotEmptyString(data)) {
       const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length;
       const positionEnd = data.indexOf('</errorCode>');
       if (positionStart > 1 && (positionEnd > (positionStart))) {

@@ -347,10 +347,10 @@ module.exports = function (RED) {
     }
     sonosPlayer.currentTrack()
       .then((response) => {
-        msg.song = response;
         if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined current song received');
         }
+        msg.song = response;
         // modify albumArtURL property
         if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
           (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {

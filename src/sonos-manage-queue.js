@@ -894,7 +894,7 @@ module.exports = function (RED) {
 
         // validate numberOfSongs
         if (!NrcspHelper.isTruthyAndNotEmptyString(msg.numberOfSongs)) {
-          validatedNumberofSongs = 1;
+          validatedNumberofSongs = 1; //  set as default
         }
         // Convert to integer and check
         const numberOfSongs = parseInt(String(msg.numberOfSongs).trim());
