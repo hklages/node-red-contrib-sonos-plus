@@ -10,6 +10,8 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 ## NEWS
 - CAUTION: In node "Control Player" msg is not anymore modified (msg.payload)
 
+- Added in Control Player node: create_stereopair, seperate_stereopair
+
 - CAUTION: In node "Get Status" msg.role is now "Coordinator" in stead of "master
 
 - New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.

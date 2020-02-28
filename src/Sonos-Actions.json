@@ -257,5 +257,39 @@
     ],
     "dataType": "string",
     "info": "returns duration in format hh:mm:ss - type string"
+  },
+  "CreateStereoPair": {
+    "path": "/DeviceProperties/Control",
+    "name": "DeviceProperties",
+    "action": "CreateStereoPair",
+    "args": {
+      "InstanceID": 0,
+      "ChannelMapSet": "RINCON_B8E9375831C001400:LF,LF;RINCON_000E58FE3AEA01400:RF,RF"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:CreateStereoPairResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
+    "info": "pair stereo speakers, must be same model e.g. Play:1, parameters are uuid, format ${left}:LF,LF;${right}:RF,RF"
+  },
+  "SeparateStereoPair": {
+    "path": "/DeviceProperties/Control",
+    "name": "DeviceProperties",
+    "action": "SeparateStereoPair",
+    "args": {
+      "InstanceID": 0,
+      "ChannelMapSet": "RINCON_B8E9375831C001400:LF,LF;RINCON_000E58FE3AEA01400:RF,RF"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SeparateStereoPairResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
+    "info": "unpair stereo speakers, format ${left}:LF,LF;${right}:RF,RF "
   }
 }

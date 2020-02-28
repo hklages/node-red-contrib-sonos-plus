@@ -93,6 +93,7 @@ module.exports = {
     if (!NrcspHelper.isValidProperty(bodyXml, actionParameter.responsePath)) {
       throw new Error('n-r-c-s-p: invalid response from sonos player');
     }
+    console.log('bodyXML >>' + JSON.stringify(bodyXml));
     const result = actionParameter.responsePath.reduce((object, path) => {
       return (object)[path];
     }, bodyXml);

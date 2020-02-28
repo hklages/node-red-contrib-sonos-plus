@@ -111,7 +111,10 @@ module.exports = function (RED) {
       setEQ(node, msg, sonosPlayer);
     } else if (command === 'set_sleeptimer') {
       configureSleepTimer(node, msg, sonosPlayer);
-      // TODO lab_ function - remove
+    } else if (command === 'create_stereopair') {
+      createStereoPair(node, msg, sonosPlayer);
+    } else if (command === 'seperate_stereopair') {
+      seperateStereoPair(node, msg, sonosPlayer);
     } else if (command === 'lab_test') {
       labTest(node, msg, sonosPlayer);
     } else {
@@ -580,6 +583,90 @@ module.exports = function (RED) {
     NrcspSonos.setCmd(sonosPlayer.baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: newValue })
       .then(() => {
         NrcspHelper.success(node, msg, sonosFunction);
+      })
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  Create a stereo pair.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} msg.topic uuid of left hand speaker
+  * @param  {string} msg.modelName uuid of left hand speaker
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
+  * PREREQ: both player must be of same type
+  */
+  function createStereoPair (node, msg, sonosPlayer) {
+    const sonosFunction = 'create stereo pair';
+
+    // validate msg.topic
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined msg.topic', sonosFunction));
+      return;
+    }
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.modelName)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined msg.modelName', sonosFunction));
+      return;
+    }
+    sonosPlayer.deviceDescription()
+      .then((response) => {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player properties received');
+        }
+        if (response.modelName !== msg.modelName) {
+          throw new Error('n-r-c-s-p: both player must be of same type');
+        }
+        return response.UDN.substring('uuid:'.length);
+      })
+      .then((uuid) => {
+        const value = `${msg.topic}:LF,LF;${uuid}:RF,RF`;
+        return NrcspSonos.setCmd(sonosPlayer.baseUrl, 'CreateStereoPair', { ChannelMapSet: value });
+      })
+      .then(() => {
+        NrcspHelper.success(node, msg, sonosFunction);
+        return true;
+      })
+      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+  }
+
+  /**  Seperate a stereo pair.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  * @param  {string} msg.topic uuid of left hand speaker
+  * @param  {string} msg.modelName uuid of left hand speaker
+  * @param  {object} sonosPlayer Sonos Player
+  * @output: {object} msg unmodified / stopped in case of error
+  * PREREQ: both player must be of same type
+  */
+  function seperateStereoPair (node, msg, sonosPlayer) {
+    const sonosFunction = 'seperate stereo pair';
+
+    // validate msg.topic
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined msg.topic', sonosFunction));
+      return;
+    }
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.modelName)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined msg.modelName', sonosFunction));
+      return;
+    }
+    sonosPlayer.deviceDescription()
+      .then((response) => {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player properties received');
+        }
+        if (response.modelName !== msg.modelName) {
+          throw new Error('n-r-c-s-p: both player must be of same type');
+        }
+        return response.UDN.substring('uuid:'.length);
+      })
+      .then((uuid) => {
+        const value = `${msg.topic}:LF,LF;${uuid}:RF,RF`;
+        return NrcspSonos.setCmd(sonosPlayer.baseUrl, 'SeparateStereoPair', { ChannelMapSet: value });
+      })
+      .then(() => {
+        NrcspHelper.success(node, msg, sonosFunction);
+        return true;
       })
       .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
   }
