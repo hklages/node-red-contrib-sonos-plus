@@ -77,14 +77,16 @@ RED.nodes.registerType('sonos-control-player', {
 
   Accepted values for <code>payload</code> are:
   <ul>
-  <li><b>play/stop/pause/mute/ummute/next_song/previous_song</b> Obvious. For play: <code>volume</code> may contain the volume in the range from 1 to 99.</li>
-  <li><b>toggleplayback</b> Toggles play/stop</li>
+  <li><b>play/stop/pause/mute/ummute/next_song/previous_song</b>. Mute/unmute will always work, others only if player is not a client. For play: <code>volume</code> may contain the volume in the range from 1 to 99.</li>
+  <li><b>toggleplayback</b> Toggles play/stop - only if player is not a client in a group. </li>
   <li><b>number</b>: 1...99 Set volume</li>
   <li><b>+number</b>: +1...+29 Increase volume CAUTION: use string not number format!</li>
   <li><b>-number</b>: -29...-1 Decrease volume</li>
   <li><b>play_notification</b> Plays a given notification. Notification must be specified in <code>topic</code>. <code>volume</code> may contain the notificaiton volume in the range from 1 to 99. Default is 40.</li>
   <li><b>leave_group</b> Leave group</li>
   <li><b>join_group</b> Join group. Group name must be specified in <code>topic</code></li>
+  <li><b>create_stereopair</b> pairs two players of same type (Play:1, Play:3) for stereo. Needs msg.topic (uuid of second player) and msg.modelName</li>
+  <li><b>seperate_stereopair</b> unpairs two formerly paired players. Needs msg.topic (uuid of second player) and msg.modelName</li>
   <li><b>set_led</b> Sets the LED light - <code>topic</code> is On|Off</li>
   <li><b>set_crossfade</b> Sets crossfademode - <code>topic</code> On|Off. On only if current state supports this mode.</li>
   <li><b>set_loudness</b> Sets loundness - <code>topic</code> On|Off</li>

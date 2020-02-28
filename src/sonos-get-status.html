@@ -111,6 +111,9 @@ RED.nodes.registerType('sonos-get-status', {
       <dt>position <span class="property-type">Object</span></dt>
       <dd> more info - for instance duration, radio station name </dd>
 
+      <dt>uuid <span class="property-type">string</span></dt>
+      <dd> uuid of the player </dd>
+
       <dt>info <span class="property-type">String</span></dt>
       <dd> provides more info for test_connected</dd>
 
@@ -122,8 +125,8 @@ RED.nodes.registerType('sonos-get-status', {
   <ul>
     <li><b>get_basics</b> Outputs current state, volume, muted, player name, group attributes</li>
     <li><b>get_state/volume/muted/name/led</b> Outputs only the playing state/volume/muted/name/led status</li>
-    <li><b>get_properties</b> Outputs player properties</li>
-    <li><b>get_groups</b> Outputs group information - the players role, array of groups with members, etc</li>
+    <li><b>get_properties</b> Outputs player properties - now also uuid</li>
+    <li><b>get_groups</b> Outputs group information - the players role (coordinator, client, independent), array of groups with members, etc</li>
     <li><b>get_songmedia</b> Outputs song, media and position info</li>
     <li><b>get_songinfo</b> Outputs song info</li>
     <li><b>get_mediainfo</b> Outputs media info</li>
