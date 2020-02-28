@@ -8,6 +8,12 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
+- CAUTION: In node "Control Player" msg is not anymore modified (msg.payload)
+
+- Added in Control Player node: create_stereopair, seperate_stereopair
+
+- CAUTION: In node "Get Status" msg.role is now "Coordinator" in stead of "master
+
 - New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.
 
 - Improved error handling

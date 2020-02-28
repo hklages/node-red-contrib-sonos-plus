@@ -98,8 +98,6 @@
     "path": "/MediaRenderer/AVTransport/Control",
     "name": "AVTransport",
     "action": "Seek",
-    "argsValueName": "Target",
-    "dataType": "string",
     "args": {
       "InstanceID": 0,
       "Unit": "REL_TIME",
@@ -112,14 +110,12 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
-    "info": "Seek with REL_TIME moves forwar in curren song, relative from now"
+    "info": "Seek with REL_TIME move to position in current song - type string hh:mm:ss"
   },
   "SetEQ": {
     "path": "/MediaRenderer/RenderingControl/Control",
     "name": "RenderingControl",
     "action": "SetEQ",
-    "argsValueName": "",
-    "dataType": "string / string / integer",
     "args": {
       "InstanceID": 0,
       "EQType": "DialogLevel",
@@ -137,7 +133,7 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
-    "info": "Set EQType and DesiredValue have to be defined. DesiredValue depend on EQType"
+    "info": "Set EQType and DesiredValue have to be set. DesiredValue depend on EQType - type number"
   },
   "GetEQ": {
     "path": "/MediaRenderer/RenderingControl/Control",
@@ -158,17 +154,15 @@
       "u:GetEQResponse",
       "CurrentValue"
     ],
-    "info": "EQType have to be defined. Current value 0|1 or -15 to 15 for SubGain"
+    "info": "EQType have to be defined. Type is string"
   },
   "SetCrossfadeMode": {
     "path": "/MediaRenderer/AVTransport/Control",
     "name": "AVTransport",
     "action": "SetCrossfadeMode",
-    "argsValueName": "CrossfadeMode",
-    "dataType": "string",
     "args": {
       "InstanceID": 0,
-      "CrossfadeMode": "1"
+      "CrossfadeMode": 1
     },
     "responsePath": [
       "s:Envelope",
@@ -177,7 +171,7 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
-    "info": "Set CrossfadeMode 0 or 1"
+    "info": "Set CrossfadeMode 0 or 1 - type is number"
   },
   "GetCrossfadeMode": {
     "path": "/MediaRenderer/AVTransport/Control",
@@ -192,14 +186,12 @@
       "u:GetCrossfadeModeResponse",
       "CrossfadeMode"
     ],
-    "info": "will return 0 or 1 and might be converted to On Off"
+    "info": "will return 0 or 1 - type is string"
   },
   "SetLoudness": {
     "path": "/MediaRenderer/RenderingControl/Control",
     "name": "RenderingControl",
     "action": "SetLoudness",
-    "argsValueName": "DesiredLoudness",
-    "dataType": "string",
     "args": {
       "InstanceID": 0,
       "Channel": "Master",
@@ -212,7 +204,7 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
-    "info": "Set Loudness 0 or 1"
+    "info": "Set Loudness 0 or 1 - type number"
   },
   "GetLoudness": {
     "path": "/MediaRenderer/RenderingControl/Control",
@@ -231,14 +223,12 @@
       "CurrentLoudness"
     ],
     "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
-    "info": "Get Loudness 0 or 1"
+    "info": "Get Loudness 0 or 1 - type string"
   },
   "ConfigureSleepTimer": {
     "path": "/MediaRenderer/AVTransport/Control",
     "name": "AVTransport",
     "action": "ConfigureSleepTimer",
-    "argsValueName": "NewSleepTimerDuration",
-    "dataType": "string",
     "args": {
       "InstanceID": 0,
       "NewSleepTimerDuration": "00:05:00"
@@ -250,7 +240,7 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
-    "info": "Duration in format hh:mm:ss"
+    "info": "Duration in format hh:mm:ss - type string"
   },
   "GetRemainingSleepTimerDuration": {
     "path": "/MediaRenderer/AVTransport/Control",
@@ -266,6 +256,40 @@
       "RemainingSleepTimerDuration"
     ],
     "dataType": "string",
-    "info": "returns duration in format hh:mm:ss - if empty string means no timer"
+    "info": "returns duration in format hh:mm:ss - type string"
+  },
+  "CreateStereoPair": {
+    "path": "/DeviceProperties/Control",
+    "name": "DeviceProperties",
+    "action": "CreateStereoPair",
+    "args": {
+      "InstanceID": 0,
+      "ChannelMapSet": "RINCON_B8E9375831C001400:LF,LF;RINCON_000E58FE3AEA01400:RF,RF"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:CreateStereoPairResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
+    "info": "pair stereo speakers, must be same model e.g. Play:1, parameters are uuid, format ${left}:LF,LF;${right}:RF,RF"
+  },
+  "SeparateStereoPair": {
+    "path": "/DeviceProperties/Control",
+    "name": "DeviceProperties",
+    "action": "SeparateStereoPair",
+    "args": {
+      "InstanceID": 0,
+      "ChannelMapSet": "RINCON_B8E9375831C001400:LF,LF;RINCON_000E58FE3AEA01400:RF,RF"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SeparateStereoPairResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
+    "info": "unpair stereo speakers, format ${left}:LF,LF;${right}:RF,RF "
   }
 }
