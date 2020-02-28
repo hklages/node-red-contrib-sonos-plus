@@ -175,7 +175,6 @@ module.exports = function (RED) {
         return NrcspSonos.findStringInMySonosTitle(items, msg.topic, filter);
       })
       .then((found) => {
-        console.log(JSON.stringify(found));
         return NrcspSonos.queue(sonosPlayer, found.uri, found.metaData);
       })
       .then((result) => {

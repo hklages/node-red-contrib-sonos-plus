@@ -87,9 +87,12 @@ module.exports = function (RED) {
     let commandWithParam = {};
 
     // dispatch
-    const basicCommandList = ['play', 'pause', 'stop', 'toggleplayback', 'mute', 'unmute', 'next_song', 'previous_song', 'join_group', 'leave_group', 'activate_avtransport'];
-    if (basicCommandList.indexOf(command) > -1) {
+    const groupCommandList = ['play', 'pause', 'stop', 'toggleplayback', 'next_song', 'previous_song'];
+    const basicCommandList = ['play_old', 'pause_old', 'stop_old', 'toggleplayback_old', 'mute', 'unmute', 'next_song_old', 'previous_song_old', 'join_group', 'leave_group', 'activate_avtransport'];
+    if (basicCommandList.includes(command)) {
       handleCommandBasic(node, msg, sonosPlayer, command);
+    } else if (groupCommandList.includes(command)) {
+      handleCommandGroup(node, msg, sonosPlayer, command);
     } else if (command === 'play_notification') {
       handlePlayNotification(node, msg, sonosPlayer);
     } else if (command.startsWith('+')) {
@@ -136,8 +139,8 @@ module.exports = function (RED) {
   */
   function handleCommandBasic (node, msg, sonosPlayer, cmd) {
     const sonosFunction = cmd;
-
-    switch (cmd) {
+    const originalCmd = cmd.replace('_old', '');
+    switch (originalCmd) {
       case 'play':
         sonosPlayer.play()
           .then(() => { // optionally change volume
@@ -224,7 +227,7 @@ module.exports = function (RED) {
 
       case 'previous_song':
         //  CAUTION! PRERQ: there should be a previous song. Only a few stations support that (example Amazon Prime)
-        sonosPlayer.previous(false)
+        sonosPlayer.previous()
           .then(() => {
             NrcspHelper.success(node, msg, sonosFunction);
             return true;
@@ -293,6 +296,179 @@ module.exports = function (RED) {
     }
   }
 
+  /**  Handle group commands to control sonos player - error when client
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+  *                 volume valid volume
+  * @param  {object} sonosPlayer Sonos Player
+  * @param  {string} cmd command - no parameter
+  * @output {object} msg unmodified / stopped in case of error
+  */
+  function handleCommandGroup (node, msg, sonosPlayer, cmd) {
+    const sonosFunction = cmd;
+
+    switch (cmd) {
+      case 'play':
+        sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+          .then((zoneData) => {
+            if (!NrcspHelper.isTruthyAndNotEmptyString(zoneData)) {
+              throw new Error('n-r-c-s-p: undefined zone group attributes received');
+            }
+            if (!NrcspHelper.isTruthy(zoneData.CurrentZoneGroupName)) {
+              throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
+            }
+            if (zoneData.CurrentZoneGroupName === '') {
+              throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
+            }
+            console.log('zone end >>');
+            return true;
+          })
+          .then(() => { return sonosPlayer.play(); })
+          .then(() => { // optionally change volume
+            if (NrcspHelper.isTruthyAndNotEmptyString(msg.volume)) {
+              const newVolume = parseInt(msg.volume);
+              if (Number.isInteger(newVolume)) {
+                if (newVolume > 0 && newVolume < 100) {
+                  // play and change volume
+                  node.debug('msg.volume is in range 1...99: ' + newVolume);
+                  return sonosPlayer.setVolume(msg.volume);
+                } else {
+                  node.debug('msg.volume is not in range: ' + newVolume);
+                  throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume);
+                }
+              } else {
+                node.debug('msg.volume is not number');
+                throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume));
+              }
+            } else {
+              return true; // dont touch volume
+            }
+          })
+          .then(() => {
+            NrcspHelper.success(node, msg, sonosFunction);
+            return true;
+          })
+          .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+        break;
+
+      case 'stop':
+        sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+          .then((zoneData) => {
+            if (!NrcspHelper.isTruthyAndNotEmptyString(zoneData)) {
+              throw new Error('n-r-c-s-p: undefined zone group attributes received');
+            }
+            if (!NrcspHelper.isTruthy(zoneData.CurrentZoneGroupName)) {
+              throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
+            }
+            if (zoneData.CurrentZoneGroupName === '') {
+              throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
+            }
+            console.log('zone end >>');
+            return true;
+          })
+          .then(() => { return sonosPlayer.stop(); })
+          .then(() => {
+            NrcspHelper.success(node, msg, sonosFunction);
+            return true;
+          })
+          .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+        break;
+
+      case 'pause':
+        sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+          .then((zoneData) => {
+            if (!NrcspHelper.isTruthyAndNotEmptyString(zoneData)) {
+              throw new Error('n-r-c-s-p: undefined zone group attributes received');
+            }
+            if (!NrcspHelper.isTruthy(zoneData.CurrentZoneGroupName)) {
+              throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
+            }
+            if (zoneData.CurrentZoneGroupName === '') {
+              throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
+            }
+            console.log('zone end >>');
+            return true;
+          })
+          .then(() => { return sonosPlayer.pause(); })
+          .then(() => {
+            NrcspHelper.success(node, msg, sonosFunction);
+            return true;
+          })
+          .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+        break;
+
+      case 'toggleplayback':
+        sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+          .then((zoneData) => {
+            if (!NrcspHelper.isTruthyAndNotEmptyString(zoneData)) {
+              throw new Error('n-r-c-s-p: undefined zone group attributes received');
+            }
+            if (!NrcspHelper.isTruthy(zoneData.CurrentZoneGroupName)) {
+              throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
+            }
+            if (zoneData.CurrentZoneGroupName === '') {
+              throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
+            }
+            console.log('zone end >>');
+            return true;
+          })
+          .then(() => { return sonosPlayer.togglePlayback(); })
+          .then(() => {
+            NrcspHelper.success(node, msg, sonosFunction);
+            return true;
+          })
+          .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+        break;
+
+      case 'next_song':
+        //  CAUTION! PRERQ: there should be a next song. Only a few stations support that (example Amazon Prime)
+        sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+          .then((zoneData) => {
+            if (!NrcspHelper.isTruthyAndNotEmptyString(zoneData)) {
+              throw new Error('n-r-c-s-p: undefined zone group attributes received');
+            }
+            if (!NrcspHelper.isTruthy(zoneData.CurrentZoneGroupName)) {
+              throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
+            }
+            if (zoneData.CurrentZoneGroupName === '') {
+              throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
+            }
+            console.log('zone end >>');
+            return true;
+          })
+          .then(() => { return sonosPlayer.next(); })
+          .then(() => {
+            NrcspHelper.success(node, msg, sonosFunction);
+            return true;
+          })
+          .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+        break;
+
+      case 'previous_song':
+        //  CAUTION! PRERQ: there should be a previous song. Only a few stations support that (example Amazon Prime)
+        sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+          .then((zoneData) => {
+            if (!NrcspHelper.isTruthyAndNotEmptyString(zoneData)) {
+              throw new Error('n-r-c-s-p: undefined zone group attributes received');
+            }
+            if (!NrcspHelper.isTruthy(zoneData.CurrentZoneGroupName)) {
+              throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
+            }
+            if (zoneData.CurrentZoneGroupName === '') {
+              throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
+            }
+            console.log('zone end >>');
+            return true;
+          })
+          .then(() => { return sonosPlayer.previous(); })
+          .then(() => {
+            NrcspHelper.success(node, msg, sonosFunction);
+            return true;
+          })
+          .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+        break;
+    }
+  }
   /**  Send set/adjust volume command to sonos player.
   * @param  {object} node current node
   * @param  {object} msg incoming message

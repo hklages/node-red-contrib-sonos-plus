@@ -8,9 +8,11 @@
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
 ## NEWS
-- CAUTION: In node "Control Player" msg is not anymore modified (msg.payload)
+- CAUTION: In node "Control Player" msg.payload is not anymore set to "true". msg is unmodified as everywhere else.
 
-- Added in Control Player node: create_stereopair, seperate_stereopair
+- CAUTION: In node "Control Player" play, stop, pause, toggleplayback, next_song, previous_song will now throw error message when send to "client" in a group.
+
+- Added in Control Player node: create_stereopair, seperate_stereopair (needs a special flow to extract uiid)
 
 - CAUTION: In node "Get Status" msg.role is now "Coordinator" in stead of "master
 

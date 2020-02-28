@@ -93,7 +93,6 @@ module.exports = {
     if (!NrcspHelper.isValidProperty(bodyXml, actionParameter.responsePath)) {
       throw new Error('n-r-c-s-p: invalid response from sonos player');
     }
-    console.log('bodyXML >>' + JSON.stringify(bodyXml));
     const result = actionParameter.responsePath.reduce((object, path) => {
       return (object)[path];
     }, bodyXml);
@@ -168,6 +167,7 @@ module.exports = {
         (items[i].processingType === filter.processingType) &&
         (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all') &&
         (items[i].sid === service.sid || filter.serviceName === 'all' || (filter.serviceName === 'MusicLibrary' && items[i].sid === ''))) {
+        console.log('found: ' + items[i].uri);
         return { title: items[i].title, uri: items[i].uri, metaData: items[i].metaData };
       }
     }
@@ -184,7 +184,7 @@ module.exports = {
 
   parseBrowseFavoritesResults: async function (body) {
     const cleanXml = body.replace('\\"', '');
-    const tag = 'sidTag';
+    const tag = 'uriIdentifier';
     const result = await NrcspSoap.parseSoapBodyV1(cleanXml, tag);
     const list = [];
     let sid, upnpClass, processingType;
@@ -205,11 +205,12 @@ module.exports = {
       if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
         processingType = 'queue';
       }
+      console.log(JSON.stringify(original[0]));
       list.push(
         {
           title: original[i]['dc:title'],
           albumArt: original[i]['upnp:albumArtURI'],
-          uri: original[i].res.chartag,
+          uri: original[i].res[tag],
           metaData: original[i]['r:resMD'],
           sid: sid,
           upnpClass: upnpClass,

@@ -726,7 +726,7 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => { // send request to SONOS player
-        return NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetEQ');
+        return NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetEQ-' + eqType);
       })
       .then((result) => {
         if (eqType === 'SubGain') {

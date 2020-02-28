@@ -135,7 +135,7 @@
     "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
     "info": "Set EQType and DesiredValue have to be set. DesiredValue depend on EQType - type number"
   },
-  "GetEQ": {
+  "GetEQ-DialogLevel": {
     "path": "/MediaRenderer/RenderingControl/Control",
     "name": "RenderingControl",
     "action": "GetEQ",
@@ -143,18 +143,45 @@
       "InstanceID": 0,
       "EQType": "DialogLevel"
     },
-    "eqTypeValues": [
-      "DialogLevel",
-      "NightMode",
-      "SubGain"
-    ],
     "responsePath": [
       "s:Envelope",
       "s:Body",
       "u:GetEQResponse",
       "CurrentValue"
     ],
-    "info": "EQType have to be defined. Type is string"
+    "info": "Type is string"
+  },
+  "GetEQ-NightMode": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "GetEQ",
+    "args": {
+      "InstanceID": 0,
+      "EQType": "NightMode"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetEQResponse",
+      "CurrentValue"
+    ],
+    "info": "Type is string"
+  },
+  "GetEQ-SubGain": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "GetEQ",
+    "args": {
+      "InstanceID": 0,
+      "EQType": "SubGain"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetEQResponse",
+      "CurrentValue"
+    ],
+    "info": "Type is string"
   },
   "SetCrossfadeMode": {
     "path": "/MediaRenderer/AVTransport/Control",
