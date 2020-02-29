@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.2] 2020-02-29
+### Changed
+- Bug fix get_groups
+
 ## [2.1.1] 2020-02-29
 ### Changed
 - Bug fix and naming create_stereopair, separate_stereopair

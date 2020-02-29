@@ -679,9 +679,29 @@ module.exports = function (RED) {
         }
         node.debug('got zone group attribures info');
         msg.sonosGroup = response;
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response.CurrentZoneGroupName)) {
+        if (!NrcspHelper.isTruthy(response.CurrentZoneGroupName)) {
           throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
         }
+        if (NrcspHelper.isTruthyAndNotEmptyString(response.CurrentZoneGroupID)) {
+          let coordinatorUuid;
+          let coordinatorName;
+          const memberNames = [];
+          for (var i = 0; i < msg.payload.length; i++) {
+            if (msg.payload[i].ID === response.CurrentZoneGroupID) {
+              coordinatorUuid = msg.payload[i].Coordinator;
+              for (var j = 0; j < msg.payload[i].ZoneGroupMember.length; j++) {
+                memberNames.push(msg.payload[i].ZoneGroupMember[j].ZoneName);
+                if (coordinatorUuid === msg.payload[i].ZoneGroupMember[j].UUID) {
+                  coordinatorName = msg.payload[i].ZoneGroupMember[j].ZoneName;
+                }
+              }
+            }
+          }
+          msg.coorinatorUuid = coordinatorUuid;
+          msg.coordinatorName = coordinatorName;
+          msg.memberNames = memberNames;
+        }
+
         if (response.CurrentZoneGroupName === '') {
           msg.role = 'client';
         } else if (response.CurrentZoneGroupName.includes('+')) {
