@@ -167,7 +167,6 @@ module.exports = {
         (items[i].processingType === filter.processingType) &&
         (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all') &&
         (items[i].sid === service.sid || filter.serviceName === 'all' || (filter.serviceName === 'MusicLibrary' && items[i].sid === ''))) {
-        console.log('found: ' + items[i].uri);
         return { title: items[i].title, uri: items[i].uri, metaData: items[i].metaData };
       }
     }
@@ -205,7 +204,6 @@ module.exports = {
       if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
         processingType = 'queue';
       }
-      console.log(JSON.stringify(original[0]));
       list.push(
         {
           title: original[i]['dc:title'],

@@ -320,7 +320,6 @@ module.exports = function (RED) {
             if (zoneData.CurrentZoneGroupName === '') {
               throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
             }
-            console.log('zone end >>');
             return true;
           })
           .then(() => { return sonosPlayer.play(); })
@@ -363,7 +362,6 @@ module.exports = function (RED) {
             if (zoneData.CurrentZoneGroupName === '') {
               throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
             }
-            console.log('zone end >>');
             return true;
           })
           .then(() => { return sonosPlayer.stop(); })
@@ -386,7 +384,6 @@ module.exports = function (RED) {
             if (zoneData.CurrentZoneGroupName === '') {
               throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
             }
-            console.log('zone end >>');
             return true;
           })
           .then(() => { return sonosPlayer.pause(); })
@@ -409,7 +406,6 @@ module.exports = function (RED) {
             if (zoneData.CurrentZoneGroupName === '') {
               throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
             }
-            console.log('zone end >>');
             return true;
           })
           .then(() => { return sonosPlayer.togglePlayback(); })
@@ -433,7 +429,6 @@ module.exports = function (RED) {
             if (zoneData.CurrentZoneGroupName === '') {
               throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
             }
-            console.log('zone end >>');
             return true;
           })
           .then(() => { return sonosPlayer.next(); })
@@ -457,7 +452,6 @@ module.exports = function (RED) {
             if (zoneData.CurrentZoneGroupName === '') {
               throw new Error(('n-r-c-s-p: player is in client mode - command rejected'));
             }
-            console.log('zone end >>');
             return true;
           })
           .then(() => { return sonosPlayer.previous(); })
