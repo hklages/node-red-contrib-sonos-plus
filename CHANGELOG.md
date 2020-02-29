@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] 2020-02-29
+### Changed
+- Bug fix and naming create_stereopair, separate_stereopair
+
 ## [2.1.0] 2020-02-29
 ### Added
 - Node "Get Status" command get_properties now has new property msg.uuid (needed for stereopair)

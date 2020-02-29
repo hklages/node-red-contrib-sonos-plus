@@ -12,7 +12,7 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 - CAUTION: In node "Control Player" play, stop, pause, toggleplayback, next_song, previous_song will now throw error message when send to "client" in a group.
 
-- Added in Control Player node: create_stereopair, seperate_stereopair (needs a special flow to extract uiid)
+- Added in Control Player node: create_stereopair, separate_stereopair (needs a special flow to extract uiid)
 
 - CAUTION: In node "Get Status" msg.role is now "Coordinator" in stead of "master
 
