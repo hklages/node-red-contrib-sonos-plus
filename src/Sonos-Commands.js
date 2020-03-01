@@ -79,6 +79,7 @@ module.exports = {
     // copy action parameter and update
     const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
     Object.assign(actionParameter.args, newArgs);
+    console.log(JSON.stringify(actionParameter.args));
     const { path, name, action, args } = actionParameter;
     const response = await NrcspSoap.sendToPlayerV1(baseUrl, path, name, action, args);
 

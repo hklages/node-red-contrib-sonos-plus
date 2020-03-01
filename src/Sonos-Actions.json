@@ -317,6 +317,6 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
-    "info": "unpair stereo speakers, format ${left}:LF,LF;${right}:RF,RF "
+    "info": "unpair stereo speakers - caution channelMapSet is only as example!!!!!!"
   }
 }

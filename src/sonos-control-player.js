@@ -793,6 +793,7 @@ module.exports = function (RED) {
   /**  Separate a stereo pair.
   * @param  {object} node current node
   * @param  {object} msg incoming message
+  * @param  {string} msg.topic uuid of right hand speaker
   * @param  {object} sonosPlayer Sonos Player
   * @output: {object} msg unmodified / stopped in case of error
   */
@@ -800,7 +801,21 @@ module.exports = function (RED) {
     const sonosFunction = 'separate stereo pair';
 
     // validate msg.topic
-    NrcspSonos.setCmd(sonosPlayer.baseUrl, 'SeparateStereoPair', {})
+    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
+      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined msg.topic', sonosFunction));
+      return;
+    }
+    sonosPlayer.deviceDescription()
+      .then((response) => {
+        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player properties received');
+        }
+        return response.UDN.substring('uuid:'.length);
+      })
+      .then((uuid) => {
+        const value = `${uuid}:LF,LF;${msg.topic}:RF,RF`;
+        return NrcspSonos.setCmd(sonosPlayer.baseUrl, 'SeparateStereoPair', { ChannelMapSet: value });
+      })
       .then(() => {
         NrcspHelper.success(node, msg, sonosFunction);
         return true;
