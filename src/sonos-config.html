@@ -2,52 +2,54 @@
 
 <!-- Registering Node - caution config -->
 <script type="text/javascript">
-/* global  RED,$ */
-/* eslint no-undef: "error" */
-RED.nodes.registerType('sonos-config', {
-  category: 'config',
-  defaults: {
-    name: {
-      value: '',
-      required: true
+  /* global  RED,$ */
+  /* eslint no-undef: "error" */
+  RED.nodes.registerType('sonos-config', {
+    category: 'config',
+    defaults: {
+      name: {
+        value: '',
+        required: true
+      },
+      serialnum: {
+        value: ''
+      },
+      ipaddress: {
+        value: ''
+      }
     },
-    serialnum: {
-      value: ''
+    label: function() {
+      return this.name;
     },
-    ipaddress: {
-      value: ''
-    }
-  },
-  label: function () {
-    return this.name;
-  },
-  oneditprepare: function () {
-    try {
-      $('#node-config-input-serialnum').autocomplete('destroy');
-    } catch (err) {}
-    $('#node-config-lookup-serialnum').click(function () {
-      $('#node-config-lookup-serialnum-icon').removeClass('fa-search');
-      $('#node-config-lookup-serialnum-icon').addClass('spinner');
-      $('#node-config-lookup-serialnum').addClass('disabled');
-      $.getJSON('sonosSearch', function (sonosPlayer) {
-        $('#node-config-lookup-serialnum-icon').addClass('fa-search');
-        $('#node-config-lookup-serialnum-icon').removeClass('spinner');
-        $('#node-config-lookup-serialnum').removeClass('disabled');
-        var dataArray = [];
-        $.each(sonosPlayer, function (i, element) {
-          dataArray.push(element);
+    oneditprepare: function() {
+      try {
+        $('#node-config-input-serialnum').autocomplete('destroy');
+      } catch (err) {}
+      $('#node-config-lookup-serialnum').click(function() {
+        $('#node-config-lookup-serialnum-icon').removeClass('fa-search');
+        $('#node-config-lookup-serialnum-icon').addClass('spinner');
+        $('#node-config-lookup-serialnum').addClass('disabled');
+        $.getJSON('sonosSearch', function(sonosPlayer) {
+          $('#node-config-lookup-serialnum-icon').addClass('fa-search');
+          $('#node-config-lookup-serialnum-icon').removeClass('spinner');
+          $('#node-config-lookup-serialnum').removeClass('disabled');
+          var dataArray = [];
+          $.each(sonosPlayer, function(i, element) {
+            dataArray.push(element);
+          });
+          $('#node-config-input-serialnum')
+            .autocomplete({
+              source: dataArray,
+              minLength: 0,
+              close: function(event, ui) {
+                $('#node-config-input-serialnum').autocomplete('destroy');
+              }
+            })
+            .autocomplete('search', '');
         });
-        $('#node-config-input-serialnum').autocomplete({
-          source: dataArray,
-          minLength: 0,
-          close: function (event, ui) {
-            $('#node-config-input-serialnum').autocomplete('destroy');
-          }
-        }).autocomplete('search', '');
       });
-    });
-  }
-});
+    }
+  });
 </script>
 
 <script type="text/x-red" data-template-name="sonos-config">
@@ -74,5 +76,4 @@ RED.nodes.registerType('sonos-config', {
         <label for="node-config-input-ipaddress"><i class="fa fa-globe"></i> IP Address</label>
         <input type="text" id="node-config-input-ipaddress" placeholder="192.168.xx.xx">
   </div>
-
 </script>

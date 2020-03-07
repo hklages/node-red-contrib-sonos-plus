@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = {
-
   // data to be used in other modules
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
@@ -14,11 +13,11 @@ module.exports = {
   // functions to be used in other modules
 
   /** Starts async discovery of sonos player and returns ipAddress - used in callback.
-  * @param  {object} node current node
-  * @param  {string} serialNumber player serial number
-  * @param  {function} callback function with parameter err, ipAddress
-  * provides ipAddress or null (not found) and calls callback handling that.
-  */
+   * @param  {object} node current node
+   * @param  {string} serialNumber player serial number
+   * @param  {function} callback function with parameter err, ipAddress
+   * provides ipAddress or null (not found) and calls callback handling that.
+   */
   discoverSonosPlayerBySerial: (node, serialNumber, callback) => {
     const sonos = require('sonos');
 
@@ -30,15 +29,21 @@ module.exports = {
     node.debug('Start searching for players');
     let discovery = sonos.DeviceDiscovery({ timeout: searchTime });
 
-    discovery.on('DeviceAvailable', (sonosPlayer) => {
+    discovery.on('DeviceAvailable', sonosPlayer => {
       // serial number is in deviceDescription serialNum
       // ipAddress is in sonosPlayer.host
-      sonosPlayer.deviceDescription()
+      sonosPlayer
+        .deviceDescription()
         .then(data => {
           // compary serial numbers
           if (module.exports.isTruthyAndNotEmptyString(data.serialNum)) {
-            if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-              node.debug('Found sonos player based on serialnumber in device description.');
+            if (
+              data.serialNum.trim().toUpperCase() ===
+              serialNumber.trim().toUpperCase()
+            ) {
+              node.debug(
+                'Found sonos player based on serialnumber in device description.'
+              );
               if (module.exports.isTruthyAndNotEmptyString(sonosPlayer.host)) {
                 // success
                 node.debug('Got ipaddres from device.host.');
@@ -61,7 +66,7 @@ module.exports = {
           }
           return true;
         })
-        .catch((error) => {
+        .catch(error => {
           callback(error, null);
           node.debug('Cleanup disovery - error');
           if (module.exports.isTruthyAndNotEmptyString(discovery)) {
@@ -73,24 +78,29 @@ module.exports = {
 
     // listener 'timeout' only once
     discovery.once('timeout', () => {
-      node.debug('Received time out without finding any matching (serialnumber) sonos player');
+      node.debug(
+        'Received time out without finding any matching (serialnumber) sonos player'
+      );
       // error messages in calling function
       callback(null, null);
     });
   },
 
   /** processing of msg with failure.
-  * @param  {object} node current node
-  * @param  {object} msg current msg
-  * @param  {Error object} error  error object from response
-  * @param  {string} functionName name of calling function
-  * @param  {string} messageShort  short message for status
-  */
+   * @param  {object} node current node
+   * @param  {object} msg current msg
+   * @param  {Error object} error  error object from response
+   * @param  {string} functionName name of calling function
+   * @param  {string} messageShort  short message for status
+   */
   failure: (node, msg, error, functionName) => {
     let msgShort = 'unknown'; // default text
     let msgDetails = 'unknown'; // default text
     node.debug(`Entering error handling from ${functionName}.`);
-    node.debug('Complete error message>' + JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    node.debug(
+      'Complete error message>' +
+        JSON.stringify(error, Object.getOwnPropertyNames(error))
+    );
     // validate .code and check for ECONNREFUSED
     if (!module.exports.isTruthyAndNotEmptyString(error.code)) {
       // Caution: getOwn is neccessary for some error messages eg playmode!
@@ -126,26 +136,37 @@ module.exports = {
     }
 
     node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg);
-    node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}` });
+    node.status({
+      fill: 'red',
+      shape: 'dot',
+      text: `error: ${functionName} - ${msgShort}`
+    });
   },
 
   /** show warning status and warn message
-  * @param  {object} node current node
-  * @param  {string} functionName name of calling function
-  * @param  {string} messageShort  short message for status
-  * @param  {string} messageDetail  details
-  */
+   * @param  {object} node current node
+   * @param  {string} functionName name of calling function
+   * @param  {string} messageShort  short message for status
+   * @param  {string} messageDetail  details
+   */
   warning: (node, functionName, messageShort, messageDetail) => {
     node.debug(`Entering warning handling from ${functionName}`);
-    node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail);
-    node.status({ fill: 'blue', shape: 'dot', text: `warning: ${functionName} - ${messageShort}` });
+    node.warn(
+      `Just a warning: ${functionName} - ${messageShort} :: Details: ` +
+        messageDetail
+    );
+    node.status({
+      fill: 'blue',
+      shape: 'dot',
+      text: `warning: ${functionName} - ${messageShort}`
+    });
   },
 
   /** processing of msg was successful
-  * @param  {object} node current node
-  * @param  {object} msg current msg (maybe null)
-  * @param  {string} functionName name of calling function
-  */
+   * @param  {object} node current node
+   * @param  {object} msg current msg (maybe null)
+   * @param  {string} functionName name of calling function
+   */
 
   success: (node, msg, functionName) => {
     node.send(msg);
@@ -160,46 +181,56 @@ module.exports = {
   // const city = getNestedObject(user, ['personalInfo', 'addresses', 0, 'city']);
   // this will return the city from the first address item.
   getNestedObject: (nestedObj, pathArray) => {
-    return pathArray.reduce((obj, key) =>
-      obj[key], nestedObj);
+    return pathArray.reduce((obj, key) => obj[key], nestedObj);
   },
 
   /** Validates either the property or the object (if pathArray is [])
-  * @param  {object} nestdObj object
-  * @param  {array} path array with the property chain
-  * @outputs {boolean} property exists
-  */
+   * @param  {object} nestdObj object
+   * @param  {array} path array with the property chain
+   * @outputs {boolean} property exists
+   */
   isValidProperty: (nestedObj, pathArray) => {
     if (pathArray.length === 0) {
       return module.exports.isTruthyAndNotEmptyString(nestedObj);
     } else {
-      const property = pathArray.reduce((obj, key) =>
-        (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+      const property = pathArray.reduce(
+        (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+        nestedObj
+      );
       return typeof property !== 'undefined';
     }
   },
 
   isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
-    const property = pathArray.reduce((obj, key) =>
-      (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+    const property = pathArray.reduce(
+      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    );
     return typeof property !== 'undefined' && property !== '';
   },
 
-  isTruthy: (input) => {
+  isTruthy: input => {
     // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
     // all the following are false - same for constants.
     //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0
     // but these are true: let input = []; let input = {};
-    return !(typeof input === 'undefined' || input === null ||
-          (typeof input === 'number' && !Number.isFinite(input)));
+    return !(
+      typeof input === 'undefined' ||
+      input === null ||
+      (typeof input === 'number' && !Number.isFinite(input))
+    );
   },
 
-  isTruthyAndNotEmptyString: (input) => {
+  isTruthyAndNotEmptyString: input => {
     // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
     // all the following are false - same for constants.
     //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
     // but these are true: let input = []; let input = {};
-    return !(typeof input === 'undefined' || input === null ||
-          (typeof input === 'number' && !Number.isFinite(input)) || input === '');
+    return !(
+      typeof input === 'undefined' ||
+      input === null ||
+      (typeof input === 'number' && !Number.isFinite(input)) ||
+      input === ''
+    );
   }
 };

@@ -1,82 +1,155 @@
-const NrcspHelper = require('./Helper.js');
-const NrcspSonos = require('./Sonos-Commands.js');
+const {
+  REGEX_IP,
+  REGEX_SERIAL,
+  PLAYER_WITH_TV,
+  failure,
+  warning,
+  discoverSonosPlayerBySerial,
+  isValidProperty,
+  isValidPropertyNotEmptyString,
+  isTruthyAndNotEmptyString,
+  isTruthy,
+  success
+} = require('./Helper.js');
 
-module.exports = function (RED) {
+const { ACTIONS_TEMPLATES, getCmd } = require('./Sonos-Commands.js');
+
+module.exports = function(RED) {
   'use strict';
 
   /**  Create Get Status Node and subscribe to messages.
-  * @param  {object} config current node configuration data
-  */
-  function SonosGetStatusNode (config) {
+   * @param  {object} config current node configuration data
+   */
+  function SonosGetStatusNode(config) {
     RED.nodes.createNode(this, config);
     const sonosFunction = 'setup subscribe';
 
     const node = this;
     const configNode = RED.nodes.getNode(config.confignode);
 
-    if (!((NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) ||
-      (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)))) {
-      NrcspHelper.failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction);
+    if (
+      !(
+        (isValidProperty(configNode, ['ipaddress']) &&
+          REGEX_IP.test(configNode.ipaddress)) ||
+        (isValidProperty(configNode, ['serialnum']) &&
+          REGEX_SERIAL.test(configNode.serialnum))
+      )
+    ) {
+      failure(
+        node,
+        null,
+        new Error(
+          'n-r-c-s-p: invalid config node - missing ip or serial number'
+        ),
+        sonosFunction
+      );
       return;
     }
 
     // clear node status
     node.status({});
     // subscribe and handle input message
-    node.on('input', function (msg) {
+    node.on('input', function(msg) {
       node.debug('node - msg received');
 
       // if ip address exist use it or get it via discovery based on serialNum
-      if (NrcspHelper.isValidProperty(configNode, ['ipaddress']) && NrcspHelper.REGEX_IP.test(configNode.ipaddress)) {
+      if (
+        isValidProperty(configNode, ['ipaddress']) &&
+        REGEX_IP.test(configNode.ipaddress)
+      ) {
         node.debug('using IP address of config node');
         processInputMsg(node, msg, configNode.ipaddress, configNode.serialnum);
       } else {
         // have to get ip address via disovery with serial numbers
-        NrcspHelper.warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended');
-        if (NrcspHelper.isValidProperty(configNode, ['serialnum']) && NrcspHelper.REGEX_SERIAL.test(configNode.serialnum)) {
-          NrcspHelper.discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
-            if (err) {
-              NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: discovery failed'), sonosFunction);
-              return;
+        warning(
+          node,
+          sonosFunction,
+          'No ip address',
+          'Providing ip address is recommended'
+        );
+        if (
+          isValidProperty(configNode, ['serialnum']) &&
+          REGEX_SERIAL.test(configNode.serialnum)
+        ) {
+          discoverSonosPlayerBySerial(
+            node,
+            configNode.serialnum,
+            (err, ipAddress) => {
+              if (err) {
+                failure(
+                  node,
+                  msg,
+                  new Error('n-r-c-s-p: discovery failed'),
+                  sonosFunction
+                );
+                return;
+              }
+              if (ipAddress === null) {
+                failure(
+                  node,
+                  msg,
+                  new Error('n-r-c-s-p: could not find any player by serial'),
+                  sonosFunction
+                );
+              } else {
+                // setting of nodestatus is done in following call handelIpuntMessage
+                node.debug('Found sonos player');
+                processInputMsg(node, msg, ipAddress, configNode.serialnum);
+              }
             }
-            if (ipAddress === null) {
-              NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction);
-            } else {
-              // setting of nodestatus is done in following call handelIpuntMessage
-              node.debug('Found sonos player');
-              processInputMsg(node, msg, ipAddress, configNode.serialnum);
-            }
-          });
+          );
         } else {
-          NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction);
+          failure(
+            node,
+            msg,
+            new Error('n-r-c-s-p: invalid config node - invalid serial'),
+            sonosFunction
+          );
         }
       }
     });
   }
 
   /**  Validate sonos player and input message then dispatch further.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {string} ipaddress IP address of sonos player
-  */
-  function processInputMsg (node, msg, ipaddress) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} ipaddress IP address of sonos player
+   */
+  function processInputMsg(node, msg, ipaddress) {
     const sonosFunction = 'handle input msg';
     const { Sonos } = require('sonos');
     const sonosPlayer = new Sonos(ipaddress);
 
-    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction);
+    if (!isTruthyAndNotEmptyString(sonosPlayer)) {
+      failure(
+        node,
+        msg,
+        new Error('n-r-c-s-p: undefined sonos player'),
+        sonosFunction
+      );
       return;
     }
-    if (!NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.host) || !NrcspHelper.isTruthyAndNotEmptyString(sonosPlayer.port)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction);
+    if (
+      !isTruthyAndNotEmptyString(sonosPlayer.host) ||
+      !isTruthyAndNotEmptyString(sonosPlayer.port)
+    ) {
+      failure(
+        node,
+        msg,
+        new Error('n-r-c-s-p: missing ip or port'),
+        sonosFunction
+      );
       return;
     }
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`;
 
     // Check msg.payload. Store lowercase version in command
-    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.payload)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction));
+    if (!isTruthyAndNotEmptyString(msg.payload)) {
+      failure(
+        node,
+        msg,
+        new Error('n-r-c-s-p: undefined payload', sonosFunction)
+      );
       return;
     }
 
@@ -118,13 +191,16 @@ module.exports = function (RED) {
       getRemainingSleepTimerDuration(node, msg, sonosPlayer);
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer);
-    // depreciated commands
+      // depreciated commands
     } else if (command === 'get_mysonos') {
       getMySonosAll(node, msg, sonosPlayer);
-    } else if (command === 'lab_test') {
-      labtest(node, msg, sonosPlayer);
     } else {
-      NrcspHelper.warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command));
+      warning(
+        node,
+        sonosFunction,
+        'dispatching commands - invalid command',
+        'command-> ' + JSON.stringify(command)
+      );
     }
   }
 
@@ -133,99 +209,122 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /** Get the SONOS basic data and output to msg.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output msg: state, volume, volumeNormalized, muted, name, group
-  * This command will send several api calls and combine the results.
-  */
-  function getBasicsV1 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: state, volume, volumeNormalized, muted, name, group
+   * This command will send several api calls and combine the results.
+   */
+  function getBasicsV1(node, msg, sonosPlayer) {
     const sonosFunction = 'get basics';
-    let state; let volume; let normalizedVolume; let muted; let sonosName; let sonosGroup;
+    let state;
+    let volume;
+    let normalizedVolume;
+    let muted;
+    let sonosName;
+    let sonosGroup;
 
-    sonosPlayer.getCurrentState()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .getCurrentState()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player state received');
         }
         state = response;
         return true;
       })
-      .then(() => { return sonosPlayer.getVolume(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+      .then(() => {
+        return sonosPlayer.getVolume();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player volume received');
         }
         volume = response;
         normalizedVolume = response / 100.0;
         return true;
       })
-      .then(() => { return sonosPlayer.getMuted(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+      .then(() => {
+        return sonosPlayer.getMuted();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player muted state received');
         }
         muted = response;
         return true;
       })
-      .then(() => { return sonosPlayer.getName(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+      .then(() => {
+        return sonosPlayer.getName();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player name received');
         }
         sonosName = response;
         return true;
       })
-      .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined zone group attributes received');
+      .then(() => {
+        return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error(
+            'n-r-c-s-p: undefined zone group attributes received'
+          );
         }
         sonosGroup = response;
         return true;
       })
       .then(() => {
-        msg.state = state; msg.volume = volume; msg.volumeNormalized = normalizedVolume; msg.muted = muted; msg.name = sonosName; msg.group = sonosGroup;
-        NrcspHelper.success(node, msg, sonosFunction);
+        msg.state = state;
+        msg.volume = volume;
+        msg.volumeNormalized = normalizedVolume;
+        msg.muted = muted;
+        msg.name = sonosName;
+        msg.group = sonosGroup;
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player state and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload
-  */
-  function getPlayerStateV3 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   */
+  function getPlayerStateV3(node, msg, sonosPlayer) {
     const sonosFunction = 'get player state';
 
-    sonosPlayer.getCurrentState()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .getCurrentState()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player state received');
         }
         node.debug('got valid player state');
         msg.payload = response;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player volume and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload
-  */
-  function getPlayerVolumeV3 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   */
+  function getPlayerVolumeV3(node, msg, sonosPlayer) {
     const sonosFunction = 'get player volume';
 
-    sonosPlayer.getVolume()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response) || isNaN(response)) {
+    sonosPlayer
+      .getVolume()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response) || isNaN(response)) {
           throw new Error('n-r-c-s-p: undefined player volume received');
         }
         if (!Number.isInteger(response)) {
@@ -233,107 +332,111 @@ module.exports = function (RED) {
         }
         node.debug('got valid player volume');
         msg.payload = response;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player muted state and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload
-  */
-  function getPlayerMutedV3 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   */
+  function getPlayerMutedV3(node, msg, sonosPlayer) {
     const sonosFunction = 'get player muted state';
 
-    sonosPlayer.getMuted()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .getMuted()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined mute state received');
         }
         node.debug('got valid mute state');
         msg.payload = response;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player name and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload
-  */
-  function getPlayerNameV3 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   */
+  function getPlayerNameV3(node, msg, sonosPlayer) {
     const sonosFunction = 'get player name';
-    sonosPlayer.getName()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .getName()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player name received');
         }
         node.debug('got valid player name');
         msg.payload = response;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player LED light status and outputs to payload.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload in On or Off
-  */
-  function getPlayerLedStatus (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload in On or Off
+   */
+  function getPlayerLedStatus(node, msg, sonosPlayer) {
     const sonosFunction = 'get LED status';
-    sonosPlayer.getLEDState()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .getLEDState()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player properties received');
         }
         // should be On or Off
         node.debug('got valid LED status');
         msg.payload = response;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player properties and outputs to payload.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload
-  */
-  function getPlayerProperties (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   */
+  function getPlayerProperties(node, msg, sonosPlayer) {
     const sonosFunction = 'get player properties';
-    sonosPlayer.deviceDescription()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .deviceDescription()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player properties received');
         }
         node.debug('got valid group attributes');
         msg.uuid = response.UDN.substring('uuid:'.length);
         msg.payload = response;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song, media and position and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output msg: artist, title, albumArtURL, queueActivated, song, media and position
-  * This command send serveral api requests and combines them.
-  */
-  function getPlayerSongMediaV1 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: artist, title, albumArtURL, queueActivated, song, media and position
+   * This command send serveral api requests and combines them.
+   */
+  function getPlayerSongMediaV1(node, msg, sonosPlayer) {
     const sonosFunction = 'get songmedia';
 
     let artist = 'unknown'; // as default
@@ -341,37 +444,62 @@ module.exports = function (RED) {
     let albumArtURL = '';
 
     let suppressWarnings = false; // default
-    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.suppressWarnings)) {
+    if (!isTruthyAndNotEmptyString(msg.suppressWarnings)) {
       suppressWarnings = false;
     } else {
       if (typeof msg.suppressWarnings === 'boolean') {
         suppressWarnings = msg.suppressWarnings;
       } else {
-        NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction);
+        failure(
+          node,
+          msg,
+          new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'),
+          sonosFunction
+        );
         return;
       }
     }
-    sonosPlayer.currentTrack()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .currentTrack()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined current song received');
         }
         msg.song = response;
         // modify albumArtURL property
-        if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
-          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {
+        if (
+          typeof response.albumArtURI === 'undefined' ||
+          response.albumArtURI === null ||
+          (typeof response.albumArtURI === 'number' &&
+            isNaN(response.albumArtURI)) ||
+          response.albumArtURI === ''
+        ) {
           // TuneIn does not provide AlbumArtURL -so we continue
         } else {
           node.debug('got valid albumArtURI');
           albumArtURL = sonosPlayer.baseUrl + response.albumArtURI;
         }
         // extract artist and title if available V2
-        if (typeof response.artist === 'undefined' || response.artist === null ||
-          (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
+        if (
+          typeof response.artist === 'undefined' ||
+          response.artist === null ||
+          (typeof response.artist === 'number' && isNaN(response.artist)) ||
+          response.artist === ''
+        ) {
           // missing artist: TuneIn provides artist and title in title field
-          if (typeof response.title === 'undefined' || response.title === null ||
-              (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            if (!suppressWarnings) NrcspHelper.warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+          if (
+            typeof response.title === 'undefined' ||
+            response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) ||
+            response.title === ''
+          ) {
+            if (!suppressWarnings)
+              warning(
+                node,
+                sonosFunction,
+                'no artist, no title',
+                'received-> ' + JSON.stringify(response)
+              );
             msg.artist = artist;
             msg.title = title;
             return;
@@ -381,7 +509,13 @@ module.exports = function (RED) {
               artist = response.title.split(' - ')[0];
               title = response.title.split(' - ')[1];
             } else {
-              if (!suppressWarnings) NrcspHelper.warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              if (!suppressWarnings)
+                warning(
+                  node,
+                  sonosFunction,
+                  'invalid combination artist title received',
+                  'received-> ' + JSON.stringify(response)
+                );
               msg.artist = artist;
               msg.title = response.title;
               return;
@@ -389,8 +523,12 @@ module.exports = function (RED) {
           }
         } else {
           artist = response.artist;
-          if (typeof response.title === 'undefined' || response.title === null ||
-              (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+          if (
+            typeof response.title === 'undefined' ||
+            response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) ||
+            response.title === ''
+          ) {
             // title unknown
           } else {
             title = response.title;
@@ -404,17 +542,24 @@ module.exports = function (RED) {
         msg.title = title;
         return true;
       })
-      .then(() => { return sonosPlayer.avTransportService().GetMediaInfo(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+      .then(() => {
+        return sonosPlayer.avTransportService().GetMediaInfo();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined media info received');
         }
-        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
-          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
+        if (
+          typeof response.CurrentURI === 'undefined' ||
+          response.CurrentURI === null ||
+          (typeof response.CurrentURI === 'number' &&
+            isNaN(response.CurrentURI)) ||
+          response.CurrentURI === ''
+        ) {
           throw new Error('n-r-c-s-p: undefined CurrentURI received');
         }
         const uri = response.CurrentURI;
-        msg.queueActivated = (uri.startsWith('x-rincon-queue'));
+        msg.queueActivated = uri.startsWith('x-rincon-queue');
         if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
           const end = uri.indexOf('?sid=254');
           const start = 'x-sonosapi-stream:'.length;
@@ -423,19 +568,21 @@ module.exports = function (RED) {
         msg.media = response;
         return true;
       })
-      .then(() => { return sonosPlayer.avTransportService().GetPositionInfo(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+      .then(() => {
+        return sonosPlayer.avTransportService().GetPositionInfo();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined position info received');
         }
         msg.position = response;
         return true;
       })
       .then(() => {
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the sonos player current song and outputs.
@@ -445,7 +592,7 @@ module.exports = function (RED) {
   * @param  {object} sonosPlayer sonos player object
   * @output msg:  artist, title, albumArtURL and song
   */
-  function getPlayerCurrentSongV1 (node, msg, sonosPlayer) {
+  function getPlayerCurrentSongV1(node, msg, sonosPlayer) {
     const sonosFunction = 'get current song';
 
     let artist = 'unknown'; // as default
@@ -453,38 +600,63 @@ module.exports = function (RED) {
     let albumArtURL = '';
 
     let suppressWarnings = false; // default
-    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.suppressWarnings)) {
+    if (!isTruthyAndNotEmptyString(msg.suppressWarnings)) {
       suppressWarnings = false;
     } else {
       if (typeof msg.suppressWarnings === 'boolean') {
         suppressWarnings = msg.suppressWarnings;
       } else {
-        NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction);
+        failure(
+          node,
+          msg,
+          new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'),
+          sonosFunction
+        );
         return;
       }
     }
 
-    sonosPlayer.currentTrack()
-      .then((response) => {
+    sonosPlayer
+      .currentTrack()
+      .then(response => {
         msg.payload = response;
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined current song received');
         }
         // modify albumArtURL property
-        if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
-          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {
+        if (
+          typeof response.albumArtURI === 'undefined' ||
+          response.albumArtURI === null ||
+          (typeof response.albumArtURI === 'number' &&
+            isNaN(response.albumArtURI)) ||
+          response.albumArtURI === ''
+        ) {
           // TuneIn does not provide AlbumArtURL -so we continure
         } else {
           node.debug('got valid albumArtURI');
           albumArtURL = sonosPlayer.baseUrl + response.albumArtURI;
         }
         // extract artist and title if available V2
-        if (typeof response.artist === 'undefined' || response.artist === null ||
-          (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
+        if (
+          typeof response.artist === 'undefined' ||
+          response.artist === null ||
+          (typeof response.artist === 'number' && isNaN(response.artist)) ||
+          response.artist === ''
+        ) {
           // missing artist: TuneIn provides artist and title in title field
-          if (typeof response.title === 'undefined' || response.title === null ||
-              (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            if (!suppressWarnings) NrcspHelper.warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response));
+          if (
+            typeof response.title === 'undefined' ||
+            response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) ||
+            response.title === ''
+          ) {
+            if (!suppressWarnings)
+              warning(
+                node,
+                sonosFunction,
+                'no artist, no title',
+                'received-> ' + JSON.stringify(response)
+              );
             msg.artist = artist;
             msg.title = title;
             return;
@@ -494,7 +666,13 @@ module.exports = function (RED) {
               artist = response.title.split(' - ')[0];
               title = response.title.split(' - ')[1];
             } else {
-              if (!suppressWarnings) NrcspHelper.warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response));
+              if (!suppressWarnings)
+                warning(
+                  node,
+                  sonosFunction,
+                  'invalid combination artist title received',
+                  'received-> ' + JSON.stringify(response)
+                );
               msg.artist = artist;
               msg.title = response.title;
               return;
@@ -502,8 +680,12 @@ module.exports = function (RED) {
           }
         } else {
           artist = response.artist;
-          if (typeof response.title === 'undefined' || response.title === null ||
-              (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+          if (
+            typeof response.title === 'undefined' ||
+            response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) ||
+            response.title === ''
+          ) {
             // title unknown
           } else {
             title = response.title;
@@ -517,32 +699,39 @@ module.exports = function (RED) {
         msg.title = title;
       })
       .then(() => {
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the media info and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output msg: queueActivated, payload = media
-  */
-  function getMediaInfoV1 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: queueActivated, payload = media
+   */
+  function getMediaInfoV1(node, msg, sonosPlayer) {
     const sonosFunction = 'get media info';
 
-    sonosPlayer.avTransportService().GetMediaInfo()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .avTransportService()
+      .GetMediaInfo()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined media info received');
         }
-        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
-          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
+        if (
+          typeof response.CurrentURI === 'undefined' ||
+          response.CurrentURI === null ||
+          (typeof response.CurrentURI === 'number' &&
+            isNaN(response.CurrentURI)) ||
+          response.CurrentURI === ''
+        ) {
           throw new Error('n-r-c-s-p: undefined CurrentURI received');
         }
         const uri = response.CurrentURI;
-        msg.queueActivated = (uri.startsWith('x-rincon-queue'));
+        msg.queueActivated = uri.startsWith('x-rincon-queue');
         if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
           const end = uri.indexOf('?sid=254');
           const start = 'x-sonosapi-stream:'.length;
@@ -552,55 +741,64 @@ module.exports = function (RED) {
         return true;
       })
       .then(() => {
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get the position info and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output msg: payload = position
-  */
-  function getPositionInfoV1 (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: payload = position
+   */
+  function getPositionInfoV1(node, msg, sonosPlayer) {
     const sonosFunction = 'get position info';
 
-    sonosPlayer.avTransportService().GetPositionInfo()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .avTransportService()
+      .GetPositionInfo()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined position info received');
         }
         msg.payload = response;
         return true;
       })
       .then(() => {
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   // depreciated command
 
   /**  Get list of all My Sonos items.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * change msg.payload to array of all My Sonos items
-  */
-  function getMySonosAll (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * change msg.payload to array of all My Sonos items
+   */
+  function getMySonosAll(node, msg, sonosPlayer) {
     // get list of My Sonos items
     const sonosFunction = 'get my sonos all';
-    sonosPlayer.getFavorites()
-      .then((response) => {
+    sonosPlayer
+      .getFavorites()
+      .then(response => {
         // validate response
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received');
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error(
+            'n-r-c-s-p: undefined getFavorites response received'
+          );
         }
-        if (typeof response.items === 'undefined' || response.items === null ||
-          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
+        if (
+          typeof response.items === 'undefined' ||
+          response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) ||
+          response.items === ''
+        ) {
           throw new Error('n-r-c-s-p: undefined favorite list received');
         }
         if (!Array.isArray(response.items)) {
@@ -611,34 +809,35 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: no my sonos items found');
         }
         msg.payload = list;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Test SONOS player: reachable true/false
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output changes msg.payload to boolean true otherwise false
-  */
-  function testConnected (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload to boolean true otherwise false
+   */
+  function testConnected(node, msg, sonosPlayer) {
     const sonosFunction = 'test is player reachable';
-    sonosPlayer.getCurrentState()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
+    sonosPlayer
+      .getCurrentState()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
           throw new Error('n-r-c-s-p: undefined player state received');
         }
         node.debug('player reachable');
         msg.payload = true;
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
         return true;
       })
-      .catch((error) => {
+      .catch(error => {
         node.debug('test command - error ignored' + JSON.stringify(error));
         let msgShort = 'no further information';
-        if (NrcspHelper.isTruthyAndNotEmptyString(error.code)) {
+        if (isTruthyAndNotEmptyString(error.code)) {
           if (error.code === 'ECONNREFUSED') {
             msgShort = 'can not connect to player - refused';
           } else if (error.code === 'EHOSTUNREACH') {
@@ -655,34 +854,41 @@ module.exports = function (RED) {
   }
 
   /** getGroupsInfo: get all available data about the topology = group
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output {object} payload topology and group current group information
-  */
-  function getGroupsInfo (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output {object} payload topology and group current group information
+   */
+  function getGroupsInfo(node, msg, sonosPlayer) {
     const sonosFunction = 'get groups info';
 
-    sonosPlayer.getAllGroups()
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined all group information received');
+    sonosPlayer
+      .getAllGroups()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error(
+            'n-r-c-s-p: undefined all group information received'
+          );
         }
         node.debug('got valid all group info');
         msg.payload = response;
         return true;
       })
-      .then(() => { return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes(); })
-      .then((response) => {
-        if (!NrcspHelper.isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined zone group attributes received');
+      .then(() => {
+        return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes();
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error(
+            'n-r-c-s-p: undefined zone group attributes received'
+          );
         }
         node.debug('got zone group attribures info');
         msg.sonosGroup = response;
-        if (!NrcspHelper.isTruthy(response.CurrentZoneGroupName)) {
+        if (!isTruthy(response.CurrentZoneGroupName)) {
           throw new Error('n-r-c-s-p: undefined CurrentZoneGroupName received');
         }
-        if (NrcspHelper.isTruthyAndNotEmptyString(response.CurrentZoneGroupID)) {
+        if (isTruthyAndNotEmptyString(response.CurrentZoneGroupID)) {
           let coordinatorUuid;
           let coordinatorName;
           const memberNames = [];
@@ -691,7 +897,9 @@ module.exports = function (RED) {
               coordinatorUuid = msg.payload[i].Coordinator;
               for (var j = 0; j < msg.payload[i].ZoneGroupMember.length; j++) {
                 memberNames.push(msg.payload[i].ZoneGroupMember[j].ZoneName);
-                if (coordinatorUuid === msg.payload[i].ZoneGroupMember[j].UUID) {
+                if (
+                  coordinatorUuid === msg.payload[i].ZoneGroupMember[j].UUID
+                ) {
                   coordinatorName = msg.payload[i].ZoneGroupMember[j].ZoneName;
                 }
               }
@@ -709,113 +917,118 @@ module.exports = function (RED) {
         } else {
           msg.role = 'independent';
         }
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /** Get EQ information (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV-
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  *                 msg.topic specifies EQtype
-  * @param  {object} sonosPlayer sonos player object
-  * @output {object} payload with nightMode, SpeechEnhancement, subGain
-  */
-  function getEQ (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *                 msg.topic specifies EQtype
+   * @param  {object} sonosPlayer sonos player object
+   * @output {object} payload with nightMode, SpeechEnhancement, subGain
+   */
+  function getEQ(node, msg, sonosPlayer) {
     const sonosFunction = 'get EQ';
 
     // validate msg.topic
-    if (!NrcspHelper.isTruthyAndNotEmptyString(msg.topic)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction);
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(
+        node,
+        msg,
+        new Error('n-r-c-s-p: undefined topic'),
+        sonosFunction
+      );
       return;
     }
-    if (!NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
-      NrcspHelper.failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + NrcspSonos.ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()), sonosFunction);
+    if (!ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
+      failure(
+        node,
+        msg,
+        new Error(
+          'n-r-c-s-p: invalid topic. Should be one of ' +
+            ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()
+        ),
+        sonosFunction
+      );
       return;
     }
     const eqType = msg.topic;
 
-    sonosPlayer.deviceDescription()
-      .then((response) => { // ensure that SONOS player has TV mode
-        if (!NrcspHelper.isValidPropertyNotEmptyString(response, ['modelName'])) {
+    sonosPlayer
+      .deviceDescription()
+      .then(response => {
+        // ensure that SONOS player has TV mode
+        if (!isValidPropertyNotEmptyString(response, ['modelName'])) {
           throw new Error('n-r-c-s-p: undefined model name received');
         }
-        if (!NrcspHelper.PLAYER_WITH_TV.includes(response.modelName)) {
+        if (!PLAYER_WITH_TV.includes(response.modelName)) {
           throw new Error('n-r-c-s-p: your player does not support TV');
         }
         return true;
       })
-      .then(() => { // send request to SONOS player
-        return NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetEQ-' + eqType);
+      .then(() => {
+        // send request to SONOS player
+        return getCmd(sonosPlayer.baseUrl, 'GetEQ-' + eqType);
       })
-      .then((result) => {
+      .then(result => {
         if (eqType === 'SubGain') {
           msg.payload = result;
         } else {
-          msg.payload = (result === '1' ? 'On' : 'Off');
+          msg.payload = result === '1' ? 'On' : 'Off';
         }
-        NrcspHelper.success(node, msg, sonosFunction);
+        success(node, msg, sonosFunction);
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /**  Get current crossfade mode.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * @output {String} msg.payload On Off
-  */
-  function getCrossfadeMode (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {String} msg.payload On Off
+   */
+  function getCrossfadeMode(node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode';
-    NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetCrossfadeMode')
-      .then((result) => {
-        msg.payload = (result === '1' ? 'On' : 'Off');
-        NrcspHelper.success(node, msg, sonosFunction);
+    getCmd(sonosPlayer.baseUrl, 'GetCrossfadeMode')
+      .then(result => {
+        msg.payload = result === '1' ? 'On' : 'Off';
+        success(node, msg, sonosFunction);
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /**  Get current loudness mode.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * @output {String} msg.payload On Off
-  */
-  function getLoudnessMode (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {String} msg.payload On Off
+   */
+  function getLoudnessMode(node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode';
-    NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetLoudness')
-      .then((result) => {
-        msg.payload = (result === '1' ? 'On' : 'Off');
-        NrcspHelper.success(node, msg, sonosFunction);
+    getCmd(sonosPlayer.baseUrl, 'GetLoudness')
+      .then(result => {
+        msg.payload = result === '1' ? 'On' : 'Off';
+        success(node, msg, sonosFunction);
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   /**  Get remaining sleep timer duration.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer Sonos Player
-  * @output {String} msg.payload On Off
-  */
-  function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {String} msg.payload On Off
+   */
+  function getRemainingSleepTimerDuration(node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer';
-    NrcspSonos.getCmd(sonosPlayer.baseUrl, 'GetRemainingSleepTimerDuration')
-      .then((result) => {
-        msg.payload = (result === '' ? 'no time set' : result);
-        NrcspHelper.success(node, msg, sonosFunction);
+    getCmd(sonosPlayer.baseUrl, 'GetRemainingSleepTimerDuration')
+      .then(result => {
+        msg.payload = result === '' ? 'no time set' : result;
+        success(node, msg, sonosFunction);
       })
-      .catch((error) => NrcspHelper.failure(node, msg, error, sonosFunction));
-  }
-
-  /** sandbox to test new commands
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-  * @param  {object} sonosPlayer sonos player object
-  * @output
-  */
-  function labtest (node, msg, sonosPlayer) {
-    const sonosFunction = 'labtest';
-    return sonosFunction;
+      .catch(error => failure(node, msg, error, sonosFunction));
   }
 
   RED.nodes.registerType('sonos-get-status', SonosGetStatusNode);

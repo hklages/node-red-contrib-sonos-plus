@@ -2,140 +2,138 @@
 
 <!-- Registering Node -->
 <script type="text/javascript">
-/* global  RED */
-/* eslint no-undef: "error" */
-RED.nodes.registerType('sonos-get-status', {
-  category: 'SonosPlus',
-  defaults: {
-    confignode: {
-      value: '',
-      type: 'sonos-config'
+  /* global  RED */
+  /* eslint no-undef: "error" */
+  RED.nodes.registerType('sonos-get-status', {
+    category: 'SonosPlus',
+    defaults: {
+      confignode: {
+        value: '',
+        type: 'sonos-config'
+      },
+      name: {
+        value: ''
+      }
     },
-    name: {
-      value: ''
-    }
-  },
-  inputs: 1,
-  outputs: 1,
-  icon: 'sonos.png', // saved in  icons/myicon.png
-  color: '#f4e7a8',
-  label: function () {
-    return this.name || 'Get Status';
-  },
-  paletteLabel: 'Get Status'
-});
+    inputs: 1,
+    outputs: 1,
+    icon: 'sonos.png', // saved in  icons/myicon.png
+    color: '#f4e7a8',
+    label: function() {
+      return this.name || 'Get Status';
+    },
+    paletteLabel: 'Get Status'
+  });
 </script>
 
 <!-- Setting design and inputs for node -->
 <script type="text/x-red" data-template-name="sonos-get-status">
 
+   <div class="form-row">
+         <label for="node-input-confignode"> Config Node</label>
+         <input type="text" id="node-input-confignode"/>
+   </div>
+
   <div class="form-row">
-        <label for="node-input-confignode"> Config Node</label>
-        <input type="text" id="node-input-confignode"/>
-  </div>
-
-	<div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="This Node Name"/>
-  </div>
-
+         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+         <input type="text" id="node-input-name" placeholder="This Node Name"/>
+   </div>
 </script>
-
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-get-status">
-	<p>Outputs different kind of SONOS player status data. Incoming message is used as command. The commands <i>get basics/songmedia</i> are aggregations.</p>
+  <p>Outputs different kind of SONOS player status data. Incoming message is used as command. The commands <i>get basics/songmedia</i> are aggregations.</p>
 
-	<h3>Input (required)</h3>
+  <h3>Input (required)</h3>
 
-	<dl class="message-properties">
-			<dt>payload <span class="property-type">string</span> </dt>
-      <dd>A command. Valid commands see Details.</dd>
-
-      <dt>topic <span class="property-type">string</span> </dt>
-      <dd>Specifies the EQType in command get_eq. Currently NightMode, DialogLevel, SubEnabled and SubGain are supported.</dd>
-
-      <dt>suppressWarnings <span class="property-type">boolean, optional</span> </dt>
-      <dd>if true suppresses the warning message for missing title or author in get_songmedia, get_songinfo</dd>
-	</dl>
-
-	<h3>Outputs</h3>
-
-  The commands <b>get_state/volume/muted/name/led/properties/positioninfo/songinfo/mysonos</b> outputs only to <code>payload</code>.
-  The command <b>get_songmedia</b> outputs to all several properties beneath. The command <b>get_mediainfo</b> outputs to payload and queueActivated.
-  The command <b>songinfo</b> outputs to payload and albumArtURI, artist, title.
   <dl class="message-properties">
+  		<dt>payload <span class="property-type">string</span> </dt>
+       <dd>A command. Valid commands see Details.</dd>
 
-      <dt>state <span class="property-type">string | playing/stopped/paused</span> </dt>
-      <dd>current playing state: playing, stopped, ...</dd>
+       <dt>topic <span class="property-type">string</span> </dt>
+       <dd>Specifies the EQType in command get_eq. Currently NightMode, DialogLevel, SubEnabled and SubGain are supported.</dd>
 
-      <dt>muted <span class="property-type">boolean</span> </dt>
-      <dd> current mute state</dd>
-
-      <dt>volume <span class="property-type">int | 1..99</span> </dt>
-      <dd> current volume value</dd>
-
-      <dt>volumeNormalized <span class="property-type">float | 0-1</span></dt>
-      <dd> normalized current volume value (from 0.0 to 1.0)</dd>
-
-      <dt>name <span class="property-type">string</span></dt>
-      <dd> SONOS player name</dd>
-
-      <dt>group <span class="property-type">Object</span></dt>
-      <dd> SONOS player group attributes</dd>
-
-      <dt>role <span class="property-type">string</span></dt>
-      <dd> SONOS player role (master, client or independent)</dd>
-
-      <dt>song  <span class="property-type">object</span></dt>
-      <dd> full song info object</dd>
-
-      <dt>albumArtURL <span class="property-type">string/url</span></dt>
-      <dd> url for the album art</dd>
-
-      <dt>artist <span class="property-type">string</span></dt>
-      <dd> current artist only in case of TuneIn, Amazon Prime</dd>
-
-      <dt>queueActivated <span class="property-type">string</span></dt>
-      <dd> Indicator wheter SONOS queue is activated</dd>
-
-      <dt>title <span class="property-type">string</span></dt>
-      <dd> current title only in case of TuneIn, Amazon Prime</dd>
-
-      <dt>media <span class="property-type">Object</span></dt>
-      <dd> more information - for instance radio station name</dd>
-
-      <dt>radioId <span class="property-type">String</span></dt>
-      <dd> provides the TuneIn Radio Id</dd>
-
-      <dt>position <span class="property-type">Object</span></dt>
-      <dd> more info - for instance duration, radio station name </dd>
-
-      <dt>uuid <span class="property-type">string</span></dt>
-      <dd> uuid of the player </dd>
-
-      <dt>info <span class="property-type">String</span></dt>
-      <dd> provides more info for test_connected</dd>
-
+       <dt>suppressWarnings <span class="property-type">boolean, optional</span> </dt>
+       <dd>if true suppresses the warning message for missing title or author in get_songmedia, get_songinfo</dd>
   </dl>
 
-  <h3>Details</h3>
+  <h3>Outputs</h3>
 
-  Accepted values for <code>payload</code> are:
-  <ul>
-    <li><b>get_basics</b> Outputs current state, volume, muted, player name, group attributes</li>
-    <li><b>get_state/volume/muted/name/led</b> Outputs only the playing state/volume/muted/name/led status</li>
-    <li><b>get_properties</b> Outputs player properties - now also uuid</li>
-    <li><b>get_groups</b> Outputs group information - the players role (coordinator, client, independent), array of groups with members, etc</li>
-    <li><b>get_songmedia</b> Outputs song, media and position info</li>
-    <li><b>get_songinfo</b> Outputs song info</li>
-    <li><b>get_mediainfo</b> Outputs media info</li>
-    <li><b>get_positioninfo</b> Outputs position info</li>
-    <li><b>get_eq</b> Outputs EQType value. EQType has to be specified in msg.topic</li>
-    <li><b>get_crossfade</b> Outputs current crossfade (On/Off)</li>
-    <li><b>get_loudness</b> Outputs loundness (On/Off)</li>
-    <li><b>get_sleeptimer</b> Outputs remaining sleep timer</li>
-    <br/>
-    <li><b>test_connected</b> Outputs boolean true, if player is reachable</li>
-  </ul>
+   The commands <b>get_state/volume/muted/name/led/properties/positioninfo/songinfo/mysonos</b> outputs only to <code>payload</code>.
+   The command <b>get_songmedia</b> outputs to all several properties beneath. The command <b>get_mediainfo</b> outputs to payload and queueActivated.
+   The command <b>songinfo</b> outputs to payload and albumArtURI, artist, title.
+   <dl class="message-properties">
+
+       <dt>state <span class="property-type">string | playing/stopped/paused</span> </dt>
+       <dd>current playing state: playing, stopped, ...</dd>
+
+       <dt>muted <span class="property-type">boolean</span> </dt>
+       <dd> current mute state</dd>
+
+       <dt>volume <span class="property-type">int | 1..99</span> </dt>
+       <dd> current volume value</dd>
+
+       <dt>volumeNormalized <span class="property-type">float | 0-1</span></dt>
+       <dd> normalized current volume value (from 0.0 to 1.0)</dd>
+
+       <dt>name <span class="property-type">string</span></dt>
+       <dd> SONOS player name</dd>
+
+       <dt>group <span class="property-type">Object</span></dt>
+       <dd> SONOS player group attributes</dd>
+
+       <dt>role <span class="property-type">string</span></dt>
+       <dd> SONOS player role (master, client or independent)</dd>
+
+       <dt>song  <span class="property-type">object</span></dt>
+       <dd> full song info object</dd>
+
+       <dt>albumArtURL <span class="property-type">string/url</span></dt>
+       <dd> url for the album art</dd>
+
+       <dt>artist <span class="property-type">string</span></dt>
+       <dd> current artist only in case of TuneIn, Amazon Prime</dd>
+
+       <dt>queueActivated <span class="property-type">string</span></dt>
+       <dd> Indicator wheter SONOS queue is activated</dd>
+
+       <dt>title <span class="property-type">string</span></dt>
+       <dd> current title only in case of TuneIn, Amazon Prime</dd>
+
+       <dt>media <span class="property-type">Object</span></dt>
+       <dd> more information - for instance radio station name</dd>
+
+       <dt>radioId <span class="property-type">String</span></dt>
+       <dd> provides the TuneIn Radio Id</dd>
+
+       <dt>position <span class="property-type">Object</span></dt>
+       <dd> more info - for instance duration, radio station name </dd>
+
+       <dt>uuid <span class="property-type">string</span></dt>
+       <dd> uuid of the player </dd>
+
+       <dt>info <span class="property-type">String</span></dt>
+       <dd> provides more info for test_connected</dd>
+
+   </dl>
+
+   <h3>Details</h3>
+
+   Accepted values for <code>payload</code> are:
+   <ul>
+     <li><b>get_basics</b> Outputs current state, volume, muted, player name, group attributes</li>
+     <li><b>get_state/volume/muted/name/led</b> Outputs only the playing state/volume/muted/name/led status</li>
+     <li><b>get_properties</b> Outputs player properties - now also uuid</li>
+     <li><b>get_groups</b> Outputs group information - the players role (coordinator, client, independent), array of groups with members, etc</li>
+     <li><b>get_songmedia</b> Outputs song, media and position info</li>
+     <li><b>get_songinfo</b> Outputs song info</li>
+     <li><b>get_mediainfo</b> Outputs media info</li>
+     <li><b>get_positioninfo</b> Outputs position info</li>
+     <li><b>get_eq</b> Outputs EQType value. EQType has to be specified in msg.topic</li>
+     <li><b>get_crossfade</b> Outputs current crossfade (On/Off)</li>
+     <li><b>get_loudness</b> Outputs loundness (On/Off)</li>
+     <li><b>get_sleeptimer</b> Outputs remaining sleep timer</li>
+     <br/>
+     <li><b>test_connected</b> Outputs boolean true, if player is reachable</li>
+   </ul>
 </script>

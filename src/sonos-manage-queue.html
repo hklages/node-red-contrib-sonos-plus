@@ -3,110 +3,107 @@
 <!-- Registering Node -->
 
 <script type="text/javascript">
-/* global  RED */
-/* eslint no-undef: "error" */
-RED.nodes.registerType('sonos-manage-queue', {
-  category: 'SonosPlus',
-  defaults: {
-    confignode: {
-      value: '',
-      type: 'sonos-config'
+  /* global  RED */
+  /* eslint no-undef: "error" */
+  RED.nodes.registerType('sonos-manage-queue', {
+    category: 'SonosPlus',
+    defaults: {
+      confignode: {
+        value: '',
+        type: 'sonos-config'
+      },
+      name: {
+        value: ''
+      }
     },
-    name: {
-      value: ''
-    }
-  },
-  inputs: 1, // set the number of inputs - only 0 or 1
-  outputs: 1, // set the number of outputs - 0 to n
-  icon: 'sonos.png', // saved in  icons/myicon.png
-  color: '#9dc1ec',
-  label: function () {
-    return this.name || 'Manage Queue';
-  },
-  paletteLabel: 'Mng Queue'
-});
+    inputs: 1, // set the number of inputs - only 0 or 1
+    outputs: 1, // set the number of outputs - 0 to n
+    icon: 'sonos.png', // saved in  icons/myicon.png
+    color: '#9dc1ec',
+    label: function() {
+      return this.name || 'Manage Queue';
+    },
+    paletteLabel: 'Mng Queue'
+  });
 </script>
 
 <!-- Setting design and inputs for node -->
 <script type="text/x-red" data-template-name="sonos-manage-queue">
 
+   <div class="form-row">
+         <label for="node-input-confignode"> Config Node</label>
+         <input type="text" id="node-input-confignode"/>
+   </div>
+
   <div class="form-row">
-        <label for="node-input-confignode"> Config Node</label>
-        <input type="text" id="node-input-confignode"/>
-  </div>
-
-	<div class="form-row">
-      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-      <input type="text" id="node-input-name" placeholder="This Node Name"/>
-  </div>
-
+       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+       <input type="text" id="node-input-name" placeholder="This Node Name"/>
+   </div>
 </script>
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-queue">
-  <p> Incoming message is being converted to valid command and send to SONOS player. The <i>get ... </i> provides information about the current queue or playlists.</p>
+    <p> Incoming message is being converted to valid command and send to SONOS player. The <i>get ... </i> provides information about the current queue or playlists.</p>
 
-  <h3>Input</h3>
+    <h3>Input</h3>
 
-  <dl class="message-properties">
+    <dl class="message-properties">
 
-      <dt>payload (required) <span class="property-type">string</span> </dt>
-      <dd>A command. Valid commands see Details.</dd>
+        <dt>payload (required) <span class="property-type">string</span> </dt>
+        <dd>A command. Valid commands see Details.</dd>
 
-      <dt>topic (optional)<span class="property-type">string</span> </dt>
-      <dd>Command parameter is used in almost all commands.</dd>
+        <dt>topic (optional)<span class="property-type">string</span> </dt>
+        <dd>Command parameter is used in almost all commands.</dd>
 
-      <dt>volume (optional)<span class="property-type">string</span> </dt>
-      <dd>Volume being used together with <b>activate_queue</b></dd>
+        <dt>volume (optional)<span class="property-type">string</span> </dt>
+        <dd>Volume being used together with <b>activate_queue</b></dd>
 
-      <dt>size (optional)<span class="property-type">string</span> </dt>
-      <dd>Size specifies the maximum number of playlists beeing retrieved from SONOS player. It is used in commands <b>insert_musiclibrary_playlist, insert_sonos_playlist, get_musiclibrary_playlists, get_sonos_playlists </b>.</dd>
+        <dt>size (optional)<span class="property-type">string</span> </dt>
+        <dd>Size specifies the maximum number of playlists beeing retrieved from SONOS player. It is used in commands <b>insert_musiclibrary_playlist, insert_sonos_playlist, get_musiclibrary_playlists, get_sonos_playlists </b>.</dd>
 
-      <dt>region (optional)<span class="property-type">string - 4 digits</span> </dt>
-      <dd>Spotify region (4 digits) to overwrite the default region which is EU 2311. It is used in <b>insert_spotify_uri, insert_spotify_playlist</b></dd>
+        <dt>region (optional)<span class="property-type">string - 4 digits</span> </dt>
+        <dd>Spotify region (4 digits) to overwrite the default region which is EU 2311. It is used in <b>insert_spotify_uri, insert_spotify_playlist</b></dd>
 
-      <dt>numberOfSongs (optional)<span class="property-type">positive number</span> </dt>
-      <dd>Number of songs beeing removed. Default is 1. It is used in <b>remove_song</b></dd>
-  </dl>
+        <dt>numberOfSongs (optional)<span class="property-type">positive number</span> </dt>
+        <dd>Number of songs beeing removed. Default is 1. It is used in <b>remove_song</b></dd>
+    </dl>
 
-  <h3>Outputs</h3>
+    <h3>Outputs</h3>
 
-  <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">Array</span>
-      </dt>
-      <dd>Array of songs or playlists in case of <i>get</i> command.</dd>
-  </dl>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Array</span>
+        </dt>
+        <dd>Array of songs or playlists in case of <i>get</i> command.</dd>
+    </dl>
 
-  <h3>Details</h3>
+    <h3>Details</h3>
 
-  Accepted values for <code>payload</code> are:
+    Accepted values for <code>payload</code> are:
+    <ul>
+      <li><b>insert_uri</b> Inserts a song or a complete playlist into queue. <code>topic</code> provides uri</li>
+      <li><b>insert_spotify_uri</b> Inserts a spotify song, album, playlist into queue. <code>topic</code> provides uri. <code>region</code> specifies the Spotify region</li>
+      <li><b>insert_prime_playlisturi</b> Inserts all songs of a Amazon Prime playlist into queue. <code>topic</code> provides uri</li>
+      <li><b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string</li>
+      <li><b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string</li>
+      <br/>
+      <li><b>activate_queue</b> Starts playing songs from queue (checks queue is not empty). <code>volume</code> may contain the volume in the range from 1 to 99.</li>
+      <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
+      <li><b>seek</b> Moves inside current (QUEUE) song to specified time. <code>topic</code> provides time in hh:mm:ss format</li>
+      <br/>
+      <li><b>flush_queue</b> Erases the queue and stops playing!</li>
+      <li><b>remove_song</b> Removes several (numberOfSongs) songs from queue. <code>topic</code> provides start index</li>
+      <br/>
+      <li><b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE</li>
+      <br/>
+      <li><b>get_queue</b> Outputs the current queue as output</li>
+      <li><b>get_queuemode</b> Gets the current queue mode</li>
+      <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
+      <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>
+    </ul>
+  The scope for the search string is:
   <ul>
-    <li><b>insert_uri</b> Inserts a song or a complete playlist into queue. <code>topic</code> provides uri</li>
-    <li><b>insert_spotify_uri</b> Inserts a spotify song, album, playlist into queue. <code>topic</code> provides uri. <code>region</code> specifies the Spotify region</li>
-    <li><b>insert_prime_playlisturi</b> Inserts all songs of a Amazon Prime playlist into queue. <code>topic</code> provides uri</li>
-    <li><b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string</li>
-    <li><b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string</li>
-    <br/>
-    <li><b>activate_queue</b> Starts playing songs from queue (checks queue is not empty). <code>volume</code> may contain the volume in the range from 1 to 99.</li>
-    <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
-    <li><b>seek</b> Moves inside current (QUEUE) song to specified time. <code>topic</code> provides time in hh:mm:ss format</li>
-    <br/>
-    <li><b>flush_queue</b> Erases the queue and stops playing!</li>
-    <li><b>remove_song</b> Removes several (numberOfSongs) songs from queue. <code>topic</code> provides start index</li>
-    <br/>
-    <li><b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE</li>
-    <br/>
-    <li><b>get_queue</b> Outputs the current queue as output</li>
-    <li><b>get_queuemode</b> Gets the current queue mode</li>
-    <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
-    <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>
+  <li>all SONOS playlists for insert_sonos_playlist/ get</li>
+  <li>all imported Music Library playlists for insert_musiclibrary_playlist/ get</li>
   </ul>
-The scope for the search string is:
-<ul>
-<li>all SONOS playlists for insert_sonos_playlist/ get</li>
-<li>all imported Music Library playlists for insert_musiclibrary_playlist/ get</li>
-</ul>
-
-
 </script>

@@ -2,45 +2,43 @@
 
 <!-- Registering Node -->
 <script type="text/javascript">
-/* global  RED */
-/* eslint no-undef: "error" */
-RED.nodes.registerType('sonos-manage-radio', {
-  category: 'SonosPlus',
-  defaults: {
-    confignode: {
-      value: '',
-      type: 'sonos-config'
+  /* global  RED */
+  /* eslint no-undef: "error" */
+  RED.nodes.registerType('sonos-manage-radio', {
+    category: 'SonosPlus',
+    defaults: {
+      confignode: {
+        value: '',
+        type: 'sonos-config'
+      },
+      name: {
+        value: ''
+      }
     },
-    name: {
-      value: ''
-    }
-  },
-  inputs: 1, // set the number of inputs - only 0 or 1
-  outputs: 1, // set the number of outputs - 0 to n
-  icon: 'sonos.png', // saved in  icons/myicon.png
-  color: '#edb88a',
-  label: function () {
-    return this.name || 'Manage Radio';
-  },
-  paletteLabel: 'Mng Radio'
-});
+    inputs: 1, // set the number of inputs - only 0 or 1
+    outputs: 1, // set the number of outputs - 0 to n
+    icon: 'sonos.png', // saved in  icons/myicon.png
+    color: '#edb88a',
+    label: function() {
+      return this.name || 'Manage Radio';
+    },
+    paletteLabel: 'Mng Radio'
+  });
 </script>
 
 <!-- Setting design and inputs for node -->
 <script type="text/x-red" data-template-name="sonos-manage-radio">
 
+   <div class="form-row">
+         <label for="node-input-confignode"> Config Node</label>
+         <input type="text" id="node-input-confignode"/>
+   </div>
+
   <div class="form-row">
-        <label for="node-input-confignode"> Config Node</label>
-        <input type="text" id="node-input-confignode"/>
-  </div>
-
-	<div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="This Node Name"/>
-  </div>
-
+         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+         <input type="text" id="node-input-name" placeholder="This Node Name"/>
+   </div>
 </script>
-
 
 <!-- Help Text -->
 <script type="text/x-red" data-help-name="sonos-manage-radio">

@@ -1,10 +1,9 @@
-
-module.exports = function (RED) {
+module.exports = function(RED) {
   'use strict';
 
   let node = {}; // used for sending node.error, node.debug
 
-  function SonosPlayerNode (config) {
+  function SonosPlayerNode(config) {
     RED.nodes.createNode(this, config);
 
     node = this;
@@ -13,13 +12,13 @@ module.exports = function (RED) {
   }
 
   // Build API to auto detect IP Addresses
-  RED.httpAdmin.get('/sonosSearch', function (req, response) {
-    discoverSonosPlayer(function (playerList) {
+  RED.httpAdmin.get('/sonosSearch', function(req, response) {
+    discoverSonosPlayer(function(playerList) {
       response.json(playerList);
     });
   });
 
-  function discoverSonosPlayer (discoveryCallback) {
+  function discoverSonosPlayer(discoveryCallback) {
     const sonos = require('sonos');
 
     const playerList = []; // list of all discovered SONOS players
@@ -35,17 +34,21 @@ module.exports = function (RED) {
     const discovery = sonos.DeviceDiscovery({ timeout: searchTime });
 
     // listener  'DeviceAvailable'
-    discovery.on('DeviceAvailable', (sonosPlayer) => {
-      sonosPlayer.deviceDescription()
-        .then((data) => {
+    discovery.on('DeviceAvailable', sonosPlayer => {
+      sonosPlayer
+        .deviceDescription()
+        .then(data => {
           playerList.push({
             label: data.friendlyName + '::' + data.roomName,
             value: data.serialNum
           });
           node.debug('OK Found SONOS player ' + data.serialNum);
         })
-        .catch((err) => {
-          node.error('DeviceDiscovery description error:: Details: ' + JSON.stringify(err));
+        .catch(err => {
+          node.error(
+            'DeviceDiscovery description error:: Details: ' +
+              JSON.stringify(err)
+          );
         });
     });
 
