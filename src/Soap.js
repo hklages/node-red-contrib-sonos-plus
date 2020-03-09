@@ -1,8 +1,8 @@
-'use strict';
-const request = require('axios');
-const xml2js = require('xml2js');
+'use strict'
+const request = require('axios')
+const xml2js = require('xml2js')
 
-const { isValidProperty, isTruthyAndNotEmptyString } = require('./Helper.js');
+const { isValidProperty, isTruthyAndNotEmptyString } = require('./Helper.js')
 
 module.exports = {
   // SOAP related data
@@ -20,24 +20,24 @@ module.exports = {
    * @returns {promise} with response from player
    * All  parameters are required except args.
    */
-  sendToPlayerV1: async function(baseUrl, path, name, action, args) {
+  sendToPlayerV1: async function (baseUrl, path, name, action, args) {
     // create header
-    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`;
+    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`
 
     // create body
-    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`;
+    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`
     if (args) {
       Object.keys(args).forEach(key => {
-        messageBody += `<${key}>${args[key]}</${key}>`;
-      });
+        messageBody += `<${key}>${args[key]}</${key}>`
+      })
     }
-    messageBody += `</u:${action}>`;
+    messageBody += `</u:${action}>`
     messageBody = [
       // '<?xml version="1.0" encoding="utf-8"?>',
       '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
       '<s:Body>' + messageBody + '</s:Body>',
       '</s:Envelope>'
-    ].join('');
+    ].join('')
 
     try {
       // try and catch to be able to modify error message
@@ -50,14 +50,14 @@ module.exports = {
           'Content-type': 'text/xml; charset=utf8'
         },
         data: messageBody
-      });
+      })
       return {
         headers: response.headers,
         body: response.data,
         statusCode: response.status
-      };
+      }
     } catch (error) {
-      console.log(`request failed: ${error}`);
+      console.log(`request failed: ${error}`)
       // In case of an SOAP error error.reponse helds the details.
       // That goes usually together with status code 500 - triggering catch
       // Experience: When using reject(error) the error.reponse get lost.
@@ -65,23 +65,21 @@ module.exports = {
       if (error.response) {
         // Indicator for SOAP Error
         if (error.message.startsWith('Request failed with status code 500')) {
-          const errorCode = module.exports.getErrorCode(error.response.data);
-          console.log(name);
-          const errorMessage = module.exports.getErrorMessage(errorCode, name);
-          console.log('errormessage >>' + errorMessage);
+          const errorCode = module.exports.getErrorCode(error.response.data)
+          console.log(name)
+          const errorMessage = module.exports.getErrorMessage(errorCode, name)
+          console.log('errormessage >>' + errorMessage)
           throw new Error(
             'n-r-c-s-p: statusCode >>500 & upnpErrorCode >>' +
               errorCode +
               ' upnpErrorMessage >>' +
               errorMessage
-          );
+          )
         } else {
-          throw new Error(
-            'n-r-c-s-p: ' + error.message + '///' + error.response.data
-          );
+          throw new Error('n-r-c-s-p: ' + error.message + '///' + error.response.data)
         }
       } else {
-        throw error;
+        throw error
       }
     }
   },
@@ -94,28 +92,25 @@ module.exports = {
    */
 
   getErrorMessage: (errorCode, actionName) => {
-    const defaultMessage = '';
+    const defaultMessage = ''
     if (isValidProperty(errorCode, []) && errorCode !== '') {
-      if (
-        isValidProperty(module.exports.ERROR_CODES, [actionName.toUpperCase()])
-      ) {
-        const actionErrorList =
-          module.exports.ERROR_CODES[actionName.toUpperCase()];
+      if (isValidProperty(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
+        const actionErrorList = module.exports.ERROR_CODES[actionName.toUpperCase()]
         for (let i = 0; i < actionErrorList.length; i++) {
           if (actionErrorList[i].code === errorCode) {
-            return actionErrorList[i].message;
+            return actionErrorList[i].message
           }
         }
       }
-      const npnpErrorList = module.exports.ERROR_CODES.UPNP;
+      const npnpErrorList = module.exports.ERROR_CODES.UPNP
       for (let i = 0; i < npnpErrorList.length; i++) {
         if (npnpErrorList[i].code === errorCode) {
-          return npnpErrorList[i].message;
+          return npnpErrorList[i].message
         }
       }
-      return defaultMessage;
+      return defaultMessage
     } else {
-      return defaultMessage;
+      return defaultMessage
     }
   },
 
@@ -127,15 +122,15 @@ module.exports = {
    */
 
   getErrorCode: data => {
-    let errorCode = ''; // default
+    let errorCode = '' // default
     if (isTruthyAndNotEmptyString(data)) {
-      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length;
-      const positionEnd = data.indexOf('</errorCode>');
+      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
+      const positionEnd = data.indexOf('</errorCode>')
       if (positionStart > 1 && positionEnd > positionStart) {
-        errorCode = data.substring(positionStart, positionEnd);
+        errorCode = data.substring(positionStart, positionEnd)
       }
     }
-    return errorCode.trim();
+    return errorCode.trim()
   },
 
   /** Encodes special XML characters e. g. < to &lt.
@@ -148,17 +143,17 @@ module.exports = {
     return xmlData.replace(/[<>&'"]/g, singleChar => {
       switch (singleChar) {
         case '<':
-          return '&lt;';
+          return '&lt;'
         case '>':
-          return '&gt;';
+          return '&gt;'
         case '&':
-          return '&amp;';
-        case '\'':
-          return '&apos;';
+          return '&amp;'
+        case "'":
+          return '&apos;'
         case '"':
-          return '&quot;';
+          return '&quot;'
       }
-    });
+    })
   },
 
   /** Transforms soap response to JSON format.
@@ -167,12 +162,12 @@ module.exports = {
    * @returns {promise} JSON format
    * All params must exist!
    */
-  parseSoapBodyV1: async function(body, tag) {
-    const arg = { mergeAttrs: true, explicitArray: false };
+  parseSoapBodyV1: async function (body, tag) {
+    const arg = { mergeAttrs: true, explicitArray: false }
 
     if (tag !== '') {
-      arg.charkey = tag;
+      arg.charkey = tag
     }
-    return xml2js.parseStringPromise(body, arg);
+    return xml2js.parseStringPromise(body, arg)
   }
-};
+}

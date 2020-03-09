@@ -1,7 +1,7 @@
-'use strict';
+'use strict'
 
-const { isValidProperty, isTruthyAndNotEmptyString } = require('./Helper.js');
-const { encodeXml, sendToPlayerV1, parseSoapBodyV1 } = require('./Soap.js');
+const { isValidProperty, isTruthyAndNotEmptyString } = require('./Helper.js')
+const { encodeXml, sendToPlayerV1, parseSoapBodyV1 } = require('./Soap.js')
 
 module.exports = {
   // SONOS related data
@@ -32,21 +32,21 @@ module.exports = {
    * Restrictions: Audible Audiobooks are missing.
    * Restrictions: Pocket Casts Podcasts without uri, only metaData
    */
-  getAllMySonosItems: async function(sonosPlayer) {
+  getAllMySonosItems: async function (sonosPlayer) {
     // receive data from player
-    const result = await module.exports.getCmd(sonosPlayer.baseUrl, 'Browse');
-    const list = await module.exports.parseBrowseFavoritesResults(result);
+    const result = await module.exports.getCmd(sonosPlayer.baseUrl, 'Browse')
+    const list = await module.exports.parseBrowseFavoritesResults(result)
 
     // Music library items have special albumArt, without host
     // We have to add the baseurl
-    list.forEach((item) => {
+    list.forEach(item => {
       if (isValidProperty(item, ['albumArt'])) {
         if (item.albumArt.startsWith('/getaa')) {
-          item.albumArt = sonosPlayer.baseUrl + item.albumArt;
+          item.albumArt = sonosPlayer.baseUrl + item.albumArt
         }
       }
-    });
-    return list;
+    })
+    return list
   },
 
   /**  queues My Sonos item (aka adds all tracks to SONOS queue): single song, album, playlist
@@ -55,17 +55,13 @@ module.exports = {
    * @param  {string} meta  meta data
    * array of my Sonos items as object.
    */
-  queue: async function(sonosPlayer, uri, meta) {
+  queue: async function (sonosPlayer, uri, meta) {
     // copy action parameter and update
     const modifiedArgs = {
       EnqueuedURI: encodeXml(uri),
       EnqueuedURIMetaData: encodeXml(meta)
-    };
-    return module.exports.setCmd(
-      sonosPlayer.baseUrl,
-      'AddURIToQueue',
-      modifiedArgs
-    );
+    }
+    return module.exports.setCmd(sonosPlayer.baseUrl, 'AddURIToQueue', modifiedArgs)
   },
 
   /**  stream uri
@@ -73,18 +69,14 @@ module.exports = {
    * @param  {string} uri  uri
    * @param  {string} meta  meta data
    */
-  stream: async function(sonosPlayer, uri, meta) {
+  stream: async function (sonosPlayer, uri, meta) {
     // TODO NOT WORKING
     // copy action parameter and update
-    const modifiedArgs = { EnqueuedURI: encodeXml(uri) };
+    const modifiedArgs = { EnqueuedURI: encodeXml(uri) }
     if (meta !== '') {
-      modifiedArgs.EnqueuedURIMetaData = encodeXml(meta);
+      modifiedArgs.EnqueuedURIMetaData = encodeXml(meta)
     }
-    return module.exports.setCmd(
-      sonosPlayer.baseUrl,
-      'SetAVTransportURI',
-      modifiedArgs
-    );
+    return module.exports.setCmd(sonosPlayer.baseUrl, 'SetAVTransportURI', modifiedArgs)
   },
 
   /**  set action with new arg object
@@ -93,41 +85,39 @@ module.exports = {
    * @param  {object} modifiedArgs only those properties being modified
    * @returns {promise} true if succesfull
    */
-  setCmd: async function(baseUrl, actionName, newArgs) {
+  setCmd: async function (baseUrl, actionName, newArgs) {
     // copy action parameter and update
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
-    Object.assign(actionParameter.args, newArgs);
-    console.log(JSON.stringify(actionParameter.args));
-    const { path, name, action, args } = actionParameter;
-    const response = await sendToPlayerV1(baseUrl, path, name, action, args);
+    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName]
+    Object.assign(actionParameter.args, newArgs)
+    console.log(JSON.stringify(actionParameter.args))
+    const { path, name, action, args } = actionParameter
+    const response = await sendToPlayerV1(baseUrl, path, name, action, args)
 
     // check response - select/transform item properties
-    let bodyXml;
+    let bodyXml
     if (response.statusCode === 200) {
       // maybe not necessary as promise will throw error
-      bodyXml = await parseSoapBodyV1(response.body, '');
+      bodyXml = await parseSoapBodyV1(response.body, '')
     } else {
       throw new Error(
         'n-r-c-s-p: status code: ' +
           response.statusCode +
           '-- body:' +
           JSON.stringify(response.body)
-      );
+      )
     }
 
     if (!isValidProperty(bodyXml, actionParameter.responsePath)) {
-      throw new Error('n-r-c-s-p: invalid response from sonos player');
+      throw new Error('n-r-c-s-p: invalid response from sonos player')
     }
     const result = actionParameter.responsePath.reduce((object, path) => {
-      return object[path];
-    }, bodyXml);
+      return object[path]
+    }, bodyXml)
 
     if (result !== actionParameter.responseValue) {
-      throw new Error(
-        'n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml)
-      );
+      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml))
     }
-    return true;
+    return true
   },
 
   /**  set action with new value.
@@ -136,40 +126,71 @@ module.exports = {
    * @param  {string} value new value (optional)
    * @returns {promise} result from action
    */
-  getCmd: async function(baseUrl, actionName) {
+  getCmd: async function (baseUrl, actionName) {
     // copy action parameter and update
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName];
-    const { path, name, action, args } = actionParameter;
-    const response = await sendToPlayerV1(baseUrl, path, name, action, args);
+    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName]
+    const { path, name, action, args } = actionParameter
+    const response = await sendToPlayerV1(baseUrl, path, name, action, args)
 
     // check response - select/transform item properties
-    let bodyXml;
+    let bodyXml
     if (response.statusCode === 200) {
       // maybe not necessary as promise will throw error
-      bodyXml = await parseSoapBodyV1(response.body, '');
+      bodyXml = await parseSoapBodyV1(response.body, '')
     } else {
       throw new Error(
         'n-r-c-s-p: status code: ' +
           response.statusCode +
           '-- body:' +
           JSON.stringify(response.body)
-      );
+      )
     }
 
     // check response - select/transform item properties
-    const paths = actionParameter.responsePath;
+    const paths = actionParameter.responsePath
     const result = paths.reduce((object, element) => {
-      return (object || {})[element];
-    }, bodyXml);
+      return (object || {})[element]
+    }, bodyXml)
     // TODO please verify!
     if (typeof result !== 'string') {
       // Caution: this check does only work for primitive values (not objects)
-      throw new Error('n-r-c-s-p: could not get value from player');
+      throw new Error('n-r-c-s-p: could not get value from player')
     }
-    return result;
+    return result
   },
 
   // ======================  HELPERS
+
+  /** Get ip address of group leader.
+   * @param  {string} playerName SONOS player name
+   * @param  {object} sonosBasePlayer player from config node
+   * @return {string} ip address of the leading SONOS player in that group
+   *
+   * @prereq sonosBasePlayer has valid ip address
+   *
+   * @throws exception: getAllGroups returns invalid value
+   *         exception: player name not found
+   */
+  getIpAddressOfGroupLeader: async function (playerName, sonosBasePlayer) {
+    const groups = await sonosBasePlayer.getAllGroups()
+    // Find our players group, check whether player is coordinator, get ip address
+    //
+    // groups is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, Coordinater (uuid)
+    // ZoneGroupMembers is an array of all members with properties ip address and more
+
+    if (!isTruthyAndNotEmptyString(groups)) {
+      throw new Error('n-r-c-s-p: undefined all groups information received')
+    }
+    for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex < groups[groupIndex].ZoneGroupMember.length; memberIndex++) {
+        if (groups[groupIndex].ZoneGroupMember[memberIndex].ZoneName === playerName) {
+          // found player for given playerName
+          return groups[groupIndex].host
+        }
+      }
+    }
+    throw new Error('n-r-c-s-p: could not find given player name in any group')
+  },
 
   /** find searchString in My Sonos items, property title
    * @param  {Array} items array of objects with property title, ...
@@ -181,48 +202,38 @@ module.exports = {
    * @return {promise} object {title, uri, metaData} or null if not found
    */
 
-  findStringInMySonosTitle: async function(items, searchString, filter) {
+  findStringInMySonosTitle: async function (items, searchString, filter) {
     // get service id from filter.serviceName or set '' if all.
-    let service = { name: 'unknown', sid: '' };
+    let service = { name: 'unknown', sid: '' }
     // Why: Apart from service there can also be My Sonos item from Music Library
     if (filter.serviceName !== 'all' && filter.serviceName !== 'MusicLibrary') {
-      service = module.exports.SERVICES.find(
-        o => o.name === filter.serviceName
-      );
+      service = module.exports.SERVICES.find(o => o.name === filter.serviceName)
       if (!service) {
-        throw new Error(
-          'n-r-c-s-p: service currently not supported > ' + filter.serviceName
-        );
+        throw new Error('n-r-c-s-p: service currently not supported > ' + filter.serviceName)
       }
     }
     if (!module.exports.MEDIA_TYPES.includes(filter.mediaType)) {
-      throw new Error('n-r-c-s-p: invalid media type ' + filter.mediaType);
+      throw new Error('n-r-c-s-p: invalid media type ' + filter.mediaType)
     }
     // Why: In upnp class playlist has small letters Album, Track but playlist
-    const correctedMediaType =
-      filter.mediaType === 'Playlist' ? 'playlist' : filter.mediaType;
+    const correctedMediaType = filter.mediaType === 'Playlist' ? 'playlist' : filter.mediaType
     for (var i = 0; i < items.length; i++) {
-      if (
-        items[i].title.includes(searchString) &&
+      if (items[i].title.includes(searchString) &&
         items[i].processingType === filter.processingType &&
-        (items[i].upnpClass.includes(correctedMediaType) ||
-          filter.mediaType === 'all') &&
+        (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all') &&
         (items[i].sid === service.sid ||
           filter.serviceName === 'all' ||
-          (filter.serviceName === 'MusicLibrary' && items[i].sid === ''))
-      ) {
+          (filter.serviceName === 'MusicLibrary' && items[i].sid === ''))) {
         return {
           title: items[i].title,
           uri: items[i].uri,
           metaData: items[i].metaData
-        };
+        }
       }
     }
     // not found
-    console.log('does not found matching item');
-    throw new Error(
-      'n-r-c-s-p: No title machting msg.topic found. Modify msg.topic'
-    );
+    console.log('does not found matching item')
+    throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic')
   },
 
   /** Extract list with title, albumArt, uri, metadata, sid, upnpClass and processingType from given input
@@ -231,28 +242,28 @@ module.exports = {
    * All params must exist!
    */
 
-  parseBrowseFavoritesResults: async function(body) {
-    const cleanXml = body.replace('\\"', '');
-    const tag = 'uriIdentifier';
-    const result = await parseSoapBodyV1(cleanXml, tag);
-    const list = [];
-    let sid, upnpClass, processingType;
-    const original = result['DIDL-Lite'].item;
+  parseBrowseFavoritesResults: async function (body) {
+    const cleanXml = body.replace('\\"', '')
+    const tag = 'uriIdentifier'
+    const result = await parseSoapBodyV1(cleanXml, tag)
+    const list = []
+    let sid, upnpClass, processingType
+    const original = result['DIDL-Lite'].item
     for (var i = 0; i < original.length; i++) {
-      sid = '';
+      sid = ''
       if (isValidProperty(original[i], ['res', tag])) {
-        sid = module.exports.getSid(original[i].res[tag]);
+        sid = module.exports.getSid(original[i].res[tag])
       }
-      upnpClass = '';
+      upnpClass = ''
       if (isValidProperty(original[i], ['r:resMD'])) {
-        upnpClass = module.exports.getUpnpClass(original[i]['r:resMD']);
+        upnpClass = module.exports.getUpnpClass(original[i]['r:resMD'])
       }
-      processingType = 'unsupported';
+      processingType = 'unsupported'
       if (module.exports.UPNP_CLASSES_STREAM.includes(upnpClass)) {
-        processingType = 'stream';
+        processingType = 'stream'
       }
       if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
-        processingType = 'queue';
+        processingType = 'queue'
       }
       list.push({
         title: original[i]['dc:title'],
@@ -262,9 +273,9 @@ module.exports = {
         sid: sid,
         upnpClass: upnpClass,
         processingType: processingType
-      });
+      })
     }
-    return list;
+    return list
   },
 
   /**  Get sid from uri.
@@ -275,15 +286,15 @@ module.exports = {
    */
 
   getSid: uri => {
-    let sid = ''; // default even if uri undefined.
+    let sid = '' // default even if uri undefined.
     if (isTruthyAndNotEmptyString(uri)) {
-      const positionStart = uri.indexOf('?sid=') + '$sid='.length;
-      const positionEnd = uri.indexOf('&flags=');
+      const positionStart = uri.indexOf('?sid=') + '$sid='.length
+      const positionEnd = uri.indexOf('&flags=')
       if (positionStart > 1 && positionEnd > positionStart) {
-        sid = uri.substring(positionStart, positionEnd);
+        sid = uri.substring(positionStart, positionEnd)
       }
     }
-    return sid;
+    return sid
   },
 
   /**  Get UpnP class. If not found provide empty string.
@@ -294,15 +305,14 @@ module.exports = {
    */
 
   getUpnpClass: metaData => {
-    let upnpClass = ''; // default
+    let upnpClass = '' // default
     if (isTruthyAndNotEmptyString(metaData)) {
-      const positionStart =
-        metaData.indexOf('<upnp:class>') + '<upnp:class>'.length;
-      const positionEnd = metaData.indexOf('</upnp:class>');
+      const positionStart = metaData.indexOf('<upnp:class>') + '<upnp:class>'.length
+      const positionEnd = metaData.indexOf('</upnp:class>')
       if (positionStart > 1 && positionEnd > positionStart) {
-        upnpClass = metaData.substring(positionStart, positionEnd);
+        upnpClass = metaData.substring(positionStart, positionEnd)
       }
     }
-    return upnpClass;
+    return upnpClass
   }
-};
+}

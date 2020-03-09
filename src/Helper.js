@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 module.exports = {
   // data to be used in other modules
@@ -19,15 +19,15 @@ module.exports = {
    * provides ipAddress or null (not found) and calls callback handling that.
    */
   discoverSonosPlayerBySerial: (node, serialNumber, callback) => {
-    const sonos = require('sonos');
+    const sonos = require('sonos')
 
-    node.debug('Start find Sonos player.');
-    let ipAddress = null;
+    node.debug('Start find Sonos player.')
+    let ipAddress = null
 
     // define discovery, find matching player and return ip
-    const searchTime = 5000; // in miliseconds
-    node.debug('Start searching for players');
-    let discovery = sonos.DeviceDiscovery({ timeout: searchTime });
+    const searchTime = 5000 // in miliseconds
+    node.debug('Start searching for players')
+    let discovery = sonos.DeviceDiscovery({ timeout: searchTime })
 
     discovery.on('DeviceAvailable', sonosPlayer => {
       // serial number is in deviceDescription serialNum
@@ -37,26 +37,21 @@ module.exports = {
         .then(data => {
           // compary serial numbers
           if (module.exports.isTruthyAndNotEmptyString(data.serialNum)) {
-            if (
-              data.serialNum.trim().toUpperCase() ===
-              serialNumber.trim().toUpperCase()
-            ) {
-              node.debug(
-                'Found sonos player based on serialnumber in device description.'
-              );
+            if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
+              node.debug('Found sonos player based on serialnumber in device description.')
               if (module.exports.isTruthyAndNotEmptyString(sonosPlayer.host)) {
                 // success
-                node.debug('Got ipaddres from device.host.');
-                ipAddress = sonosPlayer.host;
-                callback(null, ipAddress);
-                node.debug('Cleanup disovery');
+                node.debug('Got ipaddres from device.host.')
+                ipAddress = sonosPlayer.host
+                callback(null, ipAddress)
+                node.debug('Cleanup disovery')
                 if (module.exports.isTruthyAndNotEmptyString(discovery)) {
-                  discovery.destroy();
-                  discovery = null;
+                  discovery.destroy()
+                  discovery = null
                 }
               } else {
                 // failure
-                throw new Error('Found player but invalid ip address');
+                throw new Error('Found player but invalid ip address')
               }
             } else {
               // continue awaiting next players
@@ -64,26 +59,24 @@ module.exports = {
           } else {
             // failure but ignore and awaiting next player
           }
-          return true;
+          return true
         })
         .catch(error => {
-          callback(error, null);
-          node.debug('Cleanup disovery - error');
+          callback(error, null)
+          node.debug('Cleanup disovery - error')
           if (module.exports.isTruthyAndNotEmptyString(discovery)) {
-            discovery.destroy();
-            discovery = null;
+            discovery.destroy()
+            discovery = null
           }
-        });
-    });
+        })
+    })
 
     // listener 'timeout' only once
     discovery.once('timeout', () => {
-      node.debug(
-        'Received time out without finding any matching (serialnumber) sonos player'
-      );
+      node.debug('Received time out without finding any matching (serialnumber) sonos player')
       // error messages in calling function
-      callback(null, null);
-    });
+      callback(null, null)
+    })
   },
 
   /** processing of msg with failure.
@@ -94,53 +87,52 @@ module.exports = {
    * @param  {string} messageShort  short message for status
    */
   failure: (node, msg, error, functionName) => {
-    let msgShort = 'unknown'; // default text
-    let msgDetails = 'unknown'; // default text
-    node.debug(`Entering error handling from ${functionName}.`);
+    let msgShort = 'unknown' // default text
+    let msgDetails = 'unknown' // default text
+    node.debug(`Entering error handling from ${functionName}.`)
     node.debug(
-      'Complete error message>' +
-        JSON.stringify(error, Object.getOwnPropertyNames(error))
-    );
+      'Complete error message>' + JSON.stringify(error, Object.getOwnPropertyNames(error))
+    )
     // validate .code and check for ECONNREFUSED
     if (!module.exports.isTruthyAndNotEmptyString(error.code)) {
       // Caution: getOwn is neccessary for some error messages eg playmode!
       if (!module.exports.isTruthyAndNotEmptyString(error.message)) {
-        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
-        msgShort = 'sonos-node / exception';
+        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
+        msgShort = 'sonos-node / exception'
       } else {
         if (error.message.startsWith('n-r-c-s-p:')) {
           // handle my own error
-          msgDetails = 'none';
-          msgShort = error.message.replace('n-r-c-s-p: ', '');
+          msgDetails = 'none'
+          msgShort = error.message.replace('n-r-c-s-p: ', '')
         } else {
           // Caution: getOwn is neccessary for some error messages eg playmode!
-          msgShort = error.message;
-          msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
+          msgShort = error.message
+          msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
         }
       }
     } else {
       if (error.code === 'ECONNREFUSED') {
-        msgShort = 'can not connect to player - refused';
-        msgDetails = 'Validate ip address of player';
+        msgShort = 'can not connect to player - refused'
+        msgDetails = 'Validate ip address of player'
       } else if (error.code === 'EHOSTUNREACH') {
-        msgShort = 'can not connect to player- unreach';
-        msgDetails = 'Validate ip address of player / power on';
+        msgShort = 'can not connect to player- unreach'
+        msgDetails = 'Validate ip address of player / power on'
       } else if (error.code === 'ETIMEDOUT') {
-        msgShort = 'can not connect to player- time out';
-        msgDetails = 'Validate IP address of player / power on';
+        msgShort = 'can not connect to player- time out'
+        msgDetails = 'Validate IP address of player / power on'
       } else {
         // Caution: getOwn is neccessary for some error messages eg playmode!
-        msgShort = 'sonos-node / exception';
-        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        msgShort = 'sonos-node / exception'
+        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
       }
     }
 
-    node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg);
+    node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg)
     node.status({
       fill: 'red',
       shape: 'dot',
       text: `error: ${functionName} - ${msgShort}`
-    });
+    })
   },
 
   /** show warning status and warn message
@@ -150,16 +142,13 @@ module.exports = {
    * @param  {string} messageDetail  details
    */
   warning: (node, functionName, messageShort, messageDetail) => {
-    node.debug(`Entering warning handling from ${functionName}`);
-    node.warn(
-      `Just a warning: ${functionName} - ${messageShort} :: Details: ` +
-        messageDetail
-    );
+    node.debug(`Entering warning handling from ${functionName}`)
+    node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail)
     node.status({
       fill: 'blue',
       shape: 'dot',
       text: `warning: ${functionName} - ${messageShort}`
-    });
+    })
   },
 
   /** processing of msg was successful
@@ -169,9 +158,9 @@ module.exports = {
    */
 
   success: (node, msg, functionName) => {
-    node.send(msg);
-    node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` });
-    node.debug(`ok:${functionName}`);
+    node.send(msg)
+    node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
+    node.debug(`ok:${functionName}`)
   },
 
   // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
@@ -181,7 +170,7 @@ module.exports = {
   // const city = getNestedObject(user, ['personalInfo', 'addresses', 0, 'city']);
   // this will return the city from the first address item.
   getNestedObject: (nestedObj, pathArray) => {
-    return pathArray.reduce((obj, key) => obj[key], nestedObj);
+    return pathArray.reduce((obj, key) => obj[key], nestedObj)
   },
 
   /** Validates either the property or the object (if pathArray is [])
@@ -191,13 +180,13 @@ module.exports = {
    */
   isValidProperty: (nestedObj, pathArray) => {
     if (pathArray.length === 0) {
-      return module.exports.isTruthyAndNotEmptyString(nestedObj);
+      return module.exports.isTruthyAndNotEmptyString(nestedObj)
     } else {
       const property = pathArray.reduce(
         (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
         nestedObj
-      );
-      return typeof property !== 'undefined';
+      )
+      return typeof property !== 'undefined'
     }
   },
 
@@ -205,8 +194,8 @@ module.exports = {
     const property = pathArray.reduce(
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
-    );
-    return typeof property !== 'undefined' && property !== '';
+    )
+    return typeof property !== 'undefined' && property !== ''
   },
 
   isTruthy: input => {
@@ -218,7 +207,7 @@ module.exports = {
       typeof input === 'undefined' ||
       input === null ||
       (typeof input === 'number' && !Number.isFinite(input))
-    );
+    )
   },
 
   isTruthyAndNotEmptyString: input => {
@@ -231,6 +220,6 @@ module.exports = {
       input === null ||
       (typeof input === 'number' && !Number.isFinite(input)) ||
       input === ''
-    );
+    )
   }
-};
+}

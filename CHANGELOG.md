@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Now using VSCode
+- Now using VSCode, ESlint with standard style
 
 - Code standardization
 
