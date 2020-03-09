@@ -2,15 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.4] 2020-03.09
+## [2.1.4] 2020-03-09
 
 ### Changed
 
-- Now using VSCode, ESlint with standard style
+- Now using VSCode
 
-- Code standardization
+- Code standardization with ESlint option standard
 
-## [2.1.3] 2020-03.01
+- Additional dependencies
+
+## [2.1.3] 2020-03-01
 
 ### Changed
 
