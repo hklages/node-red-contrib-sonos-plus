@@ -93,7 +93,7 @@ module.exports = {
 
   getErrorMessage: (errorCode, actionName) => {
     const defaultMessage = ''
-    if (isValidProperty(errorCode, []) && errorCode !== '') {
+    if (isTruthyAndNotEmptyString(errorCode)) {
       if (isValidProperty(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
         const actionErrorList = module.exports.ERROR_CODES[actionName.toUpperCase()]
         for (let i = 0; i < actionErrorList.length; i++) {

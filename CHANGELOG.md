@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.5] 2020-03-15
+
+### Changed
+
+- Updated dependencies
+
+- small bug fixes in documentation
+
 ## [2.1.4] 2020-03-09
 
 ### Changed

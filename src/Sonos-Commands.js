@@ -1,6 +1,6 @@
 'use strict'
 
-const { isValidProperty, isTruthyAndNotEmptyString } = require('./Helper.js')
+const { isValidProperty, isTruthyAndNotEmptyString, getNestedProperty } = require('./Helper.js')
 const { encodeXml, sendToPlayerV1, parseSoapBodyV1 } = require('./Soap.js')
 
 module.exports = {
@@ -94,37 +94,36 @@ module.exports = {
     const response = await sendToPlayerV1(baseUrl, path, name, action, args)
 
     // check response - select/transform item properties
-    let bodyXml
-    if (response.statusCode === 200) {
-      // maybe not necessary as promise will throw error
-      bodyXml = await parseSoapBodyV1(response.body, '')
-    } else {
-      throw new Error(
-        'n-r-c-s-p: status code: ' +
-          response.statusCode +
-          '-- body:' +
-          JSON.stringify(response.body)
-      )
+    if (!isValidProperty(response, ['statusCode'])) {
+      throw new Error(`n-r-c-s-p: invalid status code from sendToPlayer - response >>${JSON.stringify(response)}`)
     }
+    if (response.statusCode !== 200) {
+      throw new Error(`n-r-c-s-p: status code not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
+    }
+    if (!isValidProperty(response, ['body'])) {
+      throw new Error(`n-r-c-s-p: invalid body from sendToPlayer - response >>${JSON.stringify(response)}`)
+    }
+    const bodyXml = await parseSoapBodyV1(response.body, '')
 
-    if (!isValidProperty(bodyXml, actionParameter.responsePath)) {
-      throw new Error('n-r-c-s-p: invalid response from sonos player')
+    // check response - select/transform item properties
+    const key = actionParameter.responsePath
+    if (!isValidProperty(bodyXml, key)) {
+      throw new Error(`n-r-c-s-p: invalid body from sendToPlayer - response >>${JSON.stringify(response)}`)
     }
-    const result = actionParameter.responsePath.reduce((object, path) => {
-      return object[path]
-    }, bodyXml)
+    const result = getNestedProperty(bodyXml, key)
 
     if (result !== actionParameter.responseValue) {
-      throw new Error('n-r-c-s-p: got error message from player: ' + JSON.stringify(bodyXml))
+      throw new Error(`n-r-c-s-p: unexpected response from player >>${JSON.stringify(result)}`)
     }
     return true
   },
 
-  /**  set action with new value.
+  /**  Get action with new value.
    * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
    * @param  {string} actionName the action name
-   * @param  {string} value new value (optional)
-   * @returns {promise} result from action
+   * @returns {promise} value from action
+   *
+   * PREREQ: Expectation is that the value is of type string - otherwise an error is
    */
   getCmd: async function (baseUrl, actionName) {
     // copy action parameter and update
@@ -133,28 +132,26 @@ module.exports = {
     const response = await sendToPlayerV1(baseUrl, path, name, action, args)
 
     // check response - select/transform item properties
-    let bodyXml
-    if (response.statusCode === 200) {
-      // maybe not necessary as promise will throw error
-      bodyXml = await parseSoapBodyV1(response.body, '')
-    } else {
-      throw new Error(
-        'n-r-c-s-p: status code: ' +
-          response.statusCode +
-          '-- body:' +
-          JSON.stringify(response.body)
-      )
+    if (!isValidProperty(response, ['statusCode'])) {
+      throw new Error(`n-r-c-s-p: invalid status code from sendToPlayer - response >>${JSON.stringify(response)}`)
     }
+    if (response.statusCode !== 200) {
+      throw new Error(`n-r-c-s-p: status code not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
+    }
+    if (!isValidProperty(response, ['body'])) {
+      throw new Error(`n-r-c-s-p: invalid body from sendToPlayer - response >>${JSON.stringify(response)}`)
+    }
+    const bodyXml = await parseSoapBodyV1(response.body, '')
 
     // check response - select/transform item properties
-    const paths = actionParameter.responsePath
-    const result = paths.reduce((object, element) => {
-      return (object || {})[element]
-    }, bodyXml)
-    // TODO please verify!
+    const key = actionParameter.responsePath
+    if (!isValidProperty(bodyXml, key)) {
+      throw new Error(`n-r-c-s-p: invalid body from sendToPlayer - response >>${JSON.stringify(response)}`)
+    }
+    const result = getNestedProperty(bodyXml, key)
     if (typeof result !== 'string') {
       // Caution: this check does only work for primitive values (not objects)
-      throw new Error('n-r-c-s-p: could not get value from player')
+      throw new Error('n-r-c-s-p: could not get string value from player')
     }
     return result
   },

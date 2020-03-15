@@ -156,12 +156,7 @@ module.exports = function (RED) {
     } else if (command === 'separate_stereopair') {
       separateStereoPair(node, msg, sonosPlayer)
     } else {
-      warning(
-        node,
-        sonosFunction,
-        'dispatching commands - invalid command',
-        'command-> ' + JSON.stringify(commandWithParam)
-      )
+      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(commandWithParam))
     }
   }
 
@@ -190,17 +185,15 @@ module.exports = function (RED) {
               if (Number.isInteger(newVolume)) {
                 if (newVolume > 0 && newVolume < 100) {
                   // play and change volume
-                  node.debug('msg.volume is in range 1...99: ' + newVolume)
+                  node.debug(`msg.volume is in range 1...99: ${newVolume}`)
                   return sonosPlayer.setVolume(msg.volume)
                 } else {
                   node.debug('msg.volume is not in range: ' + newVolume)
-                  throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume)
+                  throw new Error(`n-r-c-s-p: msg.volume is out of range 1...99: ${newVolume}`)
                 }
               } else {
                 node.debug('msg.volume is not number')
-                throw new Error(
-                  'n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume)
-                )
+                throw new Error(`n-r-c-s-p: msg.volume is not a number: ${JSON.stringify(msg.volume)}`)
               }
             } else {
               return true // dont touch volume
@@ -770,8 +763,7 @@ module.exports = function (RED) {
       return
     }
 
-    sonosPlayer
-      .deviceDescription()
+    sonosPlayer.deviceDescription()
       .then((response) => {
         // ensure that SONOS player has TV mode
         if (!isValidPropertyNotEmptyString(response, ['modelName'])) {

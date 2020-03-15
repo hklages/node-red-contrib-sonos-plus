@@ -91,9 +91,8 @@ module.exports = {
     let msgDetails = 'unknown' // default text
     node.debug(`Entering error handling from ${functionName}.`)
     node.debug(
-      'Complete error message>' + JSON.stringify(error, Object.getOwnPropertyNames(error))
+      `Complete error message >>${JSON.stringify(error, Object.getOwnPropertyNames(error))}`
     )
-    // validate .code and check for ECONNREFUSED
     if (!module.exports.isTruthyAndNotEmptyString(error.code)) {
       // Caution: getOwn is neccessary for some error messages eg playmode!
       if (!module.exports.isTruthyAndNotEmptyString(error.message)) {
@@ -163,33 +162,23 @@ module.exports = {
     node.debug(`ok:${functionName}`)
   },
 
-  // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
-  // pass in your object structure as array elements
-  // const name = getNestedObject(user, ['personalInfo', 'name']);
-  // to access nested array, just pass in array index as an element the path array.
-  // const city = getNestedObject(user, ['personalInfo', 'addresses', 0, 'city']);
-  // this will return the city from the first address item.
-  getNestedObject: (nestedObj, pathArray) => {
-    return pathArray.reduce((obj, key) => obj[key], nestedObj)
-  },
-
-  /** Validates either the property or the object (if pathArray is [])
+  /** Validates whether property is safely accessable - empty string allowed
    * @param  {object} nestdObj object
-   * @param  {array} path array with the property chain
+   * @param  {array} path array with the property chain- should be non empty
    * @outputs {boolean} property exists
    */
   isValidProperty: (nestedObj, pathArray) => {
-    if (pathArray.length === 0) {
-      return module.exports.isTruthyAndNotEmptyString(nestedObj)
-    } else {
-      const property = pathArray.reduce(
-        (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
-        nestedObj
-      )
-      return typeof property !== 'undefined'
-    }
+    const property = pathArray.reduce(
+      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+    return typeof property !== 'undefined'
   },
 
+  /** Validates whether property is safely accessable - empty string NOT allowed
+   * @param  {object} nestdObj object
+   * @param  {array} path array with the property chain- should be non empty
+   */
   isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
     const property = pathArray.reduce(
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
@@ -198,28 +187,39 @@ module.exports = {
     return typeof property !== 'undefined' && property !== ''
   },
 
-  isTruthy: input => {
-    // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
-    // all the following are false - same for constants.
-    //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0
-    // but these are true: let input = []; let input = {};
-    return !(
-      typeof input === 'undefined' ||
-      input === null ||
-      (typeof input === 'number' && !Number.isFinite(input))
-    )
+  // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
+  // pass in your object structure as array elements
+  // const name = getNestedProperty(user, ['personalInfo', 'name']);
+  // to access nested array, just pass in array index as an element the path array.
+  // const city = getNestedProperty(user, ['personalInfo', 'addresses', 0, 'city']);
+  // this will return the city from the first address item.
+  getNestedProperty: (nestedObj, pathArray) => {
+    return pathArray.reduce((obj, key) => obj[key], nestedObj)
   },
 
+  /** Validates whether an constant/variable is "valid" - empty string allowed allowed
+   * @param  {object} input const, variable, object
+   * @outputs {boolean} valid
+   */
+  isTruthy: input => {
+    // All the following are false - same for constants.
+    //  let input; let input = null; let input = undefined; let input = NaN; let input = 1.0 / 0; let input = -1.0 / 0
+    // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+    // but these are true: let input = []; let input = {};
+    return !(typeof input === 'undefined' || input === null ||
+      (typeof input === 'number' && !Number.isFinite(input)))
+  },
+
+  /** Validates whether an constant/variable is "valid" - empty string NOT allowed allowed
+   * @param  {object} input const, variable, object
+   * @outputs {boolean} valid
+   */
   isTruthyAndNotEmptyString: input => {
     // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
     // all the following are false - same for constants.
     //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
     // but these are true: let input = []; let input = {};
-    return !(
-      typeof input === 'undefined' ||
-      input === null ||
-      (typeof input === 'number' && !Number.isFinite(input)) ||
-      input === ''
-    )
+    return !(typeof input === 'undefined' || input === null ||
+      (typeof input === 'number' && !Number.isFinite(input)) || input === '')
   }
 }

@@ -1,6 +1,6 @@
 <!-- Sonos Manage My Sonos Node -->
 
-<!-- Registering Node -->
+<!-- Registering Node (JavaScript) -->
 <script type="text/javascript">
   /* global  RED */
   /* eslint no-undef: "error" */
@@ -26,52 +26,62 @@
   });
 </script>
 
-<!-- Setting design and inputs for node -->
+<!-- Setting design and inputs for node panel (HTML)-->
 <script type="text/x-red" data-template-name="sonos-manage-mysonos">
-
-   <div class="form-row">
-         <label for="node-input-confignode"> Config Node</label>
-         <input type="text" id="node-input-confignode"/>
-   </div>
-
-  <div class="form-row">
-         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-         <input type="text" id="node-input-name" placeholder="This Node Name"/>
-   </div>
+  <div id="main-props">
+    <div class="form-row">
+      <label for="node-input-confignode"> Config Node</label>
+      <input type="text" id="node-input-confignode"/>
+    </div>
+    <!-- Node name-->
+    <div class="form-row">
+      <label for="node-input-name">
+        <i class="fa fa-tag"></i> Name
+      </label>
+      <input type="text" id="node-input-name" placeholder="This Node Name"/>
+    </div>
+  </div>
 </script>
 
-<!-- Help Text -->
+<!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">
-  <p>Incoming message is being converted to valid command and send to SONOS player.
-    The <b>get</b> provides information about the My Sonos.</p>
+<p>Incoming message is being converted to valid command and send to SONOS player. The
+    <b>get</b> provides information about the My Sonos.
+</p>
 
-  <h3>Input (required)</h3>
+<h1>Input (required)</h3>
 
-  <dl class="message-properties">
+<dl class="message-properties">
 
-      <dt>payload (always required) <span class="property-type">string</span>  </dt>
-      <dd>A command. Valid commands see Details.</dd>
+  <dt>payload (always required) <span class="property-type">string</span></dt>
+  <dd>A command. Valid commands see Details.</dd>
 
-      <dt>topic <span class="property-type">string</span> </dt>
-      <dd>Parameter - part of the My Sonos title. CASE SENSITIVE!</dd>
+  <dt class="optional">topic <span class="property-type">string</span></dt>
+  <dd>Parameter - part of the My Sonos title. CASE SENSITIVE!</dd>
 
-  </dl>
+</dl>
 
-  <h3>Outputs</h3>
+<h1>Outputs</h3>
 
-  <dl class="message-properties">
-      <dt>payload
-          <span class="property-type">string</span>
-      </dt>
-      <dd>In case of <b>get_items</b> the array of items.</dd>
-  </dl>
+<dl class="message-properties">
+    <dt>payload <span class="property-type">string</span> </dt>
+    <dd>In case of <b>get_items</b> the array of items.</dd>
+</dl>
 
-  <h3>Details</h3>
+<h1>Details</h3> Accepted values for
 
-  Accepted values for <code>payload</code> are:
-  <ul>
-  <li><b>queue</b> queues the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive</li>
-  <li><b>stream</b> streams the found item (stream, radio). msg.topic is title search string - case sensitive</li>
-  <li><b>get_items</b> Outputs the array of all My Sonos items</li>
-  </ul>
+<code>payload</code> are:
+
+<ul>
+    <li>
+        <b>queue</b> queues the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive
+    </li>
+    <li>
+        <b>stream</b> streams the found item (stream, radio). msg.topic is title search string - case sensitive
+    </li>
+    <li>
+        <b>get_items</b> Outputs the array of all My Sonos items
+    </li>
+</ul>
+  
 </script>
