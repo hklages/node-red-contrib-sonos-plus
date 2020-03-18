@@ -12,9 +12,9 @@ const {
   success
 } = require('./Helper.js')
 
-const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd } = require('./Sonos-Commands.js')
-
+const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMembersData } = require('./Sonos-Commands.js')
 const process = require('process')
+const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
   'use strict'
@@ -79,8 +79,8 @@ module.exports = function (RED) {
    */
   function processInputMsg (node, msg, ipaddress, serialnumber) {
     const sonosFunction = 'handle input msg'
+    node.debug('msg.payload >>' + msg.payload)
 
-    const { Sonos } = require('sonos')
     const sonosPlayer = new Sonos(ipaddress)
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
       failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction)
@@ -132,6 +132,8 @@ module.exports = function (RED) {
       handleCommandGroup(node, msg, sonosPlayer, command)
     } else if (command === 'play_notification') {
       handlePlayNotification(node, msg, sonosPlayer)
+    } else if (command === 'play_noti') {
+      handlePlayNotificationRevised(node, msg, sonosPlayer)
     } else if (command.startsWith('+')) {
       commandWithParam = { cmd: 'volume_increase', parameter: command }
       handleVolumeCommand(node, msg, sonosPlayer, commandWithParam)
@@ -156,7 +158,7 @@ module.exports = function (RED) {
     } else if (command === 'separate_stereopair') {
       separateStereoPair(node, msg, sonosPlayer)
     } else {
-      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(commandWithParam))
+      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
   }
 
@@ -596,12 +598,7 @@ module.exports = function (RED) {
         } else {
           node.debug('is not in range: ' + notificationVolume)
           notificationVolume = defaultVolume
-          warning(
-            node,
-            sonosFunction,
-            'volume value out of range - set to default',
-            'value-> ' + JSON.stringify(notificationVolume)
-          )
+          warning(node, sonosFunction, 'volume value out of range - set to default', 'value-> ' + JSON.stringify(notificationVolume))
         }
       } else {
         node.debug('is not number')
@@ -616,6 +613,110 @@ module.exports = function (RED) {
       onlyWhenPlaying: false,
       volume: notificationVolume // Change the volume for the notification, and revert back afterwards.
     })
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch((error) => failure(node, msg, error, sonosFunction))
+      .finally(() => node.debug('process id- finally ' + process.pid))
+  }
+
+  /**  Play Notification featuing zones
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string}  msg.topic valid uri
+   * @param  {integer} msg.volume valid integer 1 .. 99, default is 40
+   * @param  {boolean} msg.onlyWhenPlaying  default is false
+   * @param  {boolean} msg.useCoordinator default is false
+   * @param  {boolean} msg.sameVolume default is true
+   * @param  {boolean} msg.duration default: use sonos to figure out || 6 seconds
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {object} msg unmodified / stopped in case of error
+   */
+  function handlePlayNotificationRevised (node, msg, sonosPlayer) {
+    const sonosFunction = 'play notification - new version'
+    // validate all properties and use defaults
+    if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined msg.topic', sonosFunction))
+      return
+    }
+    const options = { uri: msg.topic, volume: 40, onlyWhenPlaying: false } // defaults
+
+    if (isValidProperty(msg, ['volume'])) {
+      const tmpVolume = parseInt(msg.volume)
+      if (Number.isInteger(tmpVolume)) {
+        if (tmpVolume > 0 && tmpVolume < 100) {
+          node.debug(`msg.volume >>${tmpVolume} is in range`)
+          options.volume = tmpVolume
+        } else {
+          // still using default
+          warning(node, sonosFunction, `msg.volume >>${tmpVolume} is out of range 1 .. 99 - using default`)
+        }
+      } else {
+        // still using default
+        warning(node, sonosFunction, `msg.volume >>${tmpVolume} is not number - using default`)
+      }
+    } else {
+      // still use default as no given volume (no warning!)
+    }
+    if (isValidProperty(msg, ['onlyWhenPlaying'])) {
+      if (typeof msg.onlyWhenPlaying === 'boolean') {
+        options.onlyWhenPlaying = msg.onlyWhenPlaying
+      } else {
+        failure(node, msg, 'n-r-c-s-p: invalid msg.onlyWhenPlaying property', sonosFunction)
+        return
+      }
+    }
+
+    const control = { ignoreMute: true, sameVolume: true, automaticDuration: true, duration: 6000 } // defaults
+    if (isValidProperty(msg, ['sameVolume'])) {
+      if (typeof msg.sameVolume === 'boolean') {
+        control.sameVolume = msg.sameVolume
+      } else {
+        failure(node, msg, 'n-r-c-s-p: invalid msg.sameVolume property', sonosFunction)
+        return
+      }
+    }
+
+    if (isValidProperty(msg, ['duration'])) {
+      if (typeof msg.duration === 'string') {
+        if (!REGEX_TIME.test(msg.duration)) {
+          failure(node, msg, new Error('n-r-c-s-p: msg.duration must have format hh:mm:ss, hh < 20'), sonosFunction)
+          return
+        }
+        control.duration = msg.duration
+        control.automaticDuration = false
+      } else {
+        failure(node, msg, 'n-r-c-s-p: invalid duration property', sonosFunction)
+        return
+      }
+    }
+
+    if (isValidProperty(msg, ['useCoordinator'])) {
+      if (typeof msg.useCoordinator !== 'boolean') {
+        failure(node, msg, 'n-r-c-s-p: invalid msg.useCoordinator property', sonosFunction)
+        return
+      }
+    }
+
+    /// replacement of standard play notification
+    getGroupMembersData(sonosPlayer)
+      .then((groupData) => {
+        const members = []
+        let player = {}
+        if (msg.useCoordinator) {
+          for (let index = 0; index < groupData.length; index++) {
+            player = new Sonos(groupData[index].urlHostname)
+            members.push(player)
+          }
+        } else {
+          members.push(sonosPlayer)
+        }
+        return members
+      })
+      .then((members) => {
+        return playNotificationRevised(node, members, options, control)
+      })
       .then(() => {
         success(node, msg, sonosFunction)
         return true

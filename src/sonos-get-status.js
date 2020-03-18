@@ -12,7 +12,8 @@ const {
   success
 } = require('./Helper.js')
 
-const { ACTIONS_TEMPLATES, getCmd } = require('./Sonos-Commands.js')
+const { ACTIONS_TEMPLATES, getCmd, getGroupMembersData } = require('./Sonos-Commands.js')
+const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
   'use strict'
@@ -74,7 +75,6 @@ module.exports = function (RED) {
    */
   function processInputMsg (node, msg, ipaddress) {
     const sonosFunction = 'handle input msg'
-    const { Sonos } = require('sonos')
     const sonosPlayer = new Sonos(ipaddress)
 
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
@@ -135,6 +135,8 @@ module.exports = function (RED) {
       // depreciated commands
     } else if (command === 'get_mysonos') {
       getMySonosAll(node, msg, sonosPlayer)
+    } else if (command === 'lab') {
+      labFunction(node, msg, sonosPlayer)
     } else {
       warning(
         node,
@@ -413,7 +415,7 @@ module.exports = function (RED) {
         ) {
           // missing artist: TuneIn provides artist and title in title field
           if (typeof response.title === 'undefined' || response.title === null ||
-            (typeof response.title === 'number' && isNaN(response.title)) ||  response.title === '') {
+            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
             if (!suppressWarnings) {
               warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response))
             }
@@ -861,6 +863,18 @@ module.exports = function (RED) {
     getCmd(sonosPlayer.baseUrl, 'GetRemainingSleepTimerDuration')
       .then(result => {
         msg.payload = result === '' ? 'no time set' : result
+        success(node, msg, sonosFunction)
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Test area
+   */
+  function labFunction (node, msg, sonosPlayer) {
+    const sonosFunction = 'lab'
+    getGroupMembersData(sonosPlayer)
+      .then((members) => {
+        msg.payload = members
         success(node, msg, sonosFunction)
       })
       .catch(error => failure(node, msg, error, sonosFunction))

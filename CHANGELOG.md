@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.6] 2020-03-20
+
+### Changes
+
+- Code optimization, preparation for new play notification
+
+## [2.1.4] 2020-03-09
+
+
 ## [2.1.5] 2020-03-15
 
 ### Changed

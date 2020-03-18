@@ -11,6 +11,7 @@ const {
 } = require('./Helper.js')
 
 const { setCmd } = require('./Sonos-Commands.js')
+const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
   'use strict'
@@ -79,7 +80,6 @@ module.exports = function (RED) {
   function processInputMsg (node, msg, ipaddress) {
     const sonosFunction = 'handle input msg'
     // get sonos player
-    const { Sonos } = require('sonos')
     const sonosPlayer = new Sonos(ipaddress)
 
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
@@ -219,10 +219,8 @@ module.exports = function (RED) {
     }
 
     // validate msg.region as region - default is EU 2311. US would be 3079?
-    const Sonos = require('sonos')
     sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU)
     if (!isTruthyAndNotEmptyString(msg.region)) {
-      const Sonos = require('sonos')
       sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU)
     } else {
       const regex = /^\d{4}$/
@@ -317,7 +315,6 @@ module.exports = function (RED) {
 
     // validate msg.region - default is EU 2311. US would be 3079?
     if (!isTruthyAndNotEmptyString(msg.region)) {
-      const Sonos = require('sonos')
       sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU)
     } else {
       const regex = /^\d{4}$/

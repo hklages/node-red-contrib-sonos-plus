@@ -10,6 +10,7 @@ const {
 } = require('./Helper.js')
 
 const { getAllMySonosItems, findStringInMySonosTitle, queue } = require('./Sonos-Commands.js')
+const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
   'use strict'
@@ -87,7 +88,6 @@ module.exports = function (RED) {
    */
   function processInputMsg (node, msg, ipaddress) {
     const sonosFunction = 'handle input msg'
-    const { Sonos } = require('sonos')
     const sonosPlayer = new Sonos(ipaddress)
 
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
