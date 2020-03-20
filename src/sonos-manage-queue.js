@@ -297,7 +297,7 @@ module.exports = function (RED) {
    *        topic: part of the title name; is search string
    *        region: valid region, 4 digits EU 2311, US 3079. DEFAULT is EU
    * @param  {object} sonosPlayer Sonos Player
-   * @param  {Boolean} onlyPlaylists yes if only playlists should be searched
+   * @param  {boolean} onlyPlaylists yes if only playlists should be searched
    * @output {object} Success: msg, no modification
    *
    *   !!!   D E P R E C I A T E D  - use My Sonos

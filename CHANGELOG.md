@@ -8,9 +8,6 @@ All notable changes to this project will be documented in this file.
 
 - Code optimization, preparation for new play notification
 
-## [2.1.4] 2020-03-09
-
-
 ## [2.1.5] 2020-03-15
 
 ### Changed
@@ -134,7 +131,7 @@ All notable changes to this project will be documented in this file.
 
 - Manage Queue: remove_song got property "numberOfSongs" to specify the number of songs to be removed.
 
-## [1.0.0] 2019-11-30 Caution: last published release was 0.5.1!!
+## [1.0.0] 2019-11-30 Caution: last published release was 0.5.1
 
 ### Changed
 
@@ -206,6 +203,7 @@ All notable changes to this project will be documented in this file.
 - in control player node: removed lab_play_notification -> use play_notification
 
 ## [0.4.8] 2019-10-26
+
 ### Changed
 
 - added msg.size for insert_musiclibrary_playlist, get_musiclibrary_playlists

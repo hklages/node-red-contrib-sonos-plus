@@ -1,6 +1,6 @@
 'use strict'
 
-const { isValidProperty, isTruthyAndNotEmptyString, getNestedProperty } = require('./Helper.js')
+const { isValidProperty, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec } = require('./Helper.js')
 const { encodeXml, sendToPlayerV1, parseSoapBodyV1 } = require('./Soap.js')
 const { GenerateMetadata } = require('sonos').Helpers
 
@@ -33,21 +33,19 @@ module.exports = {
    * @param  {string}  options.metadata  metadata - will be generated if missing
    * @param  {string}  options.volume volumen during notification
    * @param  {boolean} options.onlyWhenPlaying
-   * @param  {object}  control
-   * @param  {boolean} control.sameVolume all player in group play with same volume level
-   * @param  {boolean} control.automaticDuration
-   * @param  {string}  control.duration format hh:mm:ss
+   * @param  {boolean} options.sameVolume all player in group play with same volume level
+   * @param  {boolean} options.automaticDuration
+   * @param  {string}  options.duration format hh:mm:ss
    * @returns {promise} true/false
    *
    */
-  playNotificationRevised: async function (node, members, options, control) {
-    // prepare options - volume checked before
+  playNotificationRevised: async function (node, members, options) {
+    // generate metadata if not provided
     if (!isValidProperty(options, ['metadata'])) {
       options.metadata = GenerateMetadata(options.uri).metadata
     }
 
-    // snapshot state/volume/content
-    console.log('members >>' + JSON.stringify(members))
+    // create snapshot state/volume/content
     const snapshot = {}
     const state = await members[0].getCurrentState()
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
@@ -55,70 +53,68 @@ module.exports = {
       node.debug('player was not playing and onlyWhenPlaying was true')
       return
     }
-
     snapshot.mediaInfo = await members[0].avTransportService().GetMediaInfo()
     snapshot.positionInfo = await members[0].avTransportService().GetPositionInfo()
-    snapshot.volume = await members[0].getVolume()
-    if (control.sameVolume) { // all other members, starting at 1
-      snapshot.memberVolumes = []
+    snapshot.memberVolumes = []
+    snapshot.memberVolumes[0] = await members[0].getVolume()
+    if (options.sameVolume) { // all other members, starting at 1
       let vol
       for (let index = 1; index < members.length; index++) {
-        vol = await members[index].getVolume
-        snapshot.memberVolumes.push(vol)
+        vol = await members[index].getVolume()
+        snapshot.memberVolumes[index] = vol
       }
     }
 
-    // play notification with volume
-    node.debug('Volume >>' + JSON.stringify(options.volume))
-    node.debug('uri >>' + JSON.stringify(options.uri))
-    node.debug('Metadata >>' + JSON.stringify(options.metadata))
-    await members[0].setAVTransportURI(options)
+    // play notification and set volume
+    await members[0].setAVTransportURI({
+      uri: options.uri,
+      onlyWhenPlaying: options.onlyWhenPlaying,
+      metadata: options.metadata
+    })
     await members[0].setVolume(options.volume)
-    if (control.sameVolume) { // all other members, starting at 1
+    if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < members.length; index++) {
         await members[index].setVolume(options.volume)
       }
     }
 
-    // when should we return?
-    let waitInMilliseconds = control.duration
-    if (control.automaticDuration) {
+    // waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds
+    if (options.automaticDuration) {
       const positionInfo = await members[0].avTransportService().GetPositionInfo()
       if (isValidProperty(positionInfo, ['TrackDuration'])) {
-        waitInMilliseconds = ((hms) => {
-          const [hours, minutes, seconds] = hms.split(':')
-          return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
-        })(positionInfo.TrackDuration)
+        waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration)
       }
       node.debug('milliseconds to wait >>' + waitInMilliseconds)
     } else {
-      waitInMilliseconds = ((hms) => {
-        const [hours, minutes, seconds] = hms.split(':')
-        return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
-      })(control.duration)
+      waitInMilliseconds = hhmmss2msec(options.duration)
+      console.log('duration >>' + JSON.stringify(waitInMilliseconds))
     }
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
-
+    console.log('timeout end')
     // return to previous state = restore snapshot
-    await members[0].setVolume(snapshot.volume)
-    if (control.sameVolume) { // all other members, starting at 1
+    await members[0].setVolume(snapshot.memberVolumes[0])
+    console.log('volume end')
+    if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < members.length; index++) {
+        console.log('index >>' + index)
         await members[index].setVolume(snapshot.memberVolumes[index])
       }
     }
+    console.log('set volume end')
     await members[0].setAVTransportURI({
       uri: snapshot.mediaInfo.CurrentURI,
       metadata: snapshot.mediaInfo.CurrentURIMetaData,
-      onlySetUri: true
+      onlySetUri: options.onlyWhenPlaying
     })
-
-    // TODO continue work
+    console.log('set setAVTR end')
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
       await members[0].selectTrack(snapshot.positionInfo.Track)
         .catch(reason => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
+    console.log('set selectTrack end')
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
       await members[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime }).catch(reason => {

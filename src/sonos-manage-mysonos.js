@@ -154,7 +154,7 @@ module.exports = function (RED) {
   /**  queueItem (aka add) first My Sonos item - matching search string and filter - to SONOS queue.
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   * @param  {String} msg.topic search string
+   * @param  {string} msg.topic search string
    * @param  {object} msg.filter optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
    * @param  {object} sonosPlayer Sonos Player
    * @output: {object} msg unmodified / stopped in case of error
@@ -209,7 +209,7 @@ module.exports = function (RED) {
   /** stream (aka play) first radio/stream in My Sonos streams matching search string in msg.topic
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   * @param  {String} msg.topic search string for title
+   * @param  {string} msg.topic search string for title
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} msg unmodified / stopped in case of error
    */

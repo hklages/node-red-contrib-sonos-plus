@@ -200,12 +200,13 @@ module.exports = {
   /** Validates whether an constant/variable is "valid" - empty string allowed allowed
    * @param  {object} input const, variable, object
    * @outputs {boolean} valid
+   *
+   *  All the following are false - same for constants.
+   *  let input; let input = null; let input = undefined; let input = NaN; let input = 1.0 / 0; let input = -1.0 / 0
+   *  (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+   *  but these are true: let input = []; let input = {};
    */
   isTruthy: input => {
-    // All the following are false - same for constants.
-    //  let input; let input = null; let input = undefined; let input = NaN; let input = 1.0 / 0; let input = -1.0 / 0
-    // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
-    // but these are true: let input = []; let input = {};
     return !(typeof input === 'undefined' || input === null ||
       (typeof input === 'number' && !Number.isFinite(input)))
   },
@@ -213,13 +214,23 @@ module.exports = {
   /** Validates whether an constant/variable is "valid" - empty string NOT allowed allowed
    * @param  {object} input const, variable, object
    * @outputs {boolean} valid
+   *
+   *  (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+   *  all the following are false - same for constants.
+   *  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
+   *  but these are true: let input = []; let input = {};
    */
   isTruthyAndNotEmptyString: input => {
-    // (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
-    // all the following are false - same for constants.
-    //  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
-    // but these are true: let input = []; let input = {};
     return !(typeof input === 'undefined' || input === null ||
       (typeof input === 'number' && !Number.isFinite(input)) || input === '')
+  },
+
+  /** Converts hh:mm:ss time to milliseconds
+   * @param  {string} hhmmss string in format hh:mm:ss
+   * @outputs {number} milliseconds as integer
+   */
+  hhmmss2msec: hhmmss => {
+    const [hours, minutes, seconds] = hhmmss.split(':')
+    return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
   }
 }

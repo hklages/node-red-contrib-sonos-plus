@@ -824,7 +824,7 @@ module.exports = function (RED) {
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
-   * @output {String} msg.payload On Off
+   * @output {string} msg.payload On Off
    */
   function getCrossfadeMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get crossfade mode'
@@ -840,7 +840,7 @@ module.exports = function (RED) {
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
-   * @output {String} msg.payload On Off
+   * @output {string} msg.payload On Off
    */
   function getLoudnessMode (node, msg, sonosPlayer) {
     const sonosFunction = 'get loudness mode'
@@ -856,7 +856,7 @@ module.exports = function (RED) {
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
-   * @output {String} msg.payload On Off
+   * @output {string} msg.payload On Off
    */
   function getRemainingSleepTimerDuration (node, msg, sonosPlayer) {
     const sonosFunction = 'get remainig sleep timer'
