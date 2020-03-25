@@ -39,48 +39,46 @@ module.exports = {
       '</s:Envelope>'
     ].join('')
 
-    try {
-      // try and catch to be able to modify error message
-      const response = await request({
-        method: 'post',
-        baseURL: baseUrl,
-        url: path,
-        headers: {
-          SOAPAction: messageAction,
-          'Content-type': 'text/xml; charset=utf8'
-        },
-        data: messageBody
-      })
-      return {
-        headers: response.headers,
-        body: response.data,
-        statusCode: response.status
-      }
-    } catch (error) {
-      console.log(`request failed: ${error}`)
-      // In case of an SOAP error error.reponse helds the details.
-      // That goes usually together with status code 500 - triggering catch
-      // Experience: When using reject(error) the error.reponse get lost.
-      // Thats why error.response is checked and handled here!
-      if (error.response) {
+    const response = await request({
+      method: 'post',
+      baseURL: baseUrl,
+      url: path,
+      headers: {
+        SOAPAction: messageAction,
+        'Content-type': 'text/xml; charset=utf8'
+      },
+      data: messageBody
+    })
+      .catch((error) => {
+        console.log(`request failed: ${error}`)
+        // In case of an SOAP error error.reponse helds the details.
+        // That goes usually together with status code 500 - triggering catch
+        // Experience: When using reject(error) the error.reponse get lost.
+        // Thats why error.response is checked and handled here!
+        if (error.response) {
         // Indicator for SOAP Error
-        if (error.message.startsWith('Request failed with status code 500')) {
-          const errorCode = module.exports.getErrorCode(error.response.data)
-          console.log(name)
-          const errorMessage = module.exports.getErrorMessage(errorCode, name)
-          console.log('errormessage >>' + errorMessage)
-          throw new Error(
-            'n-r-c-s-p: statusCode >>500 & upnpErrorCode >>' +
+          if (error.message.startsWith('Request failed with status code 500')) {
+            const errorCode = module.exports.getErrorCode(error.response.data)
+            console.log(name)
+            const errorMessage = module.exports.getErrorMessage(errorCode, name)
+            console.log('errormessage >>' + errorMessage)
+            throw new Error(
+              'n-r-c-s-p: statusCode >>500 & upnpErrorCode >>' +
               errorCode +
               ' upnpErrorMessage >>' +
               errorMessage
-          )
+            )
+          } else {
+            throw new Error('n-r-c-s-p: ' + error.message + '///' + error.response.data)
+          }
         } else {
-          throw new Error('n-r-c-s-p: ' + error.message + '///' + error.response.data)
+          throw error
         }
-      } else {
-        throw error
-      }
+      })
+    return {
+      headers: response.headers,
+      body: response.data,
+      statusCode: response.status
     }
   },
 

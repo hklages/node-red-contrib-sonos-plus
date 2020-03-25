@@ -49,6 +49,7 @@ module.exports = {
     const snapshot = {}
     const state = await members[0].getCurrentState()
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
+    node.debug('wasPlaying >>' + snapshot.wasPlaying)
     if (!snapshot.wasPlaying && options.onlyWhenPlaying === true) {
       node.debug('player was not playing and onlyWhenPlaying was true')
       return
@@ -85,36 +86,28 @@ module.exports = {
       if (isValidProperty(positionInfo, ['TrackDuration'])) {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration)
       }
-      node.debug('milliseconds to wait >>' + waitInMilliseconds)
     } else {
       waitInMilliseconds = hhmmss2msec(options.duration)
-      console.log('duration >>' + JSON.stringify(waitInMilliseconds))
     }
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
-    console.log('timeout end')
     // return to previous state = restore snapshot
     await members[0].setVolume(snapshot.memberVolumes[0])
-    console.log('volume end')
     if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < members.length; index++) {
-        console.log('index >>' + index)
         await members[index].setVolume(snapshot.memberVolumes[index])
       }
     }
-    console.log('set volume end')
     await members[0].setAVTransportURI({
       uri: snapshot.mediaInfo.CurrentURI,
       metadata: snapshot.mediaInfo.CurrentURIMetaData,
-      onlySetUri: options.onlyWhenPlaying
+      onlySetUri: true
     })
-    console.log('set setAVTR end')
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
       await members[0].selectTrack(snapshot.positionInfo.Track)
         .catch(reason => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
-    console.log('set selectTrack end')
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
       await members[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime }).catch(reason => {

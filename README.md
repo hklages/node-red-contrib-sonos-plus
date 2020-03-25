@@ -20,7 +20,6 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 - New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.
 
-
 ## Installation
 
 Install directly from your NodeRED's setting pallete.

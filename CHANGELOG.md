@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.6] 2020-03-25
+
+### Changes
+
+- bug fixes, preparation new play notification
+
 ## [2.1.6] 2020-03-20
 
 ### Changes
