@@ -893,11 +893,11 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /** Removes several (msg.numberOfSong) songs starting at pecified index (msg.topic) from SONOS queue.
+  /** Removes several (msg.numberOfSong) songs starting at specified index (msg.topic) from SONOS queue.
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   *        topic: index between 1 and length of queue, or first, last
-   *        numberOfSongs: number of songs being removed
+   * @param  {number} msg.topic: index between 1 and length of queue, or first, last
+   * @param  {number} msg.numberOfSongs: number of songs being removed, optional: default is
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg, no modifications!
    */
@@ -952,21 +952,24 @@ module.exports = function (RED) {
         validatedPosition = position
 
         // validate numberOfSongs
-        if (!isTruthyAndNotEmptyString(msg.numberOfSongs)) {
+        if (!isValidProperty(msg, ['numberOfSongs'])) {
           validatedNumberofSongs = 1 //  set as default
-        }
-        // Convert to integer and check
-        const numberOfSongs = parseInt(String(msg.numberOfSongs).trim())
-        if (!Number.isInteger(numberOfSongs)) {
-          throw new Error('n-r-c-s-p: numberOfSongs is not a number')
-        }
-        if (numberOfSongs < 1) {
-          throw new Error('n-r-c-s-p: numberOfSongs is out of range - less than 1')
-        }
-        if (numberOfSongs > queueSize - validatedPosition + 1) {
-          validatedNumberofSongs = queueSize - validatedPosition + 1
+          console.log('number of songs >>' + validatedNumberofSongs)
         } else {
-          validatedNumberofSongs = numberOfSongs
+          // Convert to integer and check
+          const numberOfSongs = parseInt(String(msg.numberOfSongs).trim())
+          console.log('msg.numberOfSongs >>' + msg.numberOfSongs)
+          if (!Number.isInteger(numberOfSongs)) {
+            throw new Error('n-r-c-s-p: numberOfSongs is not a number')
+          }
+          if (numberOfSongs < 1) {
+            throw new Error('n-r-c-s-p: numberOfSongs is out of range - less than 1')
+          }
+          if (numberOfSongs > queueSize - validatedPosition + 1) {
+            validatedNumberofSongs = queueSize - validatedPosition + 1
+          } else {
+            validatedNumberofSongs = numberOfSongs
+          }
         }
 
         return true
