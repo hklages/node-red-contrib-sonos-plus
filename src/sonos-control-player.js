@@ -12,7 +12,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMembersData } = require('./Sonos-Commands.js')
+const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMemberData, getTransportInfo } = require('./Sonos-Commands.js')
 const process = require('process')
 const { Sonos } = require('sonos')
 
@@ -157,6 +157,8 @@ module.exports = function (RED) {
       createStereoPair(node, msg, sonosPlayer)
     } else if (command === 'separate_stereopair') {
       separateStereoPair(node, msg, sonosPlayer)
+    } else if (command === 'lab_function') {
+      labFunction(node, msg, sonosPlayer)
     } else {
       warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
@@ -656,7 +658,7 @@ module.exports = function (RED) {
       useCoordinator: true,
       sameVolume: true,
       automaticDuration: true,
-      duration: 6000 // in case automaticDuration does not work
+      duration: '00:00:05' // in case automaticDuration does not work - 5 seconds
     }
 
     if (isValidProperty(msg, ['volume'])) {
@@ -722,7 +724,7 @@ module.exports = function (RED) {
     }
 
     /// get group data (coordinator is first) then use replacement of standard play notification
-    getGroupMembersData(sonosPlayer)
+    getGroupMemberData(sonosPlayer)
       .then((groupData) => {
         const members = []
         let player = {}
@@ -735,9 +737,11 @@ module.exports = function (RED) {
           if (sonosPlayer.host === groupData[0].urlHostname) { // current player is coordinator
             for (let index = 0; index < groupData.length; index++) {
               player = new Sonos(groupData[index].urlHostname)
+              player.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
               members.push(player)
             }
           } else {
+            player.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
             members.push(sonosPlayer)
             options.sameVolume = false // it is only one player
           }
@@ -1014,6 +1018,25 @@ module.exports = function (RED) {
         })
       })
       .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch((error) => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Lab function.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} msg.topic uuid of right hand speaker
+   * @param  {object} sonosPlayer Sonos Player
+   * @output: {object} msg unmodified / stopped in case of error
+   */
+  function labFunction (node, msg, sonosPlayer) {
+    const sonosFunction = 'lab function'
+
+    getTransportInfo(sonosPlayer)
+      .then((response) => {
+        msg.payload = response
         success(node, msg, sonosFunction)
         return true
       })

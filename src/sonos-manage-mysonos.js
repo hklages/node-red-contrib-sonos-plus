@@ -5,6 +5,7 @@ const {
   warning,
   discoverSonosPlayerBySerial,
   isValidProperty,
+  isValidPropertyNotEmptyString,
   isTruthyAndNotEmptyString,
   success
 } = require('./Helper.js')
@@ -31,12 +32,7 @@ module.exports = function (RED) {
         (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum))
       )
     ) {
-      failure(
-        node,
-        null,
-        new Error('n-r-c-s-p: invalid config node - missing ip or serial number'),
-        sonosFunction
-      )
+      failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction)
       return
     }
 
@@ -68,12 +64,7 @@ module.exports = function (RED) {
             }
           })
         } else {
-          failure(
-            node,
-            msg,
-            new Error('n-r-c-s-p: invalid config node - invalid serial'),
-            sonosFunction
-          )
+          failure(node, msg, new Error('n-r-c-s-p: invalid config node - invalid serial'), sonosFunction)
         }
       }
     })
@@ -129,7 +120,7 @@ module.exports = function (RED) {
   // Commands
   // -----------------------------------------------------
 
-  /**  outputs array of My Sonos items as object.
+  /**  Outputs array of My Sonos items as object.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
@@ -151,20 +142,20 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /**  queueItem (aka add) first My Sonos item - matching search string and filter - to SONOS queue.
+  /**  QueueItem (aka add) first My Sonos item - matching search string and filter - to SONOS queue.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {string} msg.topic search string
    * @param  {object} msg.filter optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
    * @param  {object} sonosPlayer Sonos Player
-   * @output: {object} msg unmodified / stopped in case of error
+   * @output {object} msg unmodified / stopped in case of error
    * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
    */
   function queueItem (node, msg, sonosPlayer) {
     const sonosFunction = 'queue my sonos item'
 
     // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
+    if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
       failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
       return
     }
@@ -172,14 +163,14 @@ module.exports = function (RED) {
     // create filter object with processingType queue
     const filter = { processingType: 'queue' } // no streams!
     // check existens and value of media typye/serviceName
-    if (isTruthyAndNotEmptyString(msg.filter)) {
-      if (isTruthyAndNotEmptyString(msg.filter.mediaType)) {
+    if (isValidPropertyNotEmptyString(msg, ['filter'])) {
+      if (isValidPropertyNotEmptyString(msg, ['filter', 'mediaType'])) {
         filter.mediaType = msg.filter.mediaType
       } else {
         throw new Error('n-r-c-s-p: missing media type or empty string' + JSON.stringify(msg.filter))
       }
       // check existens of service name
-      if (isTruthyAndNotEmptyString(msg.filter.serviceName)) {
+      if (isValidPropertyNotEmptyString(msg, ['filter', 'serviceName'])) {
         filter.serviceName = msg.filter.serviceName
       } else {
         throw new Error('n-r-c-s-p: missing service name or empty string. result msg.filter>>' + JSON.stringify(msg.filter)
@@ -194,6 +185,10 @@ module.exports = function (RED) {
 
     getAllMySonosItems(sonosPlayer)
       .then(items => {
+        if (items.length === 0) {
+          throw new Error('n-r-c-s-p: Could not find any My Sonos items')
+        }
+        // if not found throws error
         return findStringInMySonosTitle(items, msg.topic, filter)
       })
       .then(found => {
@@ -206,7 +201,7 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /** stream (aka play) first radio/stream in My Sonos streams matching search string in msg.topic
+  /** Stream (aka play) first radio/stream in My Sonos streams matching search string in msg.topic.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {string} msg.topic search string for title
@@ -217,7 +212,7 @@ module.exports = function (RED) {
     const sonosFunction = 'play my sonos stream'
 
     // validate msg.topic.
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
+    if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
       failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
       return
     }
@@ -230,6 +225,10 @@ module.exports = function (RED) {
 
     getAllMySonosItems(sonosPlayer)
       .then(items => {
+        if (items.length === 0) {
+          throw new Error('n-r-c-s-p: Could not find any My Sonos items')
+        }
+        // if not found throws error
         return findStringInMySonosTitle(items, msg.topic, filter)
       })
       .then(found => {
@@ -238,7 +237,7 @@ module.exports = function (RED) {
       })
       .then(() => {
         // optionally change volume
-        if (isTruthyAndNotEmptyString(msg.volume)) {
+        if (isValidPropertyNotEmptyString(msg, ['volume'])) {
           const newVolume = parseInt(msg.volume)
           if (Number.isInteger(newVolume)) {
             if (newVolume > 0 && newVolume < 100) {

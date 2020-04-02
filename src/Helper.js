@@ -229,8 +229,8 @@ module.exports = {
    * @param  {string} hhmmss string in format hh:mm:ss
    * @outputs {number} milliseconds as integer
    */
-  hhmmss2msec: hhmmss => {
-    const [hours, minutes, seconds] = hhmmss.split(':')
+  hhmmss2msec: (hhmmss) => {
+    const [hours, minutes, seconds] = (hhmmss).split(':')
     return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
   }
 }

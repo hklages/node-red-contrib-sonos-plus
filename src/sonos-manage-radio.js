@@ -109,12 +109,7 @@ module.exports = function (RED) {
     } else if (command === 'get_mysonos') {
       getMySonosStations(node, msg, sonosPlayer)
     } else {
-      warning(
-        node,
-        sonosFunction,
-        'dispatching commands - invalid command',
-        'command-> ' + JSON.stringify(command)
-      )
+      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
   }
 

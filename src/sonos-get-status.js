@@ -138,12 +138,7 @@ module.exports = function (RED) {
     } else if (command === 'lab') {
       labFunction(node, msg, sonosPlayer)
     } else {
-      warning(
-        node,
-        sonosFunction,
-        'dispatching commands - invalid command',
-        'command-> ' + JSON.stringify(command)
-      )
+      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
   }
 

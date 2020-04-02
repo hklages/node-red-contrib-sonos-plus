@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.6] 2020-03-25
+## [2.1.8] 2020-04-02
+
+### Changes
+
+- Manage queue: bug fixes: remove_song
+
+## [2.1.7] 2020-03-25
 
 ### Changes
 

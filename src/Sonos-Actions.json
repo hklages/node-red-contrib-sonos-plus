@@ -38,7 +38,7 @@
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "set the player to specific playing mode: queue (x-rincon-queue:<macaddress>0<port>#0), stream, tv, ...",
-    "status": "in work"
+    "status": ""
   },
   "Play": {
     "path": "/MediaRenderer/AVTransport/Control",
@@ -55,7 +55,7 @@
       "xmlns:u"
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
-    "info": "start playing"
+    "info": "start playing - prereq is that uri is set (either stream or queue) . Response value is boolean" 
   },
   "RemoveAllTracksFromQueue": {
     "path": "/MediaRenderer/AVTransport/Control",
@@ -318,5 +318,20 @@
     ],
     "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
     "info": "unpair stereo speakers - caution channelMapSet is only as example!!!!!!"
+  },
+  "GetTransportInfo": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "GetTransportInfo",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetTransportInfoResponse",
+      "CurrentTransportState"
+    ],
+    "info": "will return PLAYING, PAUSED_PLAYBACK, ...  CAUTION: Client in group will always return playing. Hint: <currentTransportState> and two more xml items are returnd"
   }
 }

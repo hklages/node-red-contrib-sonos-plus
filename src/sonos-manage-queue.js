@@ -6,6 +6,7 @@ const {
   warning,
   discoverSonosPlayerBySerial,
   isValidProperty,
+  isValidPropertyNotEmptyString,
   isTruthyAndNotEmptyString,
   success
 } = require('./Helper.js')
@@ -123,6 +124,11 @@ module.exports = function (RED) {
       flushQueue(node, msg, sonosPlayer)
     } else if (command === 'remove_song') {
       removeSongFromQueue(node, msg, sonosPlayer)
+        .then(() => {
+          success(node, msg, command)
+          return true
+        })
+        .catch(error => failure(node, msg, error, command))
     } else if (command === 'set_queuemode') {
       setQueuemode(node, msg, sonosPlayer)
     } else if (command === 'seek') {
@@ -148,12 +154,7 @@ module.exports = function (RED) {
       getMySonosAmazonPrimePlaylists(node, msg, sonosPlayer)
       // end of depreciated
     } else {
-      warning(
-        node,
-        sonosFunction,
-        'dispatching commands - invalid command',
-        'command-> ' + JSON.stringify(command)
-      )
+      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
   }
 
@@ -897,92 +898,75 @@ module.exports = function (RED) {
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {number} msg.topic: index between 1 and length of queue, or first, last
-   * @param  {number} msg.numberOfSongs: number of songs being removed, optional: default is
+   * @param  {number} [msg.numberOfSongs=1] number of songs being removed
    * @param  {object} sonosPlayer Sonos Player
+   * @return {promise} ok
    * @output {object} Success: msg, no modifications!
+   * @throws missing or invalid response from player (getqueue, removeTracks), missing or invalid msg.topic, invalid msg.numberOfSongs
    */
-  function removeSongFromQueue (node, msg, sonosPlayer) {
-    const sonosFunction = 'remove songs from queue'
+  async function removeSongFromQueue (node, msg, sonosPlayer) {
+    // get queue size - ensure not empty
+    const response = await sonosPlayer.getQueue()
+    if (!isTruthyAndNotEmptyString(response)) {
+      throw new Error('n-r-c-s-p: undefined getqueue response received')
+    }
+    if (response === false) {
+      // queue is empty
+      throw new Error('n-r-c-s-p: queue is empty!')
+    }
+    if (!isValidPropertyNotEmptyString(response, ['returned'])) {
+      throw new Error('n-r-c-s-p: undefined queue size received')
+    }
+    // queue not empty
+    const queueSize = parseInt(response.returned)
+    node.debug(`queue contains ${queueSize} songs`)
 
-    let validatedPosition
+    // validate message topic. Remark: at this position because we need queue size
+    if (!isValidPropertyNotEmptyString(msg, ['topic'])) { // required
+      throw new Error('n-r-c-s-p: undefined topic')
+    }
+    let position = String(msg.topic).trim()
+    if (position === 'last') {
+      position = queueSize
+    } else if (position === 'first') {
+      position = 1
+    } else {
+      if (isNaN(position)) {
+        throw new Error('n-r-c-s-p: topic is not number')
+      }
+      position = parseInt(position) // make integer
+      node.debug('queue size: ' + queueSize + ' / position: ' + position)
+      if (position < 1 || position > queueSize) {
+        throw new Error('n-r-c-s-p: topic is out of range')
+      }
+    }
+    // position is in range 1 ... queueSize
+    const validatedPosition = position
+
+    // validate numberOfSongs
     let validatedNumberofSongs
+    if (!isValidProperty(msg, ['numberOfSongs'])) { // optional with default 1
+      validatedNumberofSongs = 1
+    } else {
+      // Convert to integer and check
+      const numberOfSongs = parseInt(String(msg.numberOfSongs).trim())
+      if (!Number.isInteger(numberOfSongs)) {
+        throw new Error('n-r-c-s-p: numberOfSongs is not a number')
+      }
+      if (numberOfSongs < 1) {
+        throw new Error('n-r-c-s-p: numberOfSongs is out of range - less than 1')
+      }
+      if (numberOfSongs > queueSize - validatedPosition + 1) {
+        validatedNumberofSongs = queueSize - validatedPosition + 1
+      } else {
+        validatedNumberofSongs = numberOfSongs
+      }
+    }
 
-    sonosPlayer.getQueue()
-      .then(response => {
-        // get queue size - ensure not empty
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined getqueue response received')
-        }
-        if (response === false) {
-          // queue is empty
-          throw new Error('n-r-c-s-p: queue is empty!')
-        }
-        if (typeof response.returned === 'undefined' || response.returned === null ||
-          (typeof response.returned === 'number' && isNaN(response.returned)) ||
-          response.returned === '' || isNaN(response.returned)) {
-          throw new Error('n-r-c-s-p: undefined queue size received')
-        }
-        // queue not empty
-        node.debug(`queue contains ${parseInt(response.returned)} songs`)
-        return parseInt(response.returned) // Caution: will convert for example 1.3 to 1
-      })
-      .then(queueSize => {
-        // queueSize is integer!
-        // validate message topic. Remark: at this position because we need queue size
-        if (!isTruthyAndNotEmptyString(msg.topic)) {
-          throw new Error('n-r-c-s-p: undefined topic')
-        }
-
-        let position = String(msg.topic).trim()
-        if (position === 'last') {
-          position = queueSize
-        } else if (position === 'first') {
-          position = 1
-        } else {
-          if (isNaN(position)) {
-            throw new Error('n-r-c-s-p: topic is not number')
-          }
-          position = parseInt(position) // make integer
-          node.debug('queue size: ' + queueSize + ' / position: ' + position)
-          if (position < 1 || position > queueSize) {
-            throw new Error('n-r-c-s-p: topic is out of range')
-          }
-        }
-        // position is in range 1 ... queueSize
-        validatedPosition = position
-
-        // validate numberOfSongs
-        if (!isValidProperty(msg, ['numberOfSongs'])) {
-          validatedNumberofSongs = 1 //  set as default
-          console.log('number of songs >>' + validatedNumberofSongs)
-        } else {
-          // Convert to integer and check
-          const numberOfSongs = parseInt(String(msg.numberOfSongs).trim())
-          console.log('msg.numberOfSongs >>' + msg.numberOfSongs)
-          if (!Number.isInteger(numberOfSongs)) {
-            throw new Error('n-r-c-s-p: numberOfSongs is not a number')
-          }
-          if (numberOfSongs < 1) {
-            throw new Error('n-r-c-s-p: numberOfSongs is out of range - less than 1')
-          }
-          if (numberOfSongs > queueSize - validatedPosition + 1) {
-            validatedNumberofSongs = queueSize - validatedPosition + 1
-          } else {
-            validatedNumberofSongs = numberOfSongs
-          }
-        }
-
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.removeTracksFromQueue(validatedPosition, validatedNumberofSongs)
-      })
-      .then(response => {
-        node.debug('result: ' + JSON.stringify(response))
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
+    const playerResponse = await sonosPlayer.removeTracksFromQueue(validatedPosition, validatedNumberofSongs)
+    // returns {"NewUpdateID":"134"}  - ignore it.
+    node.debug('playerResponse >>' + JSON.stringify(playerResponse))
+    return playerResponse
   }
 
   /**  Set queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
