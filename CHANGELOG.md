@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changes
 
-- Manage queue: bug fixes: remove_song
+- All nodes: bug fixes: remove_song
 
 ## [2.1.7] 2020-03-25
 
