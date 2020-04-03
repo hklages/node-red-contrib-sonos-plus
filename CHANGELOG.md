@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.9] 2020-04-1x
+
+### Changes
+
+- All nodes: bug fixes (get_items)
+
 ## [2.1.8] 2020-04-02
 
 ### Changes

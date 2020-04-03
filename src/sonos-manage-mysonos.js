@@ -26,18 +26,17 @@ module.exports = function (RED) {
     const node = this
     const configNode = RED.nodes.getNode(config.confignode)
 
-    if (
-      !(
-        (isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) ||
-        (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum))
-      )
-    ) {
+    // check during creation of node!
+    if (!(
+      (isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) ||
+      (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)))) {
       failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction)
       return
     }
 
     // clear node status
     node.status({})
+
     // subscribe and handle input message
     node.on('input', function (msg) {
       node.debug('node - msg received')
@@ -48,7 +47,8 @@ module.exports = function (RED) {
         processInputMsg(node, msg, configNode.ipaddress)
       } else {
         // have to get ip address via disovery with serial numbers
-        warning(node, sonosFunction, 'No ip address', 'Providing ip address is recommended')
+        // this part cost time during procession and should be avoided - see warning.
+        warning(node, sonosFunction, 'no ip address', 'Providing ip address is recommended')
         if (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)) {
           discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
@@ -59,8 +59,8 @@ module.exports = function (RED) {
               failure(node, msg, new Error('n-r-c-s-p: could not find any player by serial'), sonosFunction)
             } else {
               // setting of nodestatus is done in following call handelIpuntMessage
-              node.debug('Found sonos player')
-              processInputMsg(node, msg, ipAddress, configNode.serialnum)
+              node.debug('found sonos player')
+              processInputMsg(node, msg, ipAddress)
             }
           })
         } else {
@@ -81,21 +81,20 @@ module.exports = function (RED) {
     const sonosFunction = 'handle input msg'
     const sonosPlayer = new Sonos(ipaddress)
 
+    // set baseUrl
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
       failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction)
       return
     }
-    if (
-      !isTruthyAndNotEmptyString(sonosPlayer.host) ||
-      !isTruthyAndNotEmptyString(sonosPlayer.port)
-    ) {
+    if (!isValidPropertyNotEmptyString(sonosPlayer, ['host']) ||
+      !isValidPropertyNotEmptyString(sonosPlayer, ['port'])) {
       failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction)
       return
     }
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
 
     // Check msg.payload. Store lowercase version in command
-    if (!isTruthyAndNotEmptyString(msg.payload)) {
+    if (!isValidPropertyNotEmptyString(msg, ['payload'])) {
       failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction))
       return
     }
@@ -124,15 +123,18 @@ module.exports = function (RED) {
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
+   *
    * @output {object} msg.payload  = array of my Sonos items with title, albumArt,uri, metaData, sid, upnpClass, processingType
    * uri, metadata, sid, upnpclass: empty string are allowed
+   *
+   * @throws n-r-c-s-p error in case of empty My Sonos
    */
   function getMySonos (node, msg, sonosPlayer) {
     const sonosFunction = 'get My Sonos items'
 
     getAllMySonosItems(sonosPlayer)
       .then(items => {
-        if (items.length === 0) {
+        if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
         }
         msg.payload = items
@@ -148,7 +150,11 @@ module.exports = function (RED) {
    * @param  {string} msg.topic search string
    * @param  {object} msg.filter optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
    * @param  {object} sonosPlayer Sonos Player
+   *
    * @output {object} msg unmodified / stopped in case of error
+   *
+   * @throws nothing!
+   *
    * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
    */
   function queueItem (node, msg, sonosPlayer) {
@@ -167,14 +173,15 @@ module.exports = function (RED) {
       if (isValidPropertyNotEmptyString(msg, ['filter', 'mediaType'])) {
         filter.mediaType = msg.filter.mediaType
       } else {
-        throw new Error('n-r-c-s-p: missing media type or empty string' + JSON.stringify(msg.filter))
+        failure(node, msg, new Error('n-r-c-s-p: missing media type or empty string' + JSON.stringify(msg.filter)), sonosFunction)
+        return
       }
       // check existens of service name
       if (isValidPropertyNotEmptyString(msg, ['filter', 'serviceName'])) {
         filter.serviceName = msg.filter.serviceName
       } else {
-        throw new Error('n-r-c-s-p: missing service name or empty string. result msg.filter>>' + JSON.stringify(msg.filter)
-        )
+        failure(node, msg, new Error('n-r-c-s-p: missing service name or empty string. result msg.filter>>' + JSON.stringify(msg.filter)), sonosFunction)
+        return
       }
     } else {
       // default - no filter
@@ -185,8 +192,8 @@ module.exports = function (RED) {
 
     getAllMySonosItems(sonosPlayer)
       .then(items => {
-        if (items.length === 0) {
-          throw new Error('n-r-c-s-p: Could not find any My Sonos items')
+        if (!isTruthyAndNotEmptyString(items)) {
+          throw new Error('n-r-c-s-p: could not find any My Sonos items')
         }
         // if not found throws error
         return findStringInMySonosTitle(items, msg.topic, filter)
@@ -225,8 +232,8 @@ module.exports = function (RED) {
 
     getAllMySonosItems(sonosPlayer)
       .then(items => {
-        if (items.length === 0) {
-          throw new Error('n-r-c-s-p: Could not find any My Sonos items')
+        if (!isTruthyAndNotEmptyString(items)) {
+          throw new Error('n-r-c-s-p: could not find any My Sonos items')
         }
         // if not found throws error
         return findStringInMySonosTitle(items, msg.topic, filter)
