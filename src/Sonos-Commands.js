@@ -129,9 +129,10 @@ module.exports = {
     }
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
-      await members[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime }).catch(reason => {
-        node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
-      })
+      await members[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
+        .catch(reason => {
+          node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
+        })
     }
     if (snapshot.wasPlaying) members[0].play()
   },
