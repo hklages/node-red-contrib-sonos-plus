@@ -12,7 +12,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { ACTIONS_TEMPLATES, getCmd, getGroupMembersData } = require('./Sonos-Commands.js')
+const { ACTIONS_TEMPLATES, getCmd } = require('./Sonos-Commands.js')
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
@@ -867,9 +867,9 @@ module.exports = function (RED) {
    */
   function labFunction (node, msg, sonosPlayer) {
     const sonosFunction = 'lab'
-    getGroupMembersData(sonosPlayer)
-      .then((members) => {
-        msg.payload = members
+    getCmd(sonosPlayer.baseUrl, 'GetCurrentTransportActions')
+      .then((response) => {
+        msg.payload = response
         success(node, msg, sonosFunction)
       })
       .catch(error => failure(node, msg, error, sonosFunction))

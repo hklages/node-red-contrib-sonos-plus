@@ -285,6 +285,7 @@ module.exports = {
     const result = getNestedProperty(bodyXml, key)
     if (typeof result !== 'string') {
       // Caution: this check does only work for primitive values (not objects)
+      console.log('response >>' + JSON.stringify(result))
       throw new Error('n-r-c-s-p: could not get string value from player')
     }
     return result
@@ -329,7 +330,7 @@ module.exports = {
 
   /** Get array of all sonosPlayer-data in same group. Coordinator is first in array.
    * @param  {object} sonosPlayer valid player object
-   * @return {promise} array of all players urlHostname, urlPort, uuid, name in that group. First member is coordinator
+   * @return {promise} array of all players in that group:  urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
    *
    * @prereq sonosPlayer is validated.
    *
@@ -368,9 +369,10 @@ module.exports = {
     // create array of members with data {urlHostname: "192.168.178.1", urlPort: 1400, sonosName: "Küche", uudi: RINCON_xxxxxxx}. Coordinator is first!
     const members = []
     const coordinatorHostname = allGroupsData[playerGroupIndex].host
-    members.push({
+    members.push({ // coordinator name will be updated later!
       urlHostname: coordinatorHostname,
       urlPort: allGroupsData[playerGroupIndex].port,
+      baseUrl: `http://${coordinatorHostname}:${allGroupsData[playerGroupIndex].port}`,
       uuid: allGroupsData[playerGroupIndex].Coordinator
     }) // push coordinator
     let memberUrl
@@ -392,7 +394,75 @@ module.exports = {
     return members
   },
 
-  /** find searchString in My Sonos items, property title
+  /** Get array of all SONOS player data in same group as player, given by playerName. Coordinator is first in array.
+   * @param  {object} sonosPlayer valid player object
+   * @param  {string} playerName valid player name
+   * @return {promise} array of all players in that group: urlHostname, urlPort, uuid, sonosName. First member is coordinator
+   *
+   * @prereq sonosPlayer is validated.
+   *
+   * @throws exception: getAllGroups returns invalid value
+   *         player name not found in any group
+   */
+  getGroupMemberDataByName: async function (sonosPlayer, playerName) {
+    const allGroupsData = await sonosPlayer.getAllGroups()
+
+    if (!isTruthyAndNotEmptyString(allGroupsData)) {
+      throw new Error('n-r-c-s-p: undefined all groups data received')
+    }
+
+    // find our players group in groups output
+    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
+    // ZoneGroupMembers is an array of all members with properties ip address and more
+    let playerGroupIndex = -1 // indicator for no player found
+    let name
+    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+        // extact hostname (eg 192.168.178.1) from Locaton field
+        name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
+        if (name.localeCompare(playerName)) {
+          playerGroupIndex = groupIndex
+          break
+        }
+      }
+      if (playerGroupIndex >= 0) {
+        break
+      }
+    }
+    if (playerGroupIndex === -1) {
+      throw new Error('n-r-c-s-p: could not find given player in any group')
+    }
+
+    // create array of members with data {urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
+    //                                    sonosName: "Küche", uuid: RINCON_xxxxxxx}. Coordinator is first!
+    const members = []
+    const coordinatorHostname = allGroupsData[playerGroupIndex].host
+    members.push({ // sonosName will be updated later!
+      urlHostname: coordinatorHostname,
+      urlPort: allGroupsData[playerGroupIndex].port,
+      baseUrl: `http://${coordinatorHostname}:${allGroupsData[playerGroupIndex].port}`,
+      uuid: allGroupsData[playerGroupIndex].Coordinator
+    }) // push coordinator
+    let memberUrl
+    for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
+      memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
+      if (memberUrl.hostname !== coordinatorHostname) {
+        members.push({
+          urlHostname: memberUrl.hostname,
+          urlPort: memberUrl.port,
+          baseUrl: `http://${sonosPlayer.host}:${sonosPlayer.port}`,
+          sonosName: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName,
+          uuid: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
+        })
+      } else {
+        // update coordinator on positon 0 with name
+        members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
+      }
+    }
+    return members
+  },
+
+  /** Find searchString in My Sonos items, property title.
    * @param  {Array} items array of objects with property title, ...
    * @param  {string} searchString search string for title property
    * @param  {object} filter filter to reduce returned item playlist
@@ -430,6 +500,29 @@ module.exports = {
           title: items[i].title,
           uri: items[i].uri,
           metaData: items[i].metaData
+        }
+      }
+    }
+    // not found
+    throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic')
+  },
+
+  /** Find searchString in My Sonos items, property title - without filter.
+   * @param  {Array} items array of objects with property title, ...
+   * @param  {string} searchString search string for title property
+   * @return {promise} object {title, uri, metaData}
+   *
+   * @throws error if string not found
+   */
+
+  findStringInMySonosTitleV1: async function (items, searchString) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].title.includes(searchString)) {
+        return {
+          title: items[i].title,
+          uri: items[i].uri,
+          metaData: items[i].metaData,
+          queue: (items[i].processingType === 'queue')
         }
       }
     }

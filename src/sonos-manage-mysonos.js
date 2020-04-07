@@ -10,7 +10,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getAllMySonosItems, findStringInMySonosTitle, queue } = require('./Sonos-Commands.js')
+const { getAllMySonosItems, findStringInMySonosTitle, findStringInMySonosTitleV1, queue } = require('./Sonos-Commands.js')
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
@@ -110,6 +110,8 @@ module.exports = function (RED) {
       queueItem(node, msg, sonosPlayer)
     } else if (command === 'stream') {
       stream(node, msg, sonosPlayer)
+    } else if (command === 'get_item') {
+      getItem(node, msg, sonosPlayer)
     } else {
       warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
@@ -264,6 +266,47 @@ module.exports = function (RED) {
         }
       })
       .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Get first My Sonos item - matching search string and outputs results
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} msg.topic search string
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @output {object} msg.payload
+   * @output {string} msg.payload.uri
+   * @output {string} msg.payload.metadata
+   * @output {boolea} msg.payload.queue
+   *
+   * @throws nothing!
+   *
+   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
+   */
+  function getItem (node, msg, sonosPlayer) {
+    const sonosFunction = 'get my sonos'
+
+    // validate msg.topic
+    if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+
+    getAllMySonosItems(sonosPlayer)
+      .then(items => {
+        if (!isTruthyAndNotEmptyString(items)) {
+          throw new Error('n-r-c-s-p: could not find any My Sonos items')
+        }
+        // if not found throws error
+        return findStringInMySonosTitleV1(items, msg.topic)
+      })
+      .then(found => {
+        console.log('found >>' + JSON.stringify(found))
+        msg.payload = { uri: found.uri, metadata: found.metaData, queue: found.queue }
         success(node, msg, sonosFunction)
         return true
       })

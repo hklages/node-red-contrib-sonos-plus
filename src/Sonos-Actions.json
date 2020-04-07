@@ -333,5 +333,34 @@
       "CurrentTransportState"
     ],
     "info": "will return PLAYING, PAUSED_PLAYBACK, ...  CAUTION: Client in group will always return playing. Hint: <currentTransportState> and two more xml items are returnd"
+  },
+  "GetTransportSettings": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "GetTransportSettings",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetTransportSettingsResponse"
+    ],
+    "info": "retunrs RecQualityMode and PlayMode "
+  },
+  "GetCurrentTransportActions": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "GetCurrentTransportActions",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetCurrentTransportActionsResponse",
+      "Actions"
+    ],
+  "info": "returns the current actions: Set, Stop, Pause, Play, X_DLNA_SeekTime, Next, X_DLNA_SeekTrackNr"
   }
 }
