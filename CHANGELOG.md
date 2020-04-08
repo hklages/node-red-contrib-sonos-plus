@@ -2,11 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.9] 2020-04-1x
+## [2.1.9] 2020-04-08
 
 ### Changes
 
 - All nodes: bug fixes (get_items)
+
+- Ctrl Player: bug fix set EQ
+
+- New node-sonos 1.13.0 including bug fixes for error messages and Spotify
 
 ## [2.1.8] 2020-04-02
 

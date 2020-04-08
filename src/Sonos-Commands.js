@@ -7,6 +7,7 @@ const { GenerateMetadata } = require('sonos').Helpers
 module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
+  PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
   ACTIONS_TEMPLATES: require('./Sonos-Actions.json'),
   SERVICES: require('./Sonos-Services.json'),
 

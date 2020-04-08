@@ -10,6 +10,8 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 ## NEWS
 
+- Bug fixing and node-sonos 1.13.0 (includes some Spotify bug fixes)
+
 - CAUTION: In node "Control Player" msg.payload is not anymore set to "true". msg is unmodified as everywhere else.
 
 - CAUTION: In node "Control Player" play, stop, pause, toggleplayback, next_song, previous_song will now throw error message when send to "client" in a group.
