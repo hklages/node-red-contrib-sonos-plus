@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 
 - Ctrl Player: bug fix set EQ
 
+- Manage Queue: bug fix insert_spotify
+
 - New node-sonos 1.13.0 including bug fixes for error messages and Spotify
 
 ## [2.1.8] 2020-04-02

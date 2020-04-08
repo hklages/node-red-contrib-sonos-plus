@@ -220,9 +220,8 @@ module.exports = function (RED) {
     }
 
     // validate msg.region as region - default is EU 2311. US would be 3079?
-    sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU)
     if (!isTruthyAndNotEmptyString(msg.region)) {
-      sonosPlayer.setSpotifyRegion(Sonos.SpotifyRegion.EU)
+      sonosPlayer.setSpotifyRegion('2311')
     } else {
       const regex = /^\d{4}$/
       if (msg.region.match(regex)) {
