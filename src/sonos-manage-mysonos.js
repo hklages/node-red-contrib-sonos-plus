@@ -134,7 +134,7 @@ module.exports = function (RED) {
   function getMySonos (node, msg, sonosPlayer) {
     const sonosFunction = 'get My Sonos items'
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -192,7 +192,7 @@ module.exports = function (RED) {
     }
     node.debug('filter value >>>' + JSON.stringify(filter))
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -232,7 +232,7 @@ module.exports = function (RED) {
       serviceName: 'all'
     } // only streams
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -296,7 +296,7 @@ module.exports = function (RED) {
       return
     }
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -305,7 +305,6 @@ module.exports = function (RED) {
         return findStringInMySonosTitleV1(items, msg.topic)
       })
       .then(found => {
-        console.log('found >>' + JSON.stringify(found))
         msg.payload = { uri: found.uri, metadata: found.metaData, queue: found.queue }
         success(node, msg, sonosFunction)
         return true

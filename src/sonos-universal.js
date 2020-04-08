@@ -10,7 +10,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getGroupMemberData, getGroupMemberDataByName, queue } = require('./Sonos-Commands.js')
+const { getGroupMemberDataV1, queue } = require('./Sonos-Commands.js')
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
@@ -68,37 +68,39 @@ module.exports = function (RED) {
     node.on('input', function (msg) {
       // TODO check wheter handling node status should be done here .then .catch
       node.debug('node - msg received')
+      const command = msg.payload
       processInputMsg(node, msg, configNode.ipaddress)
+        // TODO maybe here (additional info)
+        .then((msgUpdate) => {
+          Object.assign(msg, msgUpdate)
+          success(node, msg, command)
+        })
+        .catch(error => failure(node, msg, error, command))
     })
   }
 
   // ------------------------------------------------------------------------------------
 
-  /**  Validate sonos player and input message then dispatch further.
+  /**  Validate sonos player and msg.payload then dispatch further.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {string} ipaddress IP address of sonos player
    */
-  function processInputMsg (node, msg, ipaddress) {
-    const sonosFunction = 'handle input msg'
-
+  async function processInputMsg (node, msg, ipaddress) {
     const sonosPlayer = new Sonos(ipaddress)
     // set baseUrl
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined sonos player'), sonosFunction)
-      return
+      throw new Error('n-r-c-s-p: undefined sonos player')
     }
     if (!isValidPropertyNotEmptyString(sonosPlayer, ['host']) ||
       !isValidPropertyNotEmptyString(sonosPlayer, ['port'])) {
-      failure(node, msg, new Error('n-r-c-s-p: missing ip or port'), sonosFunction)
-      return
+      throw new Error('n-r-c-s-p: missing ip or port')
     }
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
 
     // Check msg.payload. Store lowercase version in command
     if (!isValidPropertyNotEmptyString(msg, ['payload'])) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined payload', sonosFunction))
-      return
+      throw new Error('n-r-c-s-p: undefined payload')
     }
 
     // dispatch (dont add msg.topic because may not exist and is not checked)
@@ -106,12 +108,12 @@ module.exports = function (RED) {
     command = command.toLowerCase()
 
     // dispatch
-    if (command === 'setplay_group') {
-      setPlayGroup(node, msg, sonosPlayer)
-        .then(() => success(node, msg, command))
-        .catch(error => failure(node, msg, error, command))
+    if (command === 'playmysonos_group') {
+      return setPlayGroup(msg, sonosPlayer)
+    } else if (command === 'getstatus_group') {
+      return getGroupStatus(msg, sonosPlayer)
     } else {
-      warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
+      warning(node, 'handle input msg', 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
   }
 
@@ -120,7 +122,6 @@ module.exports = function (RED) {
   // -----------------------------------------------------
 
   /**  Set uri and play in a group - works for stream and queue.
-   * @param  {object}  node current node
    * @param  {object}  msg incoming message
    * @param  {string}  msg.content content to be played
    * @param  {string}  msg.content.uri uri to be played
@@ -142,7 +143,7 @@ module.exports = function (RED) {
    * if content.uri / queue is missing
    *
    */
-  async function setPlayGroup (node, msg, sonosPlayer) {
+  async function setPlayGroup (msg, sonosPlayer) {
     // validate msg.playerName.
     let usePlayerName = false // default -only if specified
     if (isValidProperty(msg, ['playerName'])) {
@@ -152,15 +153,9 @@ module.exports = function (RED) {
         usePlayerName = true
       }
     }
-
-    let members
-    // TODO getGroupMember vereinen mit optionalem Parameter playerName!
     // TODO provide return value handling for every await
-    if (usePlayerName) {
-      members = await getGroupMemberDataByName(sonosPlayer, msg.playerName)
-    } else {
-      members = await getGroupMemberData(sonosPlayer)
-    }
+    const playerName = (usePlayerName ? msg.playerName : '')
+    const members = await getGroupMemberDataV1(sonosPlayer, playerName)
 
     // set newVolume, -1 means dont touch current volume - throw errors
     let newVolume = -1
@@ -202,7 +197,7 @@ module.exports = function (RED) {
     const coordinator = new Sonos(members[0].urlHostname)
     coordinator.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
     if (msg.content.queue) {
-      await queue(coordinator, msg.content.uri, msg.content.metadata)
+      await queue(coordinator.baseUrl, msg.content.uri, msg.content.metadata)
       await coordinator.selectQueue()
     } else {
       await coordinator.setAVTransportURI(msg.content.uri)
@@ -237,6 +232,33 @@ module.exports = function (RED) {
         }
       }
     }
+    return {} // means untouched msg
+  }
+
+  /**  Get group status: playing, ... thats the same as the status of the coordinator
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos Player - as default and anchor player
+   *
+   * @output msg.payload is set to status
+   *
+   * @throws if playerName exist and is (not string or empty string)
+   */
+  async function getGroupStatus (msg, sonosPlayer) {
+    let usePlayerName
+    if (isValidProperty(msg, ['playerName'])) {
+      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
+        throw new Error('n-r-c-s-p: invalid playerName,  must be string and not empty')
+      } else {
+        usePlayerName = true
+      }
+    }
+    // TODO provide return value handling for every await
+    const playerName = (usePlayerName ? msg.playerName : '')
+    const members = await getGroupMemberDataV1(sonosPlayer, playerName)
+    const coordinator = new Sonos(members[0].urlHostname)
+    const status = await coordinator.getCurrentState()
+    return { payload: status }
   }
 
   RED.nodes.registerType('sonos-universal', SonosUniversalNode)

@@ -12,7 +12,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMemberData, getTransportInfo } = require('./Sonos-Commands.js')
+const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMemberDataV1, getTransportInfo } = require('./Sonos-Commands.js')
 const process = require('process')
 const { Sonos } = require('sonos')
 
@@ -724,7 +724,7 @@ module.exports = function (RED) {
     }
 
     /// get group data (coordinator is first) then use replacement of standard play notification
-    getGroupMemberData(sonosPlayer)
+    getGroupMemberDataV1(sonosPlayer, '')
       .then((groupData) => {
         const members = []
         let player = {}
@@ -1028,13 +1028,13 @@ module.exports = function (RED) {
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {string} msg.topic uuid of right hand speaker
-   * @param  {object} sonosPlayer Sonos Player
+   * @param  {object} sonosPlayerPlus Sonos Player with extension baseUrl
    * @output: {object} msg unmodified / stopped in case of error
    */
-  function labFunction (node, msg, sonosPlayer) {
+  function labFunction (node, msg, sonosPlayerPlus) {
     const sonosFunction = 'lab function'
 
-    getTransportInfo(sonosPlayer)
+    getTransportInfo(sonosPlayerPlus.baseUrl)
       .then((response) => {
         msg.payload = response
         success(node, msg, sonosFunction)

@@ -50,7 +50,6 @@ module.exports = {
       data: messageBody
     })
       .catch((error) => {
-        console.log(`request failed: ${error}`)
         // In case of an SOAP error error.reponse helds the details.
         // That goes usually together with status code 500 - triggering catch
         // Experience: When using reject(error) the error.reponse get lost.
@@ -59,9 +58,7 @@ module.exports = {
         // Indicator for SOAP Error
           if (error.message.startsWith('Request failed with status code 500')) {
             const errorCode = module.exports.getErrorCode(error.response.data)
-            console.log(name)
             const errorMessage = module.exports.getErrorMessage(errorCode, name)
-            console.log('errormessage >>' + errorMessage)
             throw new Error(
               'n-r-c-s-p: statusCode >>500 & upnpErrorCode >>' +
               errorCode +
