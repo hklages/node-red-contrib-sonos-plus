@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.10] 2020-04-09
+
+### Changes
+
+- My Sonos: bug fix insert_spotify
+
 ## [2.1.9] 2020-04-08
 
 ### Changes
