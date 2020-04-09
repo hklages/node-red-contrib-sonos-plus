@@ -242,6 +242,7 @@ module.exports = function (RED) {
       })
       .then(found => {
         // TODO switch to set...  current Metadata not used!
+        // this does setting the uri AND plays it!
         return sonosPlayer.setAVTransportURI(found.uri)
       })
       .then(() => {
