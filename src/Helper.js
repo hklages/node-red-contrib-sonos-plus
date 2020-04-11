@@ -9,6 +9,7 @@ module.exports = {
   REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
   REGEX_RADIO_ID: /^[s][0-9]+$/,
+  REGEX_2DIGITS: /^\d{1,2}$/,
 
   // functions to be used in other modules
 

@@ -10,7 +10,7 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 ## NEWS
 
-- Newe "Universal" node
+- New "Universal" node to play notification in a group, more will come.
 
 - CAUTION: In node "Control Player" msg.payload is not anymore set to "true". msg is unmodified as everywhere else.
 

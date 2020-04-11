@@ -31,8 +31,8 @@ module.exports = {
 
   /**  Revised default sonos api playNotification function
    * @param  {object}  node current node
-   * @param  {array}   members array of sonos players with baseUrl, coordinator/selected player has index 0
-   *                            members.length = 1 in case independent or client
+   * @param  {array}   membersAsPlayersPlus array of sonos players with baseUrl, coordinator/selected player has index 0
+   *                   members.length = 1 in case independent
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
    * @param  {string}  options.metadata  metadata - will be generated if missing
@@ -43,11 +43,14 @@ module.exports = {
    * @param  {string}  options.duration format hh:mm:ss
    * @returns {promise} true/false
    *
+   *
+   *    DEPRECIATED -
+   *
    */
 
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
   // TODO maybe part better in Node file not commands
-  playNotificationRevised: async function (node, members, options) {
+  playNotificationRevised: async function (node, membersAsPlayerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
     // generate metadata if not provided
@@ -62,38 +65,37 @@ module.exports = {
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
     const snapshot = {}
-    const state = await members[0].getCurrentState()
+    const state = await membersAsPlayerPlus[0].getCurrentState()
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     node.debug('wasPlaying >>' + snapshot.wasPlaying)
     if (!snapshot.wasPlaying && options.onlyWhenPlaying === true) {
       node.debug('player was not playing and onlyWhenPlaying was true')
       return
     }
-    snapshot.mediaInfo = await members[0].avTransportService().GetMediaInfo()
-    snapshot.positionInfo = await members[0].avTransportService().GetPositionInfo()
+    snapshot.mediaInfo = await membersAsPlayerPlus[0].avTransportService().GetMediaInfo()
+    snapshot.positionInfo = await membersAsPlayerPlus[0].avTransportService().GetPositionInfo()
     snapshot.memberVolumes = []
-    snapshot.memberVolumes[0] = await members[0].getVolume()
+    snapshot.memberVolumes[0] = await membersAsPlayerPlus[0].getVolume()
     if (options.sameVolume) { // all other members, starting at 1
       let vol
-      for (let index = 1; index < members.length; index++) {
-        vol = await members[index].getVolume()
+      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+        vol = await membersAsPlayerPlus[index].getVolume()
         snapshot.memberVolumes[index] = vol
       }
     }
     node.debug('Snapshot created - now start playing notification')
-
-    let response = await module.exports.setAVTransportURI(members[0].baseUrl, options.uri, metadata)
+    let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[0].baseUrl, options.uri, metadata)
     if (!response) {
       throw new Error('n-r-c-s-p: setAVTransportURI response is false')
     }
-    response = await module.exports.play(members[0])
+    response = await module.exports.play(membersAsPlayerPlus[0].baseUrl)
     if (!response) {
       throw new Error('n-r-c-s-p: play response is false')
     }
-    await members[0].setVolume(options.volume)
+    await membersAsPlayerPlus[0].setVolume(options.volume)
     if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < members.length; index++) {
-        await members[index].setVolume(options.volume)
+      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+        await membersAsPlayerPlus[index].setVolume(options.volume)
       }
     }
     node.debug('Playing notification started - now figuring out the end')
@@ -101,7 +103,7 @@ module.exports = {
     // waiting either based on SONOS estimation, per default or user specified
     let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
-      const positionInfo = await members[0].avTransportService().GetPositionInfo()
+      const positionInfo = await membersAsPlayerPlus[0].avTransportService().GetPositionInfo()
       if (isValidProperty(positionInfo, ['TrackDuration'])) {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         node.debug('Did retrieve duration from SONOS player')
@@ -114,31 +116,308 @@ module.exports = {
     node.debug('notification finished - now starting to restore')
 
     // return to previous state = restore snapshot
-    await members[0].setVolume(snapshot.memberVolumes[0])
+    await membersAsPlayerPlus[0].setVolume(snapshot.memberVolumes[0])
     if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < members.length; index++) {
-        await members[index].setVolume(snapshot.memberVolumes[index])
+      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+        await membersAsPlayerPlus[index].setVolume(snapshot.memberVolumes[index])
       }
     }
-    await members[0].setAVTransportURI({ // using node-sonos
+    await membersAsPlayerPlus[0].setAVTransportURI({ // using node-sonos
       uri: snapshot.mediaInfo.CurrentURI,
       metadata: snapshot.mediaInfo.CurrentURIMetaData,
       onlySetUri: true
     })
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
-      await members[0].selectTrack(snapshot.positionInfo.Track)
+      await membersAsPlayerPlus[0].selectTrack(snapshot.positionInfo.Track)
         .catch(reason => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
-      await members[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
+      await membersAsPlayerPlus[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
         .catch(reason => {
           node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
         })
     }
-    if (snapshot.wasPlaying) members[0].play()
+    if (snapshot.wasPlaying) membersAsPlayerPlus[0].play()
+  },
+
+  /**  Play notification on a group using coordinator. Coordinator is index 0
+   * @param  {object}  node current node - for debugging
+   * @param  {array}   membersAsPlayersPlus array of sonos players with baseUrl,
+   *                   coordinator has index 0
+   *                   length = 1 is allowed if independend.
+   * @param  {object}  options options
+   * @param  {string}  options.uri  uri
+   * @param  {string}  [options.metadata]  metadata - will be generated if missing
+   * @param  {string}  options.volume volumen during notification - if -1 dont use, range 1 .. 99
+   * @param  {boolean} options.sameVolume all player in group play at same volume level
+   * @param  {boolean} options.automaticDuration duration will be received from player
+   * @param  {string}  options.duration format hh:mm:ss
+   * @returns {promise} true
+   *
+   * @throws if invalid response from setAVTransportURI, play,
+   */
+
+  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  playGroupNotification: async function (node, membersAsPlayerPlus, options) {
+    const WAIT_ADJUSTMENT = 2000
+
+    // generate metadata if not provided
+    let metadata
+    if (!isValidProperty(options, ['metadata'])) {
+      metadata = GenerateMetadata(options.uri).metadata
+    } else {
+      metadata = options.metadata
+    }
+    node.debug('metadata >>' + JSON.stringify(metadata))
+
+    // create snapshot state/volume/content
+    // getCurrentState will return playing for a non-coordinator player even if group is playing
+    const coordinatorIndex = 0
+    const snapshot = {}
+    const state = await membersAsPlayerPlus[coordinatorIndex].getCurrentState()
+    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
+    node.debug('wasPlaying >>' + snapshot.wasPlaying)
+    snapshot.mediaInfo = await membersAsPlayerPlus[coordinatorIndex].avTransportService().GetMediaInfo()
+    snapshot.positionInfo = await membersAsPlayerPlus[0].avTransportService().GetPositionInfo()
+    snapshot.memberVolumes = []
+    if (options.volume !== -1) {
+      snapshot.memberVolumes[0] = await membersAsPlayerPlus[coordinatorIndex].getVolume()
+    }
+    if (options.sameVolume) { // all other members, starting at 1
+      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+        snapshot.memberVolumes[index] = await membersAsPlayerPlus[index].getVolume()
+      }
+    }
+    node.debug('Snapshot created - now start playing notification')
+
+    let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[coordinatorIndex].baseUrl, options.uri, metadata)
+    if (!response) {
+      throw new Error('n-r-c-s-p: setAVTransportURI response is false')
+    }
+    response = await module.exports.play(membersAsPlayerPlus[coordinatorIndex].baseUrl)
+    if (!response) {
+      throw new Error('n-r-c-s-p: play response is false')
+    }
+    await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
+    node.debug(options.sameVolume)
+    if (options.sameVolume) { // all other members, starting at 1
+      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+        await membersAsPlayerPlus[index].setVolume(options.volume)
+      }
+    }
+    node.debug('Playing notification started - now figuring out the end')
+
+    // waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds = hhmmss2msec(options.duration)
+    if (options.automaticDuration) {
+      const positionInfo = await membersAsPlayerPlus[coordinatorIndex].avTransportService().GetPositionInfo()
+      if (isValidProperty(positionInfo, ['TrackDuration'])) {
+        waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
+        node.debug('Did retrieve duration from SONOS player')
+      } else {
+        node.debug('Could NOT retrieve duration from SONOS player - using default/specified lenght')
+      }
+    }
+    node.debug('duration >>' + JSON.stringify(waitInMilliseconds))
+    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
+    node.debug('notification finished - now starting to restore')
+
+    // return to previous state = restore snapshot
+    if (options.volume !== -1) {
+      await membersAsPlayerPlus[coordinatorIndex].setVolume(snapshot.memberVolumes[coordinatorIndex])
+    }
+    if (options.sameVolume) { // all other members, starting at 1
+      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+        await membersAsPlayerPlus[index].setVolume(snapshot.memberVolumes[index])
+      }
+    }
+    await membersAsPlayerPlus[coordinatorIndex].setAVTransportURI({
+      uri: snapshot.mediaInfo.CurrentURI,
+      metadata: snapshot.mediaInfo.CurrentURIMetaData,
+      onlySetUri: true // means dont play
+    })
+    if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
+      await membersAsPlayerPlus[coordinatorIndex].selectTrack(snapshot.positionInfo.Track)
+        .catch(reason => {
+          node.debug('Reverting back track failed, happens for some music services.')
+        })
+    }
+    if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
+      node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
+      await membersAsPlayerPlus[coordinatorIndex].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
+        .catch(reason => {
+          node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
+        })
+    }
+    if (snapshot.wasPlaying) {
+      await membersAsPlayerPlus[coordinatorIndex].play()
+    }
+  },
+
+  /**  Play notification on a single joiner - a player in a group not beeing coordinator.
+   * @param  {object}  node current node - for debugging
+   * @param  {array}   membersAsPlayersPlus array of sonos players with baseUrl,
+   *                   coordinator has index 0
+   *                   length = 1 is allowed if independend.
+   * @param  {number}  joinerIndex index of joiner in the array above
+   * @param  {object}  options options
+   * @param  {string}  options.uri  uri
+   * @param  {string}  [options.metadata]  metadata - will be generated if missing
+   * @param  {string}  options.volume volumen during notification - if -1 dont use
+   * @param  {boolean} options.automaticDuration
+   * @param  {string}  options.duration format hh:mm:ss
+   * @returns {promise} true
+   *
+   * @throws if invalid response from setAVTransportURI, play
+   *
+   * Hint: joiner will leave group, play notification and rejoin the group. State will be imported from group.
+   */
+
+  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  playJoinerNotification: async function (node, membersAsPlayerPlus, joinerIndex, options) {
+    const WAIT_ADJUSTMENT = 2000
+
+    // generate metadata if not provided
+    let metadata
+    if (!isValidProperty(options, ['metadata'])) {
+      metadata = GenerateMetadata(options.uri).metadata
+    } else {
+      metadata = options.metadata
+    }
+    node.debug('metadata >>' + JSON.stringify(metadata))
+
+    // create snapshot state/volume/content
+    // getCurrentState will return playing for a non-coordinator player even if group is playing
+    const snapshot = {}
+    const coordinatorIndex = 0
+    snapshot.mediaInfo = await membersAsPlayerPlus[coordinatorIndex].avTransportService().GetMediaInfo()
+    snapshot.positionInfo = await membersAsPlayerPlus[coordinatorIndex].avTransportService().GetPositionInfo()
+    if (options.volume !== -1) {
+      snapshot.joinerVolume = await membersAsPlayerPlus[joinerIndex].getVolume()
+    }
+    node.debug('Snapshot created - now start playing notification')
+
+    // set the joiner to notification - joiner will leave group!
+    let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[joinerIndex].baseUrl, options.uri, metadata)
+    if (!response) {
+      throw new Error('n-r-c-s-p: setAVTransportURI response is false')
+    }
+    response = await module.exports.play(membersAsPlayerPlus[joinerIndex].baseUrl)
+    if (!response) {
+      throw new Error('n-r-c-s-p: play response is false')
+    }
+    if (options.volume !== -1) {
+      await membersAsPlayerPlus[joinerIndex].setVolume(options.volume)
+    }
+    node.debug('Playing notification started - now figuring out the end')
+
+    // waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds = hhmmss2msec(options.duration)
+    if (options.automaticDuration) {
+      const positionInfo = await membersAsPlayerPlus[joinerIndex].avTransportService().GetPositionInfo()
+      if (isValidProperty(positionInfo, ['TrackDuration'])) {
+        waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
+        node.debug('Did retrieve duration from SONOS player')
+      } else {
+        node.debug('Could NOT retrieve duration from SONOS player - using default/specified lenght')
+      }
+    }
+    node.debug('duration >>' + JSON.stringify(waitInMilliseconds))
+    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[coordinatorIndex]](waitInMilliseconds)
+    node.debug('notification finished - now starting to restore')
+
+    // return to previous state = restore snapshot
+    if (options.volume !== -1) {
+      await membersAsPlayerPlus[joinerIndex].setVolume(snapshot.joinerVolume)
+    }
+    await membersAsPlayerPlus[joinerIndex].setAVTransportURI({
+      uri: snapshot.mediaInfo.CurrentURI,
+      metadata: snapshot.mediaInfo.CurrentURIMetaData,
+      onlySetUri: true // means dont play
+    })
+  },
+
+  /**  Creates snapshot of group.
+   * @param  {object}  node current node - for debugging
+   * @param  {array}   membersAsPlayers array of sonos players, coordinator/selected player has index 0
+   *                   members.length = 1 in case independent
+   * @param  {boolea}  allVolumes shall all volumes being captured
+   * @returns {promise} group snapshot object: state, mediaInfo, positionInfo, memberVolumes
+   *
+   * @throws if invalid response from SONOS player
+   *
+  */
+
+  // TODO next release with group identifier to ensure that group is not mixed up
+  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO await error handling
+  creategroup_snapshot: async function (node, membersAsPlayer, allVolumes) {
+    // create snapshot state/volume/content
+    // getCurrentState will return playing for a non-coordinator player even if group is playing
+    const coordinatorIndex = 0
+    const snapshot = {}
+    snapshot.players = membersAsPlayer
+    snapshot.allVolumes = allVolumes
+    snapshot.state = await membersAsPlayer[coordinatorIndex].getCurrentState()
+    snapshot.mediaInfo = await membersAsPlayer[coordinatorIndex].avTransportService().GetMediaInfo()
+    snapshot.positionInfo = await membersAsPlayer[coordinatorIndex].avTransportService().GetPositionInfo()
+    snapshot.memberVolumes = []
+    snapshot.memberVolumes[coordinatorIndex] = await membersAsPlayer[coordinatorIndex].getVolume()
+    if (allVolumes) { // all other members, starting at 1
+      let vol
+      for (let index = 1; index < membersAsPlayer.length; index++) {
+        vol = await membersAsPlayer[index].getVolume()
+        snapshot.memberVolumes[index] = vol
+      }
+    }
+    return snapshot
+  },
+
+  /**  Restore snapshot of group.
+   * @param  {object}  node current node - for debugging
+   * @param  {object}  snapshot
+   * @returns {promise} true
+   *
+   * @throws if invalid response from SONOS player
+   *
+  */
+
+  // TODO work in progress!!!!!!
+
+  // TODO next release with group identifier to ensure that group is not mixed up
+  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO await error handling
+  restoregroup_snapshot: async function (node, snapshot) {
+    const coordinatorIndex = 0
+    await snapshot.players[coordinatorIndex].setVolume(snapshot.memberVolumes[coordinatorIndex])
+    if (snapshot.sameVolume) { // all other members, starting at 1
+      for (let index = 1; index < snapshot.players.length; index++) {
+        await snapshot.players[index].setVolume(snapshot.memberVolumes[index])
+      }
+    }
+    await snapshot.players[coordinatorIndex].setAVTransportURI({ // using node-sonos
+      uri: snapshot.mediaInfo.CurrentURI,
+      metadata: snapshot.mediaInfo.CurrentURIMetaData,
+      onlySetUri: true
+    })
+    if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
+      await snapshot.players[coordinatorIndex].selectTrack(snapshot.positionInfo.Track)
+        .catch(reason => {
+          node.debug('Reverting back track failed, happens for some music services.')
+        })
+    }
+    if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
+      node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
+      await snapshot.players[coordinatorIndex].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
+        .catch(reason => {
+          node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
+        })
+    }
+    if (snapshot.wasPlaying) snapshot.players[coordinatorIndex].play()
+    return true
   },
 
   /** Get ip address for a given player name.
@@ -170,76 +449,13 @@ module.exports = {
     throw new Error('n-r-c-s-p: could not find given player name in any group')
   },
 
-  // TODO has to be removed
-  /** Get array of all sonosPlayer-data in same group. Coordinator is first in array.
-   * @param  {object} sonosPlayer valid player object
-   * @return {promise} array of all players in that group:  urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
-   *
-   * @throws if getAllGroups returns invalid value
-   */
-  // getGroupMemberData: async function (sonosPlayer) {
-  //   const allGroupsData = await sonosPlayer.getAllGroups()
-  //   if (!isTruthyAndNotEmptyString(allGroupsData)) {
-  //     throw new Error('n-r-c-s-p: undefined all groups data received')
-  //   }
-
-  //   // find our players group in groups output
-  //   // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, coordinater (uuid)
-  //   // ZoneGroupMembers is an array of all members with properties ip address and more
-  //   let playerGroupIndex = -1 // indicator for no player found
-  //   let playerUrl
-  //   for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
-  //     for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
-  //       // extact hostname (eg 192.168.178.1) from Locaton field
-  //       playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-  //       if (playerUrl.hostname === sonosPlayer.host) {
-  //         playerGroupIndex = groupIndex
-  //         break
-  //       }
-  //     }
-  //     if (playerGroupIndex >= 0) {
-  //       break
-  //     }
-  //   }
-  //   if (playerGroupIndex === -1) {
-  //     throw new Error('n-r-c-s-p: could not find given player in any group')
-  //   }
-
-  //   // create array of members with data {urlHostname: "192.168.178.1", urlPort: 1400, sonosName: "Küche", uudi: RINCON_xxxxxxx}. Coordinator is first!
-  //   const members = []
-  //   const coordinatorHostname = allGroupsData[playerGroupIndex].host
-  //   members.push({ // coordinator name will be updated later!
-  //     urlHostname: coordinatorHostname,
-  //     urlPort: allGroupsData[playerGroupIndex].port,
-  //     baseUrl: `http://${coordinatorHostname}:${allGroupsData[playerGroupIndex].port}`,
-  //     uuid: allGroupsData[playerGroupIndex].Coordinator
-  //   }) // push coordinator
-  //   let memberUrl
-  //   for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
-  //     memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
-  //     if (memberUrl.hostname !== coordinatorHostname) {
-  //       members.push({
-  //         urlHostname: memberUrl.hostname,
-  //         urlPort: memberUrl.port,
-  //         baseUrl: `http://${sonosPlayer.host}:${sonosPlayer.port}`,
-  //         sonosName: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName,
-  //         uuid: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
-  //       })
-  //     } else {
-  //       // update coordinator on positon 0 with name
-  //       members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
-  //     }
-  //   }
-  //   return members
-  // },
-
   /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
    * @param  {object} sonosPlayer valid player object
    * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
    * @return {promise} array of all players in that group: urlHostname, urlPort, uuid, sonosName. First member is coordinator
    *
-   * @throws exception: getAllGroups returns invalid value
-   *         player name not found in any group
+   * @throws if getAllGroups returns invalid value
+   *         if player name not found in any group
    */
   getGroupMemberDataV1: async function (sonosPlayer, playerName) {
     const searchByName = isTruthyAndNotEmptyString(playerName)
@@ -259,7 +475,7 @@ module.exports = {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         if (searchByName) {
           name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
-          if (name.localeCompare(playerName)) {
+          if (name === playerName) {
             playerGroupIndex = groupIndex
             break
           }
@@ -307,6 +523,82 @@ module.exports = {
       }
     }
     return members
+  },
+
+  /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
+   * @param  {object} sonosPlayer valid player object
+   * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
+   * @return {promise} Object: { playerIndex, members[] }  members[]: urlHostname, urlPort, uuid, sonosName. First member is coordinator
+   *
+   * @throws if getAllGroups returns invalid value
+   *         if player name not found in any group
+   */
+  getGroupMemberDataV2: async function (sonosPlayer, playerName) {
+    const searchByName = isTruthyAndNotEmptyString(playerName)
+
+    const allGroupsData = await sonosPlayer.getAllGroups()
+    if (!isTruthyAndNotEmptyString(allGroupsData)) {
+      throw new Error('n-r-c-s-p: undefined all groups data received')
+    }
+
+    // find our players group in groups output
+    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
+    // ZoneGroupMembers is an array of all members with properties ip address and more
+    let playerGroupIndex = -1 // indicator for no player found
+    let name
+    let playerUrl
+    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+        if (searchByName) {
+          name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
+          if (name === playerName) {
+            playerGroupIndex = groupIndex
+            break
+          }
+        } else {
+          // extact hostname (eg 192.168.178.1) from Locaton field
+          playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+          if (playerUrl.hostname === sonosPlayer.host) {
+            playerGroupIndex = groupIndex
+            break
+          }
+        }
+      }
+      if (playerGroupIndex >= 0) {
+        break
+      }
+    }
+    if (playerGroupIndex === -1) {
+      throw new Error('n-r-c-s-p: could not find given player in any group')
+    }
+
+    // create array of members with data {urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
+    //                                    sonosName: "Küche", uuid: RINCON_xxxxxxx}. Coordinator is first!
+    const members = []
+    const coordinatorHostname = allGroupsData[playerGroupIndex].host
+    members.push({ // sonosName will be updated later!
+      urlHostname: coordinatorHostname,
+      urlPort: allGroupsData[playerGroupIndex].port,
+      baseUrl: `http://${coordinatorHostname}:${allGroupsData[playerGroupIndex].port}`,
+      uuid: allGroupsData[playerGroupIndex].Coordinator
+    }) // push coordinator
+    let memberUrl
+    for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
+      memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
+      if (memberUrl.hostname !== coordinatorHostname) {
+        members.push({
+          urlHostname: memberUrl.hostname,
+          urlPort: memberUrl.port,
+          baseUrl: `http://${sonosPlayer.host}:${sonosPlayer.port}`,
+          sonosName: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName,
+          uuid: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
+        })
+      } else {
+        // update coordinator on positon 0 with name
+        members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
+      }
+    }
+    return { playerIndex: playerGroupIndex, members: members }
   },
 
   /**  Get array of all My Sonos items as object: title, albumArt, uri, metadata, sid, upnpClass and processingType
