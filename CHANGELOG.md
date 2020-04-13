@@ -2,15 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.0.0] 2020-04-12
+## [3.0.0] 2020-04-14
 
 ### Added
 
-- New Universal node
+- New Universal node: usage of player names, easier group handling, different kinds of notification
 
-### Changes
+- New My Sonos command: get.item
 
-- All nodes: bug fixes (get_items)
+### Changed
+
+- play_noti uses same procedure now as play.notification
+
 
 ## [2.1.10] 2020-04-09
 

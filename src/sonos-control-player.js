@@ -12,7 +12,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMemberDataV1, getTransportInfo } = require('./Sonos-Commands.js')
+const { ACTIONS_TEMPLATES, PLAYER_WITH_TV, setCmd, playNotificationRevised, getGroupMemberDataV2, getTransportInfo } = require('./Sonos-Commands.js')
 const process = require('process')
 const { Sonos } = require('sonos')
 
@@ -724,19 +724,19 @@ module.exports = function (RED) {
     }
 
     /// get group data (coordinator is first) then use replacement of standard play notification
-    getGroupMemberDataV1(sonosPlayer, '')
+    getGroupMemberDataV2(sonosPlayer, '')
       .then((groupData) => {
         const members = []
         let player = {}
         if (msg.useCoordinator) {
-          for (let index = 0; index < groupData.length; index++) {
-            player = new Sonos(groupData[index].urlHostname)
+          for (let index = 0; index < groupData.members.length; index++) {
+            player = new Sonos(groupData.members[index].urlHostname)
             members.push(player)
           }
         } else {
-          if (sonosPlayer.host === groupData[0].urlHostname) { // current player is coordinator
-            for (let index = 0; index < groupData.length; index++) {
-              player = new Sonos(groupData[index].urlHostname)
+          if (sonosPlayer.host === groupData.members[0].urlHostname) { // current player is coordinator
+            for (let index = 0; index < groupData.members.length; index++) {
+              player = new Sonos(groupData.members[index].urlHostname)
               player.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
               members.push(player)
             }
@@ -746,7 +746,7 @@ module.exports = function (RED) {
             options.sameVolume = false // it is only one player
           }
         }
-        options.sameVolume = (options.sameVolume && groupData.length > 1) // only multiple player can have same volume
+        options.sameVolume = (options.sameVolume && groupData.members.length > 1) // only multiple player can have same volume
         return members
       })
       .then((members) => {

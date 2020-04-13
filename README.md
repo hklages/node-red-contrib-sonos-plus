@@ -10,15 +10,7 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 ## NEWS
 
-- New "Universal" node to play notification in a group, more will come.
-
-- CAUTION: In node "Control Player" msg.payload is not anymore set to "true". msg is unmodified as everywhere else.
-
-- CAUTION: In node "Control Player" play, stop, pause, toggleplayback, next_song, previous_song will now throw error message when send to "client" in a group.
-
-- Added in Control Player node: create_stereopair, separate_stereopair (needs a special flow to extract uiid)
-
-- CAUTION: In node "Get Status" msg.role is now "coordinator" in stead of "master
+- New "Universal" node allows usage of Sonos playernames (room names) and makes group handling much easier.
 
 - New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.
 

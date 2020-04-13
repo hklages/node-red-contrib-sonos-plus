@@ -452,82 +452,6 @@ module.exports = {
   /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
    * @param  {object} sonosPlayer valid player object
    * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
-   * @return {promise} array of all players in that group: urlHostname, urlPort, uuid, sonosName. First member is coordinator
-   *
-   * @throws if getAllGroups returns invalid value
-   *         if player name not found in any group
-   */
-  getGroupMemberDataV1: async function (sonosPlayer, playerName) {
-    const searchByName = isTruthyAndNotEmptyString(playerName)
-
-    const allGroupsData = await sonosPlayer.getAllGroups()
-    if (!isTruthyAndNotEmptyString(allGroupsData)) {
-      throw new Error('n-r-c-s-p: undefined all groups data received')
-    }
-
-    // find our players group in groups output
-    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
-    // ZoneGroupMembers is an array of all members with properties ip address and more
-    let playerGroupIndex = -1 // indicator for no player found
-    let name
-    let playerUrl
-    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
-      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
-        if (searchByName) {
-          name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
-          if (name === playerName) {
-            playerGroupIndex = groupIndex
-            break
-          }
-        } else {
-          // extact hostname (eg 192.168.178.1) from Locaton field
-          playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-          if (playerUrl.hostname === sonosPlayer.host) {
-            playerGroupIndex = groupIndex
-            break
-          }
-        }
-      }
-      if (playerGroupIndex >= 0) {
-        break
-      }
-    }
-    if (playerGroupIndex === -1) {
-      throw new Error('n-r-c-s-p: could not find given player in any group')
-    }
-
-    // create array of members with data {urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
-    //                                    sonosName: "Küche", uuid: RINCON_xxxxxxx}. Coordinator is first!
-    const members = []
-    const coordinatorHostname = allGroupsData[playerGroupIndex].host
-    members.push({ // sonosName will be updated later!
-      urlHostname: coordinatorHostname,
-      urlPort: allGroupsData[playerGroupIndex].port,
-      baseUrl: `http://${coordinatorHostname}:${allGroupsData[playerGroupIndex].port}`,
-      uuid: allGroupsData[playerGroupIndex].Coordinator
-    }) // push coordinator
-    let memberUrl
-    for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
-      memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
-      if (memberUrl.hostname !== coordinatorHostname) {
-        members.push({
-          urlHostname: memberUrl.hostname,
-          urlPort: memberUrl.port,
-          baseUrl: `http://${sonosPlayer.host}:${sonosPlayer.port}`,
-          sonosName: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName,
-          uuid: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
-        })
-      } else {
-        // update coordinator on positon 0 with name
-        members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
-      }
-    }
-    return members
-  },
-
-  /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
-   * @param  {object} sonosPlayer valid player object
-   * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
    * @return {promise} Object: { playerIndex, members[] }  members[]: urlHostname, urlPort, uuid, sonosName. First member is coordinator
    *
    * @throws if getAllGroups returns invalid value
@@ -535,7 +459,7 @@ module.exports = {
    */
   getGroupMemberDataV2: async function (sonosPlayer, playerName) {
     const searchByName = isTruthyAndNotEmptyString(playerName)
-
+    console.log('searchbyName >>' + searchByName)
     const allGroupsData = await sonosPlayer.getAllGroups()
     if (!isTruthyAndNotEmptyString(allGroupsData)) {
       throw new Error('n-r-c-s-p: undefined all groups data received')
@@ -545,6 +469,7 @@ module.exports = {
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let playerGroupIndex = -1 // indicator for no player found
+    let playerIndex
     let name
     let playerUrl
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
@@ -553,6 +478,7 @@ module.exports = {
           name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
           if (name === playerName) {
             playerGroupIndex = groupIndex
+            playerIndex = memberIndex
             break
           }
         } else {
@@ -560,6 +486,7 @@ module.exports = {
           playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
           if (playerUrl.hostname === sonosPlayer.host) {
             playerGroupIndex = groupIndex
+            playerIndex = memberIndex
             break
           }
         }
@@ -598,7 +525,7 @@ module.exports = {
         members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
       }
     }
-    return { playerIndex: playerGroupIndex, members: members }
+    return { playerIndex: playerIndex, members: members }
   },
 
   /**  Get array of all My Sonos items as object: title, albumArt, uri, metadata, sid, upnpClass and processingType
