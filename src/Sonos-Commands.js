@@ -259,25 +259,23 @@ module.exports = {
 
   /**  Play notification on a single joiner - a player in a group not beeing coordinator.
    * @param  {object}  node current node - for debugging
-   * @param  {array}   membersAsPlayersPlus array of sonos players with baseUrl,
-   *                   coordinator has index 0
-   *                   length = 1 is allowed if independend.
-   * @param  {number}  joinerIndex index of joiner in the array above
+   * @param  {object}  coordinatorPlus coordinator in group
+   * @param  {object}  joinerPlus jointer in group
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
    * @param  {string}  [options.metadata]  metadata - will be generated if missing
-   * @param  {string}  options.volume volumen during notification - if -1 dont use
+   * @param  {string}  options.volume volumen during notification. - 1 means dont touch. integer 1 .. 99
    * @param  {boolean} options.automaticDuration
    * @param  {string}  options.duration format hh:mm:ss
    * @returns {promise} true
    *
-   * @throws if invalid response from setAVTransportURI, play
+   * @throws all from setAVTransportURI(), avTransportService()*, play, setVolume
    *
    * Hint: joiner will leave group, play notification and rejoin the group. State will be imported from group.
    */
 
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
-  playJoinerNotification: async function (node, membersAsPlayerPlus, joinerIndex, options) {
+  playJoinerNotification: async function (node, coordinatorPlus, joinerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
     // generate metadata if not provided
@@ -293,31 +291,31 @@ module.exports = {
     // getCurrentState will return playing for a non-coordinator player even if group is playing
     const snapshot = {}
     const coordinatorIndex = 0
-    snapshot.mediaInfo = await membersAsPlayerPlus[coordinatorIndex].avTransportService().GetMediaInfo()
-    snapshot.positionInfo = await membersAsPlayerPlus[coordinatorIndex].avTransportService().GetPositionInfo()
+    snapshot.mediaInfo = await coordinatorPlus.avTransportService().GetMediaInfo()
+    snapshot.positionInfo = await coordinatorPlus.avTransportService().GetPositionInfo()
     if (options.volume !== -1) {
-      snapshot.joinerVolume = await membersAsPlayerPlus[joinerIndex].getVolume()
+      snapshot.joinerVolume = await joinerPlus.getVolume()
     }
     node.debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[joinerIndex].baseUrl, options.uri, metadata)
+    let response = await module.exports.setAVTransportURI(joinerPlus.baseUrl, options.uri, metadata)
     if (!response) {
       throw new Error('n-r-c-s-p: setAVTransportURI response is false')
     }
-    response = await module.exports.play(membersAsPlayerPlus[joinerIndex].baseUrl)
+    response = await module.exports.play(joinerPlus.baseUrl)
     if (!response) {
       throw new Error('n-r-c-s-p: play response is false')
     }
     if (options.volume !== -1) {
-      await membersAsPlayerPlus[joinerIndex].setVolume(options.volume)
+      await joinerPlus.setVolume(options.volume)
     }
     node.debug('Playing notification started - now figuring out the end')
 
     // waiting either based on SONOS estimation, per default or user specified
     let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
-      const positionInfo = await membersAsPlayerPlus[joinerIndex].avTransportService().GetPositionInfo()
+      const positionInfo = await joinerPlus.avTransportService().GetPositionInfo()
       if (isValidProperty(positionInfo, ['TrackDuration'])) {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         node.debug('Did retrieve duration from SONOS player')
@@ -331,9 +329,9 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await membersAsPlayerPlus[joinerIndex].setVolume(snapshot.joinerVolume)
+      await joinerPlus.setVolume(snapshot.joinerVolume)
     }
-    await membersAsPlayerPlus[joinerIndex].setAVTransportURI({
+    await joinerPlus.setAVTransportURI({
       uri: snapshot.mediaInfo.CurrentURI,
       metadata: snapshot.mediaInfo.CurrentURIMetaData,
       onlySetUri: true // means dont play
@@ -566,7 +564,7 @@ module.exports = {
   // ========================================================================
   //
   //             BASIC COMMAND
-  //             They change only the argumens and use standard services
+  //             They change only the arguments and use standard services
   //
   // ========================================================================
 

@@ -50,8 +50,8 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-universal">
-<p>Incoming message controls the whole <b>GROUP</b>! Only if explicitly specified (leading joiner, player) the message controls the specified player.
-The group is identified by the default player (given in the node by configuration node) and can be overwritten with 
+<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly specified (command prefix: joiner, player) the message acts on the specified player.
+The group is identified by the default player (configuration node) and can be overwritten with 
 property playerName. The playerName is the name of the player (aka room, zone) and NOT the name of a configuration node!<br>  
 
 Joiner is the "opposite" of coordinator. A group always consist of a unique coordinator and optional joiners.<br>
@@ -66,20 +66,23 @@ All messages do not change the msg except those with <b>get</b>.
   <dt>payload (always required) <span class="property-type">string</span></dt>
   <dd>A command. Valid commands see Details.</dd>
 
-  <dt class="optional">topic (only some commands)<span class="property-type">string</span></dt>
+  <dt class="optional">topic (some commands)<span class="property-type">string</span></dt>
   <dd>Parameter</dd>
 
   <dt class="optional">playerName <span class="property-type">string</span></dt>
   <dd>SONOS Player name aka room name aka zone. If missing, the one given in configuration is used. </dd>
 
-  <dt class="optional">volume (only some commands) <span class="property-type">string/number</span></dt>
+  <dt class="optional">volume (some commands) <span class="property-type">string/number</span></dt>
   <dd>volume </dd>
 
-  <dt class="optional">sameVolume (only some commands) <span class="property-type">boolean</span></dt>
+  <dt class="optional">sameVolume (some commands) <span class="property-type">boolean</span></dt>
   <dd>all player in group will play at the specified volume </dd>
 
-  <dt class="optional">duration (only notification) <span class="property-type">string</span></dt>
+  <dt class="optional">duration (only play.notification, joiner.play.notification) <span class="property-type">string</span></dt>
   <dd>the duration of the notification - if left, program will try to calculate the best duration </dd>
+
+  <dt>export (only play.export) <span class="property-type">object</span></dt>
+  <dd>The uri, metadata and queue identifier of the content to be played.</dd>
 
 </dl>
 
@@ -100,9 +103,9 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName, volume, sameVolume. 
   </li>
   <li>
-    <code>play.mysonos</code> Starts playing an item from My Sonos in the group. The content can be obtained from the My Sonos node, command get_item.<br>
-    Required property: content<br>
-    Optional properties are: playerName, volume, sameVolume. 
+    <code>play.export</code> Starts playing content (eg an item from My Sonos, command get.item) in the group. <br>
+    Required property: export.uri, export.queue<br>
+    Optional properties are: playerName, volume, sameVolume, export.metadata
   </li>
   <li>
     <code>play.queue</code> Starts playing the SONOS queue. Queue must not be empty<br>
@@ -115,7 +118,7 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   </li>
   <li>
     <code>play.notification</code> Sends a notification to a group. If volume is specified, all will play at the specified volume.<br>
-    Required property topic: notification ur<br>
+    Required property topic: notification uri<br>
     Optional properties are: playerName, volume, sameVolume, duration.     
   </li>
   <li>

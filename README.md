@@ -10,9 +10,9 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 ## NEWS
 
-- New "Universal" node allows usage of Sonos playernames (room names) and makes group handling much easier.
+- New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.
+- "My Sonos" node: new command export.item works together with Universal node command play.export
 
 ## Installation
 
@@ -20,7 +20,8 @@ Install directly from your NodeRED's setting pallete.
 
 ## Major Functions
 
-- SONOS Player: Simply select the SONOS player in ConfigNode by search button (recommendation: enter IP address, processing is faster)
+- SONOS Player: Simply select the SONOS player in ConfigNode by search button.
+- Universal node: SONOS player names can now be used. Commands now work in group mode by default. 
 - Queue playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
 - Stream stations from Amazon, Napster, TuneIn, Radioplayer, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id

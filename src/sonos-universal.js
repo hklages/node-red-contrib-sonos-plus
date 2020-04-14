@@ -12,7 +12,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getGroupMemberDataV2, playGroupNotification, playJointerNotification, queue } = require('./Sonos-Commands.js')
+const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, queue } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -71,8 +71,6 @@ module.exports = function (RED) {
     })
   }
 
-  // ------------------------------------------------------------------------------------
-
   /**  Validate sonos player and msg.payload then dispatch further.
    * @param  {object} node current node
    * @param  {object} msg incoming message
@@ -104,8 +102,8 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'play') {
       return groupPlay(node, msg, sonosPlayer)
-    } else if (command === 'play.mysonos') {
-      return groupPlayMySonos(node, msg, sonosPlayer)
+    } else if (command === 'play.export') {
+      return groupPlayExport(node, msg, sonosPlayer)
     } else if (command === 'play.queue') {
       return groupPlayQueue(node, msg, sonosPlayer)
     } else if (command === 'play.tunein') {
@@ -135,9 +133,11 @@ module.exports = function (RED) {
     }
   }
 
-  // -----------------------------------------------------
-  // Commands
-  // -----------------------------------------------------
+  // ========================================================================
+  //
+  //             COMMANDS
+  //
+  // ========================================================================
 
   /**  Play already set content on given group of players. Optional set volume, use playerName.
    * @param  {object}  node only used for debug and warning
@@ -275,13 +275,13 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Set uri and play a given My Sonos item on a gvien group of players - works for stream and queue.
+  /**  Set uri and play a given content (uri/metadata) on a gvien group of players - works for stream and queue.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.content content to be played
-   * @param  {string}  msg.content.uri uri to be played
-   * @param  {boolea}  msg.content.queue indicator has to be queued
-   * @param  {string}  [msg.content.metadata] metadata in case of queue = true
+   * @param  {string}  msg.export content to be played
+   * @param  {string}  msg.export.uri uri to be played
+   * @param  {boolea}  msg.export.queue indicator has to be queued
+   * @param  {string}  [msg.export.metadata] metadata in case of queue = true
    * @param  {number}  [msg.volume] volume - if missing do not touch volume
    * @param  {number}  [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -291,14 +291,14 @@ module.exports = function (RED) {
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
-   *          if msg.content.uri / msg.content.queue is missing
+   *          if msg.export.uri / msg.export.queue is missing
    */
-  async function groupPlayMySonos (node, msg, sonosPlayer) {
-    // simple validation of content and activation
-    if (!isValidPropertyNotEmptyString(msg, ['content', 'queue'])) {
+  async function groupPlayExport (node, msg, sonosPlayer) {
+    // simple validation of export and activation
+    if (!isValidPropertyNotEmptyString(msg, ['export', 'queue'])) {
       throw new Error(`${PKG} queue identifier is missing`)
     }
-    if (!isValidPropertyNotEmptyString(msg, ['content', 'uri'])) {
+    if (!isValidPropertyNotEmptyString(msg, ['export', 'uri'])) {
       throw new Error(`${PKG} uri is missing`)
     }
 
@@ -311,11 +311,11 @@ module.exports = function (RED) {
 
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     coordinator.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
-    if (msg.content.queue) {
-      await queue(coordinator.baseUrl, msg.content.uri, msg.content.metadata)
+    if (msg.export.queue) {
+      await queue(coordinator.baseUrl, msg.export.uri, msg.export.metadata)
       await coordinator.selectQueue()
     } else {
-      await coordinator.setAVTransportURI(msg.content.uri)
+      await coordinator.setAVTransportURI(msg.export.uri)
     }
     if (validated.volume !== -1) {
       let player
@@ -363,7 +363,12 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PKG)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
-    // msg.sameVolume is being ignored!
+    // verify that player is joiner and not a coordinator
+    if (groupData.playerIndex === 0) {
+      throw new Error(`${PKG} player is not a joiner`)
+    }
+
+    // msg.sameVolume is not used (only one player!)
     const options = { // set defaults
       uri: msg.topic,
       volume: validated.volume, // means dont touch
@@ -383,19 +388,13 @@ module.exports = function (RED) {
       options.automaticDuration = false
     }
 
-    // verify that player is joiner and not a coordinator and get ip
-    if (groupData.playerIndex === 0) {
-      throw new Error(`${PKG} player is not a joiner`)
-    }
-    const membersPlayerPlus = []
-    let sonosPlayerCreated = {}
-    for (let index = 0; index < groupData.members.length; index++) {
-      sonosPlayerCreated = new Sonos(groupData.members[index].urlHostname)
-      sonosPlayerCreated.baseUrl = groupData.members[index].baseUrl
-      membersPlayerPlus.push(sonosPlayerCreated)
-    }
-    await playJointerNotification(node, membersPlayerPlus, groupData.playerIndex, options)
-    return true
+    // The coordinator is being used to capture group status (playing, content, ...)
+    const coordinatorPlus = new Sonos(groupData.members[0].urlHostname)
+    coordinatorPlus.baseUrl = groupData.members[0].baseUrl
+    const joinerPlus = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    joinerPlus.baseUrl = groupData.members[groupData.members[groupData.playerIndex]].baseUrl
+    await playJoinerNotification(node, coordinatorPlus, joinerPlus, options)
+    return {}
   }
 
   /**  Play notification on a given group of players. Group topology will not being touched.
@@ -469,18 +468,12 @@ module.exports = function (RED) {
    *
    * @output msg unchanged
    *
-   * @throws if playerName exist and is (not string or empty string)
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function groupNextTrack (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-    const groupData = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.next()
     return {} // means untouched msg
@@ -494,18 +487,12 @@ module.exports = function (RED) {
    *
    * @output msg unchanged
    *
-   * @throws if playerName exist and is (not string or empty string)
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function groupPreviousTrack (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-    const groupData = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.previous()
     return {} // means untouched msg
@@ -515,54 +502,50 @@ module.exports = function (RED) {
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {number}  msg.topic volume, integer 1 .. 99
+   * @param  {number}  [msg.volume] volume - if missing do not touch volume
    * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @output msg unchanged
    *
-   * @throws if playerName exist and is (not string or empty string)
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function playerSetVolume (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-
-    // volume must be integer, 1..99, volume is required field!
+    const validated = await validatedGroupProperties(msg, PKG)
+    // if volume is set in msg.volume - msg.topic is ignored.
     let newVolume
-    if (!isValidProperty(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
-    }
-    if (typeof msg.topic !== 'number' && typeof msg.topic !== 'string') {
-      throw new Error(`${PKG} msg.topic is not string or number`)
-    }
-    if (typeof msg.topic === 'number') {
-      if (!Number.isInteger(msg.topic)) {
-        throw new Error(`${PKG} msg.topic is not integer`)
+    if (validated.volume === -1) {
+      // volume must be integer, 1..99, volume is required field!
+      if (!isValidProperty(msg, ['topic'])) {
+        throw new Error(`${PKG} msg.topic is invalid`)
       }
-      newVolume = msg.topic
+      if (typeof msg.topic !== 'number' && typeof msg.topic !== 'string') {
+        throw new Error(`${PKG} msg.topic is not string or number`)
+      }
+      if (typeof msg.topic === 'number') {
+        if (!Number.isInteger(msg.topic)) {
+          throw new Error(`${PKG} msg.topic is not integer`)
+        }
+        newVolume = msg.topic
+      } else {
+        // must be string
+        if (!REGEX_2DIGITS.test(msg.topic)) {
+          throw new Error(`${PKG} msg.topic is not a single/double digit`)
+        }
+        newVolume = parseInt(msg.topic)
+      }
+      if (!(newVolume >= 1 && msg.topic <= 99)) {
+        throw new Error(`${PKG} msg.topic is out of range 1 .. 99`)
+      }
     } else {
-      // must be string
-      if (!REGEX_2DIGITS.test(msg.topic)) {
-        throw new Error(`${PKG} msg.topic is not a single/double digit`)
-      }
-      newVolume = parseInt(msg.topic)
-    }
-    if (!(newVolume >= 1 && msg.topic <= 99)) {
-      throw new Error(`${PKG} msg.topic is out of range 1 .. 99`)
+      node.debug('msg.topic is being ignored as msg.volume is definend')
+      newVolume = validated.volume
     }
 
-    if (newPlayerName === '') {
-      await sonosPlayer.setVolume(newVolume)
-    } else {
-      const response = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
-      const player = new Sonos(response.members[response.playerIndex].urlHostname)
-      await player.setVolume(newVolume)
-    }
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    await player.setVolume(newVolume)
     return {} // means untouched msg
   }
 
@@ -574,25 +557,14 @@ module.exports = function (RED) {
    *
    * @output {promise}  object with volume
    *
-   * @throws if playerName exist and is (not string or empty string)
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function playerGetVolume (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-    let volume
-    if (newPlayerName === '') {
-      volume = await sonosPlayer.getVolume()
-    } else {
-      const response = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
-      const player = new Sonos(response.members[response.playerIndex].urlHostname)
-      volume = await player.getVolume()
-    }
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    const volume = await player.getVolume()
     return { payload: volume }
   }
 
@@ -604,18 +576,12 @@ module.exports = function (RED) {
    *
    * @output msg unchanged
    *
-   * @throws if playerName exist and is (not string or empty string)
+  * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function groupTogglePlayback (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-    const groupData = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.togglePlayback()
     return {} // means untouched msg
@@ -629,18 +595,12 @@ module.exports = function (RED) {
    *
   * @returns {promise}  object to update msg. Empty that means msg is unchanged.
    *
-   * @throws if playerName exist and is (not string or empty string)
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function groupStop (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or not empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-    const groupData = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.stop()
     return {}
@@ -654,18 +614,12 @@ module.exports = function (RED) {
    *
    * @returns {promise} object to update msg. msg.payload to status of player as string.
    *
-   * @throws if playerName exist and is (not string or empty string)
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function groupGetState (node, msg, sonosPlayer) {
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${PKG} msg.playername is not string or empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
-    const groupData = await getGroupMemberDataV2(sonosPlayer, newPlayerName)
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     const status = await coordinator.getCurrentState()
     return { payload: status }
@@ -679,7 +633,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} object to update msg. msg.payload to role of player as string.
    *
-   * @throws  all fro get
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function playerGetRole (node, msg, sonosPlayer) {
@@ -698,11 +652,11 @@ module.exports = function (RED) {
     return { payload: role }
   }
 
-  /// ///////////////////////////////////////////////////////////////////////////
+  // ========================================================================
   //
-  //      HELPER
+  //             HELPER
   //
-  /// ///////////////////////////////////////////////////////////////////////////
+  // ========================================================================
 
   /**  Validates group properties msg.playerName, msg.volume, msg.sameVolume.
    * @param  {object}        msg incoming message

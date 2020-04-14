@@ -48,7 +48,6 @@ module.exports = function (RED) {
       } else {
         // have to get ip address via disovery with serial numbers
         // this part cost time during procession and should be avoided - see warning.
-        warning(node, sonosFunction, 'no ip address', 'Providing ip address is recommended')
         if (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)) {
           discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
@@ -106,12 +105,14 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'get_items') {
       getMySonos(node, msg, sonosPlayer)
+    } else if (command === 'get.items') {
+      getMySonos(node, msg, sonosPlayer)
     } else if (command === 'queue') {
       queueItem(node, msg, sonosPlayer)
     } else if (command === 'stream') {
       stream(node, msg, sonosPlayer)
-    } else if (command === 'get_item') {
-      getItem(node, msg, sonosPlayer)
+    } else if (command === 'export.item') {
+      exportItem(node, msg, sonosPlayer)
     } else {
       warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
@@ -273,22 +274,22 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /**  Get first My Sonos item - matching search string and outputs results
+  /**  Export first My Sonos item - matching search string and outputs results
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {string} msg.topic search string
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @output {object} msg.payload
-   * @output {string} msg.payload.uri
-   * @output {string} msg.payload.metadata
-   * @output {boolea} msg.payload.queue
+   * @output {object} msg.payload = play.export
+   * @output {string} msg.export.uri
+   * @output {string} msg.export.metadata
+   * @output {boolean} msg.export.queue
    *
    * @throws nothing!
    *
    * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
    */
-  function getItem (node, msg, sonosPlayer) {
+  function exportItem (node, msg, sonosPlayer) {
     const sonosFunction = 'get my sonos'
 
     // validate msg.topic
@@ -306,7 +307,8 @@ module.exports = function (RED) {
         return findStringInMySonosTitleV1(items, msg.topic)
       })
       .then(found => {
-        msg.payload = { uri: found.uri, metadata: found.metaData, queue: found.queue }
+        msg.payload = 'play.export'
+        msg.export = { uri: found.uri, metadata: found.metaData, queue: found.queue }
         success(node, msg, sonosFunction)
         return true
       })
