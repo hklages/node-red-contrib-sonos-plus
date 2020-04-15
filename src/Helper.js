@@ -26,7 +26,7 @@ module.exports = {
     let ipAddress = null
 
     // define discovery, find matching player and return ip
-    const searchTime = 5000 // in miliseconds
+    const searchTime = 4000 // in miliseconds
     node.debug('Start searching for players')
     let discovery = sonos.DeviceDiscovery({ timeout: searchTime })
 
@@ -160,7 +160,7 @@ module.exports = {
   success: (node, msg, functionName) => {
     node.send(msg)
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
-    node.debug(`ok:${functionName}`)
+    node.debug(`OK: ${functionName}`)
   },
 
   /** Validates whether property is safely accessable - empty string allowed

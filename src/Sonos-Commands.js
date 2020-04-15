@@ -290,9 +290,9 @@ module.exports = {
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
     const snapshot = {}
-    const coordinatorIndex = 0
-    snapshot.mediaInfo = await coordinatorPlus.avTransportService().GetMediaInfo()
-    snapshot.positionInfo = await coordinatorPlus.avTransportService().GetPositionInfo()
+    const state = await coordinatorPlus.getCurrentState() // joiner does not show valid state!
+    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
+    snapshot.mediaInfo = await joinerPlus.avTransportService().GetMediaInfo()
     if (options.volume !== -1) {
       snapshot.joinerVolume = await joinerPlus.getVolume()
     }
@@ -324,7 +324,7 @@ module.exports = {
       }
     }
     node.debug('duration >>' + JSON.stringify(waitInMilliseconds))
-    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[coordinatorIndex]](waitInMilliseconds)
+    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
     node.debug('notification finished - now starting to restore')
 
     // return to previous state = restore snapshot
@@ -336,6 +336,9 @@ module.exports = {
       metadata: snapshot.mediaInfo.CurrentURIMetaData,
       onlySetUri: true // means dont play
     })
+    if (snapshot.wasPlaying) {
+      await joinerPlus.play()
+    }
   },
 
   /**  Creates snapshot of group.
@@ -450,14 +453,17 @@ module.exports = {
   /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
    * @param  {object} sonosPlayer valid player object
    * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
-   * @return {promise} Object: { playerIndex, members[] }  members[]: urlHostname, urlPort, uuid, sonosName. First member is coordinator
+   * @return {promise} returns object
+   *          object.playerIndex
+   *          object.members[]
+   *          members[]: urlHostname, urlPort, uuid, sonosName. First member is coordinator
    *
    * @throws if getAllGroups returns invalid value
    *         if player name not found in any group
    */
   getGroupMemberDataV2: async function (sonosPlayer, playerName) {
+    // playerName !== '' then use playerName
     const searchByName = isTruthyAndNotEmptyString(playerName)
-    console.log('searchbyName >>' + searchByName)
     const allGroupsData = await sonosPlayer.getAllGroups()
     if (!isTruthyAndNotEmptyString(allGroupsData)) {
       throw new Error('n-r-c-s-p: undefined all groups data received')
@@ -467,16 +473,17 @@ module.exports = {
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let playerGroupIndex = -1 // indicator for no player found
-    let playerIndex
     let name
     let playerUrl
+    let usedPlayerHostname
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         if (searchByName) {
           name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
           if (name === playerName) {
             playerGroupIndex = groupIndex
-            playerIndex = memberIndex
+            playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+            usedPlayerHostname = playerUrl.hostname
             break
           }
         } else {
@@ -484,7 +491,7 @@ module.exports = {
           playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
           if (playerUrl.hostname === sonosPlayer.host) {
             playerGroupIndex = groupIndex
-            playerIndex = memberIndex
+            usedPlayerHostname = playerUrl.hostname
             break
           }
         }
@@ -500,21 +507,21 @@ module.exports = {
     // create array of members with data {urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
     //                                    sonosName: "Küche", uuid: RINCON_xxxxxxx}. Coordinator is first!
     const members = []
-    const coordinatorHostname = allGroupsData[playerGroupIndex].host
-    members.push({ // sonosName will be updated later!
-      urlHostname: coordinatorHostname,
+    const coordinatorUrlHostname = allGroupsData[playerGroupIndex].host
+    members.push({ // first push coordinator - sonosName will be updated later!
+      urlHostname: coordinatorUrlHostname,
       urlPort: allGroupsData[playerGroupIndex].port,
-      baseUrl: `http://${coordinatorHostname}:${allGroupsData[playerGroupIndex].port}`,
-      uuid: allGroupsData[playerGroupIndex].Coordinator
-    }) // push coordinator
+      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[playerGroupIndex].port}`,
+      uuid: allGroupsData[0].uuid
+    })
     let memberUrl
     for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
       memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
-      if (memberUrl.hostname !== coordinatorHostname) {
+      if (memberUrl.hostname !== coordinatorUrlHostname) {
         members.push({
           urlHostname: memberUrl.hostname,
           urlPort: memberUrl.port,
-          baseUrl: `http://${sonosPlayer.host}:${sonosPlayer.port}`,
+          baseUrl: `http://${memberUrl.hostname}:${memberUrl.port}`,
           sonosName: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName,
           uuid: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
         })
@@ -523,6 +530,9 @@ module.exports = {
         members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
       }
     }
+
+    // find our player index in members - that helps to figure out role: coordinator, joiner, independent
+    const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
     return { playerIndex: playerIndex, members: members }
   },
 

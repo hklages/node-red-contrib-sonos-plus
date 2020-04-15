@@ -18,7 +18,7 @@
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
     icon: 'sonos.png', // saved in  icons/myicon.png
-    color: '#777777',
+    color: '#AAAAAA',
     label: function() {
       return this.name || 'Universal';
     },
@@ -42,7 +42,7 @@
     </div>
     <!-- Explanation-->
     <div class="text">
-      Please ensure, that the configNode has a valid serial number AND a valid ip address. The ip address should be static/permanent. </br>
+      The serial number is only being used in case of missing ip address. The ip address should be static/permanent.</br>
       The corresponding SONOS player is being used as default and can be overwritten with msg.playerName.  
     </div>
   </div>
@@ -50,43 +50,44 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-universal">
-<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly specified (command prefix: joiner, player) the message acts on the specified player.
-The group is identified by the default player (configuration node) and can be overwritten with 
-property playerName. The playerName is the name of the player (aka room, zone) and NOT the name of a configuration node!<br>  
+<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly specified (command prefix: joiner, player) the message acts on the player.
+The group is identified by the given player - either from configuration node or from msg.playerName (higher priority).</br>
 
-Joiner is the "opposite" of coordinator. A group always consist of a unique coordinator and optional joiners.<br>
+The <b>playerName</b> is the name of the player (aka room, zone) and NOT the name of a configuration node!</br>
+
+<b>Joiner</b> is the "opposite" of <b>coordinator</b>. A group always consist of a unique coordinator and optional joiners.</br>
 
 All messages do not change the msg except those with <b>get</b>.
 </p>
 
-<h1>Input</h3>
+<h1>Input (msg properties before processing)</h3>
 
 <dl class="message-properties">
 
   <dt>payload (always required) <span class="property-type">string</span></dt>
-  <dd>A command. Valid commands see Details.</dd>
+  <dd>A command. Valid commands see section Commands.</dd>
 
   <dt class="optional">topic (some commands)<span class="property-type">string</span></dt>
-  <dd>Parameter</dd>
+  <dd>Additonal parameter for the given command.</dd>
 
   <dt class="optional">playerName <span class="property-type">string</span></dt>
-  <dd>SONOS Player name aka room name aka zone. If missing, the one given in configuration is used. </dd>
+  <dd>SONOS Player name aka room name aka zone (priority) If missing, the one given in configuration is used. </dd>
 
   <dt class="optional">volume (some commands) <span class="property-type">string/number</span></dt>
-  <dd>volume </dd>
+  <dd>Volume in range 1 .. 99</dd>
 
   <dt class="optional">sameVolume (some commands) <span class="property-type">boolean</span></dt>
-  <dd>all player in group will play at the specified volume </dd>
+  <dd>All player in group will play at the specified volume - default is true!</dd>
 
-  <dt class="optional">duration (only play.notification, joiner.play.notification) <span class="property-type">string</span></dt>
-  <dd>the duration of the notification - if left, program will try to calculate the best duration </dd>
+  <dt class="optional">duration (play.notification, joiner.play.notification) <span class="property-type">string</span></dt>
+  <dd>The duration of the notification in format hh:mm:ss - if left, program will try to calculate the best duration </dd>
 
-  <dt>export (only play.export) <span class="property-type">object</span></dt>
-  <dd>The uri, metadata and queue identifier of the content to be played.</dd>
+  <dt>export (play.export) <span class="property-type">object</span></dt>
+  <dd>The uri (string), metadata(string) and queue(boolean) identifier of the content to be played.</dd>
 
 </dl>
 
-<h1>Output</h3>
+<h1>Output (msg properties after processing)</h3>
 
 <dl class="message-properties">
     <dt>payload <span class="property-type">string</span> </dt>
@@ -139,11 +140,7 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName  
   </li>
   <li>
-    <code>player.get.volume</code> Outputs the volume.<br> 
-    Optional properties are: playerName  
-  </li>
-  <li>
-    <code>toggleplayback</code> Toggles playback in the group.<br>
+    <code>toggle.playback</code> Toggles playback in the group (playing, paused)<br>
     Optional properties are: playerName
   </li>
   <li>
@@ -155,8 +152,8 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName
   </li>
   <li>
-    <code>player.get.volume</code> Outputs the current volume.<br>
-    Optional properties are: playerName
+    <code>player.get.volume</code> Outputs the volume.<br> 
+    Optional properties are: playerName  
   </li>
   <li>
     <code>player.get.role</code> Outputs the current state: coordinator, joiner, independent.<br>

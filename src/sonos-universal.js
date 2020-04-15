@@ -1,5 +1,6 @@
 const {
   REGEX_SERIAL,
+  REGEX_IP,
   REGEX_TIME,
   REGEX_2DIGITS,
   REGEX_RADIO_ID,
@@ -16,7 +17,7 @@ const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, que
 
 const { Sonos } = require('sonos')
 
-const PKG = 'n-r-c-s-p'
+const PKG = 'n-r-c-s-p: '
 
 module.exports = function (RED) {
   'use strict'
@@ -31,28 +32,32 @@ module.exports = function (RED) {
     const node = this
     const configNode = RED.nodes.getNode(config.confignode)
 
-    // check serialnum
-    if (!(isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum))) {
-      failure(node, null, new Error(`${PKG} serial number is missing in config node.`), sonosFunction)
+    // Either ipaddress or serialnum must be valid
+    if (!(
+      (isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) ||
+      (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)))) {
+      failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction)
       return
     }
 
-    // Get ip address via disovery from given serial numbers
-    // As it is only during creation of node it does not have an impact on daily processing
-    node.debug('IP address is being discovered')
-    discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
-      if (err) {
-        failure(node, null, new Error(`${PKG} could not figure out ip address (discovery)`), sonosFunction)
-        return
-      }
-      if (newIpaddress === null) {
-        failure(node, null, new Error(`${PKG} could not find any player by serial`), sonosFunction)
-      } else {
-        // setting of nodestatus is done in following call handelIpuntMessage
-        node.debug('OK found sonos player')
-        configNode.ipaddress = newIpaddress
-      }
-    })
+    // preference is ipaddress
+    if (isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) {
+      node.debug('using IP address of config node')
+    } else {
+      discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
+        if (err) {
+          failure(node, null, new Error(`${PKG} could not figure out ip address (discovery)`), sonosFunction)
+          return
+        }
+        if (newIpaddress === null) {
+          failure(node, null, new Error(`${PKG} could not find any player by serial`), sonosFunction)
+        } else {
+          // setting of nodestatus is done in following call handelIpuntMessage
+          node.debug('OK found sonos player')
+          configNode.ipaddress = newIpaddress
+        }
+      })
+    }
 
     // clear node status
     node.status({})
@@ -118,7 +123,7 @@ module.exports = function (RED) {
       return groupNextTrack(node, msg, sonosPlayer)
     } else if (command === 'previous.track') {
       return groupPreviousTrack(node, msg, sonosPlayer)
-    } else if (command === 'toogle.playback') {
+    } else if (command === 'toggle.playback') {
       return groupTogglePlayback(node, msg, sonosPlayer)
     } else if (command === 'stop') {
       return groupStop(node, msg, sonosPlayer)
@@ -391,8 +396,9 @@ module.exports = function (RED) {
     // The coordinator is being used to capture group status (playing, content, ...)
     const coordinatorPlus = new Sonos(groupData.members[0].urlHostname)
     coordinatorPlus.baseUrl = groupData.members[0].baseUrl
+
     const joinerPlus = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    joinerPlus.baseUrl = groupData.members[groupData.members[groupData.playerIndex]].baseUrl
+    joinerPlus.baseUrl = groupData.members[groupData.playerIndex].baseUrl
     await playJoinerNotification(node, coordinatorPlus, joinerPlus, options)
     return {}
   }
