@@ -292,7 +292,7 @@ module.exports = function (RED) {
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @returns {promise} {} means dont change msg
+   * @return {promise} {} means dont change msg
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -352,7 +352,7 @@ module.exports = function (RED) {
    *          if msg.topic is invalid
    *          all from validatedGroupProperties
    *          if msg.duration is not string in format hh:mm:ss
-   *          all from getGroupMemberDataV2, playGroupNotification
+   *          all from getGroupMemberDataV2, playJoinerNotification
    *
    * Hints:
    *  While playing a notification (start .. to end + 2 seconds)
@@ -463,7 +463,7 @@ module.exports = function (RED) {
       membersPlayerPlus.push(sonosPlayerCreated)
     }
     await playGroupNotification(node, membersPlayerPlus, options)
-    return true
+    return {}
   }
 
   /**  Play next track on given group of players.
@@ -599,7 +599,7 @@ module.exports = function (RED) {
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-  * @returns {promise}  object to update msg. Empty that means msg is unchanged.
+  * @return {promise}  object to update msg. Empty that means msg is unchanged.
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -637,7 +637,7 @@ module.exports = function (RED) {
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @returns {promise} object to update msg. msg.payload to role of player as string.
+   * @return {promise} object to update msg. msg.payload to role of player as string.
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -671,7 +671,7 @@ module.exports = function (RED) {
    * @param  {boolean}       [msg.sameVolume] sameVolume
    * @param  {string}        pkg package identifier
    *
-   * @returns {promise} object {playerName, volume, sameVolume}
+   * @return {promise} object {playerName, volume, sameVolume}
    * playerName is '' if missing. Otherwise the playerName
    * volume is -1 if missing. Otherwise number, integer in range 1 .. 99
    * sameVolume is true if missing. Otherwise the given value

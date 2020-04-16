@@ -8,6 +8,7 @@ module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
+  MIME_TYPES: ['.mp3', '.mp4', '.flac', '.m4a', '.ogg', '.wma'],
   ACTIONS_TEMPLATES: require('./Sonos-Actions.json'),
   SERVICES: require('./Sonos-Services.json'),
 
@@ -201,11 +202,13 @@ module.exports = {
     if (!response) {
       throw new Error('n-r-c-s-p: play response is false')
     }
-    await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
-    node.debug(options.sameVolume)
-    if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
-        await membersAsPlayerPlus[index].setVolume(options.volume)
+    if (options.volume !== -1) {
+      await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
+      node.debug('same Volume' + options.sameVolume)
+      if (options.sameVolume) { // all other members, starting at 1
+        for (let index = 1; index < membersAsPlayerPlus.length; index++) {
+          await membersAsPlayerPlus[index].setVolume(options.volume)
+        }
       }
     }
     node.debug('Playing notification started - now figuring out the end')
@@ -385,9 +388,7 @@ module.exports = {
    * @throws if invalid response from SONOS player
    *
   */
-
   // TODO work in progress!!!!!!
-
   // TODO next release with group identifier to ensure that group is not mixed up
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
@@ -603,7 +604,8 @@ module.exports = {
    * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
    * @param  {string} uri  uri
    * @param  {string} meta  meta data
-   * @returns {promise} true or false
+   *
+   * @returns {promise} setCMD
    */
   setAVTransportURI: async function (sonosPlayerBaseUrl, uri, metadata) {
     const modifiedArgs = { CurrentURI: encodeXml(uri) }
@@ -629,10 +631,11 @@ module.exports = {
   //
   // ========================================================================
 
-  /**  set action with new arg object
+  /**  Set action with new arg object.
    * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
    * @param  {string} actionName the action name
    * @param  {object} modifiedArgs only those properties being modified
+   *
    * @returns {promise} true if succesfull
    */
   setCmd: async function (baseUrl, actionName, newArgs) {
@@ -641,10 +644,9 @@ module.exports = {
     Object.assign(actionParameter.args, newArgs)
     const { path, name, action, args } = actionParameter
     const response = await sendToPlayerV1(baseUrl, path, name, action, args)
-
     // check response - select/transform item properties
     if (!isValidProperty(response, ['statusCode'])) {
-      throw new Error(`n-r-c-s-p: invalid status code from sendToPlayer - response >>${JSON.stringify(response)}`)
+      throw new Error(`n-r-c-s-p: invalid status code from sendToPlayer - response.statusCode >>${JSON.stringify(response)}`)
     }
     if (response.statusCode !== 200) {
       throw new Error(`n-r-c-s-p: status code not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)

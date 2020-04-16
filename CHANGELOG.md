@@ -2,19 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.0.0] 2020-04-15
+## [3.0.0] 2020-04-17
 
 ### Added
 
 - New Universal node: SONOS player names are supported, easier group handling, different kinds of notification
 
-- Universal node: only serial number of configuration node is being use - not anymore the ip address
-
 - My Sonos node: new command export.item to export content data of a My Sonos item. That is input to Universal node play.export
 
 ### Changed
 
-- Control player node: play_notification is depreciated. Please use Universal nodde joiner.play.notification or play.notification
+- Control player node: play_notification is depreciated. Please use Universal node joiner.play.notification or play.notification
 
 - Control player node: play_noti is depreciated. Please use  Universal node with play.notification
 
