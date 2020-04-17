@@ -2,7 +2,7 @@
 const request = require('axios')
 const xml2js = require('xml2js')
 
-const { isValidProperty, isTruthyAndNotEmptyString } = require('./Helper.js')
+const { isValidProperty, isTruthyAndNotEmptyString, getErrorCode } = require('./Helper.js')
 
 module.exports = {
   // SOAP related data
@@ -17,11 +17,12 @@ module.exports = {
    * @param  {string} name e.g. 'RenderingControl'
    * @param  {string} action e.g 'SetEQ'
    * @param  {object} args e.g.  { InstanceID: 0, EQType: '' },
-   * @returns {promise} with response from player
-   * All  parameters are required except args.
+   *
+   * @return {promise} response from player
    */
   sendToPlayerV1: async function (baseUrl, path, name, action, args) {
-    // create header
+    console.log('sendToPlayer1 now started. Action >>' + action)
+    // create action used in header
     const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`
 
     // create body
@@ -50,31 +51,28 @@ module.exports = {
       data: messageBody
     })
       .catch((error) => {
-        console.log(`request failed: ${error}`)
         // In case of an SOAP error error.reponse helds the details.
         // That goes usually together with status code 500 - triggering catch
         // Experience: When using reject(error) the error.reponse get lost.
         // Thats why error.response is checked and handled here!
+        console.log('sendToPlayerV1 entering catch error')
         if (error.response) {
         // Indicator for SOAP Error
+          console.log('sendToPlayerV1 SOAP error')
           if (error.message.startsWith('Request failed with status code 500')) {
-            const errorCode = module.exports.getErrorCode(error.response.data)
-            console.log(name)
+            // TODO replace getErrorCode with function lines of code
+            const errorCode = getErrorCode(error.response.data)
             const errorMessage = module.exports.getErrorMessage(errorCode, name)
-            console.log('errormessage >>' + errorMessage)
-            throw new Error(
-              'n-r-c-s-p: statusCode >>500 & upnpErrorCode >>' +
-              errorCode +
-              ' upnpErrorMessage >>' +
-              errorMessage
-            )
+            throw new Error(`n-r-c-s-p: statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
           } else {
+            console.log('undefined error')
             throw new Error('n-r-c-s-p: ' + error.message + '///' + error.response.data)
           }
         } else {
           throw error
         }
       })
+    console.log('sendToPlayerV1 finished.')
     return {
       headers: response.headers,
       body: response.data,
@@ -112,25 +110,6 @@ module.exports = {
     }
   },
 
-  /**  Get error code. If not found provide empty string.
-   * @param  {string} data  must exist!
-   * @return {string} error message
-   * data is required.
-   * prereq: xml  contains tag <errorCode>
-   */
-
-  getErrorCode: data => {
-    let errorCode = '' // default
-    if (isTruthyAndNotEmptyString(data)) {
-      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
-      const positionEnd = data.indexOf('</errorCode>')
-      if (positionStart > 1 && positionEnd > positionStart) {
-        errorCode = data.substring(positionStart, positionEnd)
-      }
-    }
-    return errorCode.trim()
-  },
-
   /** Encodes special XML characters e. g. < to &lt.
    * @param  {string} xmlData orignal XML data
    * @returns {string} data without any <, >, &, ', "
@@ -156,9 +135,8 @@ module.exports = {
 
   /** Transforms soap response to JSON format.
    * @param  {object} body response from SONOS player on a SOAP request
-   * @param  {string} tag tag string, not used if empty
+   * @param  {string} [tag] tag string, not used if empty
    * @returns {promise} JSON format
-   * All params must exist!
    */
   parseSoapBodyV1: async function (body, tag) {
     const arg = { mergeAttrs: true, explicitArray: false }

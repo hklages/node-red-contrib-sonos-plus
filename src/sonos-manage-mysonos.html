@@ -46,7 +46,7 @@
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">
 <p>Incoming message is being converted to valid command and send to SONOS player. The
-    <b>get</b> provides information about the My Sonos.
+    <b>get</b> command outputs data to payload. The <b>export</b> command outputs data to payload and msg.export. All other commands do not modify msg.
 </p>
 
 <h1>Input (required)</h3>
@@ -54,10 +54,10 @@
 <dl class="message-properties">
 
   <dt>payload (always required) <span class="property-type">string</span></dt>
-  <dd>A command. Valid commands see Details.</dd>
+  <dd>A command. Valid commands see section Commands.</dd>
 
   <dt class="optional">topic <span class="property-type">string</span></dt>
-  <dd>Parameter - part of the My Sonos title. CASE SENSITIVE!</dd>
+  <dd>Parameter - part of the My Sonos title. cAsE sEnSiTiVe!</dd>
 
 </dl>
 
@@ -65,23 +65,34 @@
 
 <dl class="message-properties">
     <dt>payload <span class="property-type">string</span> </dt>
-    <dd>In case of <b>get_items</b> the array of items.</dd>
+    <dd><b>get.items:</b> the array of items. <b>get.item:</b>play.export </dd>
 </dl>
 
-<h1>Details</h3> Accepted values for
+<dl class="message-properties">
+  <dt>export <span class="property-type">object</span> </dt>
+  <dd>uri, metadata and queue identifier. </dd>
+</dl>
 
-<code>payload</code> are:
+<h1>Commands</h3>
 
 <ul>
     <li>
-        <b>queue</b> queues the found item (Playlist, Album, Track) to SONOS queue. msg.topic is title search string - case sensitive
+        <code>queue</code> queues the found item (Playlist, Album, Track) to SONOS queue.<br>
+        Required property topic: title search string - cAsE sEnSiTiVe<br>
+        Optional properties are: volume
     </li>
     <li>
-        <b>stream</b> streams the found item (stream, radio). msg.topic is title search string - case sensitive
+        <code>stream</code> streams the found item (stream, radio).<br> 
+        Required property topic: title search string - cAsE sEnSiTiVe<br>
+        Optional properties are: volume
     </li>
     <li>
-        <b>get_items</b> Outputs the array of all My Sonos items
+        <code>get.items</code> Outputs the array of all My Sonos items.
     </li>
+    <li>
+      <code>export.item</code> Outputs found item data. This is used in combination with Universal node play.export.<br>
+      Required property topic: title search string - cAsE sEnSiTiVe<br>
+  </li>
 </ul>
   
 </script>

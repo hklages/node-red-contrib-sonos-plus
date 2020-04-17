@@ -9,6 +9,7 @@ module.exports = {
   REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
   REGEX_RADIO_ID: /^[s][0-9]+$/,
+  REGEX_2DIGITS: /^\d{1,2}$/,
 
   // functions to be used in other modules
 
@@ -25,7 +26,7 @@ module.exports = {
     let ipAddress = null
 
     // define discovery, find matching player and return ip
-    const searchTime = 5000 // in miliseconds
+    const searchTime = 4000 // in miliseconds
     node.debug('Start searching for players')
     let discovery = sonos.DeviceDiscovery({ timeout: searchTime })
 
@@ -90,11 +91,14 @@ module.exports = {
     let msgShort = 'unknown' // default text
     let msgDetails = 'unknown' // default text
     node.debug(`Entering error handling from ${functionName}.`)
-    node.debug(
-      `Complete error message >>${JSON.stringify(error, Object.getOwnPropertyNames(error))}`
-    )
+    node.debug('error.message >>' + JSON.stringify(error.message, Object.getOwnPropertyNames(error.message)))
+    // Nodes provides an error object - see https://nodejs.org/api/errors.html
+    // const err = new Error ('xxxx) creates a new error object. err.message is 'xxxx'
+    // error object may have properties: .code .message .name .stack
+    // A list of common system errors: https://nodejs.org/api/errors.html#errors_common_system_errors
     if (!module.exports.isTruthyAndNotEmptyString(error.code)) {
       // Caution: getOwn is neccessary for some error messages eg playmode!
+      const SONOS_UPNP_ERROR = 'upnp: statusCode 500 & upnpErrorCode '
       if (!module.exports.isTruthyAndNotEmptyString(error.message)) {
         msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
         msgShort = 'sonos-node / exception'
@@ -103,6 +107,11 @@ module.exports = {
           // handle my own error
           msgDetails = 'none'
           msgShort = error.message.replace('n-r-c-s-p: ', '')
+        } else if (error.message.startsWith(SONOS_UPNP_ERROR)) {
+          // TODO check existens of properties, handle errors
+          const upnpErrorCode = module.exports.getErrorCode(error.message.substring(SONOS_UPNP_ERROR.length))
+          msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
+          msgDetails = `Lookup upnpError ${upnpErrorCode}`
         } else {
           // Caution: getOwn is neccessary for some error messages eg playmode!
           msgShort = error.message
@@ -110,14 +119,15 @@ module.exports = {
         }
       }
     } else {
+      // A list of common system errors: https://nodejs.org/api/errors.html#errors_common_system_errors
       if (error.code === 'ECONNREFUSED') {
-        msgShort = 'can not connect to player - refused'
+        msgShort = 'player refused to connect'
         msgDetails = 'Validate ip address of player'
       } else if (error.code === 'EHOSTUNREACH') {
-        msgShort = 'can not connect to player- unreach'
+        msgShort = 'player is unreachable'
         msgDetails = 'Validate ip address of player / power on'
       } else if (error.code === 'ETIMEDOUT') {
-        msgShort = 'can not connect to player- time out'
+        msgShort = 'request timed out'
         msgDetails = 'Validate IP address of player / power on'
       } else {
         // Caution: getOwn is neccessary for some error messages eg playmode!
@@ -159,7 +169,7 @@ module.exports = {
   success: (node, msg, functionName) => {
     node.send(msg)
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
-    node.debug(`ok:${functionName}`)
+    node.debug(`OK: ${functionName}`)
   },
 
   /** Validates whether property is safely accessable - empty string allowed
@@ -232,5 +242,24 @@ module.exports = {
   hhmmss2msec: (hhmmss) => {
     const [hours, minutes, seconds] = (hhmmss).split(':')
     return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
+  },
+
+  /**  Get error code. If not found provide empty string.
+   * @param  {string} data  must exist!
+   *
+   * @return {string} error message
+   * prereq: data contains xml tag <errorCode>
+   */
+
+  getErrorCode: data => {
+    let errorCode = '' // default
+    if (module.exports.isTruthyAndNotEmptyString(data)) {
+      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
+      const positionEnd = data.indexOf('</errorCode>')
+      if (positionStart > 1 && positionEnd > positionStart) {
+        errorCode = data.substring(positionStart, positionEnd)
+      }
+    }
+    return errorCode.trim()
   }
 }

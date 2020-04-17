@@ -10,25 +10,18 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 ## NEWS
 
-- Bug fixing and node-sonos 1.13.0 (includes some Spotify bug fixes)
+- New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- CAUTION: In node "Control Player" msg.payload is not anymore set to "true". msg is unmodified as everywhere else.
-
-- CAUTION: In node "Control Player" play, stop, pause, toggleplayback, next_song, previous_song will now throw error message when send to "client" in a group.
-
-- Added in Control Player node: create_stereopair, separate_stereopair (needs a special flow to extract uiid)
-
-- CAUTION: In node "Get Status" msg.role is now "coordinator" in stead of "master
-
-- New "My Sonos" node supporting Spotify, Napster, Amazon, TuneIn, ... : Queue playlists, albums, tracks and stream radio stations. Select with title search string.
+- "My Sonos" node: new command export.item works together with Universal node command play.export
 
 ## Installation
 
-Install directly from your NodeRED's setting pallete.
+Install directly from your Node-RED's setting pallete.
 
 ## Major Functions
 
-- SONOS Player: Simply select the SONOS player in ConfigNode by search button (recommendation: enter IP address, processing is faster)
+- SONOS Player: Simply select the SONOS player in ConfigNode by search button.
+- Universal node: Use SONOS player names - commands act on whole group by default. Works with My Sonos via export.item, play.export.
 - Queue playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
 - Stream stations from Amazon, Napster, TuneIn, Radioplayer, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id

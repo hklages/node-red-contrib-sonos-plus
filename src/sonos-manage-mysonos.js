@@ -10,7 +10,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getAllMySonosItems, findStringInMySonosTitle, queue } = require('./Sonos-Commands.js')
+const { getAllMySonosItems, findStringInMySonosTitle, findStringInMySonosTitleV1, queue } = require('./Sonos-Commands.js')
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
@@ -48,7 +48,6 @@ module.exports = function (RED) {
       } else {
         // have to get ip address via disovery with serial numbers
         // this part cost time during procession and should be avoided - see warning.
-        warning(node, sonosFunction, 'no ip address', 'Providing ip address is recommended')
         if (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)) {
           discoverSonosPlayerBySerial(node, configNode.serialnum, (err, ipAddress) => {
             if (err) {
@@ -106,10 +105,14 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'get_items') {
       getMySonos(node, msg, sonosPlayer)
+    } else if (command === 'get.items') {
+      getMySonos(node, msg, sonosPlayer)
     } else if (command === 'queue') {
       queueItem(node, msg, sonosPlayer)
     } else if (command === 'stream') {
       stream(node, msg, sonosPlayer)
+    } else if (command === 'export.item') {
+      exportItem(node, msg, sonosPlayer)
     } else {
       warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
@@ -132,7 +135,7 @@ module.exports = function (RED) {
   function getMySonos (node, msg, sonosPlayer) {
     const sonosFunction = 'get My Sonos items'
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -190,7 +193,7 @@ module.exports = function (RED) {
     }
     node.debug('filter value >>>' + JSON.stringify(filter))
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -230,7 +233,7 @@ module.exports = function (RED) {
       serviceName: 'all'
     } // only streams
 
-    getAllMySonosItems(sonosPlayer)
+    getAllMySonosItems(sonosPlayer.baseUrl)
       .then(items => {
         if (!isTruthyAndNotEmptyString(items)) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
@@ -265,6 +268,47 @@ module.exports = function (RED) {
         }
       })
       .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Export first My Sonos item - matching search string and outputs results
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} msg.topic search string
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @output {object} msg.payload = play.export
+   * @output {string} msg.export.uri
+   * @output {string} msg.export.metadata
+   * @output {boolean} msg.export.queue
+   *
+   * @throws nothing!
+   *
+   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
+   */
+  function exportItem (node, msg, sonosPlayer) {
+    const sonosFunction = 'get my sonos'
+
+    // validate msg.topic
+    if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+
+    getAllMySonosItems(sonosPlayer.baseUrl)
+      .then(items => {
+        if (!isTruthyAndNotEmptyString(items)) {
+          throw new Error('n-r-c-s-p: could not find any My Sonos items')
+        }
+        // if not found throws error
+        return findStringInMySonosTitleV1(items, msg.topic)
+      })
+      .then(found => {
+        msg.payload = 'play.export'
+        msg.export = { uri: found.uri, metadata: found.metaData, queue: found.queue }
         success(node, msg, sonosFunction)
         return true
       })

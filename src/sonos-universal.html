@@ -1,0 +1,163 @@
+<!-- Sonos Universal Node -->
+
+<!-- Registering Node (JavaScript) -->
+<script type="text/javascript">
+  /* global  RED */
+  /* eslint no-undef: "error" */
+  RED.nodes.registerType('sonos-universal', {
+    category: 'SonosPlus',
+    defaults: {
+      confignode: {
+        value: '',
+        type: 'sonos-config'
+      },
+      name: {
+        value: ''
+      }
+    },
+    inputs: 1, // set the number of inputs - only 0 or 1
+    outputs: 1, // set the number of outputs - 0 to n
+    icon: 'sonos.png', // saved in  icons/myicon.png
+    color: '#AAAAAA',
+    label: function() {
+      return this.name || 'Universal';
+    },
+    paletteLabel: 'Universal'
+  });
+</script>
+
+<!-- Setting design and inputs for node panel (HTML)-->
+<script type="text/x-red" data-template-name="sonos-universal">
+  <div id="main-props">
+    <div class="form-row">
+      <label for="node-input-confignode"> Config Node</label>
+      <input type="text" id="node-input-confignode"/>
+    </div>
+    <!-- Node name-->
+    <div class="form-row">
+      <label for="node-input-name">
+        <i class="fa fa-tag"></i> Name
+      </label>
+      <input type="text" id="node-input-name" placeholder="This Node Name"/>
+    </div>
+    <!-- Explanation-->
+    <div class="text">
+      The serial number is only being used in case of missing ip address. The ip address should be static/permanent.</br>
+      The corresponding SONOS player is being used as default and can be overwritten with msg.playerName.  
+    </div>
+  </div>
+</script>
+
+<!-- Help text (HTML) -->
+<script type="text/x-red" data-help-name="sonos-universal">
+<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly specified (command prefix: joiner, player) the message acts on the player.
+The group is identified by the given player - either from configuration node or from msg.playerName (higher priority).</br>
+
+The <b>playerName</b> is the name of the player (aka room, zone) and NOT the name of a configuration node!</br>
+
+<b>Joiner</b> is the "opposite" of <b>coordinator</b>. A group always consist of a unique coordinator and optional joiners.</br>
+
+All messages do not change the msg except those with <b>get</b>.
+</p>
+
+<h1>Input (msg properties before processing)</h3>
+
+<dl class="message-properties">
+
+  <dt>payload (always required) <span class="property-type">string</span></dt>
+  <dd>A command. Valid commands see section Commands.</dd>
+
+  <dt class="optional">topic (some commands)<span class="property-type">string</span></dt>
+  <dd>Additonal parameter for the given command.</dd>
+
+  <dt class="optional">playerName <span class="property-type">string</span></dt>
+  <dd>SONOS Player name aka room name aka zone (priority) If missing, the one given in configuration is used. </dd>
+
+  <dt class="optional">volume (some commands) <span class="property-type">string/number</span></dt>
+  <dd>Volume in range 1 .. 99</dd>
+
+  <dt class="optional">sameVolume (some commands) <span class="property-type">boolean</span></dt>
+  <dd>All player in group will play at the specified volume - default is true!</dd>
+
+  <dt class="optional">duration (play.notification, joiner.play.notification) <span class="property-type">string</span></dt>
+  <dd>The duration of the notification in format hh:mm:ss - if left, program will try to calculate the best duration </dd>
+
+  <dt>export (play.export) <span class="property-type">object</span></dt>
+  <dd>The uri (string), metadata(string) and queue(boolean) identifier of the content to be played.</dd>
+
+</dl>
+
+<h1>Output (msg properties after processing)</h3>
+
+<dl class="message-properties">
+    <dt>payload <span class="property-type">string</span> </dt>
+    <dd>In case of <b>get</b> the requested data is provided. </dd>
+</dl>
+
+<h1>Commands</h3>
+
+In general the commands are "GROUP" oriented and only those commands with prefix "player", "joiner" address a specific player.
+
+<ul>
+  <li>
+    <code>play</code> Continues playing in the group.<br>
+    Optional properties are: playerName, volume, sameVolume. 
+  </li>
+  <li>
+    <code>play.export</code> Starts playing content (eg an item from My Sonos, command get.item) in the group. <br>
+    Required property: export.uri, export.queue<br>
+    Optional properties are: playerName, volume, sameVolume, export.metadata
+  </li>
+  <li>
+    <code>play.queue</code> Starts playing the SONOS queue. Queue must not be empty<br>
+    Optional properties are: playerName, volume, sameVolume. 
+  </li>
+  <li>
+    <code>play.tunein</code> Starts playing the TuneIn radio station<br>
+    Required property topic: TuneIn radio id<br>
+    Optional properties are: playerName, volume, sameVolume. 
+  </li>
+  <li>
+    <code>play.notification</code> Sends a notification to a group. If volume is specified, all will play at the specified volume.<br>
+    Required property topic: notification uri<br>
+    Optional properties are: playerName, volume, sameVolume, duration.     
+  </li>
+  <li>
+    <code>joiner.play.notification</code> Sends a notification to joiner that means a member not beeing the coordinator<br>
+    Required property topic: notification uri<br>
+    Optional properties are: playerName, volume, duration.     
+  </li>
+  <li>
+    <code>next.track</code> Skips to next track (if supported by current stream).<br>
+    Optional properties are: playerName    
+  </li>
+  <li>
+    <code>previous.track</code> Skips back track (if supported by current stream).<br>
+    Optional properties are: playerName    
+  </li>
+  <li>
+    <code>player.set.volume</code> Sets the volume.<br> 
+    Optional properties are: playerName  
+  </li>
+  <li>
+    <code>toggle.playback</code> Toggles playback in the group (playing, paused)<br>
+    Optional properties are: playerName
+  </li>
+  <li>
+    <code>stop</code> Stops playing in the group.<br>
+    Optional properties are: playerName
+  </li>
+  <li>
+    <code>get.playbackstate</code> Outputs the current playback state in the group.<br>
+    Optional properties are: playerName
+  </li>
+  <li>
+    <code>player.get.volume</code> Outputs the volume.<br> 
+    Optional properties are: playerName  
+  </li>
+  <li>
+    <code>player.get.role</code> Outputs the current state: coordinator, joiner, independent.<br>
+    Optional properties are: playerName
+  </li>
+</ul>
+</script>
