@@ -10,7 +10,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getAllMySonosItems, findStringInMySonosTitle, findStringInMySonosTitleV1, queue } = require('./Sonos-Commands.js')
+const { getAllMySonosItems, findStringInMySonosTitle, findStringInMySonosTitleV1 } = require('./Sonos-Commands.js')
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
@@ -202,7 +202,7 @@ module.exports = function (RED) {
         return findStringInMySonosTitle(items, msg.topic, filter)
       })
       .then(found => {
-        return queue(sonosPlayer, found.uri, found.metaData)
+        return sonosPlayer.queue({ uri: msg.export.uri, metadata: msg.export.metadata })
       })
       .then(() => {
         success(node, msg, sonosFunction)

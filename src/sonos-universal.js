@@ -13,7 +13,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, queue } = require('./Sonos-Commands.js')
+const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -317,7 +317,7 @@ module.exports = function (RED) {
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     coordinator.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
     if (msg.export.queue) {
-      await queue(coordinator.baseUrl, msg.export.uri, msg.export.metadata)
+      await coordinator.queue({ uri: msg.export.uri, metadata: msg.export.metadata })
       await coordinator.selectQueue()
     } else {
       await coordinator.setAVTransportURI(msg.export.uri)
