@@ -537,9 +537,11 @@ module.exports = {
     return { playerIndex: playerIndex, members: members }
   },
 
-  /**  Get array of all My Sonos items as object: title, albumArt, uri, metadata, sid, upnpClass and processingType
-   * @param  {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
-   * @returns {promise} array of My Sonos items (see parseBrowseFa) - could be emtpy
+  /**  Get array of all My Sonos items/objects.
+   * @param   {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
+   *
+   * @return {promise} array of My Sonos items - could be emtpy
+   *                   {title, albumArt, uri, metadata, sid, upnpClass, processingType}
    *
    * @throws if invalid SONOS player response
    * if parsing went wrong
@@ -547,7 +549,7 @@ module.exports = {
    * Restrictions: Sonos Favorites items are missing.
    * Restrictions: MusicLibrary without service id.
    * Restrictions: Audible Audiobooks are missing.
-   * Restrictions: Pocket Casts Podcasts without uri, only metaData
+   * Restrictions: Pocket Casts Podcasts without uri, only metadata
    */
   getAllMySonosItems: async function (sonosPlayerBaseUrl) {
     // receive data from player - uses default action for Favorites defined in Sonos-Actions, also only 100 entries!
@@ -708,62 +710,10 @@ module.exports = {
     return result
   },
 
-  // ========================================================================
-  //
-  //                          HELPERS
-  //                          They dont communcate with Sonos Player
-  //
-  // ========================================================================
-
-  /** Find searchString in My Sonos items, property title.
-   * @param  {Array} items array of objects with property title, ...
-   * @param  {string} searchString search string for title property
-   * @param  {object} filter filter to reduce returned item playlist
-   * @param  {string} filter.processingType
-   * @param  {string} filter.mediaType media type Album, Track, playlist
-   * @param  {string} filter.serviceName service name according to SERVICE_NAME
-   * @return {promise} object {title, uri, metaData}
-   *
-   * @throws error if string not found
-   */
-
-  findStringInMySonosTitle: async function (items, searchString, filter) {
-    // get service id from filter.serviceName or set '' if all.
-    let service = { name: 'unknown', sid: '' }
-    // Why: Apart from service there can also be My Sonos item from Music Library
-    if (filter.serviceName !== 'all' && filter.serviceName !== 'MusicLibrary') {
-      service = module.exports.SERVICES.find(o => o.name === filter.serviceName)
-      if (!service) {
-        throw new Error('n-r-c-s-p: service currently not supported > ' + filter.serviceName)
-      }
-    }
-    if (!module.exports.MEDIA_TYPES.includes(filter.mediaType)) {
-      throw new Error('n-r-c-s-p: invalid media type ' + filter.mediaType)
-    }
-    // Why: In upnp class playlist has small letters Album, Track but playlist
-    const correctedMediaType = filter.mediaType === 'Playlist' ? 'playlist' : filter.mediaType
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].title.includes(searchString) &&
-        items[i].processingType === filter.processingType &&
-        (items[i].upnpClass.includes(correctedMediaType) || filter.mediaType === 'all') &&
-        (items[i].sid === service.sid ||
-          filter.serviceName === 'all' ||
-          (filter.serviceName === 'MusicLibrary' && items[i].sid === ''))) {
-        return {
-          title: items[i].title,
-          uri: items[i].uri,
-          metaData: items[i].metaData
-        }
-      }
-    }
-    // not found
-    throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic')
-  },
-
   /** Find searchString in My Sonos items, property title - without filter.
-   * @param  {Array} items array of objects with property title, ...
+   * @param  {Array} items array of objects {title: , uri: , metadata}
    * @param  {string} searchString search string for title property
-   * @return {promise} object {title, uri, metaData}
+   * @return {promise} object {title, uri, metadata}
    *
    * @throws error if string not found
    */
@@ -774,7 +724,7 @@ module.exports = {
         return {
           title: items[i].title,
           uri: items[i].uri,
-          metaData: items[i].metaData,
+          metadata: items[i].metadata,
           queue: (items[i].processingType === 'queue')
         }
       }
@@ -783,9 +733,11 @@ module.exports = {
     throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic')
   },
 
-  /** Creates a list of items with title, albumArt, uri, metadata, sid, upnpClass and processingType from given Browse input.
-   * @param  {string} favoritesSoapString string is Browse response, favorites from SONOS player
-   * @returns {promise} Array of objects (see above) in JSON format. May return empty array
+  /** Creates a list of items from given Browse output.
+   * @param   {string}  favoritesSoapString string is Browse response, favorites from SONOS player
+   *
+   * @return {promise} Array of objects (see above) in JSON format. May return empty array
+   *                    {title, albumArt, uri, metadata, sid, upnpClass, processingType}
    *
    * @throws if parseSoapBody is in error
    */
@@ -820,7 +772,7 @@ module.exports = {
         title: original[i]['dc:title'],
         albumArt: original[i]['upnp:albumArtURI'],
         uri: original[i].res[tag],
-        metaData: original[i]['r:resMD'],
+        metadata: original[i]['r:resMD'],
         sid: sid,
         upnpClass: upnpClass,
         processingType: processingType
@@ -849,19 +801,19 @@ module.exports = {
   },
 
   /**  Get UpnP class. If not found provide empty string.
-   * @param  {string} metaData metaData must exist!
+   * @param  {string} metadata metadata must exist!
    * @return {string} UpnP class
    *
    * prereq: uri is string where the UPnP class is in in xml tag <upnp:class>
    */
 
-  getUpnpClass: metaData => {
+  getUpnpClass: metadata => {
     let upnpClass = '' // default
-    if (isTruthyAndNotEmptyString(metaData)) {
-      const positionStart = metaData.indexOf('<upnp:class>') + '<upnp:class>'.length
-      const positionEnd = metaData.indexOf('</upnp:class>')
+    if (isTruthyAndNotEmptyString(metadata)) {
+      const positionStart = metadata.indexOf('<upnp:class>') + '<upnp:class>'.length
+      const positionEnd = metadata.indexOf('</upnp:class>')
       if (positionStart > 1 && positionEnd > positionStart) {
-        upnpClass = metaData.substring(positionStart, positionEnd)
+        upnpClass = metadata.substring(positionStart, positionEnd)
       }
     }
     return upnpClass

@@ -10,7 +10,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getAllMySonosItems, findStringInMySonosTitle, findStringInMySonosTitleV1 } = require('./Sonos-Commands.js')
+const { getAllMySonosItems, findStringInMySonosTitleV1 } = require('./Sonos-Commands.js')
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
@@ -127,7 +127,7 @@ module.exports = function (RED) {
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @output {object} msg.payload  = array of my Sonos items with title, albumArt,uri, metaData, sid, upnpClass, processingType
+   * @output {object} msg.payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}
    * uri, metadata, sid, upnpclass: empty string are allowed
    *
    * @throws n-r-c-s-p error in case of empty My Sonos
@@ -158,7 +158,7 @@ module.exports = function (RED) {
    *
    * @throws nothing!
    *
-   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
+   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitleV1
    */
   function queueItem (node, msg, sonosPlayer) {
     const sonosFunction = 'queue my sonos item'
@@ -199,10 +199,11 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
         }
         // if not found throws error
-        return findStringInMySonosTitle(items, msg.topic, filter)
+        return findStringInMySonosTitleV1(items, msg.topic, filter)
       })
       .then(found => {
-        return sonosPlayer.queue({ uri: msg.export.uri, metadata: msg.export.metadata })
+        console.log('found >>' + JSON.stringify(found))
+        return sonosPlayer.queue({ uri: found.uri, metadata: found.metadata })
       })
       .then(() => {
         success(node, msg, sonosFunction)
@@ -239,7 +240,7 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: could not find any My Sonos items')
         }
         // if not found throws error
-        return findStringInMySonosTitle(items, msg.topic, filter)
+        return findStringInMySonosTitleV1(items, msg.topic, filter)
       })
       .then(found => {
         // TODO switch to set...  current Metadata not used!
@@ -287,7 +288,7 @@ module.exports = function (RED) {
    *
    * @throws nothing!
    *
-   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitle
+   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitleV1
    */
   function exportItem (node, msg, sonosPlayer) {
     const sonosFunction = 'get my sonos'
@@ -308,7 +309,7 @@ module.exports = function (RED) {
       })
       .then(found => {
         msg.payload = 'play.export'
-        msg.export = { uri: found.uri, metadata: found.metaData, queue: found.queue }
+        msg.export = { uri: found.uri, metadata: found.metadata, queue: found.queue }
         success(node, msg, sonosFunction)
         return true
       })

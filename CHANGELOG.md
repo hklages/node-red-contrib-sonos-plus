@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1] 2020-04-18
+
+### Changed
+
+- My Sonos: bug fix in queue, stream. Changed metaData to metadata
+
 ## [3.0.0] 2020-04-17
 
 ### Added
