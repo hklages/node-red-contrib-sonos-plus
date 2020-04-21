@@ -12,6 +12,8 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
+- New commands in "Universal" node: adjust/get.volume, player.adjust.volume,  set/get.mute, player.set/get.mute  
+
 - "My Sonos" node: new command export.item works together with Universal node command play.export
 
 ## Installation

@@ -362,5 +362,70 @@
       "Actions"
     ],
   "info": "returns the current actions: Set, Stop, Pause, Play, X_DLNA_SeekTime, Next, X_DLNA_SeekTrackNr"
+  },
+  "SetRelativeGroupVolume": {
+    "path": "/MediaRenderer/GroupRenderingControl/Control",
+    "name": "GroupRenderingControl",
+    "action": "SetRelativeGroupVolume",
+    "args": {
+      "InstanceID": 0,
+      "Adjustment": "40"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetRelativeGroupVolumeResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
+    "info": "set group relative volume, number/integer in range -99 ... -1 or +1 .. +99. returns NewVolume"
+  },
+  "GetGroupVolume": {
+    "path": "/MediaRenderer/GroupRenderingControl/Control",
+    "name": "GroupRenderingControl",
+    "action": "GetGroupVolume",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetGroupVolumeResponse",
+      "CurrentVolume"
+    ],
+  "info": "returns the current group volume "
+  },
+  "SetGroupMute": {
+    "path": "/MediaRenderer/GroupRenderingControl/Control",
+    "name": "GroupRenderingControl",
+    "action": "SetGroupMute",
+    "args": {
+      "InstanceID": 0,
+      "DesiredMute": "1"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetGroupMuteResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
+    "info": "set group mute to on (1) or off (0)"
+  },
+  "GetGroupMute": {
+    "path": "/MediaRenderer/GroupRenderingControl/Control",
+    "name": "GroupRenderingControl",
+    "action": "GetGroupMute",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetGroupMuteResponse",
+      "CurrentMute"
+    ],
+  "info": "get group mute on (1) or off (0)"
   }
+  
 }

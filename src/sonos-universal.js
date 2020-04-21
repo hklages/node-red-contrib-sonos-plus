@@ -3,6 +3,7 @@ const {
   REGEX_IP,
   REGEX_TIME,
   REGEX_2DIGITS,
+  REGEX_2DIGITSSIGN,
   REGEX_RADIO_ID,
   discoverSonosPlayerBySerial,
   isValidProperty,
@@ -13,7 +14,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification } = require('./Sonos-Commands.js')
+const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -117,8 +118,6 @@ module.exports = function (RED) {
       return groupPlayNotification(node, msg, sonosPlayer)
     } else if (command === 'joiner.play.notification') {
       return joinerPlayNotification(node, msg, sonosPlayer)
-    } else if (command === 'player.set.volume') {
-      return playerSetVolume(node, msg, sonosPlayer)
     } else if (command === 'next.track') {
       return groupNextTrack(node, msg, sonosPlayer)
     } else if (command === 'previous.track') {
@@ -127,12 +126,30 @@ module.exports = function (RED) {
       return groupTogglePlayback(node, msg, sonosPlayer)
     } else if (command === 'stop') {
       return groupStop(node, msg, sonosPlayer)
+    } else if (command === 'adjust.volume') {
+      return groupAdjustVolume(node, msg, sonosPlayer)
+    } else if (command === 'player.adjust.volume') {
+      return playerAdjustVolume(node, msg, sonosPlayer)
+    } else if (command === 'player.set.volume') {
+      return playerSetVolume(node, msg, sonosPlayer)
+    } else if (command === 'set.mute') {
+      return groupSetMute(node, msg, sonosPlayer)
+    } else if (command === 'player.set.mute') {
+      return playerSetMute(node, msg, sonosPlayer)
     } else if (command === 'get.playbackstate') {
       return groupGetState(node, msg, sonosPlayer)
+    } else if (command === 'get.volume') {
+      return groupGetVolume(node, msg, sonosPlayer)
     } else if (command === 'player.get.volume') {
       return playerGetVolume(node, msg, sonosPlayer)
+    } else if (command === 'get.mute') {
+      return groupGetMute(node, msg, sonosPlayer)
+    } else if (command === 'player.get.mute') {
+      return playerGetMute(node, msg, sonosPlayer)
     } else if (command === 'player.get.role') {
       return playerGetRole(node, msg, sonosPlayer)
+    } else if (command === 'lab') {
+      return lab(node, msg, sonosPlayer)
     } else {
       warning(node, 'handle input msg', 'invalid command in msg.payload', 'command >>' + JSON.stringify(command))
     }
@@ -469,10 +486,10 @@ module.exports = function (RED) {
   /**  Play next track on given group of players.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @output msg unchanged
+   * @return {promise} {} unchanged
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -488,10 +505,10 @@ module.exports = function (RED) {
   /**  Play previous track on given group of players.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @output msg unchanged
+   * @return {promise} {} msg unchanged
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -504,15 +521,47 @@ module.exports = function (RED) {
     return {} // means untouched msg
   }
 
+  /**  Adjust group volume
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {number}  msg.topic +/- 1 .. 99
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} output msg unchanged
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupAdjustVolume (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${PKG} msg.topic is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${PKG} msg.topic is not string`)
+    }
+    // it is a string
+    if (!REGEX_2DIGITSSIGN.test(msg.topic)) {
+      throw new Error(`${PKG}: msg.topic is not a +/- 1 .. 99`)
+    }
+    const newVolume = parseInt(msg.topic)
+
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    await setGroupVolumeRelative(groupData.members[0].baseUrl, newVolume)
+    return {} // means untouched msg
+  }
+
   /**  Set volume for given player.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {number}  msg.topic volume, integer 1 .. 99
    * @param  {number}  [msg.volume] volume - if missing do not touch volume
-   * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @output msg unchanged
+   * @return {promise} {} msg unchanged
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -555,34 +604,110 @@ module.exports = function (RED) {
     return {} // means untouched msg
   }
 
-  /**  Get volume of given player.
+  /**  Adjust player volume.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
+   * @param  {number}  msg.topic +/- 1 .. 99
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @output {promise}  object with volume
+   * @return {promise} {} output msg unchanged
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
-  async function playerGetVolume (node, msg, sonosPlayer) {
+  async function playerAdjustVolume (node, msg, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, PKG)
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${PKG} msg.topic is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${PKG} msg.topic is not string`)
+    }
+    // it is a string
+    if (!REGEX_2DIGITSSIGN.test(msg.topic)) {
+      throw new Error(`${PKG}: msg.topic is not a +/- 1 .. 99`)
+    }
+    const adjustVolume = parseInt(msg.topic)
+
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    const volume = await player.getVolume()
-    return { payload: volume }
+    await player.adjustVolume(adjustVolume)
+    return {} // means untouched msg
+  }
+  /**  Set group mute.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {number}  msg.topic On/Off
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} msg unchanged
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupSetMute (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${PKG} msg.topic is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${PKG} msg.topic is not string`)
+    }
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      throw new Error(`${PKG} msg.topic is not On/Off`)
+    }
+    const newMuteState = msg.topic === 'On'
+
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    await setGroupMute(groupData.members[0].baseUrl, newMuteState)
+    return {} // means untouched msg
+  }
+
+  /**  Set mute for given player.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.topic On Off
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} msg unchanged
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function playerSetMute (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${PKG} msg.topic is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${PKG} msg.topic is not string`)
+    }
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      throw new Error(`${PKG} msg.topic is not On/Off`)
+    }
+    const newMuteState = msg.topic === 'On'
+
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    await player.setMuted(newMuteState)
+    return {} // means untouched msg
   }
 
   /**  Toggle playback on given group of players.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  [msg.playerName] content to be played - if missing uses sonosPlayer
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @output msg unchanged
+   * @return {promise} {} msg unchanged
    *
-  * @throws  all from validatedGroupProperties
+   * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
   async function groupTogglePlayback (node, msg, sonosPlayer) {
@@ -631,6 +756,80 @@ module.exports = function (RED) {
     return { payload: status }
   }
 
+  /**  Get group volume.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @output {promise}  { payload: groupVolume}
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupGetVolume (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const volume = await getGroupVolume(groupData.members[0].baseUrl)
+    return { payload: volume }
+  }
+
+  /**  Get volume of given player.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @output {payload: volume } range 0 .. 100
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function playerGetVolume (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    const volume = await player.getVolume()
+    return { payload: volume }
+  }
+
+  /**  Get group mute.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {payload: muteState} On/Off
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupGetMute (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const muteState = await getGroupMute(groupData.members[0].baseUrl)
+    return { payload: muteState }
+  }
+
+  /**  Get mute for given player.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {payload: muteState} On / Off
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function playerGetMute (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    const state = await player.getMuted()
+    return { payload: (state ? 'On' : 'Off') }
+  }
+
   /**  Get the role of a player.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
@@ -656,6 +855,22 @@ module.exports = function (RED) {
       }
     }
     return { payload: role }
+  }
+
+  /**  Lab
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} object to update msg. msg.payload to role of player as string.
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function lab (node, msg, sonosPlayer) {
+    const response = await getCmd(sonosPlayer.baseUrl, 'GetGroupVolume')
+    return { payload: response }
   }
 
   // ========================================================================

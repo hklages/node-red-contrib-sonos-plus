@@ -21,6 +21,7 @@ module.exports = {
     'object.container.album.musicAlbum',
     'object.container.playlistContainer',
     'object.item.audioItem.musicTrack',
+    'object.container',
     'object.container.playlistContainer#playlistItem'
   ],
 
@@ -422,35 +423,6 @@ module.exports = {
     return true
   },
 
-  /** Get ip address for a given player name.
-   * @param  {string} playerName name
-   * @param  {object} sonosBasePlayer valid player object
-   * @return {promise} ip address of the given player (playerName)
-   *
-   * @throws if getAllGroups returns invalid value
-   *         if player name not found
-   */
-  getIpAddressByPlayername: async function (playerName, sonosBasePlayer) {
-    const groups = await sonosBasePlayer.getAllGroups()
-    // Find our players group, check whether player is coordinator, get ip address
-    //
-    // groups is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, Coordinater (uuid)
-    // ZoneGroupMembers is an array of all members with properties ip address and more
-    if (!isTruthyAndNotEmptyString(groups)) {
-      throw new Error('n-r-c-s-p: undefined all groups information received')
-    }
-
-    for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-      for (let memberIndex = 0; memberIndex < groups[groupIndex].ZoneGroupMember.length; memberIndex++) {
-        if (groups[groupIndex].ZoneGroupMember[memberIndex].ZoneName === playerName) {
-          // found player for given playerName
-          return groups[groupIndex].host
-        }
-      }
-    }
-    throw new Error('n-r-c-s-p: could not find given player name in any group')
-  },
-
   /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
    * @param  {object} sonosPlayer valid player object
    * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
@@ -607,7 +579,7 @@ module.exports = {
    * @param  {string} uri  uri
    * @param  {string} meta  meta data
    *
-   * @returns {promise} setCMD
+   * @return {promise} setCMD
    */
   setAVTransportURI: async function (sonosPlayerBaseUrl, uri, metadata) {
     const modifiedArgs = { CurrentURI: encodeXml(uri) }
@@ -619,12 +591,58 @@ module.exports = {
 
   /**  Get transport info - means state.
   *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-  *  @returns {promise} current state
+  *  @return {promise} current state
   *
   * CAUTION: non-coordinator player in a group will always return playing even when the group is stopped
    */
   getTransportInfo: async function (sonosPlayerBaseUrl) {
     return module.exports.getCmd(sonosPlayerBaseUrl, 'GetTransportInfo')
+  },
+
+  /**  Get group mute state.
+  *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
+  *  @return {promise} current group mute state, On, Off
+  *
+  * CAUTION: non-coordinator player will return an error
+   */
+  getGroupMute: async function (sonosPlayerBaseUrl) {
+    const isMuted = module
+      .exports.getCmd(sonosPlayerBaseUrl, 'GetGroupMute')
+    return (isMuted === '1' ? 'On' : 'Off')
+  },
+
+  /**  Get group volume state.
+  *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
+  *  @return {promise} current volume 0 ... 100
+  *
+  * CAUTION: non-coordinator player will return an error
+   */
+  getGroupVolume: async function (sonosPlayerBaseUrl) {
+    return module.exports.getCmd(sonosPlayerBaseUrl, 'GetGroupVolume')
+  },
+
+  /**  Set group mute state.
+   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
+   * @param  {boolean} muteState  the new state
+   *
+   * @return {promise}
+   */
+  setGroupMute: async function (sonosPlayerBaseUrl, muteState) {
+    const modifiedArgs = { DesiredMute: (muteState ? '1' : '0') }
+
+    return module.exports.setCmd(sonosPlayerBaseUrl, 'SetGroupMute', modifiedArgs)
+  },
+
+  /**  Set relative group volume.
+   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
+   * @param  {number} volumeRelative  volume adjustment +/- 0 .. 100
+   *
+   * @return {promise}
+   */
+  setGroupVolumeRelative: async function (sonosPlayerBaseUrl, volumeRelative) {
+    const modifiedArgs = { Adjustment: volumeRelative }
+
+    return module.exports.setCmd(sonosPlayerBaseUrl, 'SetRelativeGroupVolume', modifiedArgs)
   },
 
   // ========================================================================

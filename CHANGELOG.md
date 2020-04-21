@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.2] 2020-04-24
+
+### Added
+
+- Universal node: new commands adjust/get.volume, player.adjust.volume,  set/get.mute, player.set/get.mute  
+
 ## [3.0.1] 2020-04-18
 
 ### Changed
