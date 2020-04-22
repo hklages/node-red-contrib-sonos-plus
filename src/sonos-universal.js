@@ -14,7 +14,7 @@ const {
   success
 } = require('./Helper.js')
 
-const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd } = require('./Sonos-Commands.js')
+const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, getGroupQueue } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -132,9 +132,9 @@ module.exports = function (RED) {
       return playerAdjustVolume(node, msg, sonosPlayer)
     } else if (command === 'player.set.volume') {
       return playerSetVolume(node, msg, sonosPlayer)
-    } else if (command === 'set.mute') {
+    } else if (command === 'set.mutestate') {
       return groupSetMute(node, msg, sonosPlayer)
-    } else if (command === 'player.set.mute') {
+    } else if (command === 'player.set.mutestate') {
       return playerSetMute(node, msg, sonosPlayer)
     } else if (command === 'get.playbackstate') {
       return groupGetState(node, msg, sonosPlayer)
@@ -142,12 +142,16 @@ module.exports = function (RED) {
       return groupGetVolume(node, msg, sonosPlayer)
     } else if (command === 'player.get.volume') {
       return playerGetVolume(node, msg, sonosPlayer)
-    } else if (command === 'get.mute') {
+    } else if (command === 'get.mutestate') {
       return groupGetMute(node, msg, sonosPlayer)
-    } else if (command === 'player.get.mute') {
+    } else if (command === 'player.get.mutestate') {
       return playerGetMute(node, msg, sonosPlayer)
     } else if (command === 'player.get.role') {
       return playerGetRole(node, msg, sonosPlayer)
+    } else if (command === 'get.queue') {
+      return groupGetQueue(node, msg, sonosPlayer)
+    } else if (command === 'player.get.queue') {
+      return playerGetQueue(node, msg, sonosPlayer)
     } else if (command === 'lab') {
       return lab(node, msg, sonosPlayer)
     } else {
@@ -828,6 +832,44 @@ module.exports = function (RED) {
     const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     const state = await player.getMuted()
     return { payload: (state ? 'On' : 'Off') }
+  }
+
+  /**  Get group SONOS queue - the SONOS queue of the coordinator.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} object to update msg. msg.payload = array of queue items as object
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupGetQueue (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinator = new Sonos(groupData.members[0].urlHostname)
+    const queueItems = await getGroupQueue(coordinator)
+    return { payload: queueItems }
+  }
+
+  /**  Get the SONOS queue of the specified player.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} object to update msg. msg.payload = array of queue items as object
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function playerGetQueue (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, PKG)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    const queueItems = await getGroupQueue(player)
+    return { payload: queueItems }
   }
 
   /**  Get the role of a player.

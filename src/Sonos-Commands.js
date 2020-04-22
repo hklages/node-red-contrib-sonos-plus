@@ -1,6 +1,6 @@
 'use strict'
 
-const { isValidProperty, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec } = require('./Helper.js')
+const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec } = require('./Helper.js')
 const { encodeXml, sendToPlayerV1, parseSoapBodyV1 } = require('./Soap.js')
 const { GenerateMetadata } = require('sonos').Helpers
 
@@ -345,6 +345,44 @@ module.exports = {
     }
   },
 
+  /** Get array of all SONOS queue items. Adds baseUrl to albumArtURL
+   * @param  {object} sonosPlayer valid player object
+   * @return {promise} array of items:
+   *
+   * @throws all getQueue
+   *
+   */
+  getGroupQueue: async function (sonosPlayer) {
+    const queue = await sonosPlayer.getQueue()
+    if (!isTruthyAndNotEmptyString(queue)) {
+      throw new Error('n-r-c-s-p: undefined getqueue response received')
+    }
+
+    if (!isValidPropertyNotEmptyString(queue, ['returned'])) {
+      throw new Error('n-r-c-s-p: undefined queue size received')
+    }
+
+    let tracksArray = []
+    if (queue.returned === '0') {
+      /// keep the []
+    } else {
+      if (!isValidPropertyNotEmptyString(queue, ['items'])) {
+        throw new Error('n-r-c-s-p: did not receive any items')
+      }
+      tracksArray = queue.items
+    }
+
+    tracksArray.forEach(function (track) {
+      if (!isValidPropertyNotEmptyString(track, ['albumArtURL'])) {
+        // ignore this item
+      } else {
+        track.albumArtURI = track.albumArtURL
+        track.albumArtURL = sonosPlayer.baseUrl + track.albumArtURI
+      }
+    })
+    return tracksArray
+  },
+
   /**  Creates snapshot of group.
    * @param  {object}  node current node - for debugging
    * @param  {array}   membersAsPlayers array of sonos players, coordinator/selected player has index 0
@@ -359,7 +397,7 @@ module.exports = {
   // TODO next release with group identifier to ensure that group is not mixed up
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
-  creategroup_snapshot: async function (node, membersAsPlayer, allVolumes) {
+  createGroupSnapshot: async function (node, membersAsPlayer, allVolumes) {
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
     const coordinatorIndex = 0
@@ -393,7 +431,7 @@ module.exports = {
   // TODO next release with group identifier to ensure that group is not mixed up
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
-  restoregroup_snapshot: async function (node, snapshot) {
+  restoreGroupSnapshot: async function (node, snapshot) {
     const coordinatorIndex = 0
     await snapshot.players[coordinatorIndex].setVolume(snapshot.memberVolumes[coordinatorIndex])
     if (snapshot.sameVolume) { // all other members, starting at 1
@@ -429,7 +467,7 @@ module.exports = {
    * @return {promise} returns object
    *          object.playerIndex
    *          object.members[]
-   *          members[]: urlHostname, urlPort, uuid, sonosName. First member is coordinator
+   *          members[]: urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
    *
    * @throws if getAllGroups returns invalid value
    *         if player name not found in any group
