@@ -12,6 +12,10 @@ module.exports = {
   REGEX_2DIGITS: /^\d{1,2}$/,
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
 
+  NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
+  NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
+  NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
+
   // functions to be used in other modules
 
   /** Starts async discovery of sonos player and returns ipAddress - used in callback.
@@ -81,58 +85,75 @@ module.exports = {
     })
   },
 
-  /** processing of msg with failure.
+  /** Show any error occuring during processing of messages in the node status and create node error.
    * @param  {object} node current node
    * @param  {object} msg current msg
-   * @param  {Error object} error  error object from response
-   * @param  {string} functionName name of calling function
-   * @param  {string} messageShort  short message for status
+   * @param  {Error object} error  standard node.js or created with new Error ('')
+   * @param  {string} [functionName] name of calling function
+   *
+   * Method:
+   * 1. Is the error a standard nodejs error? Indicator: .code exists
+   * nodejs provides an error object with properties: .code, .message .name .stack
+   * See https://nodejs.org/api/errors.html for more about the error object.
+   * .code provides the best information.
+   * See https://nodejs.org/api/errors.html#errors_common_system_errors
+   *
+   * 2. Is the error thrown in node-sonos - service _request? Indicator: .message starts with NODE_SONOS_ERRORPREFIX
+   * see https://github.com/bencevans/node-sonos/blob/master/lib/services/Service.js   Service.prototype._request
+   * The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' and the error.response.data
+   * or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
+   *
+   * 3. Is the error from this package? Indicator: .message starts with NRCSP_ERRORPREFIX
+   *
+   * 4. All other error throw inside all modules (node-sonos, axio, ...)
    */
+
   failure: (node, msg, error, functionName) => {
-    let msgShort = 'unknown' // default text
-    let msgDetails = 'unknown' // default text
     node.debug(`Entering error handling from ${functionName}.`)
-    node.debug('error.message >>' + JSON.stringify(error.message, Object.getOwnPropertyNames(error.message)))
-    // Nodes provides an error object - see https://nodejs.org/api/errors.html
-    // const err = new Error ('xxxx) creates a new error object. err.message is 'xxxx'
-    // error object may have properties: .code .message .name .stack
-    // A list of common system errors: https://nodejs.org/api/errors.html#errors_common_system_errors
-    if (!module.exports.isTruthyAndNotEmptyString(error.code)) {
-      // Caution: getOwn is neccessary for some error messages eg playmode!
-      const SONOS_UPNP_ERROR = 'upnp: statusCode 500 & upnpErrorCode '
-      if (!module.exports.isTruthyAndNotEmptyString(error.message)) {
-        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
-        msgShort = 'sonos-node / exception'
+    let msgShort = 'unknown' // default text used for status message
+    let msgDetails = 'unknown' // default text for error message in addition to msgShort
+    if (module.exports.isValidPropertyNotEmptyString(error, ['code'])) {
+      // 1. nodejs errors - convert into readable message
+      if (error.code === 'ECONNREFUSED') {
+        msgShort = 'Player refused to connect'
+        msgDetails = 'Validate players ip address'
+      } else if (error.code === 'EHOSTUNREACH') {
+        msgShort = 'Player is unreachable'
+        msgDetails = 'Validate players ip address / power on'
+      } else if (error.code === 'ETIMEDOUT') {
+        msgShort = 'Request timed out'
+        msgDetails = 'Validate players IP address / power on'
       } else {
-        if (error.message.startsWith('n-r-c-s-p:')) {
-          // handle my own error
+        // Caution: getOwn is neccessary for some error messages eg playmode!
+        msgShort = 'nodejs error - contact developer'
+        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
+      }
+    } else {
+      // Caution: getOwn is neccessary for some error messages eg playmode!
+      if (module.exports.isValidPropertyNotEmptyString(error, ['message'])) {
+        if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
+          // 2. node sonos upnp errors from service _request
+          if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
+            const upnpErrorCode = module.exports.getErrorCodeFromEnvelope(error.message.substring(module.exports.NODE_SONOS_UPNP500.length))
+            msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
+            msgDetails = `Lookup upnpError ${upnpErrorCode}`
+          } else {
+            // unlikely as all UPNP errors throw 500
+            msgShort = 'statusCode NOT 500'
+            msgDetails = `upnp envelope: ${error.message}`
+          }
+        } else if (error.message.startsWith(module.exports.NRCSP_ERRORPREFIX)) {
+          // 3. my thrown errors
           msgDetails = 'none'
-          msgShort = error.message.replace('n-r-c-s-p: ', '')
-        } else if (error.message.startsWith(SONOS_UPNP_ERROR)) {
-          // TODO check existens of properties, handle errors
-          const upnpErrorCode = module.exports.getErrorCode(error.message.substring(SONOS_UPNP_ERROR.length))
-          msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
-          msgDetails = `Lookup upnpError ${upnpErrorCode}`
+          msgShort = error.message.replace(module.exports.NRCSP_ERRORPREFIX, '')
         } else {
           // Caution: getOwn is neccessary for some error messages eg playmode!
           msgShort = error.message
           msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
         }
-      }
-    } else {
-      // A list of common system errors: https://nodejs.org/api/errors.html#errors_common_system_errors
-      if (error.code === 'ECONNREFUSED') {
-        msgShort = 'player refused to connect'
-        msgDetails = 'Validate ip address of player'
-      } else if (error.code === 'EHOSTUNREACH') {
-        msgShort = 'player is unreachable'
-        msgDetails = 'Validate ip address of player / power on'
-      } else if (error.code === 'ETIMEDOUT') {
-        msgShort = 'request timed out'
-        msgDetails = 'Validate IP address of player / power on'
       } else {
-        // Caution: getOwn is neccessary for some error messages eg playmode!
-        msgShort = 'sonos-node / exception'
+        // 4. all the others
+        msgShort = 'Unknown error/ exception -see node.error'
         msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
       }
     }
@@ -246,13 +267,12 @@ module.exports = {
   },
 
   /**  Get error code. If not found provide empty string.
-   * @param  {string} data  must exist!
+   * @param  {string} data  upnp error resonse as envelope with <errorCode>xxx</errorCode>
    *
-   * @return {string} error message
-   * prereq: data contains xml tag <errorCode>
+   * @return {string} error code
    */
 
-  getErrorCode: data => {
+  getErrorCodeFromEnvelope: data => {
     let errorCode = '' // default
     if (module.exports.isTruthyAndNotEmptyString(data)) {
       const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length

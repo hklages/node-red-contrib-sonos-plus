@@ -91,8 +91,6 @@ module.exports = function (RED) {
       return
     }
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
-    const macAddress = serialnumber.split(':')[0].replace(/-/g, '')
-    sonosPlayer.uuid = `RINCON_${macAddress}0${sonosPlayer.port}`
 
     // Check msg.payload. Store lowercase version in command
     if (!isValidPropertyNotEmptyString(msg, ['payload'])) {

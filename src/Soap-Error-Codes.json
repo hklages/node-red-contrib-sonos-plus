@@ -14,7 +14,7 @@
     },
     {
       "code": "403",
-      "message": "Out of Sync"
+      "message": "Out of Sync - depreciated"
     },
     {
       "code": "404",
@@ -91,6 +91,10 @@
     {
       "code": "802",
       "message": "Invalid Certificate"
+    },
+    {
+      "code": "800",
+      "message": "maybe player is grouped?"
     },
     {
       "code": "803",
