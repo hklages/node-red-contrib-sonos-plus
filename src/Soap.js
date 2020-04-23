@@ -2,14 +2,18 @@
 const request = require('axios')
 const xml2js = require('xml2js')
 
-const { isValidProperty, isTruthyAndNotEmptyString, getErrorCode } = require('./Helper.js')
+const { isValidProperty, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope } = require('./Helper.js')
 
 module.exports = {
   // SOAP related data
 
   ERROR_CODES: require('./Soap-Error-Codes.json'),
 
-  // SOAP related functions
+  // ========================================================================
+  //
+  //                        SOAP related functions
+  //
+  // ========================================================================
 
   /** Send http request in SOAP format to specified player.
    * @param  {string} baseUrl http address including http prefix and port e.g 'http://192.168.178.30:1400'
@@ -21,7 +25,7 @@ module.exports = {
    * @return {promise} response from player
    */
   sendToPlayerV1: async function (baseUrl, path, name, action, args) {
-    console.log('sendToPlayer1 now started. Action >>' + action)
+    console.log('sendToPlayer1. Action >>' + action)
     // create action used in header
     const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`
 
@@ -55,24 +59,27 @@ module.exports = {
         // That goes usually together with status code 500 - triggering catch
         // Experience: When using reject(error) the error.reponse get lost.
         // Thats why error.response is checked and handled here!
-        console.log('sendToPlayerV1 entering catch error')
-        if (error.response) {
+        console.log('sendToPlayerV1. entering catch error')
+        if (isValidProperty(error, ['response'])) {
         // Indicator for SOAP Error
-          console.log('sendToPlayerV1 SOAP error')
-          if (error.message.startsWith('Request failed with status code 500')) {
-            // TODO replace getErrorCode with function lines of code
-            const errorCode = getErrorCode(error.response.data)
-            const errorMessage = module.exports.getErrorMessage(errorCode, name)
-            throw new Error(`n-r-c-s-p: statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
+          if (isValidProperty(error, ['message'])) {
+            if (error.message.startsWith('Request failed with status code 500')) {
+              const errorCode = getErrorCodeFromEnvelope(error.response.data)
+              const errorMessage = module.exports.getUpnpErrorMessage(errorCode, name)
+              console.log('sendToPlayerV1.  status code 500 errorCode >>' + JSON.stringify(errorCode))
+              throw new Error(`n-r-c-s-p: statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
+            } else {
+              console.log('error.message is not code 500  >>' + JSON.stringify(error.message))
+              throw new Error('error.message is not code 500' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
+            }
           } else {
-            console.log('undefined error')
-            throw new Error('n-r-c-s-p: ' + error.message + '///' + error.response.data)
+            throw new Error('error.message is missing. error >>' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
           }
         } else {
+          // usually ECON.. or timed out. Is being handled in failure procedure
           throw error
         }
       })
-    console.log('sendToPlayerV1 finished.')
     return {
       headers: response.headers,
       body: response.data,
@@ -83,30 +90,32 @@ module.exports = {
   /**  Get error message from error code. If not found provide empty string.
    * @param  {string} errorCode
    * @param  {string} actionName
-   * @return {string} error message
-   * All parameters are required!
+   *
+   * @return {string} error text (from mapping code -  text)
    */
 
-  getErrorMessage: (errorCode, actionName) => {
-    const defaultMessage = ''
+  getUpnpErrorMessage: (errorCode, actionName) => {
+    let errorText = 'unknown error' // default
     if (isTruthyAndNotEmptyString(errorCode)) {
       if (isValidProperty(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
         const actionErrorList = module.exports.ERROR_CODES[actionName.toUpperCase()]
         for (let i = 0; i < actionErrorList.length; i++) {
           if (actionErrorList[i].code === errorCode) {
-            return actionErrorList[i].message
+            errorText = actionErrorList[i].message
+            return errorText
           }
         }
       }
       const npnpErrorList = module.exports.ERROR_CODES.UPNP
       for (let i = 0; i < npnpErrorList.length; i++) {
         if (npnpErrorList[i].code === errorCode) {
-          return npnpErrorList[i].message
+          errorText = npnpErrorList[i].message
+          return errorText
         }
       }
-      return defaultMessage
+      return errorText
     } else {
-      return defaultMessage
+      return errorText
     }
   },
 
