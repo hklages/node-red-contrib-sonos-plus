@@ -3,6 +3,8 @@
 module.exports = {
   // data to be used in other modules
 
+  ERROR_CODES: require('./Soap-Error-Codes.json'),
+
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
 
   REGEX_TIME: /([0-1][0-9]):([0-5][0-9]):([0-5][0-9])/, // Only hh:mm:ss and hours from 0 to 19
@@ -136,7 +138,8 @@ module.exports = {
           if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
             const upnpErrorCode = module.exports.getErrorCodeFromEnvelope(error.message.substring(module.exports.NODE_SONOS_UPNP500.length))
             msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
-            msgDetails = `Lookup upnpError ${upnpErrorCode}`
+            // TODO service is not known, therefore we can not evaluate the error text.
+            msgDetails = module.exports.getErrorMessageV1(upnpErrorCode, module.exports.ERROR_CODES.UPNP, '') // only UPNP errors
           } else {
             // unlikely as all UPNP errors throw 500
             msgShort = 'statusCode NOT 500'
@@ -158,7 +161,7 @@ module.exports = {
       }
     }
 
-    node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg)
+    node.error(`${functionName}: ${msgShort} :: Details: ${msgDetails}`, msg)
     node.status({
       fill: 'red',
       shape: 'dot',
@@ -273,6 +276,7 @@ module.exports = {
    */
 
   getErrorCodeFromEnvelope: data => {
+    console.log('data >>' + data)
     let errorCode = '' // default
     if (module.exports.isTruthyAndNotEmptyString(data)) {
       const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
@@ -282,5 +286,32 @@ module.exports = {
       }
     }
     return errorCode.trim()
+  },
+
+  /**  Get error message from error code. If not found provide 'unknown error'.
+   * @param  {string} errorCode
+   * @param  {JSON} upnpErrorList - simple mapping .code .message
+   * @param  {JSON} [serviceErrorList] - simple mapping .code .message
+   *
+   * @return {string} error text (from mapping code -  text)
+   */
+
+  getErrorMessageV1: (errorCode, upnpErrorList, serviceErrorList) => {
+    const errorText = 'unknown error' // default
+    if (module.exports.isTruthyAndNotEmptyString(errorCode)) {
+      if (serviceErrorList !== '') {
+        for (let i = 0; i < serviceErrorList.length; i++) {
+          if (serviceErrorList[i].code === errorCode) {
+            return serviceErrorList[i].message
+          }
+        }
+      }
+      for (let i = 0; i < upnpErrorList.length; i++) {
+        if (upnpErrorList[i].code === errorCode) {
+          return upnpErrorList[i].message
+        }
+      }
+    }
+    return errorText
   }
 }

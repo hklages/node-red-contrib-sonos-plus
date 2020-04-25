@@ -5,20 +5,18 @@ const {
   REGEX_2DIGITS,
   REGEX_2DIGITSSIGN,
   REGEX_RADIO_ID,
+  NRCSP_ERRORPREFIX,
   discoverSonosPlayerBySerial,
   isValidProperty,
   isValidPropertyNotEmptyString,
   isTruthyAndNotEmptyString,
   failure,
-  warning,
   success
 } = require('./Helper.js')
 
 const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, getGroupQueue } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
-
-const PKG = 'n-r-c-s-p: '
 
 module.exports = function (RED) {
   'use strict'
@@ -47,11 +45,11 @@ module.exports = function (RED) {
     } else {
       discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
         if (err) {
-          failure(node, null, new Error(`${PKG} could not figure out ip address (discovery)`), sonosFunction)
+          failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not figure out ip address (discovery)`), sonosFunction)
           return
         }
         if (newIpaddress === null) {
-          failure(node, null, new Error(`${PKG} could not find any player by serial`), sonosFunction)
+          failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not find any player by serial`), sonosFunction)
         } else {
           // setting of nodestatus is done in following call handelIpuntMessage
           node.debug('OK found sonos player')
@@ -64,16 +62,14 @@ module.exports = function (RED) {
     node.status({})
 
     // subscribe and handle input message
-    let command
     node.on('input', function (msg) {
       node.debug('node - msg received')
-      command = msg.payload
       processInputMsg(node, msg, configNode.ipaddress)
         .then((msgUpdate) => {
           Object.assign(msg, msgUpdate)
-          success(node, msg, command)
+          success(node, msg, msg.payload)
         })
-        .catch((error) => failure(node, msg, error, command))
+        .catch((error) => failure(node, msg, error, 'processing msg'))
     })
   }
 
@@ -90,17 +86,17 @@ module.exports = function (RED) {
     const sonosPlayer = new Sonos(ipaddress)
     // set baseUrl
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
-      throw new Error(`${PKG} sonos player undefined`)
+      throw new Error(`${NRCSP_ERRORPREFIX} sonos player undefined`)
     }
     if (!(isValidPropertyNotEmptyString(sonosPlayer, ['host']) &&
       isValidPropertyNotEmptyString(sonosPlayer, ['port']))) {
-      throw new Error(`${PKG}  ip address or port is missing`)
+      throw new Error(`${NRCSP_ERRORPREFIX}  ip address or port is missing`)
     }
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // usefull for my extensions
 
     // Check msg.payload. Store lowercase version in command
     if (!isValidPropertyNotEmptyString(msg, ['payload'])) {
-      throw new Error(`${PKG} payload is undefined`)
+      throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is undefined`)
     }
     let command = String(msg.payload)
     command = command.toLowerCase()
@@ -114,6 +110,8 @@ module.exports = function (RED) {
       return groupPlayQueue(node, msg, sonosPlayer)
     } else if (command === 'play.tunein') {
       return groupPlayTuneIn(node, msg, sonosPlayer)
+    } else if (command === 'play.streamhttp') {
+      return groupPlayStreamHttp(node, msg, sonosPlayer)
     } else if (command === 'play.notification') {
       return groupPlayNotification(node, msg, sonosPlayer)
     } else if (command === 'joiner.play.notification') {
@@ -155,7 +153,7 @@ module.exports = function (RED) {
     } else if (command === 'lab') {
       return lab(node, msg, sonosPlayer)
     } else {
-      warning(node, 'handle input msg', 'invalid command in msg.payload', 'command >>' + JSON.stringify(command))
+      throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is invalid >>${msg.payload} `)
     }
   }
 
@@ -181,10 +179,10 @@ module.exports = function (RED) {
    */
   async function groupPlay (node, msg, sonosPlayer) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     if (validated.sameVolume === false && groupData.members.length === 1) {
-      throw new Error(`${PKG} msg.sameVolume is invalid: player is independent`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is invalid: player is independent`)
     }
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.play()
@@ -221,20 +219,20 @@ module.exports = function (RED) {
    */
   async function groupPlayQueue (node, msg, sonosPlayer) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     if (validated.sameVolume === false && groupData.members.length === 1) {
-      throw new Error(`${PKG} msg.sameVolume is invalid: player is independent`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is invalid: player is independent`)
     }
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     const queueData = await coordinator.getQueue()
 
     if (!isTruthyAndNotEmptyString(queueData)) {
-      throw new Error(`${PKG} get queue response is undefined`)
+      throw new Error(`${NRCSP_ERRORPREFIX} get queue response is undefined`)
     }
     if (queueData.returned === '0') {
       // queue is empty
-      throw new Error(`${PKG} queue is empty`)
+      throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
     await coordinator.selectQueue()
 
@@ -271,20 +269,68 @@ module.exports = function (RED) {
   async function groupPlayTuneIn (node, msg, sonosPlayer) {
     // validate msg.topic
     if (!isTruthyAndNotEmptyString(msg.topic)) {
-      throw new Error(`${PKG} TuneIn radio id is undefined/invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} TuneIn radio id is undefined/invalid`)
     }
     if (!REGEX_RADIO_ID.test(msg.topic)) {
-      throw new Error(`${PKG} TuneIn radio id has wrong syntax: ${JSON.stringify(msg.topic)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} TuneIn radio id has wrong syntax: ${JSON.stringify(msg.topic)}`)
     }
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     if (validated.sameVolume === false && groupData.members.length === 1) {
-      throw new Error(`${PKG} msg.sameVolume is invalid: player is independent`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is invalid: player is independent`)
     }
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.playTuneinRadio(msg.topic)
+
+    if (validated.volume !== -1) {
+      let player
+      if (validated.sameVolume) {
+        for (let index = 0; index < groupData.members.length; index++) {
+          player = new Sonos(groupData.members[index].urlHostname)
+          await player.setVolume(validated.volume)
+        }
+      } else {
+        player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+        await player.setVolume(validated.volume)
+      }
+    }
+    return {}
+  }
+
+  /**  Play http station. Optional set volume, use playerName.
+   * @param  {object}  node only used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.topic https uri
+   * @param  {number}  [msg.volume] volume - if missing do not touch volume
+   * @param  {number}  [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} means dont change msg
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   *          if msg.sameVolume === false and player is independent because non sense.
+   */
+  async function groupPlayStreamHttp (node, msg, sonosPlayer) {
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} http uri (msg.topic) is undefined/invalid`)
+    }
+    if (!msg.topic.startsWith('http')) {
+      throw new Error(`${NRCSP_ERRORPREFIX} uri (msg.topic) should start with http`)
+    }
+
+    // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    if (validated.sameVolume === false && groupData.members.length === 1) {
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is invalid: player is independent`)
+    }
+    const coordinator = new Sonos(groupData.members[0].urlHostname)
+    await coordinator.setAVTransportURI(msg.topic)
 
     if (validated.volume !== -1) {
       let player
@@ -322,17 +368,17 @@ module.exports = function (RED) {
   async function groupPlayExport (node, msg, sonosPlayer) {
     // simple validation of export and activation
     if (!isValidPropertyNotEmptyString(msg, ['export', 'queue'])) {
-      throw new Error(`${PKG} queue identifier is missing`)
+      throw new Error(`${NRCSP_ERRORPREFIX} queue identifier is missing`)
     }
     if (!isValidPropertyNotEmptyString(msg, ['export', 'uri'])) {
-      throw new Error(`${PKG} uri is missing`)
+      throw new Error(`${NRCSP_ERRORPREFIX} uri is missing`)
     }
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     if (validated.sameVolume === false && groupData.members.length === 1) {
-      throw new Error(`${PKG} msg.sameVolume is invalid: player is independent`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is invalid: player is independent`)
     }
 
     const coordinator = new Sonos(groupData.members[0].urlHostname)
@@ -382,16 +428,16 @@ module.exports = function (RED) {
   async function joinerPlayNotification (node, msg, sonosPlayer) {
     // validate all properties and use defaults
     if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
     }
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
     // verify that player is joiner and not a coordinator
     if (groupData.playerIndex === 0) {
-      throw new Error(`${PKG} player is not a joiner`)
+      throw new Error(`${NRCSP_ERRORPREFIX} player is not a joiner`)
     }
 
     // msg.sameVolume is not used (only one player!)
@@ -405,10 +451,10 @@ module.exports = function (RED) {
     // update options.duration - get info from SONOS player
     if (isValidProperty(msg, ['duration'])) {
       if (typeof msg.duration !== 'string') {
-        throw new Error(`${PKG} msg.duration is not a string`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.duration is not a string`)
       }
       if (!REGEX_TIME.test(msg.duration)) {
-        throw new Error(`${PKG} msg.duration is not format hh:mm:ss`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.duration is not format hh:mm:ss`)
       }
       options.duration = msg.duration
       options.automaticDuration = false
@@ -447,13 +493,13 @@ module.exports = function (RED) {
   async function groupPlayNotification (node, msg, sonosPlayer) {
     // validate all properties and use defaults
     if (!isValidProperty(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
     }
     if (typeof msg.topic !== 'string' || msg.topic.length === 0) {
-      throw new Error(`${PKG} msg.topic is not a string or empty string`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not a string or empty string`)
     }
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
     const options = { // set defaults
@@ -467,10 +513,10 @@ module.exports = function (RED) {
     // update options.duration - get info from SONOS
     if (isValidProperty(msg, ['duration'])) {
       if (typeof msg.duration !== 'string') {
-        throw new Error(`${PKG} msg.duration ist not a string`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.duration ist not a string`)
       }
       if (!REGEX_TIME.test(msg.duration)) {
-        throw new Error(`${PKG} msg.duration is not format hh:mm:ss`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.duration is not format hh:mm:ss`)
       }
       options.duration = msg.duration
       options.automaticDuration = false
@@ -499,7 +545,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupNextTrack (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.next()
@@ -518,7 +564,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupPreviousTrack (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.previous()
@@ -538,17 +584,17 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupAdjustVolume (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     // msg.topic is requried
     if (!isValidProperty(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
     }
     if (typeof msg.topic !== 'string') {
-      throw new Error(`${PKG} msg.topic is not string`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not string`)
     }
     // it is a string
     if (!REGEX_2DIGITSSIGN.test(msg.topic)) {
-      throw new Error(`${PKG}: msg.topic is not a +/- 1 .. 99`)
+      throw new Error(`${NRCSP_ERRORPREFIX}: msg.topic is not a +/- 1 .. 99`)
     }
     const newVolume = parseInt(msg.topic)
 
@@ -571,31 +617,31 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerSetVolume (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     // if volume is set in msg.volume - msg.topic is ignored.
     let newVolume
     if (validated.volume === -1) {
       // volume must be integer, 1..99, volume is required field!
       if (!isValidProperty(msg, ['topic'])) {
-        throw new Error(`${PKG} msg.topic is invalid`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
       }
       if (typeof msg.topic !== 'number' && typeof msg.topic !== 'string') {
-        throw new Error(`${PKG} msg.topic is not string or number`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not string or number`)
       }
       if (typeof msg.topic === 'number') {
         if (!Number.isInteger(msg.topic)) {
-          throw new Error(`${PKG} msg.topic is not integer`)
+          throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not integer`)
         }
         newVolume = msg.topic
       } else {
         // must be string
         if (!REGEX_2DIGITS.test(msg.topic)) {
-          throw new Error(`${PKG} msg.topic is not a single/double digit`)
+          throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not a single/double digit`)
         }
         newVolume = parseInt(msg.topic)
       }
       if (!(newVolume >= 1 && msg.topic <= 99)) {
-        throw new Error(`${PKG} msg.topic is out of range 1 .. 99`)
+        throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is out of range 1 .. 99`)
       }
     } else {
       node.debug('msg.topic is being ignored as msg.volume is definend')
@@ -621,17 +667,17 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerAdjustVolume (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     // msg.topic is requried
     if (!isValidProperty(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
     }
     if (typeof msg.topic !== 'string') {
-      throw new Error(`${PKG} msg.topic is not string`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not string`)
     }
     // it is a string
     if (!REGEX_2DIGITSSIGN.test(msg.topic)) {
-      throw new Error(`${PKG}: msg.topic is not a +/- 1 .. 99`)
+      throw new Error(`${NRCSP_ERRORPREFIX}: msg.topic is not a +/- 1 .. 99`)
     }
     const adjustVolume = parseInt(msg.topic)
 
@@ -653,16 +699,16 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupSetMute (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     // msg.topic is requried
     if (!isValidProperty(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
     }
     if (typeof msg.topic !== 'string') {
-      throw new Error(`${PKG} msg.topic is not string`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not string`)
     }
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
-      throw new Error(`${PKG} msg.topic is not On/Off`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not On/Off`)
     }
     const newMuteState = msg.topic === 'On'
 
@@ -684,16 +730,16 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerSetMute (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     // msg.topic is requried
     if (!isValidProperty(msg, ['topic'])) {
-      throw new Error(`${PKG} msg.topic is invalid`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is invalid`)
     }
     if (typeof msg.topic !== 'string') {
-      throw new Error(`${PKG} msg.topic is not string`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not string`)
     }
     if (!(msg.topic === 'On' || msg.topic === 'Off')) {
-      throw new Error(`${PKG} msg.topic is not On/Off`)
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic is not On/Off`)
     }
     const newMuteState = msg.topic === 'On'
 
@@ -715,7 +761,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupTogglePlayback (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.togglePlayback()
@@ -734,7 +780,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupStop (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.stop()
@@ -753,7 +799,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupGetState (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     const status = await coordinator.getCurrentState()
@@ -772,7 +818,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupGetVolume (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const volume = await getGroupVolume(groupData.members[0].baseUrl)
     return { payload: volume }
@@ -790,7 +836,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerGetVolume (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     const volume = await player.getVolume()
@@ -809,7 +855,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupGetMute (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const muteState = await getGroupMute(groupData.members[0].baseUrl)
     return { payload: muteState }
@@ -827,7 +873,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerGetMute (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     const state = await player.getMuted()
@@ -846,7 +892,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function groupGetQueue (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     const queueItems = await getGroupQueue(coordinator)
@@ -865,7 +911,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerGetQueue (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const player = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     const queueItems = await getGroupQueue(player)
@@ -884,7 +930,7 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    */
   async function playerGetRole (node, msg, sonosPlayer) {
-    const validated = await validatedGroupProperties(msg, PKG)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     let role
     if (groupData.members.length === 1) {

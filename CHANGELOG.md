@@ -6,7 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Universal node: new commands adjust/get.volume, player.adjust.volume,  set/get.mute, player.set/get.mute  
+- Universal node: new commands adjust/get.volume, player.adjust.volume,  set/get.mute, player.set/get.mute, get.queue, player.get.queue
+
+- "Universal" node: new command play.streamhttp
+
+## Changed
+
+- Universal node throws error in case of an invalid command (msg.payload)
+
+- "Manage Radio" is depreciated - please use Universal node instead.
 
 ## [3.0.2] 2020-04-23
 

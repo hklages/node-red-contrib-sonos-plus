@@ -197,7 +197,7 @@ module.exports = {
 
     let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[coordinatorIndex].baseUrl, options.uri, metadata)
     if (!response) {
-      throw new Error('n-r-c-s-p: setAVTransportURI response is false')
+      throw new Error('n-r-c-s-p: setAVTransportURI response is invalid')
     }
     response = await module.exports.play(membersAsPlayerPlus[coordinatorIndex].baseUrl)
     if (!response) {

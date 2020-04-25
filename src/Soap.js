@@ -2,7 +2,7 @@
 const request = require('axios')
 const xml2js = require('xml2js')
 
-const { isValidProperty, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope } = require('./Helper.js')
+const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1 } = require('./Helper.js')
 
 module.exports = {
   // SOAP related data
@@ -65,7 +65,12 @@ module.exports = {
           if (isValidProperty(error, ['message'])) {
             if (error.message.startsWith('Request failed with status code 500')) {
               const errorCode = getErrorCodeFromEnvelope(error.response.data)
-              const errorMessage = module.exports.getUpnpErrorMessage(errorCode, name)
+              let serviceErrorList = ''
+              if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [name.toUpperCase()])) {
+                // look up in the service specific error codes 7xx
+                serviceErrorList = module.exports.ERROR_CODES[name.toUpperCase()]
+              }
+              const errorMessage = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
               console.log('sendToPlayerV1.  status code 500 errorCode >>' + JSON.stringify(errorCode))
               throw new Error(`n-r-c-s-p: statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
             } else {
@@ -89,34 +94,31 @@ module.exports = {
 
   /**  Get error message from error code. If not found provide empty string.
    * @param  {string} errorCode
-   * @param  {string} actionName
+   * @param  {string} [actionName] '' is
    *
    * @return {string} error text (from mapping code -  text)
    */
 
   getUpnpErrorMessage: (errorCode, actionName) => {
-    let errorText = 'unknown error' // default
+    const errorText = 'unknown error' // default
     if (isTruthyAndNotEmptyString(errorCode)) {
-      if (isValidProperty(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
+      if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
+        // look up in the service specific error codes 7xx
         const actionErrorList = module.exports.ERROR_CODES[actionName.toUpperCase()]
         for (let i = 0; i < actionErrorList.length; i++) {
           if (actionErrorList[i].code === errorCode) {
-            errorText = actionErrorList[i].message
-            return errorText
+            return actionErrorList[i].message
           }
         }
       }
       const npnpErrorList = module.exports.ERROR_CODES.UPNP
       for (let i = 0; i < npnpErrorList.length; i++) {
         if (npnpErrorList[i].code === errorCode) {
-          errorText = npnpErrorList[i].message
-          return errorText
+          return npnpErrorList[i].message
         }
       }
-      return errorText
-    } else {
-      return errorText
     }
+    return errorText
   },
 
   /** Encodes special XML characters e. g. < to &lt.
@@ -145,7 +147,8 @@ module.exports = {
   /** Transforms soap response to JSON format.
    * @param  {object} body response from SONOS player on a SOAP request
    * @param  {string} [tag] tag string, not used if empty
-   * @returns {promise} JSON format
+   *
+   * @return {promise} JSON format
    */
   parseSoapBodyV1: async function (body, tag) {
     const arg = { mergeAttrs: true, explicitArray: false }
