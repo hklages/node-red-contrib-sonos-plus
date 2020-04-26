@@ -50,10 +50,10 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-universal">
-<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly specified (command prefix: joiner, player) the message acts on the player.
-The group is identified by the given player - either from configuration node or from msg.playerName (higher priority).</br>
+<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly stated (command prefix: joiner, player) the message acts on the player.
+The group is identified by the given player. msg.playerName overrides the configuration node player.</br>
 
-The <b>playerName</b> is the name of the player (aka room, zone) and NOT the name of a configuration node!</br>
+The <b>playerName</b> is the name of the SONOS player (aka room, zone) and NOT the name of a configuration node!</br>
 
 <b>Joiner</b> is the "opposite" of <b>coordinator</b>. A group always consist of a unique coordinator and optional joiners.</br>
 
@@ -106,7 +106,7 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   <li>
     <code>play.export</code> Starts playing content (eg an item from My Sonos, command get.item) in the group. <br>
     Required property: export.uri, export.queue<br>
-    Optional properties are: playerName, volume, sameVolume, export.metadata
+    Optional properties are: playerName, volume, sameVolume: default true , clearQueue: default true, export.metadata, 
   </li>
   <li>
     <code>play.queue</code> Starts playing the SONOS queue. Queue must not be empty<br>
@@ -194,7 +194,7 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName  
   </li>
   <li>
-    <code>player.get.role</code> Outputs the current state: coordinator, joiner, independent.<br>
+    <code>player.get.role</code> Outputs the current state: coordinator|joiner|independent and the SONOS player name.<br>
     Optional properties are: playerName
   </li>
   <li>
@@ -204,6 +204,10 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   <li>
     <code>player.get.queue</code> Outputs the current queue of the specified player.<br>
     Optional properties are: playerName
+  </li>
+  <li>
+    <code>get.trackplus</code> Outputs the track, media and position data - also status of queue, title,artist, TuneIn radio id<br>
+    Optional properties are: playerName<br>
   </li>
 </ul>
 </script>

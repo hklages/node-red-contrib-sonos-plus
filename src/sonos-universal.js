@@ -1,61 +1,53 @@
 const {
-  REGEX_SERIAL,
-  REGEX_IP,
-  REGEX_TIME,
-  REGEX_2DIGITS,
-  REGEX_2DIGITSSIGN,
-  REGEX_RADIO_ID,
+  REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_2DIGITS, REGEX_2DIGITSSIGN, REGEX_RADIO_ID,
   NRCSP_ERRORPREFIX,
   discoverSonosPlayerBySerial,
-  isValidProperty,
-  isValidPropertyNotEmptyString,
-  isTruthyAndNotEmptyString,
-  failure,
-  success
+  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
+  failure, success
 } = require('./Helper.js')
 
-const { getGroupMemberDataV2, playGroupNotification, playJoinerNotification, setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, getGroupQueue } = require('./Sonos-Commands.js')
+const {
+  getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
+  setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, getGroupQueue
+} = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
 module.exports = function (RED) {
   'use strict'
 
-  /**  Create Universal Node and subscribe to messages.
+  /** Create Universal node and subscribe to messages.
    * @param  {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
     RED.nodes.createNode(this, config)
-    const sonosFunction = 'create and subscribe'
+    const nrcspFunction = 'create and subscribe'
 
     const node = this
     const configNode = RED.nodes.getNode(config.confignode)
 
-    // Either ipaddress or serialnum must be valid
-    if (!(
-      (isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) ||
-      (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)))) {
-      failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction)
-      return
-    }
-
-    // preference is ipaddress
-    if (isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) {
+    // ipaddress overriding serialnum - at least one must be valid
+    if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
       node.debug('using IP address of config node')
     } else {
-      discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
-        if (err) {
-          failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not figure out ip address (discovery)`), sonosFunction)
-          return
-        }
-        if (newIpaddress === null) {
-          failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not find any player by serial`), sonosFunction)
-        } else {
-          // setting of nodestatus is done in following call handelIpuntMessage
-          node.debug('OK found sonos player')
-          configNode.ipaddress = newIpaddress
-        }
-      })
+      if (isValidProperty(configNode, ['serialnum']) && typeof configNode.serialnum === 'string' && REGEX_SERIAL.test(configNode.serialnum)) {
+        discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
+          if (err) {
+            failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not figure out ip address (discovery)`), nrcspFunction)
+            return
+          }
+          if (newIpaddress === null) {
+            failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not find any player by serial`), nrcspFunction)
+          } else {
+            // setting of nodestatus is done in following call handelIpuntMessage
+            node.debug('OK found sonos player')
+            configNode.ipaddress = newIpaddress
+          }
+        })
+      } else {
+        failure(node, null, new Error(`${NRCSP_ERRORPREFIX} both ipaddress and serial number/ are invalid/missing`), nrcspFunction)
+        return
+      }
     }
 
     // clear node status
@@ -73,30 +65,30 @@ module.exports = function (RED) {
     })
   }
 
-  /**  Validate sonos player and msg.payload then dispatch further.
+  /** Validate sonos player object and msg.payload then dispatch further.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {string} ipaddress IP address of sonos player
    *
    * @return {promise} Returns an object with all msg properties having to be modified
    * example: returning {} means msg is not modified
-   * example: returning { payload: true} means the orignal msg will modify payload and set to true
+   * example: returning { payload: true} means the orignal msg.payload will be modified and set to true
    */
   async function processInputMsg (node, msg, ipaddress) {
     const sonosPlayer = new Sonos(ipaddress)
     // set baseUrl
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} sonos player undefined`)
+      throw new Error(`${NRCSP_ERRORPREFIX} sonos player is undefined`)
     }
     if (!(isValidPropertyNotEmptyString(sonosPlayer, ['host']) &&
       isValidPropertyNotEmptyString(sonosPlayer, ['port']))) {
-      throw new Error(`${NRCSP_ERRORPREFIX}  ip address or port is missing`)
+      throw new Error(`${NRCSP_ERRORPREFIX} ip address or port is missing`)
     }
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // usefull for my extensions
 
     // Check msg.payload. Store lowercase version in command
     if (!isValidPropertyNotEmptyString(msg, ['payload'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is undefined`)
+      throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is undefined/invalid`)
     }
     let command = String(msg.payload)
     command = command.toLowerCase()
@@ -150,6 +142,8 @@ module.exports = function (RED) {
       return groupGetQueue(node, msg, sonosPlayer)
     } else if (command === 'player.get.queue') {
       return playerGetQueue(node, msg, sonosPlayer)
+    } else if (command === 'get.trackplus') {
+      return groupGetTrackPlus(node, msg, sonosPlayer)
     } else if (command === 'lab') {
       return lab(node, msg, sonosPlayer)
     } else {
@@ -351,11 +345,12 @@ module.exports = function (RED) {
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {string}  msg.export content to be played
-   * @param  {string}  msg.export.uri uri to be played
-   * @param  {boolea}  msg.export.queue indicator has to be queued
+   * @param  {string}  msg.export.uri uri to be played/queued
+   * @param  {boolea}  msg.export.queue indicator: has to be queued
    * @param  {string}  [msg.export.metadata] metadata in case of queue = true
    * @param  {number}  [msg.volume] volume - if missing do not touch volume
    * @param  {number}  [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
+   * @param  {boolea}  [msg.clearQueue] if true and export.queue = true the queue is cleared. Default is true.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
@@ -384,6 +379,9 @@ module.exports = function (RED) {
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     coordinator.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
     if (msg.export.queue) {
+      if (validated.clearQueue) {
+        await coordinator.flush()
+      }
       await coordinator.queue({ uri: msg.export.uri, metadata: msg.export.metadata })
       await coordinator.selectQueue()
     } else {
@@ -787,13 +785,15 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Get the status of that group, the specified player belongs to.
+  /**  Get the playback status of that group, the specified player belongs to.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @returns {promise} object to update msg. msg.payload to status of player as string.
+   * @returns {promise} { payload: state }
+   * state: { STOPPED: 'stopped', PLAYING: 'playing', PAUSED_PLAYBACK: 'paused', TRANSITIONING: 'transitioning', NO_MEDIA_PRESENT: 'no_media' }
+   * First is the SONOS response, that is translated by node-sonos.
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -918,7 +918,98 @@ module.exports = function (RED) {
     return { payload: queueItems }
   }
 
-  /**  Get the role of a player.
+  /**  Get group track media position info.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {payload: unchanged, media: {object}, trackInfo: {object}, positionInfo: {object}, queueActivated: true/false
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupGetTrackPlus (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinator = new Sonos(groupData.members[0].urlHostname)
+
+    // get currentTrack data and extract artist, title. Add baseUrl to albumArtURL.
+    const trackData = await coordinator.currentTrack()
+    let artist = 'unknown' // as default
+    let title = 'unknown' // as default
+    let albumArtURL = ''
+    if (!isTruthyAndNotEmptyString(trackData)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} current track data is invalid`)
+    }
+    if (!isValidPropertyNotEmptyString(trackData, ['albumArtURI'])) {
+      // TuneIn does not provide AlbumArtURL -so we continue
+    } else {
+      node.debug('got valid albumArtURI')
+      albumArtURL = sonosPlayer.baseUrl + trackData.albumArtURI
+    }
+    // extract artist and title if available
+    if (!isValidPropertyNotEmptyString(trackData, ['artist'])) {
+      // missing artist: TuneIn provides artist and title in title field
+      if (!isValidPropertyNotEmptyString(trackData, ['title'])) {
+        node.debug('Warning: no artist, no title', 'received-> ' + JSON.stringify(trackData))
+      } else {
+        if (trackData.title.indexOf(' - ') > 0) {
+          node.debug('split data to artist and title')
+          artist = trackData.title.split(' - ')[0]
+          title = trackData.title.split(' - ')[1]
+        } else {
+          node.debug('Warning: invalid combination artist title receive')
+          title = trackData.title
+        }
+      }
+    } else {
+      artist = trackData.artist
+      if (!isValidPropertyNotEmptyString(trackData, ['title'])) {
+        // title unknown - use unknown
+      } else {
+        node.debug('got artist and title')
+        title = trackData.title
+      }
+    }
+    node.debug('got valid song info')
+
+    // get current media data and extract queueActivated, radioId
+    const mediaData = await coordinator.avTransportService().GetMediaInfo()
+    if (!isTruthyAndNotEmptyString(mediaData)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} current media data is invalid`)
+    }
+    if (!isValidPropertyNotEmptyString(mediaData, ['CurrentURI'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} CurrentUri is invalid`)
+    }
+    const uri = mediaData.CurrentURI
+    const queueActivated = uri.startsWith('x-rincon-queue')
+    let radioId = ''
+    if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
+      const end = uri.indexOf('?sid=254')
+      const start = 'x-sonosapi-stream:'.length
+      radioId = uri.substring(start, end)
+    }
+
+    // get current position data
+    const positionData = await coordinator.avTransportService().GetPositionInfo()
+    if (!isTruthyAndNotEmptyString(positionData)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} current position data is invalid`)
+    }
+
+    return {
+      trackData: trackData,
+      artist: artist,
+      title: title,
+      albumArtURL: albumArtURL,
+      mediaData: mediaData,
+      queueActivated: queueActivated,
+      radioId: radioId,
+      positionData: positionData
+    }
+  }
+
+  /**  Get the role and name of a player.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -942,7 +1033,7 @@ module.exports = function (RED) {
         role = 'joiner'
       }
     }
-    return { payload: role }
+    return { payload: role, playerName: groupData.members[groupData.playerIndex].sonosName }
   }
 
   /**  Lab
@@ -967,26 +1058,28 @@ module.exports = function (RED) {
   //
   // ========================================================================
 
-  /**  Validates group properties msg.playerName, msg.volume, msg.sameVolume.
+  /**  Validates group properties msg.playerName, msg.volume, msg.sameVolume, msg.flushQueue
    * @param  {object}        msg incoming message
-   * @param  {string}        [msg.playerName] playerName
-   * @param  {string/number} [msg.volume] volume
-   * @param  {boolean}       [msg.sameVolume] sameVolume
-   * @param  {string}        pkg package identifier
+   * @param  {string}        [msg.playerName = ''] playerName
+   * @param  {string/number} [msg.volume = -1] volume
+   * @param  {boolean}       [msg.sameVolume = true] sameVolume
+   * @param  {boolean}       [msg.clearQueue = true] indicator for clear queue
+   * @param  {string}        pkgPrefix package identifier
    *
-   * @return {promise} object {playerName, volume, sameVolume}
-   * playerName is '' if missing. Otherwise the playerName
+   * @return {promise} object {playerName, volume, sameVolume, flushQueue}
+   * playerName is '' if missing.
    * volume is -1 if missing. Otherwise number, integer in range 1 .. 99
-   * sameVolume is true if missing. Otherwise the given value
+   * sameVolume is true if missing.
+   * clearQueue is true if missing.
    *
    * @throws error for all invalid values
    */
-  async function validatedGroupProperties (msg, pkg) {
+  async function validatedGroupProperties (msg, pkgPrefix) {
     // if missing set to ''
     let newPlayerName = '' // default
     if (isValidProperty(msg, ['playerName'])) {
       if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${pkg}: msg.playerName is not string or empty string`)
+        throw new Error(`${pkgPrefix}: msg.playerName is not string or empty string`)
       }
       newPlayerName = msg.playerName
     }
@@ -995,22 +1088,22 @@ module.exports = function (RED) {
     let newVolume = -1
     if (isValidProperty(msg, ['volume'])) {
       if (typeof msg.volume !== 'number' && typeof msg.volume !== 'string') {
-        throw new Error(`${pkg}: msg.volume is not tpye string or number`)
+        throw new Error(`${pkgPrefix}: msg.volume is not tpye string or number`)
       }
       if (typeof msg.volume === 'number') {
         if (!Number.isInteger(msg.volume)) {
-          throw new Error(`${pkg}: msg.volume is not integer`)
+          throw new Error(`${pkgPrefix}: msg.volume is not integer`)
         }
         newVolume = msg.volume
       } else {
         // it is a string
         if (!REGEX_2DIGITS.test(msg.volume)) {
-          throw new Error(`${pkg}: msg.volume is not a single/double digit`)
+          throw new Error(`${pkgPrefix}: msg.volume is not a single/double digit`)
         }
         newVolume = parseInt(msg.volume)
       }
       if (!(newVolume >= 1 && newVolume <= 99)) {
-        throw new Error(`${pkg}: msg.volume is out of range 1 .. 99`)
+        throw new Error(`${pkgPrefix}: msg.volume is out of range 1 .. 99`)
       }
     }
 
@@ -1018,14 +1111,24 @@ module.exports = function (RED) {
     let newSameVolume = true
     if (isValidProperty(msg, ['sameVolume'])) {
       if (typeof msg.sameVolume !== 'boolean') {
-        throw new Error(`${pkg}: invalid sameVolume  - not boolean`)
+        throw new Error(`${pkgPrefix}: invalid sameVolume  - not boolean`)
       }
       if (newVolume === -1 && msg.sameVolume === true) {
-        throw new Error(`${pkg}: sameVolume is true but no volume`)
+        throw new Error(`${pkgPrefix}: sameVolume is true but no volume`)
       }
       newSameVolume = msg.sameVolume
     }
-    return { playerName: newPlayerName, volume: newVolume, sameVolume: newSameVolume }
+
+    // if missing set to true - throws errors if invalid
+    let clearQueue = true
+    if (isValidProperty(msg, ['clearQueue'])) {
+      if (typeof msg.flushQueue !== 'boolean') {
+        throw new Error(`${pkgPrefix}: invalid clearQueue  - not boolean`)
+      }
+      clearQueue = msg.clearQueue
+    }
+
+    return { playerName: newPlayerName, volume: newVolume, sameVolume: newSameVolume, clearQueue: clearQueue }
   }
 
   RED.nodes.registerType('sonos-universal', SonosUniversalNode)

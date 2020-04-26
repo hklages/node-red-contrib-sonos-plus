@@ -207,7 +207,9 @@ module.exports = {
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
-    return typeof property !== 'undefined'
+    return module.exports.isTruthy(property)
+    // TODO has to be removed
+    // return typeof property !== 'undefined' && property !== null
   },
 
   /** Validates whether property is safely accessable - empty string NOT allowed
@@ -219,7 +221,9 @@ module.exports = {
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
-    return typeof property !== 'undefined' && property !== ''
+    return module.exports.isTruthyAndNotEmptyString(property)
+    // TODO has to be deleted
+    // return typeof property !== 'undefined' && property !== '' && property !== null
   },
 
   // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
