@@ -43,7 +43,7 @@ module.exports = {
    * @param  {boolean} options.sameVolume all player in group play with same volume level
    * @param  {boolean} options.automaticDuration
    * @param  {string}  options.duration format hh:mm:ss
-   * @returns {promise} true/false
+   * @return {promise} true/false
    *
    *
    *    DEPRECIATED -
@@ -147,7 +147,7 @@ module.exports = {
 
   /**  Play notification on a group using coordinator. Coordinator is index 0
    * @param  {object}  node current node - for debugging
-   * @param  {array}   membersAsPlayersPlus array of sonos players with baseUrl,
+   * @param  {array}   membersAsPlayersPlus array of node-sonos player object with baseUrl,
    *                   coordinator has index 0
    *                   length = 1 is allowed if independend.
    * @param  {object}  options options
@@ -157,7 +157,7 @@ module.exports = {
    * @param  {boolean} options.sameVolume all player in group play at same volume level
    * @param  {boolean} options.automaticDuration duration will be received from player
    * @param  {string}  options.duration format hh:mm:ss
-   * @returns {promise} true
+   * @return {promise} true
    *
    * @throws if invalid response from setAVTransportURI, play,
    */
@@ -263,7 +263,7 @@ module.exports = {
 
   /**  Play notification on a single joiner - a player in a group not beeing coordinator.
    * @param  {object}  node current node - for debugging
-   * @param  {object}  coordinatorPlus coordinator in group
+   * @param  {object}  coordinatorPlus coordinator in group as node-sonos player object with baseUrl
    * @param  {object}  joinerPlus jointer in group
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
@@ -271,7 +271,7 @@ module.exports = {
    * @param  {string}  options.volume volumen during notification. - 1 means dont touch. integer 1 .. 99
    * @param  {boolean} options.automaticDuration
    * @param  {string}  options.duration format hh:mm:ss
-   * @returns {promise} true
+   * @return {promise} true
    *
    * @throws all from setAVTransportURI(), avTransportService()*, play, setVolume
    *
@@ -385,79 +385,107 @@ module.exports = {
 
   /**  Creates snapshot of group.
    * @param  {object}  node current node - for debugging
-   * @param  {array}   membersAsPlayers array of sonos players, coordinator/selected player has index 0
+   * @param  {array}   membersAsPlayersPlus array of node-sonos player objects, coordinator/selected player has index 0
    *                   members.length = 1 in case independent
-   * @param  {boolea}  allVolumes shall all volumes being captured
-   * @returns {promise} group snapshot object: state, mediaInfo, positionInfo, memberVolumes
+   * @param  {object}  options
+   * @param  {boolean} [options.snapVolumes = false] capture all players volume
+   * @param  {boolean} [options.snapMutestates = false] capture all players mute state
    *
+   * @return {promise} group snapshot object: { memberData: object, isPlaying: boolean, }
+   * memberData is array of all members (coordinator is index 0) as object: {urlHostname, port, sonosName, volume, mutestate }
    * @throws if invalid response from SONOS player
    *
   */
-
-  // TODO next release with group identifier to ensure that group is not mixed up
+  // TODO capture also the group id for verifcation
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
-  createGroupSnapshot: async function (node, membersAsPlayer, allVolumes) {
-    // create snapshot state/volume/content
+  createGroupSnapshot: async function (node, membersAsPlayersPlus, options) {
     // getCurrentState will return playing for a non-coordinator player even if group is playing
-    const coordinatorIndex = 0
+
     const snapshot = {}
-    snapshot.players = membersAsPlayer
-    snapshot.allVolumes = allVolumes
-    snapshot.state = await membersAsPlayer[coordinatorIndex].getCurrentState()
-    snapshot.mediaInfo = await membersAsPlayer[coordinatorIndex].avTransportService().GetMediaInfo()
-    snapshot.positionInfo = await membersAsPlayer[coordinatorIndex].avTransportService().GetPositionInfo()
-    snapshot.memberVolumes = []
-    snapshot.memberVolumes[coordinatorIndex] = await membersAsPlayer[coordinatorIndex].getVolume()
-    if (allVolumes) { // all other members, starting at 1
-      let vol
-      for (let index = 1; index < membersAsPlayer.length; index++) {
-        vol = await membersAsPlayer[index].getVolume()
-        snapshot.memberVolumes[index] = vol
+
+    // player ip, port, ... and volume, mutestate in an array
+    snapshot.memberData = []
+    let playersVolume
+    let playersMutestate
+    let memberSimple
+    for (let index = 0; index < membersAsPlayersPlus.length; index++) {
+      memberSimple = { urlHostname: membersAsPlayersPlus[index].host, urlPort: membersAsPlayersPlus[index].port, baseUrl: membersAsPlayersPlus[index].baseUrl }
+      snapshot.memberData.push(memberSimple)
+      playersVolume = -1 // means not captured
+      if (options.snapVolumes) {
+        playersVolume = await membersAsPlayersPlus[index].getVolume()
       }
+      playersMutestate = null // means not captured
+      if (options.snapMutestates) {
+        playersMutestate = await membersAsPlayersPlus[index].getMuted()
+        playersMutestate = (playersMutestate ? 'On' : 'Off')
+      }
+      snapshot.memberData[index].volume = playersVolume
+      snapshot.memberData[index].mutestate = playersMutestate
     }
+
+    const coordinatorIndex = 0
+    snapshot.state = await membersAsPlayersPlus[coordinatorIndex].getCurrentState()
+    snapshot.wasPlaying = (snapshot.state === 'playing' || snapshot.state === 'transitioning')
+    const mediaData = await membersAsPlayersPlus[coordinatorIndex].avTransportService().GetMediaInfo()
+    const positionData = await membersAsPlayersPlus[coordinatorIndex].avTransportService().GetPositionInfo()
+    Object.assign(snapshot, { CurrentURI: mediaData.CurrentURI, CurrentURIMetadata: mediaData.CurrentURIMetaData, Track: mediaData.CurrentURIMetaData, NrTracks: mediaData.NrTracks })
+    Object.assign(snapshot, { Track: positionData.Track, RelTime: positionData.RelTime, TrackDuration: positionData.TrackDuration })
     return snapshot
   },
 
   /**  Restore snapshot of group.
    * @param  {object}  node current node - for debugging
    * @param  {object}  snapshot
-   * @returns {promise} true
+   * @param  {array}   membersAsPlayersPlus array of node-sonos player objects, coordinator/selected player has index 0
+   *                   members.length = 1 in case independent
+   *
+   * @return {promise} true
    *
    * @throws if invalid response from SONOS player
    *
-  */
-  // TODO work in progress!!!!!!
+   */
+
   // TODO next release with group identifier to ensure that group is not mixed up
   // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
-  restoreGroupSnapshot: async function (node, snapshot) {
+  restoreGroupSnapshot: async function (node, membersAsPlayersPlus, snapshot) {
+    // restore content: URI and track
     const coordinatorIndex = 0
-    await snapshot.players[coordinatorIndex].setVolume(snapshot.memberVolumes[coordinatorIndex])
-    if (snapshot.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < snapshot.players.length; index++) {
-        await snapshot.players[index].setVolume(snapshot.memberVolumes[index])
-      }
-    }
-    await snapshot.players[coordinatorIndex].setAVTransportURI({ // using node-sonos
-      uri: snapshot.mediaInfo.CurrentURI,
-      metadata: snapshot.mediaInfo.CurrentURIMetaData,
+    await membersAsPlayersPlus[coordinatorIndex].setAVTransportURI({ // using node-sonos
+      uri: snapshot.CurrentURI,
+      metadata: snapshot.CurrentURIMetadata,
       onlySetUri: true
     })
-    if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
-      await snapshot.players[coordinatorIndex].selectTrack(snapshot.positionInfo.Track)
+    if (snapshot.Track && snapshot.Track > 1 && snapshot.NrTracks > 1) {
+      await membersAsPlayersPlus[coordinatorIndex].selectTrack(snapshot.Track)
         .catch(reason => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
-    if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
-      node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
-      await snapshot.players[coordinatorIndex].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
+    if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
+      node.debug('Setting back time to >>', JSON.stringify(snapshot.RelTime))
+      await membersAsPlayersPlus[coordinatorIndex].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.RelTime })
         .catch(reason => {
           node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
         })
     }
-    if (snapshot.wasPlaying) snapshot.players[coordinatorIndex].play()
+    // restore volume/mute if captured.
+    let volume
+    let mutestate
+    let digit
+    for (let index = 0; index < membersAsPlayersPlus.length; index++) {
+      volume = snapshot.memberData[index].volume
+      if (volume !== -1) {
+        await membersAsPlayersPlus[index].setVolume(volume)
+      }
+      mutestate = snapshot.memberData[index].mutestate
+      if (mutestate != null) {
+        digit = (mutestate === 'On')
+        await membersAsPlayersPlus[index].setMuted(digit)
+      }
+    }
     return true
   },
 
@@ -604,9 +632,20 @@ module.exports = {
     return module.exports.setCmd(sonosPlayerBaseUrl, 'AddURIToQueue', modifiedArgs)
   },
 
+  /**  Saves the SONOS queue to a Sonos playlist.
+   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
+   * @param  {string} title
+   */
+  saveQueue: async function (sonosPlayerBaseUrl, title) {
+    const modifiedArgs = {
+      Title: title
+    }
+    return module.exports.setCmd(sonosPlayerBaseUrl, 'SaveQueue', modifiedArgs)
+  },
+
   /**  Start playing the curren uri (must have been set before - either stream or track in queue).
    * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @returns {promise} true or false
+   * @return {promise} true or false
    */
   play: async function (sonosPlayerBaseUrl) {
     return module.exports.setCmd(sonosPlayerBaseUrl, 'Play')
@@ -639,13 +678,13 @@ module.exports = {
 
   /**  Get group mute state.
   *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-  *  @return {promise} current group mute state, On, Off
+  *
+  *  @return {promise} current group mute state: On, Off
   *
   * CAUTION: non-coordinator player will return an error
    */
   getGroupMute: async function (sonosPlayerBaseUrl) {
-    const isMuted = module
-      .exports.getCmd(sonosPlayerBaseUrl, 'GetGroupMute')
+    const isMuted = await module.exports.getCmd(sonosPlayerBaseUrl, 'GetGroupMute')
     return (isMuted === '1' ? 'On' : 'Off')
   },
 
@@ -694,12 +733,13 @@ module.exports = {
    * @param  {string} actionName the action name
    * @param  {object} modifiedArgs only those properties being modified
    *
-   * @returns {promise} true if succesfull
+   * @return {promise} true if succesfull
    */
   setCmd: async function (baseUrl, actionName, newArgs) {
     // copy action parameter and update
     const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName]
     Object.assign(actionParameter.args, newArgs)
+    console.log('args >>' + JSON.stringify(actionParameter.args))
     const { path, name, action, args } = actionParameter
     const response = await sendToPlayerV1(baseUrl, path, name, action, args)
     // check response - select/transform item properties
@@ -730,7 +770,7 @@ module.exports = {
   /**  Get action with new value.
    * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
    * @param  {string} actionName the action name
-   * @returns {promise} value from action
+   * @return {promise} value from action
    *
    * PREREQ: Expectation is that the value is of type string - otherwise an error is
    */
@@ -751,7 +791,6 @@ module.exports = {
       throw new Error(`n-r-c-s-p: invalid body (UPNP) from sendToPlayer - response >>${JSON.stringify(response)}`)
     }
     const bodyXml = await parseSoapBodyV1(response.body, '')
-
     // check response - select/transform item properties
     const key = actionParameter.responsePath
     if (!isValidProperty(bodyXml, key)) {
@@ -839,7 +878,7 @@ module.exports = {
 
   /**  Get sid from uri.
    * @param  {string} uri uri e.g. x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&flags=8300&sn=14
-   * @returns {string} service id or if not found empty
+   * @return {string} service id or if not found empty
    *
    * prereq: uri is string where the sid is in between ?sid= and &flags=
    */

@@ -123,7 +123,7 @@ module.exports = {
 
   /** Encodes special XML characters e. g. < to &lt.
    * @param  {string} xmlData orignal XML data
-   * @returns {string} data without any <, >, &, ', "
+   * @return {string} data without any <, >, &, ', "
    * All params must exist!
    */
 

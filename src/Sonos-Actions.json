@@ -426,6 +426,23 @@
       "CurrentMute"
     ],
   "info": "get group mute on (1) or off (0)"
+  }, 
+  "SaveQueue": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "SaveQueue",
+    "args": {
+      "InstanceID": 0,
+      "Title": "unknown",
+      "ObjectID": ""
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SaveQueueResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "Save queue to Sonos playlist"
   }
-  
 }
