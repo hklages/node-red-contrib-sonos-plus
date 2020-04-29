@@ -224,8 +224,8 @@ module.exports = function (RED) {
       sonosPlayer.setSpotifyRegion('2311')
     } else {
       const regex = /^\d{4}$/
-      if (msg.region.match(regex)) {
-        sonosPlayer.setSpotifiyRegion(msg.region)
+      if ((Number.isInteger(msg.region) && 999 < msg.region && msg.region < 10000) || msg.region.match(regex)) {
+        sonosPlayer.setSpotifyRegion(msg.region)
       } else {
         failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction)
         return
@@ -318,8 +318,8 @@ module.exports = function (RED) {
       sonosPlayer.setSpotifyRegion('2311')
     } else {
       const regex = /^\d{4}$/
-      if (msg.region.match(regex)) {
-        sonosPlayer.setSpotifiyRegion(msg.region)
+      if ((Number.isInteger(msg.region) && 999 < msg.region && msg.region < 10000) || msg.region.match(regex)) {
+        sonosPlayer.setSpotifyRegion(msg.region)
       } else {
         failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction)
         return
