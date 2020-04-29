@@ -104,13 +104,13 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName, volume, sameVolume. 
   </li>
   <li>
+    <code>play.queue</code> Starts playing the SONOS queue. Queue must not be empty<br>
+    Optional properties are: playerName, volume, sameVolume. 
+  </li>
+  <li>
     <code>play.export</code> Starts playing content (eg an item from My Sonos, command get.item) in the group. <br>
     Required property: export.uri, export.queue<br>
     Optional properties are: playerName, volume, sameVolume: default true , clearQueue: default true, export.metadata, 
-  </li>
-  <li>
-    <code>play.queue</code> Starts playing the SONOS queue. Queue must not be empty<br>
-    Optional properties are: playerName, volume, sameVolume. 
   </li>
   <li>
     <code>play.tunein</code> Starts playing the TuneIn radio station<br>
@@ -131,6 +131,11 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     <code>joiner.play.notification</code> Sends a notification to joiner that means a member not beeing the coordinator<br>
     Required property topic: notification uri<br>
     Optional properties are: playerName, volume, duration.     
+  </li>
+  <li>
+    <code>play.snap</code> Plays a snapshot provided in msg.snap<br>
+    Required property snap: Object containing the snapshot data<br>
+    Optional properties are: playerName, volume 
   </li>
   <li>
     <code>next.track</code> Skips to next track (if supported by current stream).<br>
@@ -178,8 +183,21 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName  
   </li>
   <li>
+    <code>create.snap</code> Creates a snapshot<br>
+    Optional properties are: playerName, volume, snapMutestate, snapVolumes
+  </li>
+  <li>
+    <code>save.queue</code> Saves the current queue to a Sonos playlists.<br>
+    Required topic: name of Sonos playlist
+    Optional properties are: playerName  
+  </li>
+  <li>
     <code>clear.queue</code> Clears the queue.<br>
     Optional properties are: playerName  
+  </li>
+  <li>
+    <code>get.state</code> Outputs the current playback state, queue status, queue mode, coordinator name, mute state<br>
+    Optional properties are: playerName
   </li>
   <li>
     <code>get.playbackstate</code> Outputs the current playback state in the group.<br>

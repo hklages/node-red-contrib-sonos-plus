@@ -280,7 +280,6 @@ module.exports = {
    */
 
   getErrorCodeFromEnvelope: data => {
-    console.log('data >>' + data)
     let errorCode = '' // default
     if (module.exports.isTruthyAndNotEmptyString(data)) {
       const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length

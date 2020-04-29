@@ -21,6 +21,28 @@
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "ObjectID: FV:2 = Get the My Sonos is default!"
   },
+  "BrowseSQ": {
+    "path": "/MediaServer/ContentDirectory/Control",
+    "name": "ContentDirectory",
+    "action": "Browse",
+    "args": {
+      "InstanceID": 0,
+      "BrowseFlag": "BrowseDirectChildren",
+      "Filter": "*",
+      "StartingIndex": "0",
+      "RequestedCount": "100",
+      "SortCriteria": "",
+      "ObjectID": "SQ:"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:BrowseResponse",
+      "Result"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "ObjectID: SQ = Sonos playlists"
+  },
   "SetAVTransportURI": {
     "path": "/MediaRenderer/AVTransport/Control",
     "name": "AVTransport",

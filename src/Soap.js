@@ -59,7 +59,7 @@ module.exports = {
         // That goes usually together with status code 500 - triggering catch
         // Experience: When using reject(error) the error.reponse get lost.
         // Thats why error.response is checked and handled here!
-        console.log('sendToPlayerV1. entering catch error')
+        console.log('sendToPlayerV1. entering catch error') // please leave for debugging
         if (isValidProperty(error, ['response'])) {
         // Indicator for SOAP Error
           if (isValidProperty(error, ['message'])) {
@@ -71,10 +71,10 @@ module.exports = {
                 serviceErrorList = module.exports.ERROR_CODES[name.toUpperCase()]
               }
               const errorMessage = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
-              console.log('sendToPlayerV1.  status code 500 errorCode >>' + JSON.stringify(errorCode))
+              console.log('sendToPlayerV1.  status code 500 errorCode >>' + JSON.stringify(errorCode)) // please leave for debugging
               throw new Error(`n-r-c-s-p: statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
             } else {
-              console.log('error.message is not code 500  >>' + JSON.stringify(error.message))
+              console.log('error.message is not code 500  >>' + JSON.stringify(error.message)) // please leave for debugging
               throw new Error('error.message is not code 500' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
             }
           } else {
@@ -150,9 +150,17 @@ module.exports = {
    *
    * @return {promise} JSON format
    */
+
+  // documentation: https://www.npmjs.com/package/xml2js#options
+  // explicitArray (default: true):
+  //    Always put child nodes in an array if true; otherwise an array is created only if there is more than one.
+  // mergeAttrs (default: false): Merge attributes and child elements as properties of the parent,
+  //    instead of keying attributes off a child attribute object.This option is ignored if ignoreAttrs is true
+  // charkey (default: _):
+  //    Prefix that is used to access the character content.Version 0.1 default was #.
+
   parseSoapBodyV1: async function (body, tag) {
     const arg = { mergeAttrs: true, explicitArray: false }
-
     if (tag !== '') {
       arg.charkey = tag
     }
