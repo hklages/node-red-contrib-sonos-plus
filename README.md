@@ -10,17 +10,15 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sonos" using the original SONOS app. Play any of these items by using the "My Sonos" node (command export.item) in combination with "Universal node" (command play.export).
 
+See the full scope of commands [here.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.1-Universal-Node)
+
 ## NEWS
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
 - CAUTION: Univerals node: play.export by default clears the queue if export.queue = true. Use msg.clearQueue = false to avoid.
 
-- "Universal" node: new commands adjust/get.volume, player.adjust.volume,  set/get.mute, player.set/get.mute, get.queue, player.get.queue
-
-- "Universal" node: new command play.streamhttp
-
-- "Universal" node: get.trackmedia
+- New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
 
 - "Manage Radio" is depreciated - please use Universal node instead.
 

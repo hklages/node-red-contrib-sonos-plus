@@ -2,21 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.0.3] 2020-04-26
+## [3.1.0] 2020-04-30
 
 ### Added
 
-- "Universal node": new commands adjust/get.volume, player.adjust.volume, set/get.mute, player.set/get.mute, get.queue, player.get.queue
-
-- "Universal" node: new command play.streamhttp, get.trackplus
+- "Universal node": New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
 
 ## Changed
 
-- CAUTION: Universal node: play.export by default clears the queue if export.queue = true. Use msg.clearQueue = false to avoid.
+- CAUTION: Universal node: play.export by default clears the queue if export.queue is true. Use msg.clearQueue = false to avoid.
 
 - "Universal node": throws error in case of an invalid command (msg.payload)
 
 - "Universal node": command player.get.role also outputs the SONOS player name
+
+- "My Sonos" node: get.items now alos provides the Sonos playlists.
 
 - "Manage Radio": is depreciated - please use Universal node instead.
 
