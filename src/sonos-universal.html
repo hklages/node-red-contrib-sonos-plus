@@ -50,14 +50,14 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-universal">
-<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly stated (command prefix: joiner, player) the message acts on the player.
-The group is identified by the given player. msg.playerName overrides the configuration node player.</br>
+<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly stated (command prefix: joiner, player) the message acts on the given player.
+The group is identified by the given player. playerName overrides the configuration node player.</br>
 
 The <b>playerName</b> is the name of the SONOS player (aka room, zone) and NOT the name of a configuration node!</br>
 
 <b>Joiner</b> is the "opposite" of <b>coordinator</b>. A group always consist of a unique coordinator and optional joiners.</br>
-
-All messages do not change the msg except those with <b>get</b>.
+<br>
+Only <b>get.*, create.snap</b> modify the incoming message.</b>
 </p>
 
 <h1>Input (msg properties before processing)</h3>
@@ -74,16 +74,31 @@ All messages do not change the msg except those with <b>get</b>.
   <dd>SONOS Player name aka room name aka zone (priority) If missing, the one given in configuration is used. </dd>
 
   <dt class="optional">volume (some commands) <span class="property-type">string/number</span></dt>
-  <dd>Volume in range 1 .. 99</dd>
+  <dd>Volume as integer in range 1 .. 99</dd>
 
   <dt class="optional">sameVolume (some commands) <span class="property-type">boolean</span></dt>
   <dd>All player in group will play at the specified volume - default is true!</dd>
 
-  <dt class="optional">duration (play.notification, joiner.play.notification) <span class="property-type">string</span></dt>
+  <dt class="optional">duration (only play.notification, joiner.play.notification) <span class="property-type">string</span></dt>
   <dd>The duration of the notification in format hh:mm:ss - if left, program will try to calculate the best duration </dd>
 
-  <dt>export (play.export) <span class="property-type">object</span></dt>
-  <dd>The uri (string), metadata(string) and queue(boolean) identifier of the content to be played.</dd>
+  <dt>export (only play.export) <span class="property-type">object</span></dt>
+  <dd>The uri (string), metadata(string) and queue identifier (boolean) of the content to be played.</dd>
+
+  <dt class="optional">snapVolumes (only create.snap) <span class="property-type">boolean</span></dt>
+  <dd>If true the volume level of group members is captured. Default is false</dd>
+
+  <dt class="optional">snapMutestates (only create.snap) <span class="property-type">boolean</span></dt>
+  <dd>If true the mute state of group members is captured. Default is false</dd>
+
+  <dt>snap (only play.snap) <span class="property-type">object</span></dt>
+  <dd>snap holds wasPlaying, playbackstate, CurrentURI, CurrentURIMetadata, NrTracks, Track, RelTime, TrackDuration</dd>
+
+  <dt class="optional">clearQueue (only play.export) <span class="property-type">boolean</span></dt>
+  <dd>The queue is first cleared, then the exported items are imported. </dd>
+
+  <dt class="optional">ignoreNotExists (remove.sonosplaylist) <span class="property-type">boolean</span></dt>
+  <dd>If the playlist is not found The uri (string), metadata(string) and queue(boolean) identifier of the content to be played.</dd>
 
 </dl>
 
@@ -94,6 +109,11 @@ All messages do not change the msg except those with <b>get</b>.
     <dd>In case of <b>get</b> the requested data is provided. </dd>
 </dl>
 
+<dl class="message-properties">
+  <dt>snap <span class="property-type">object</span> </dt>
+  <dd>In case of <b>create.snap</b> the snapshot data. </dd>
+</dl>
+
 <h1>Commands</h3>
 
 In general the commands are "GROUP" oriented and only those commands with prefix "player", "joiner" address a specific player.
@@ -101,49 +121,49 @@ In general the commands are "GROUP" oriented and only those commands with prefix
 <ul>
   <li>
     <code>play</code> Continues playing in the group.<br>
-    Optional properties are: playerName, volume, sameVolume. 
+    Optional properties: playerName, volume, sameVolume
   </li>
   <li>
-    <code>play.queue</code> Starts playing the SONOS queue. Queue must not be empty<br>
-    Optional properties are: playerName, volume, sameVolume. 
+    <code>play.queue</code> Activates and starts playing the SONOS queue. Queue must not be empty<br>
+    Optional properties: playerName, volume, sameVolume 
   </li>
   <li>
     <code>play.export</code> Starts playing content (eg an item from My Sonos, command get.item) in the group. <br>
-    Required property: export.uri, export.queue<br>
-    Optional properties are: playerName, volume, sameVolume: default true , clearQueue: default true, export.metadata, 
+    Required properties: export.uri, export.queue<br>
+    Optional properties: playerName, volume, sameVolume, clearQueue: default true, export.metadata
   </li>
   <li>
     <code>play.tunein</code> Starts playing the TuneIn radio station<br>
-    Required property topic: TuneIn radio id<br>
-    Optional properties are: playerName, volume, sameVolume. 
+    Required property:  topic: TuneIn radio id<br>
+    Optional properties: playerName, volume, sameVolume
   </li>
   <li>
     <code>play.streamhttp</code> Starts playing a http stream from internet<br>
-    Required property topic: http/https stream id<br>
-    Optional properties are: playerName, volume, sameVolume. 
+    Required property: topic: http/https stream id<br>
+    Optional properties: playerName, volume, sameVolume
   </li>
   <li>
     <code>play.notification</code> Sends a notification to a group. If volume is specified, all will play at the specified volume.<br>
-    Required property topic: notification uri<br>
-    Optional properties are: playerName, volume, sameVolume, duration.     
+    Required property: topic: notification uri<br>
+    Optional properties: playerName, volume, sameVolume, duration
   </li>
   <li>
     <code>joiner.play.notification</code> Sends a notification to joiner that means a member not beeing the coordinator<br>
-    Required property topic: notification uri<br>
-    Optional properties are: playerName, volume, duration.     
+    Required property: topic: notification uri<br>
+    Optional properties: playerName, volume, duration
   </li>
   <li>
-    <code>play.snap</code> Plays a snapshot provided in msg.snap<br>
-    Required property snap: Object containing the snapshot data<br>
-    Optional properties are: playerName, volume 
+    <code>play.snap</code> Plays a given snapshot.<br>
+    Required property: snap: snapshot data<br>
+    Optional properties: playerName
   </li>
   <li>
     <code>next.track</code> Skips to next track (if supported by current stream).<br>
-    Optional properties are: playerName    
+    Optional properties: playerName    
   </li>
   <li>
     <code>previous.track</code> Skips back track (if supported by current stream).<br>
-    Optional properties are: playerName    
+    Optional property: playerName    
   </li>
   <li>
     <code>toggle.playback</code> Toggles playback in the group (playing, paused)<br>
@@ -151,7 +171,7 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   </li>
   <li>
     <code>pause</code> Pause playing in the group.<br>
-    Optional properties are: playerName
+    Optional properties: playerName
   </li>
   <li>
     <code>stop</code> Stops playing in the group.<br>
@@ -159,57 +179,62 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   </li>
   <li>
     <code>adjust.volume</code> Adjusts the group volume.<br> 
-    msg.topic is the volume.
-    Optional properties are: playerName
+    Required property: topic is the volume
+    Optional properties: playerName
   </li>
   <li>
     <code>player.adjust.volume</code> Adjusts the volume of the specified player.<br>
-    topic specifies the new volume 1 .. 99
-    Optional properties are: playerName  
+    Required property: topic is the volume
+    Optional properties: playerName  
   </li>
   <li>
     <code>player.set.volume</code> Sets the volume of the specified player.<br> 
-    topic specifies the new volume 1 .. 99  - is being ignored in case of msg.volume<bf>
-    Optional properties are: playerName, volume 
+    Required property: topic is the new volume 1 .. 99<bf>
+    Optional properties: playerName, volume. volume overrides topic.
   </li>
   <li>
     <code>set.mutestate</code> Sets the group mute state.<br>
-    topic specifies the state On, Off<br>
+    Requried property: topic specifies the state On, Off<br>
     Optional properties are: playerName  
   </li>
   <li>
     <code>player.set.mutestate</code> Sets the mute state of the specified player.<br>
-    topic specifies the state On, Off<br>
+    Requried property: topic specifies the state On, Off<br>
     Optional properties are: playerName  
   </li>
   <li>
     <code>create.snap</code> Creates a snapshot<br>
-    Optional properties are: playerName, volume, snapMutestate, snapVolumes
+    Optional properties are: playerName, snapMutestate, snapVolumes
   </li>
   <li>
-    <code>save.queue</code> Saves the current queue to a Sonos playlists.<br>
-    Required topic: name of Sonos playlist
-    Optional properties are: playerName  
+    <code>save.queue</code> Saves the current queue to a Sonos playlist.<br>
+    Required property: topic - title of Sonos playlist
+    Optional properties: playerName  
   </li>
   <li>
-    <code>clear.queue</code> Clears the queue.<br>
-    Optional properties are: playerName  
+    <code>clear.queue</code> Clears the SONOS queue.<br>
+    Optional properties: playerName  
+  </li>
+  <li>
+    <code>remove.sonosplaylist</code> Removes/deletes the given Sonos playlist.<br>
+    Required property: topic - the playlist title
+    Optional properties: playerName, ignoreNotExist
   </li>
   <li>
     <code>get.state</code> Outputs the current playback state, queue status, queue mode, coordinator name, mute state<br>
-    Optional properties are: playerName
+    Optional property: playerName
   </li>
   <li>
     <code>get.playbackstate</code> Outputs the current playback state in the group.<br>
-    Optional properties are: playerName
+    Optional property: playerName
   </li>
   <li>
     <code>get.volume</code> Outputs the group volume.<br> 
-    Optional properties are: playerName  
+    Optional property: playerName
   </li>
   <li>
     <code>player.get.volume</code> Outputs the volume.<br> 
-    Optional properties are: playerName  
+    Optional property: playerName  
   </li>
   <li>
     <code>get.mutestate</code> Outputs the group mute state.<br> 
@@ -217,7 +242,7 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   </li>
   <li>
     <code>player.get.mutestate</code> Outputs the mute state of the specified player<br> 
-    Optional properties are: playerName  
+    Optional property: playerName
   </li>
   <li>
     <code>player.get.role</code> Outputs the current state: coordinator|joiner|independent and the SONOS player name.<br>
@@ -229,11 +254,11 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   </li>
   <li>
     <code>player.get.queue</code> Outputs the current queue of the specified player.<br>
-    Optional properties are: playerName
+    Optional property: playerName
   </li>
   <li>
     <code>get.trackplus</code> Outputs the track, media and position data - also status of queue, title,artist, TuneIn radio id<br>
-    Optional properties are: playerName<br>
+    Optional property: playerName
   </li>
 </ul>
 </script>

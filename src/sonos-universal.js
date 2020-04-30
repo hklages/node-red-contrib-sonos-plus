@@ -2,13 +2,13 @@ const {
   REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_2DIGITS, REGEX_2DIGITSSIGN, REGEX_RADIO_ID,
   NRCSP_ERRORPREFIX,
   discoverSonosPlayerBySerial,
-  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
+  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, isTruthy,
   failure, success
 } = require('./Helper.js')
 
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
-  createGroupSnapshot, restoreGroupSnapshot, saveQueue,
+  createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllSonosPlaylists,
   setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, getGroupQueue
 } = require('./Sonos-Commands.js')
 
@@ -138,6 +138,8 @@ module.exports = function (RED) {
         return groupSaveQueueToSonosPlaylist(node, msg, sonosPlayer)
       case 'clear.queue':
         return groupClearQueue(node, msg, sonosPlayer)
+      case 'remove.sonosplaylist':
+        return groupRemoveSonosPlaylist(node, msg, sonosPlayer)
       case 'get.state':
         return groupGetState(node, msg, sonosPlayer)
       case 'get.playbackstate':
@@ -863,8 +865,8 @@ module.exports = function (RED) {
   /**  Create a snapshot of the given group of players.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {boolean}  [msg.snapVolumes = false] will capture the players volumes
-   * @param  {boolean}  [msg.snapMutestate = false] will capture the players mutestates
+   * @param  {boolean} [msg.snapVolumes = false] will capture the players volumes
+   * @param  {boolean} [msg.snapMutestate = false] will capture the players mutestates
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player
    *
@@ -950,6 +952,63 @@ module.exports = function (RED) {
     const coordinator = new Sonos(groupData.members[0].urlHostname)
     await coordinator.flush()
     return {} // means untouched msg
+  }
+
+  /**  Remove Sonos playlist with given title. (impact on My Sonos and also Sonos playlist list)
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.topic] Exact title of Sonos playlist
+   * @param  {boolean} [msg.ignoreNotExists] if missing assume true
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} msg unchanged
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupRemoveSonosPlaylist (node, msg, sonosPlayer) {
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic (title) is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${NRCSP_ERRORPREFIX} msg.topic (title) is not string`)
+    }
+    const searchTitle = msg.topic
+
+    let ignoreNotExists = true
+    if (isValidProperty(msg, ['ignoreNotExists'])) {
+      if (typeof msg.volume !== 'boolean') {
+        throw new Error(`${NRCSP_ERRORPREFIX}: msg.ignoreNotExists is not tpye boolean`)
+      }
+      ignoreNotExists = msg.ignoreNotExist
+    }
+
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinatorIndex = 0
+    const playLists = await getAllSonosPlaylists(groupData.members[coordinatorIndex].baseUrl)
+
+    if (!isTruthy(playLists)) {
+      throw new Error(`${NRCSP_ERRORPREFIX}: Sonos playlist list is invalid`)
+    }
+    // find title in playlist - exact - return id
+    let id = ''
+    for (var i = 0; i < playLists.length; i++) {
+      if (playLists[i].title === searchTitle) {
+        id = playLists[i].id.replace('SQ:', '')
+      }
+    }
+    if (id === '') { // not found
+      if (!ignoreNotExists) {
+        throw new Error(`${NRCSP_ERRORPREFIX} No Sonos playlist title matching msg.topic.`)
+      }
+    } else {
+      const coordinator = new Sonos(groupData.members[0].urlHostname)
+      await coordinator.deletePlaylist(id)
+    }
+    return {}
   }
 
   /**  Get the playback state of that group, the specified player belongs to.

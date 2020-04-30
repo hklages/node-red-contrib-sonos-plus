@@ -1,6 +1,6 @@
 'use strict'
 
-const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec } = require('./Helper.js')
+const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec, NRCSP_ERRORPREFIX } = require('./Helper.js')
 const { encodeXml, sendToPlayerV1, parseSoapBodyV1 } = require('./Soap.js')
 const { GenerateMetadata } = require('sonos').Helpers
 
@@ -426,11 +426,11 @@ module.exports = {
     }
 
     const coordinatorIndex = 0
-    snapshot.state = await membersAsPlayersPlus[coordinatorIndex].getCurrentState()
-    snapshot.wasPlaying = (snapshot.state === 'playing' || snapshot.state === 'transitioning')
+    snapshot.playbackstate = await membersAsPlayersPlus[coordinatorIndex].getCurrentState()
+    snapshot.wasPlaying = (snapshot.playbackstate === 'playing' || snapshot.playbackstate === 'transitioning')
     const mediaData = await membersAsPlayersPlus[coordinatorIndex].avTransportService().GetMediaInfo()
     const positionData = await membersAsPlayersPlus[coordinatorIndex].avTransportService().GetPositionInfo()
-    Object.assign(snapshot, { CurrentURI: mediaData.CurrentURI, CurrentURIMetadata: mediaData.CurrentURIMetaData, Track: mediaData.CurrentURIMetaData, NrTracks: mediaData.NrTracks })
+    Object.assign(snapshot, { CurrentURI: mediaData.CurrentURI, CurrentURIMetadata: mediaData.CurrentURIMetaData, NrTracks: mediaData.NrTracks })
     Object.assign(snapshot, { Track: positionData.Track, RelTime: positionData.RelTime, TrackDuration: positionData.TrackDuration })
     return snapshot
   },
@@ -579,7 +579,7 @@ module.exports = {
    * @param   {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
    *
    * @return {promise} array of My Sonos items - could be emtpy
-   *                   {title, albumArt, uri, metadata, sid, upnpClass, processingType}
+   *                   {title, albumArt, uri, metadata, sid, id (in case of a Sonos playlist), upnpClass, processingType}
    *
    * @throws if invalid SONOS player response
    * if parsing went wrong
@@ -593,11 +593,11 @@ module.exports = {
     // TODO check whether limit 100 is a problem or better use 200, 500, 1000?
 
     // get all My Sonos items - but not Sonos playlists (ObjectID FV:2)
-    let response = await module.exports.getCmd(sonosPlayerBaseUrl, 'Browse')
+    const response = await module.exports.getCmd(sonosPlayerBaseUrl, 'Browse')
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`n-r-c-s-p: Browse FV-2 response is invalid. Response >>${JSON.stringify(response)}`)
     }
-    const listMySonos = await module.exports.parseMySonosResult(response)
+    const listMySonos = await module.exports.parseMySonosWithoutSonosPlaylistsResult(response)
     if (!isTruthyAndNotEmptyString(listMySonos)) {
       throw new Error(`n-r-c-s-p: response form parsing Browse FV-2 invalid. Response >>${JSON.stringify(listMySonos)}`)
     }
@@ -612,16 +612,40 @@ module.exports = {
     })
 
     // get all Sonos playlists (ObjectID SQ)
-    response = await module.exports.getCmd(sonosPlayerBaseUrl, 'BrowseSQ')
+    // response = await module.exports.getCmd(sonosPlayerBaseUrl, 'BrowseSQ')
+    // if (!isTruthyAndNotEmptyString(response)) {
+    //   throw new Error(`n-r-c-s-p: browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
+    // }
+    // const listSonosPlaylists = await module.exports.parseSonosPlaylistsResult(response)
+    // if (!isTruthyAndNotEmptyString(listSonosPlaylists)) {
+    //   throw new Error(`n-r-c-s-p: response form parsing Browse SQ invalid. Response >>${JSON.stringify(listSonosPlaylists)}`)
+    // }
+
+    const listSonosPlaylists = await module.exports.getAllSonosPlaylists(sonosPlayerBaseUrl)
+    return listMySonos.concat(listSonosPlaylists)
+  },
+
+  /**  Get array of all Sonos playlists (objects). Caution: Upper limit 100
+   * @param  {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
+   *
+   * @return {promise} array of Sonos playlists - could be emtpy
+   *                   {title, albumArt(array), sid (empty string), uri, metadata(empty string), upnpClass, processingType}
+   *
+   * @throws if invalid SONOS player response
+   *          if parsing went wrong
+   *
+   */
+  getAllSonosPlaylists: async function (sonosPlayerBaseUrl) {
+    const response = await module.exports.getCmd(sonosPlayerBaseUrl, 'BrowseSQ')
     if (!isTruthyAndNotEmptyString(response)) {
-      throw new Error(`n-r-c-s-p: browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
     }
     const listSonosPlaylists = await module.exports.parseSonosPlaylistsResult(response)
     if (!isTruthyAndNotEmptyString(listSonosPlaylists)) {
-      throw new Error(`n-r-c-s-p: response form parsing Browse SQ invalid. Response >>${JSON.stringify(listSonosPlaylists)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(listSonosPlaylists)}`)
     }
 
-    return listMySonos.concat(listSonosPlaylists)
+    return listSonosPlaylists
   },
 
   // ========================================================================
@@ -816,6 +840,12 @@ module.exports = {
     return result
   },
 
+  // ========================================================================
+  //
+  //                         HELPERS
+  //
+  // ========================================================================
+
   /** Find searchString in My Sonos items, property title - without filter.
    * @param  {Array} items array of objects {title: , uri: , metadata}
    * @param  {string} searchString search string for title property
@@ -839,7 +869,7 @@ module.exports = {
     throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic')
   },
 
-  /** Creates a list of items from given Browse output.
+  /** Creates a list of items from given Browse FV:2 (My Sonos but without Sonos playlists) output.
    * @param   {string}  favoritesSoapString string is Browse response, favorites from SONOS player
    *
    * @return {promise} Array of objects (see above) in JSON format. May return empty array
@@ -848,12 +878,12 @@ module.exports = {
    * @throws if parseSoapBody is in error
    */
 
-  parseMySonosResult: async function (favoritesSoapString) {
+  parseMySonosWithoutSonosPlaylistsResult: async function (favoritesSoapString) {
     const cleanXml = favoritesSoapString.replace('\\"', '')
     const tag = 'uriIdentifier'
     const result = await parseSoapBodyV1(cleanXml, tag)
     if (!isTruthyAndNotEmptyString(result)) {
-      throw new Error(`n-r-c-s-p: invalid reponse form parseSoapBodyV1 - response >>${JSON.stringify(result)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBodyV1 is invalid. Response >>${JSON.stringify(result)}`)
     }
     const list = []
     let sid, upnpClass, processingType
@@ -891,9 +921,11 @@ module.exports = {
    * @param   {string}  sonosPlaylistsSoapString string is Browse response, favorites from SONOS player
    *
    * @return {promise} Array of objects (see above) in JSON format. May return empty array
-   *                    {title, albumArt, uri, metadata, sid, upnpClass, processingType}
+   *                    {title, albumArt (of first track), uri, metadata (empty string), sid (empty string), id, upnpClass, processingType}
    *
    * @throws if parseSoapBody is in error
+   *         if id is missing
+   *         if AlbumART missing
    */
 
   parseSonosPlaylistsResult: async function (sonosPlaylistsSoapString) {
@@ -901,13 +933,17 @@ module.exports = {
     const tag = 'uriIdentifier'
     const result = await parseSoapBodyV1(cleanXml, tag)
     if (!isTruthyAndNotEmptyString(result)) {
-      throw new Error(`n-r-c-s-p: invalid reponse form parseSoapBody - response >>${JSON.stringify(result)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBody is invalid. Response >>${JSON.stringify(result)}`)
     }
     const list = []
-    let sid, upnpClass, processingType
     const container = result['DIDL-Lite'].container
+    let upnpClass, processingType, id, albumArtURI, firstTrackArtURI
     for (var i = 0; i < container.length; i++) {
-      sid = ''
+      if (isValidProperty(container[i], ['id'])) {
+        id = container[i].id
+      } else { // should never happen
+        throw new Error(`${NRCSP_ERRORPREFIX} id is missing`)
+      }
       upnpClass = ''
       if (isValidProperty(container[i], ['upnp:class'])) {
         upnpClass = container[i]['upnp:class']
@@ -919,12 +955,25 @@ module.exports = {
       if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
         processingType = 'queue'
       }
+      firstTrackArtURI = ''
+      if (isValidProperty(container[i], ['upnp:albumArtURI'])) {
+        albumArtURI = container[i]['upnp:albumArtURI']
+        if (Array.isArray(albumArtURI)) {
+          if (albumArtURI.length > 0) {
+            firstTrackArtURI = albumArtURI[0]
+          }
+        }
+      } else {
+        throw new Error(`${NRCSP_ERRORPREFIX} AlbumARTURI is missing`)
+      }
+
       list.push({
         title: container[i]['dc:title'],
-        albumArt: container[i]['upnp:albumArtURI'],
+        albumArt: firstTrackArtURI,
         uri: container[i].res[tag],
-        metadata: container[i]['r:resMD'],
-        sid: sid,
+        metadata: '',
+        sid: '',
+        id: id,
         upnpClass: upnpClass,
         processingType: processingType
       })

@@ -25,7 +25,7 @@ module.exports = {
    * @return {promise} response from player
    */
   sendToPlayerV1: async function (baseUrl, path, name, action, args) {
-    console.log('sendToPlayer1. Action >>' + action)
+    console.log('sendToPlayer1. Action >>' + action) // please leave for debugging
     // create action used in header
     const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`
 
