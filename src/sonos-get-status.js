@@ -867,7 +867,7 @@ module.exports = function (RED) {
    */
   function labFunction (node, msg, sonosPlayer) {
     const sonosFunction = 'lab'
-    getCmd(sonosPlayer.baseUrl, 'GetCurrentTransportActions')
+    getCmd(sonosPlayer.baseUrl, 'GetGroupVolume')
       .then((response) => {
         msg.payload = response
         success(node, msg, sonosFunction)

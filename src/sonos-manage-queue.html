@@ -87,7 +87,6 @@
       <li><b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string</li>
       <li><b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string</li>
       <br/>
-      <li><b>activate_queue</b> Starts playing songs from queue (checks queue is not empty). <code>volume</code> may contain the volume in the range from 1 to 99.</li>
       <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
       <li><b>seek</b> Moves inside current (QUEUE) song to specified time. <code>topic</code> provides time in hh:mm:ss format</li>
       <br/>
@@ -96,7 +95,6 @@
       <br/>
       <li><b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE</li>
       <br/>
-      <li><b>get_queue</b> Outputs the current queue as output</li>
       <li><b>get_queuemode</b> Gets the current queue mode</li>
       <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
       <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>

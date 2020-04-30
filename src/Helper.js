@@ -3,6 +3,8 @@
 module.exports = {
   // data to be used in other modules
 
+  ERROR_CODES: require('./Soap-Error-Codes.json'),
+
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
 
   REGEX_TIME: /([0-1][0-9]):([0-5][0-9]):([0-5][0-9])/, // Only hh:mm:ss and hours from 0 to 19
@@ -10,6 +12,7 @@ module.exports = {
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
   REGEX_RADIO_ID: /^[s][0-9]+$/,
   REGEX_2DIGITS: /^\d{1,2}$/,
+  REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
@@ -135,7 +138,8 @@ module.exports = {
           if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
             const upnpErrorCode = module.exports.getErrorCodeFromEnvelope(error.message.substring(module.exports.NODE_SONOS_UPNP500.length))
             msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
-            msgDetails = `Lookup upnpError ${upnpErrorCode}`
+            // TODO service is not known, therefore we can not evaluate the error text.
+            msgDetails = module.exports.getErrorMessageV1(upnpErrorCode, module.exports.ERROR_CODES.UPNP, '') // only UPNP errors
           } else {
             // unlikely as all UPNP errors throw 500
             msgShort = 'statusCode NOT 500'
@@ -157,7 +161,7 @@ module.exports = {
       }
     }
 
-    node.error(`${functionName} - ${msgShort} :: Details: ${msgDetails}`, msg)
+    node.error(`${functionName}: ${msgShort} :: Details: ${msgDetails}`, msg)
     node.status({
       fill: 'red',
       shape: 'dot',
@@ -203,7 +207,7 @@ module.exports = {
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
-    return typeof property !== 'undefined'
+    return module.exports.isTruthy(property)
   },
 
   /** Validates whether property is safely accessable - empty string NOT allowed
@@ -215,7 +219,7 @@ module.exports = {
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
-    return typeof property !== 'undefined' && property !== ''
+    return module.exports.isTruthyAndNotEmptyString(property)
   },
 
   // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
@@ -281,5 +285,32 @@ module.exports = {
       }
     }
     return errorCode.trim()
+  },
+
+  /**  Get error message from error code. If not found provide 'unknown error'.
+   * @param  {string} errorCode
+   * @param  {JSON} upnpErrorList - simple mapping .code .message
+   * @param  {JSON} [serviceErrorList] - simple mapping .code .message
+   *
+   * @return {string} error text (from mapping code -  text)
+   */
+
+  getErrorMessageV1: (errorCode, upnpErrorList, serviceErrorList) => {
+    const errorText = 'unknown error' // default
+    if (module.exports.isTruthyAndNotEmptyString(errorCode)) {
+      if (serviceErrorList !== '') {
+        for (let i = 0; i < serviceErrorList.length; i++) {
+          if (serviceErrorList[i].code === errorCode) {
+            return serviceErrorList[i].message
+          }
+        }
+      }
+      for (let i = 0; i < upnpErrorList.length; i++) {
+        if (upnpErrorList[i].code === errorCode) {
+          return upnpErrorList[i].message
+        }
+      }
+    }
+    return errorText
   }
 }

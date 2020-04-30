@@ -8,9 +8,23 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
+Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sonos" using the original SONOS app. Play any of these items by using the "My Sonos" node (command export.item) in combination with "Universal node" (command play.export).
+
 ## NEWS
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
+
+- CAUTION: Univerals node: play.export by default clears the queue if export.queue = true. Use msg.clearQueue = false to avoid.
+
+- "Universal" node: new commands adjust/get.volume, player.adjust.volume,  set/get.mute, player.set/get.mute, get.queue, player.get.queue
+
+- "Universal" node: new command play.streamhttp
+
+- "Universal" node: get.trackmedia
+
+- "Manage Radio" is depreciated - please use Universal node instead.
+
+- "Universal node": throws error in case of an invalid command (msg.payload)
 
 - "My Sonos" node: new command export.item works together with Universal node command play.export
 
@@ -35,7 +49,7 @@ Install directly from your Node-RED's setting pallete.
 
 ## Restrictions
 
-> When playing a radio station the commands next_song, previous_song may cause an error message as many stations do not support them.
+> When playing a radio station the commands next.track, previous.track may cause an error message as many stations do not support them.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 

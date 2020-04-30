@@ -45,35 +45,7 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-radio">
-<p>Incoming message is being converted to valid command and send to SONOS player. The <b>get</b> provides information about the My Sonos radio stations.
+<p>This node is depreciated. Please use instead the Universal node. 
 </p>
 
-<h1>Input (required)</h3>
-
-<dl class="message-properties">
-
-    <dt>payload (always required) <span class="property-type">string</span>  </dt>
-    <dd>A command. Valid commands see Details.</dd>
-
-    <dt>topic <span class="property-type">string</span> </dt>
-    <dd>Parameter - either the TuneIn radio id or a part of the My Sonos radio station title.</dd>
-
-    <dt>volume <span class="property-type">string</span> </dt>
-    <dd>Volume beeing used together with <b>play_mysonos, play_tunein, play_httpradio</b></dd>
-
-</dl>
-
-<h1>Output</h3>
-
-<dl class="message-properties">
-    <dt>payload <span class="property-type">string</span></dt>
-    <dd>title of station from my Sonos or in case of <b>get_mysonos</b> the array of radios stations.</dd>
-</dl>
-
-<h1>Details</h3> Accepted values for <code>payload</code> are:
-
-<ul>
-    <li><b>play_tunein</b> and as topic the TuneIn radio id (eg s12345)</li>
-    <li><b>play_httpradio</b> and as topic the http string</li>
-</ul>
 </script>
