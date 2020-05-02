@@ -567,6 +567,7 @@ module.exports = {
       } else {
         // update coordinator on positon 0 with name
         members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
+        members[0].uuid = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
       }
     }
 
