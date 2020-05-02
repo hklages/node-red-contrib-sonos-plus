@@ -1032,7 +1032,7 @@ module.exports = function (RED) {
     return { payload: plabackstate }
   }
 
-  /**  Get state (playback, queue, queuemode, coordinator, group mute) of that group, the specified player belongs to.
+  /**  Get state (playback, queue, queuemode, coordinator, group mute, group volume, groupMembers, size) of that group, the specified player belongs to.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -1053,6 +1053,7 @@ module.exports = function (RED) {
     const playbackstate = await coordinator.getCurrentState()
     const coordinatorIndex = 0
     const muteState = await getGroupMute(groupData.members[coordinatorIndex].baseUrl)
+    const volume = await getGroupVolume(groupData.members[coordinatorIndex].baseUrl)
 
     // get current media data and extract queueActivated, radioId
     const mediaData = await coordinator.avTransportService().GetMediaInfo()
@@ -1075,9 +1076,12 @@ module.exports = function (RED) {
       payload: {
         playbackstate: playbackstate,
         coordinatorName: groupData.members[0].sonosName,
+        volume: volume,
         muteState: muteState,
         queueActivated: queueActivated,
-        queueMode: queueMode
+        queueMode: queueMode,
+        members: groupData.members,
+        size: groupData.members.length
       }
     }
   }

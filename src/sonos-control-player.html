@@ -55,7 +55,7 @@
       <dd>A command. Valid commands see Details.</dd>
   
       <dt>topic <span class="property-type">string</span> </dt>
-      <dd>Command parameter beeing used together with <b>join_group, activate_avtransport, set_led, play_notification</b></dd>
+      <dd>Command parameter beeing used together with <b>join_group, activate_avtransport, set_led</b></dd>
   
       <dt>eqvalue <span class="property-type">string (On|Off) or number</span> </dt>
       <dd>Value to be set for specific EQType (NightMode, SubGain, ...) beeing used with <b>set_eq</b></dd>
@@ -73,7 +73,6 @@
   
   <h1>Details</h3> Accepted values for <code>payload</code> are:
   <ul>
-      <li>play/stop/pause/mute/ummute/next_song/previous_song/toggleplayback/volume/notification - please use the new Universal node. </li>
       <li><b>leave_group</b> Leave group</li>
       <li><b>join_group</b> Join group. Any other group members name must be specified in <code>topic</code></li>
       <li><b>create_stereopair</b> pairs two players of same type (Play:1, Play:3) for stereo. Needs msg.topic (uuid of right player).</li>

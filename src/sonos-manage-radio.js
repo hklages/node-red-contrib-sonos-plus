@@ -113,9 +113,11 @@ module.exports = function (RED) {
     }
   }
 
-  // -----------------------------------------------------
-  // Commands
-  // -----------------------------------------------------
+  // ========================================================================
+  //
+  //             DEPRECIATED - ALL!!
+  //
+  // ========================================================================
 
   /**  Play TuneIn radio station (via simple TuneIn Radio id) and optional set volume.
    * @param  {object} node current node

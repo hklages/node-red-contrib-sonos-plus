@@ -1,14 +1,8 @@
 const {
-  REGEX_IP,
-  REGEX_SERIAL,
-  REGEX_TIME,
-  failure,
-  warning,
+  REGEX_IP, REGEX_SERIAL, REGEX_TIME,
+  failure, warning, success,
   discoverSonosPlayerBySerial,
-  isValidProperty,
-  isValidPropertyNotEmptyString,
-  isTruthyAndNotEmptyString,
-  success
+  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString
 } = require('./Helper.js')
 
 const { setCmd } = require('./Sonos-Commands.js')
@@ -110,18 +104,12 @@ module.exports = function (RED) {
       insertUri(node, msg, sonosPlayer)
     } else if (command === 'insert_spotify_uri') {
       insertSpotifyUri(node, msg, sonosPlayer)
-    } else if (command === 'insert_prime_playlisturi') {
-      insertPrimePlaylistUri(node, msg, sonosPlayer)
-    } else if (command === 'insert_sonos_playlist') {
-      insertSonosPlaylist(node, msg, sonosPlayer)
+    } else if (command === 'get_musiclibrary_playlists') {
+      getMusicLibraryPlaylists(node, msg, sonosPlayer)
     } else if (command === 'insert_musiclibrary_playlist') {
       insertMusicLibraryPlaylist(node, msg, sonosPlayer)
-    } else if (command === 'activate_queue') {
-      activateQueue(node, msg, sonosPlayer)
     } else if (command === 'play_song') {
       playSong(node, msg, sonosPlayer, msg.topic)
-    } else if (command === 'flush_queue') {
-      flushQueue(node, msg, sonosPlayer)
     } else if (command === 'remove_song') {
       removeSongFromQueue(node, msg, sonosPlayer)
         .then(() => {
@@ -133,15 +121,22 @@ module.exports = function (RED) {
       setQueuemode(node, msg, sonosPlayer)
     } else if (command === 'seek') {
       seek(node, msg, sonosPlayer)
+    // depreciated since 3.1.0 2020-05-01
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer)
     } else if (command === 'get_sonos_playlists') {
       getSonosPlaylists(node, msg, sonosPlayer)
-    } else if (command === 'get_musiclibrary_playlists') {
-      getMusicLibraryPlaylists(node, msg, sonosPlayer)
+    } else if (command === 'flush_queue') {
+      flushQueue(node, msg, sonosPlayer)
+    } else if (command === 'insert_prime_playlisturi') {
+      insertPrimePlaylistUri(node, msg, sonosPlayer)
+    } else if (command === 'insert_sonos_playlist') {
+      insertSonosPlaylist(node, msg, sonosPlayer)
+    } else if (command === 'activate_queue') {
+      activateQueue(node, msg, sonosPlayer)
     } else if (command === 'get_queuemode') {
       getQueuemode(node, msg, sonosPlayer)
-      // depreciated since 2.0.0
+      // depreciated since 2.0.0 2020-02-22
     } else if (command === 'insert_spotify') {
       insertMySonosSpotify(node, msg, sonosPlayer, false)
     } else if (command === 'insert_spotify_playlist') {
@@ -158,9 +153,11 @@ module.exports = function (RED) {
     }
   }
 
-  // -----------------------------------------------------
-  // Commands
-  // -----------------------------------------------------
+  // ========================================================================
+  //
+  //             COMMANDS
+  //
+  // ========================================================================-----------------------------------------------------
 
   /**  Insert defined uri at end of SONOS queue. Can be used for single songs, playlists, .... Does NOT activate queue.
    * @param  {object} node current node
@@ -224,7 +221,7 @@ module.exports = function (RED) {
       sonosPlayer.setSpotifyRegion('2311')
     } else {
       const regex = /^\d{4}$/
-      if ((Number.isInteger(msg.region) && 999 < msg.region && msg.region < 10000) || msg.region.match(regex)) {
+      if ((Number.isInteger(msg.region) && msg.region > 999 && msg.region < 10000) || msg.region.match(regex)) {
         sonosPlayer.setSpotifyRegion(msg.region)
       } else {
         failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction)
@@ -242,350 +239,16 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /** Insert all songs of specified Amazon Prime playlist (URI format) into SONOS queue.
+  /**  Get list of music library playlists (imported).
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   *           topic uri of playlist (very specific format)
+   *        size: maximum amount of playlists being loaded from SONOS player
    * @param  {object} sonosPlayer Sonos Player
-   * @output {object} Success: msg, no modification
+   * @output {object} Success: msg,  msg.payload to current array of playlists
+   * default is 100 entries if not specified msg.size
    */
-  function insertPrimePlaylistUri (node, msg, sonosPlayer) {
-    // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
-    const sonosFunction = 'insert prime playlist'
-
-    // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction)
-      return
-    }
-    if (!msg.topic.startsWith('x-rincon-cpcontainer:')) {
-      failure(node, msg, new Error('n-r-c-s-p: invalid prime playlist'), sonosFunction)
-      return
-    }
-
-    const uri = msg.topic
-    const newUri = String(uri)
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-    const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1)
-    // TODO Region? Does that work everywhere?
-    const region = 51463
-    const title = 'Amazon Prime Playlist'
-    const metadata = `
-      <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
-      <item id="${parsed[1]}" restricted="true">
-      <dc:title>${title}</dc:title>
-      <upnp:class>object.container.playlistContainer</upnp:class>
-      <desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON${region}_X_#Svc${region}-0-Token</desc>
-      </item>
-      </DIDL-Lite>`
-    sonosPlayer.queue({ uri, metadata })
-      .then(response => {
-        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
-        node.debug('response:' + JSON.stringify(response))
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /**  Insert all songs from matching My Sonos Spotify items (first match, topic string) into SONOS queue.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   *        topic: part of the title name; is search string
-   *        region: valid region, 4 digits EU 2311, US 3079. DEFAULT is EU
-   * @param  {object} sonosPlayer Sonos Player
-   * @param  {boolean} onlyPlaylists yes if only playlists should be searched
-   * @output {object} Success: msg, no modification
-   *
-   *   !!!   D E P R E C I A T E D  - use My Sonos
-   */
-  function insertMySonosSpotify (node, msg, sonosPlayer, onlyPlaylists) {
-    let sonosFunction = 'insert spotify'
-    if (onlyPlaylists) {
-      sonosFunction = 'insert spotify playlist'
-    }
-    // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
-      return
-    }
-
-    // validate msg.region - default is EU 2311. US would be 3079?
-    if (!isTruthyAndNotEmptyString(msg.region)) {
-      sonosPlayer.setSpotifyRegion('2311')
-    } else {
-      const regex = /^\d{4}$/
-      if ((Number.isInteger(msg.region) && 999 < msg.region && msg.region < 10000) || msg.region.match(regex)) {
-        sonosPlayer.setSpotifyRegion(msg.region)
-      } else {
-        failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction)
-        return
-      }
-    }
-
-    sonosPlayer.getFavorites()
-      .then(response => {
-        // get array of all Spotify playlists and return
-        const SERVICE_IDENTIFIER = 'spotify%3a'
-        const playlistArray = [] // will hold all playlist items
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received')
-        }
-        if (response === false) {
-          throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable')
-        }
-        if (typeof response.items === 'undefined' || response.items === null ||
-          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined favorite list received')
-        }
-        if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list')
-        }
-        let playlistUri = ''
-        // node.debug('favorites:' + JSON.stringify(response.items));
-        let itemTitle
-        for (let i = 0; i < parseInt(response.items.length); i++) {
-          if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
-            (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
-            warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored')
-          } else {
-            playlistUri = response.items[i].uri
-            if (playlistUri.indexOf(SERVICE_IDENTIFIER) > 0) {
-              // found prime playlist
-              playlistUri = response.items[i].uri
-              if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
-                (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) ||
-                response.items[i].title === '') {
-                warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored')
-                itemTitle = 'unknown'
-              } else {
-                itemTitle = response.items[i].title
-              }
-              playlistArray.push({ title: itemTitle, uri: playlistUri })
-            }
-          }
-        }
-        if (playlistArray.length === 0) {
-          throw new Error('n-r-c-s-p: could not find any spotify item')
-        }
-        return playlistArray
-      })
-      .then(playlistArray => {
-        // find topic in title and return uri
-        node.debug('playlist array: ' + JSON.stringify(playlistArray))
-        let position = -1
-        for (let i = 0; i < playlistArray.length; i++) {
-          if (playlistArray[i].title.indexOf(msg.topic) > -1) {
-            position = i
-            break
-          }
-        }
-        if (position === -1) {
-          throw new Error('n-r-c-s-p: could not find playlist name in playlists')
-        } else {
-          return playlistArray[position].uri
-        }
-      })
-      .then(uri => {
-        // create new uri for queue command (%3a is :)
-        // from:
-        // playlist: x-rincon-cpcontainer:1006206cspotify%3aplaylist%3a37i9dQZEVXbMDoHDwVN2tF?sid=9&flags=8300&sn=16
-        // album: x-rincon-cpcontainer:1004206cspotify%3aalbum%3a1xn54DMo2qIqBuMqHtUsFd?sid=9&flags=8300&sn=16
-        // track: x-sonos-spotify:spotify%3atrack%3a1rgnBhdG2JDFTbYkYRZAku?sid=9&flags=8224&sn=16
-        // to
-        // spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
-        // spotify:album:1xn54DMo2qIqBuMqHtUsFd
-        // spotify:track:1rgnBhdG2JDFTbYkYRZAku?sid
-
-        // convert from .. to
-        const spotifySplit = uri.split('%3a')
-        if (spotifySplit.length < 2) {
-          throw new Error('n-r-c-s-p: invalid uri syntax: %3a' + JSON.stringify(uri))
-        }
-        const spotifyType = spotifySplit[1]
-        let spotifyId = spotifySplit[2]
-        const idEnd = spotifyId.indexOf('?sid')
-        if (spotifySplit.length < 0) {
-          throw new Error('n-r-c-s-p: invalid uri syntax - ?: ' + JSON.stringify(uri))
-        }
-        spotifyId = spotifyId.substring(0, idEnd)
-        let newUri
-        switch (spotifyType) {
-          case 'playlist':
-            newUri = `spotify:user:spotify:playlist:${spotifyId}`
-            break
-          case 'album':
-            if (onlyPlaylists) {
-              throw new Error('n-r-c-s-p: album found but no playlist')
-            } else {
-              newUri = `spotify:album:${spotifyId}`
-            }
-            break
-          case 'track':
-            if (onlyPlaylists) {
-              throw new Error('n-r-c-s-p: album found but no playlist')
-            } else {
-              newUri = `spotify:track:${spotifyId}`
-            }
-            break
-          default:
-            throw new Error('n-r-c-s-p: invalid spotify type: ' + spotifyType)
-        }
-        node.debug('uri> ' + JSON.stringify(newUri))
-        return newUri
-      })
-      .then(newUri => {
-        return sonosPlayer.queue(newUri)
-      })
-      .then(() => {
-        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-  /**  Insert all songs from matching My Sonos Amazon Prime Playlist  (first match, topic string) into SONOS queue.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   *        topic: part of the title name; is search string
-   * @param  {object} sonosPlayer Sonos Player
-   * @output {object} Success: msg, no modification
-   *
-   *   !!!   D E P R E C I A T E D  - use My Sonos
-   */
-  function insertMySonosAmazonPrimePlaylist (node, msg, sonosPlayer) {
-    const sonosFunction = 'insert amazon prime playlist'
-
-    // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
-      return
-    }
-
-    sonosPlayer.getFavorites()
-      .then(response => {
-        // get array of playlists and return
-        const SERVICE_IDENTIFIER = 'prime_playlist'
-        const playlistArray = [] // will hold all playlist items
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received')
-        }
-        if (response === false) {
-          throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable')
-        }
-        if (
-          typeof response.items === 'undefined' ||
-          response.items === null ||
-          (typeof response.items === 'number' && isNaN(response.items)) ||
-          response.items === ''
-        ) {
-          throw new Error('n-r-c-s-p: undefined favorite list received')
-        }
-        if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list')
-        }
-        let playlistUri = ''
-        node.debug('favorites:' + JSON.stringify(response.items))
-        let itemTitle
-        for (let i = 0; i < parseInt(response.items.length); i++) {
-          if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
-            (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) ||
-            response.items[i].uri === '') {
-            warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored')
-          } else {
-            playlistUri = response.items[i].uri
-            if (playlistUri.indexOf(SERVICE_IDENTIFIER) > 0) {
-              // found prime playlist
-              playlistUri = response.items[i].uri
-              if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
-                (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) ||
-                response.items[i].title === '') {
-                warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored')
-                itemTitle = 'unknown'
-              } else {
-                itemTitle = response.items[i].title
-              }
-              playlistArray.push({ title: itemTitle, uri: playlistUri })
-            }
-          }
-        }
-        if (playlistArray.length === 0) {
-          throw new Error('n-r-c-s-p: could not find any amazon prime playlist')
-        }
-        return playlistArray
-      })
-      .then(playlistArray => {
-        // find topic in title and return uri
-        node.debug('playlist array: ' + JSON.stringify(playlistArray))
-        let position = -1
-        for (let i = 0; i < playlistArray.length; i++) {
-          if (playlistArray[i].title.indexOf(msg.topic) > -1) {
-            position = i
-            break
-          }
-        }
-        if (position === -1) {
-          throw new Error('n-r-c-s-p: could not find playlist name in playlists')
-        } else {
-          return playlistArray[position].uri
-        }
-      })
-      .then(uri => {
-        // create DIDL from uri and queue
-        if (!uri.startsWith('x-rincon-cpcontainer:')) {
-          throw new Error('n-r-c-s-p: invalid prime playlist')
-        }
-        node.debug('original uri: ' + JSON.stringify(uri))
-        const newUri = String(uri)
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-        const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1)
-        node.debug('new uri ' + JSON.stringify(newUri))
-        // TODO Region? Does that work everywhere?
-        const region = 51463
-        const title = 'Amazon Prime Playlist'
-        const metadata = `
-          <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
-          <item id="${parsed[1]}" restricted="true">
-          <dc:title>${title}</dc:title>
-          <upnp:class>object.container.playlistContainer</upnp:class>
-          <desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON${region}_X_#Svc${region}-0-Token</desc>
-          </item>
-          </DIDL-Lite>`
-        return { uri, metadata }
-      })
-      .then(obj => {
-        return sonosPlayer.queue(obj)
-      })
-      .then(() => {
-        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Insert all songs from matching SONOS playlist (first match, topic string) into SONOS queue.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   *        topic: part of the title name; is search string
-   *        size: maximum amount of playlists being loaded from SONOS player - optinal, default 100
-   * @param  {object} sonosPlayer Sonos Player
-   * @output {object} Success: msg , no modifications!
-   */
-  function insertSonosPlaylist (node, msg, sonosPlayer) {
-    const sonosFunction = 'insert sonos playlist'
-
-    // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
-      return
-    }
+  function getMusicLibraryPlaylists (node, msg, sonosPlayer) {
+    const sonosFunction = 'get music library playlists'
 
     // validate msg.size and use default if not available
     let listDimension = 100 // default
@@ -607,11 +270,11 @@ module.exports = function (RED) {
     }
     // listDimension is either 100 (default) or a positive integer
 
-    sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: listDimension })
+    sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
       .then(response => {
         // validate response
         if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined playlists list received')
+          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received')
         }
         if (response === false) {
           throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable')
@@ -626,7 +289,7 @@ module.exports = function (RED) {
         }
         const playlistArray = response.items
         if (playlistArray.length === 0) {
-          throw new Error('n-r-c-s-p: no SONOS playlist available')
+          throw new Error('n-r-c-s-p: no music libary playlist found')
         }
         node.debug('length:' + playlistArray.length)
         if (playlistArray.length === listDimension) {
@@ -635,29 +298,8 @@ module.exports = function (RED) {
         return playlistArray
       })
       .then(playlistArray => {
-        // find topic in title and return uri
-        node.debug('playlist array: ' + JSON.stringify(playlistArray))
-        let position = -1
-        for (let i = 0; i < playlistArray.length; i++) {
-          if (playlistArray[i].title.indexOf(msg.topic) > -1) {
-            position = i
-            break
-          }
-        }
-        if (position === -1) {
-          throw new Error('n-r-c-s-p: could not find playlist name in playlists')
-        } else {
-          // Should have format file:///jffs/settings/savedqueues ...
-          node.debug('founde uri: ' + JSON.stringify(playlistArray[position].uri))
-          return playlistArray[position].uri
-        }
-      })
-      .then(uri => {
-        return sonosPlayer.queue(uri)
-      })
-      .then(() => {
+        msg.payload = playlistArray
         success(node, msg, sonosFunction)
-        return true
       })
       .catch(error => failure(node, msg, error, sonosFunction))
   }
@@ -754,61 +396,6 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /**  Activate SONOS queue and start playing first song, optionally set volume
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   *               volume is optional
-   * @param  {object} sonosPlayer sonos player Object
-   * @output {object} Success: msg, no modifications!
-   */
-  function activateQueue (node, msg, sonosPlayer) {
-    const sonosFunction = 'activate queue'
-    sonosPlayer.getQueue()
-      .then(response => {
-        // validiate queue ist not empty
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined get queue response received')
-        }
-        if (response === false) {
-          // queue is empty
-          throw new Error('n-r-c-s-p: queue is empty')
-        }
-        // queue not empty
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.selectQueue()
-      })
-      .then(() => {
-        // optionally change volume
-        // validate volume: integer, betweent 1 and 99
-        if (isTruthyAndNotEmptyString(msg.volume)) {
-          const newVolume = parseInt(msg.volume)
-          if (Number.isInteger(newVolume)) {
-            if (newVolume > 0 && newVolume < 100) {
-              // play and change volume
-              node.debug('msg.volume is in range 1...99: ' + newVolume)
-              return sonosPlayer.setVolume(msg.volume)
-            } else {
-              node.debug('msg.volume is not in range: ' + newVolume)
-              throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume)
-            }
-          } else {
-            node.debug('msg.volume is not number')
-            throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume))
-          }
-        } else {
-          return true // dont touch volume
-        }
-      })
-      .then(() => {
-        // show success
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
   /**  Play song with specified index (msg.topic) in SONOS queue. Activates also SONOS Queue.
    * @param  {object} node current node
    * @param  {object} msg incoming message with topic: first, last, <positiv number between 1 and queueSize>
@@ -871,22 +458,6 @@ module.exports = function (RED) {
       })
       .then(response => {
         node.debug('result from select track: ' + JSON.stringify(response))
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /**  Flushes queue - removes all songs from queue.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message with topic
-   * @param  {object} sonosPlayer sonos player Object
-   * @output {object} Success: msg, no modifications
-   */
-  function flushQueue (node, msg, sonosPlayer) {
-    const sonosFunction = 'flush queue'
-    sonosPlayer.flush()
-      .then(() => {
         success(node, msg, sonosFunction)
         return true
       })
@@ -1043,11 +614,548 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
+  /**  Seek means position in current song.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} msg.topic format hh:mm:ss hh < 20
+   * @param  {object} sonosPlayer Sonos Player
+   * @output: {object} msg unmodified / stopped in case of error
+   */
+  function seek (node, msg, sonosPlayer) {
+    const sonosFunction = 'seek / move forward in song'
+
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+    if (!REGEX_TIME.test(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction)
+      return
+    }
+    const newValue = msg.topic
+
+    // execute command
+    setCmd(sonosPlayer.baseUrl, 'Seek', { Target: newValue })
+      .then(() => {
+        // msg not modified
+        success(node, msg, sonosFunction)
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  // ========================================================================
+  //
+  //             DEPRECIATED - USE UNIVERSAL NODE or MY SONOS node
+  //
+  // ========================================================================
+
+  /** Insert all songs of specified Amazon Prime playlist (URI format) into SONOS queue.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *           topic uri of playlist (very specific format)
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {object} Success: msg, no modification
+   *
+   * @deprecated 2020-05-01
+   */
+  function insertPrimePlaylistUri (node, msg, sonosPlayer) {
+    // https://github.com/bencevans/node-sonos/issues/308 ThomasMirlacher
+    const sonosFunction = 'insert prime playlist'
+
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined prime playlist'), sonosFunction)
+      return
+    }
+    if (!msg.topic.startsWith('x-rincon-cpcontainer:')) {
+      failure(node, msg, new Error('n-r-c-s-p: invalid prime playlist'), sonosFunction)
+      return
+    }
+
+    const uri = msg.topic
+    const newUri = String(uri)
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+    const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1)
+    // TODO Region? Does that work everywhere?
+    const region = 51463
+    const title = 'Amazon Prime Playlist'
+    const metadata = `
+      <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
+      <item id="${parsed[1]}" restricted="true">
+      <dc:title>${title}</dc:title>
+      <upnp:class>object.container.playlistContainer</upnp:class>
+      <desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON${region}_X_#Svc${region}-0-Token</desc>
+      </item>
+      </DIDL-Lite>`
+    sonosPlayer.queue({ uri, metadata })
+      .then(response => {
+        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
+        node.debug('response:' + JSON.stringify(response))
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Insert all songs from matching My Sonos Spotify items (first match, topic string) into SONOS queue.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *        topic: part of the title name; is search string
+   *        region: valid region, 4 digits EU 2311, US 3079. DEFAULT is EU
+   * @param  {object} sonosPlayer Sonos Player
+   * @param  {boolean} onlyPlaylists yes if only playlists should be searched
+   * @output {object} Success: msg, no modification
+   *
+   * @deprecated 2020-02-22
+   */
+  function insertMySonosSpotify (node, msg, sonosPlayer, onlyPlaylists) {
+    let sonosFunction = 'insert spotify'
+    if (onlyPlaylists) {
+      sonosFunction = 'insert spotify playlist'
+    }
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+
+    // validate msg.region - default is EU 2311. US would be 3079?
+    if (!isTruthyAndNotEmptyString(msg.region)) {
+      sonosPlayer.setSpotifyRegion('2311')
+    } else {
+      const regex = /^\d{4}$/
+      if ((Number.isInteger(msg.region) && msg.region > 999 && msg.region < 10000) || msg.region.match(regex)) {
+        sonosPlayer.setSpotifyRegion(msg.region)
+      } else {
+        failure(node, msg, new Error('n-r-c-s-p: invalid region specified - must be 4 digits'), sonosFunction)
+        return
+      }
+    }
+
+    sonosPlayer.getFavorites()
+      .then(response => {
+        // get array of all Spotify playlists and return
+        const SERVICE_IDENTIFIER = 'spotify%3a'
+        const playlistArray = [] // will hold all playlist items
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined getFavorites response received')
+        }
+        if (response === false) {
+          throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable')
+        }
+        if (typeof response.items === 'undefined' || response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
+          throw new Error('n-r-c-s-p: undefined favorite list received')
+        }
+        if (!Array.isArray(response.items)) {
+          throw new Error('n-r-c-s-p: did not receive a list')
+        }
+        let playlistUri = ''
+        // node.debug('favorites:' + JSON.stringify(response.items));
+        let itemTitle
+        for (let i = 0; i < parseInt(response.items.length); i++) {
+          if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
+            (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) || response.items[i].uri === '') {
+            warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored')
+          } else {
+            playlistUri = response.items[i].uri
+            if (playlistUri.indexOf(SERVICE_IDENTIFIER) > 0) {
+              // found prime playlist
+              playlistUri = response.items[i].uri
+              if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
+                (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) ||
+                response.items[i].title === '') {
+                warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored')
+                itemTitle = 'unknown'
+              } else {
+                itemTitle = response.items[i].title
+              }
+              playlistArray.push({ title: itemTitle, uri: playlistUri })
+            }
+          }
+        }
+        if (playlistArray.length === 0) {
+          throw new Error('n-r-c-s-p: could not find any spotify item')
+        }
+        return playlistArray
+      })
+      .then(playlistArray => {
+        // find topic in title and return uri
+        node.debug('playlist array: ' + JSON.stringify(playlistArray))
+        let position = -1
+        for (let i = 0; i < playlistArray.length; i++) {
+          if (playlistArray[i].title.indexOf(msg.topic) > -1) {
+            position = i
+            break
+          }
+        }
+        if (position === -1) {
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists')
+        } else {
+          return playlistArray[position].uri
+        }
+      })
+      .then(uri => {
+        // create new uri for queue command (%3a is :)
+        // from:
+        // playlist: x-rincon-cpcontainer:1006206cspotify%3aplaylist%3a37i9dQZEVXbMDoHDwVN2tF?sid=9&flags=8300&sn=16
+        // album: x-rincon-cpcontainer:1004206cspotify%3aalbum%3a1xn54DMo2qIqBuMqHtUsFd?sid=9&flags=8300&sn=16
+        // track: x-sonos-spotify:spotify%3atrack%3a1rgnBhdG2JDFTbYkYRZAku?sid=9&flags=8224&sn=16
+        // to
+        // spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
+        // spotify:album:1xn54DMo2qIqBuMqHtUsFd
+        // spotify:track:1rgnBhdG2JDFTbYkYRZAku?sid
+
+        // convert from .. to
+        const spotifySplit = uri.split('%3a')
+        if (spotifySplit.length < 2) {
+          throw new Error('n-r-c-s-p: invalid uri syntax: %3a' + JSON.stringify(uri))
+        }
+        const spotifyType = spotifySplit[1]
+        let spotifyId = spotifySplit[2]
+        const idEnd = spotifyId.indexOf('?sid')
+        if (spotifySplit.length < 0) {
+          throw new Error('n-r-c-s-p: invalid uri syntax - ?: ' + JSON.stringify(uri))
+        }
+        spotifyId = spotifyId.substring(0, idEnd)
+        let newUri
+        switch (spotifyType) {
+          case 'playlist':
+            newUri = `spotify:user:spotify:playlist:${spotifyId}`
+            break
+          case 'album':
+            if (onlyPlaylists) {
+              throw new Error('n-r-c-s-p: album found but no playlist')
+            } else {
+              newUri = `spotify:album:${spotifyId}`
+            }
+            break
+          case 'track':
+            if (onlyPlaylists) {
+              throw new Error('n-r-c-s-p: album found but no playlist')
+            } else {
+              newUri = `spotify:track:${spotifyId}`
+            }
+            break
+          default:
+            throw new Error('n-r-c-s-p: invalid spotify type: ' + spotifyType)
+        }
+        node.debug('uri> ' + JSON.stringify(newUri))
+        return newUri
+      })
+      .then(newUri => {
+        return sonosPlayer.queue(newUri)
+      })
+      .then(() => {
+        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+  /**  Insert all songs from matching My Sonos Amazon Prime Playlist  (first match, topic string) into SONOS queue.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *        topic: part of the title name; is search string
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {object} Success: msg, no modification
+   *
+   * @deprecated 2020-02-22
+   */
+  function insertMySonosAmazonPrimePlaylist (node, msg, sonosPlayer) {
+    const sonosFunction = 'insert amazon prime playlist'
+
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+
+    sonosPlayer.getFavorites()
+      .then(response => {
+        // get array of playlists and return
+        const SERVICE_IDENTIFIER = 'prime_playlist'
+        const playlistArray = [] // will hold all playlist items
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined getFavorites response received')
+        }
+        if (response === false) {
+          throw new Error('n-r-c-s-p: Could not find any My Sonos items or player not reachable')
+        }
+        if (
+          typeof response.items === 'undefined' ||
+          response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) ||
+          response.items === ''
+        ) {
+          throw new Error('n-r-c-s-p: undefined favorite list received')
+        }
+        if (!Array.isArray(response.items)) {
+          throw new Error('n-r-c-s-p: did not receive a list')
+        }
+        let playlistUri = ''
+        node.debug('favorites:' + JSON.stringify(response.items))
+        let itemTitle
+        for (let i = 0; i < parseInt(response.items.length); i++) {
+          if (typeof response.items[i].uri === 'undefined' || response.items[i].uri === null ||
+            (typeof response.items[i].uri === 'number' && isNaN(response.items[i].uri)) ||
+            response.items[i].uri === '') {
+            warning(node, sonosFunction, 'item does NOT have uri property', 'item does NOT have uri property - ignored')
+          } else {
+            playlistUri = response.items[i].uri
+            if (playlistUri.indexOf(SERVICE_IDENTIFIER) > 0) {
+              // found prime playlist
+              playlistUri = response.items[i].uri
+              if (typeof response.items[i].title === 'undefined' || response.items[i].title === null ||
+                (typeof response.items[i].title === 'number' && isNaN(response.items[i].title)) ||
+                response.items[i].title === '') {
+                warning(node, sonosFunction, 'item does NOT have Title property', 'item does NOT have Title property - ignored')
+                itemTitle = 'unknown'
+              } else {
+                itemTitle = response.items[i].title
+              }
+              playlistArray.push({ title: itemTitle, uri: playlistUri })
+            }
+          }
+        }
+        if (playlistArray.length === 0) {
+          throw new Error('n-r-c-s-p: could not find any amazon prime playlist')
+        }
+        return playlistArray
+      })
+      .then(playlistArray => {
+        // find topic in title and return uri
+        node.debug('playlist array: ' + JSON.stringify(playlistArray))
+        let position = -1
+        for (let i = 0; i < playlistArray.length; i++) {
+          if (playlistArray[i].title.indexOf(msg.topic) > -1) {
+            position = i
+            break
+          }
+        }
+        if (position === -1) {
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists')
+        } else {
+          return playlistArray[position].uri
+        }
+      })
+      .then(uri => {
+        // create DIDL from uri and queue
+        if (!uri.startsWith('x-rincon-cpcontainer:')) {
+          throw new Error('n-r-c-s-p: invalid prime playlist')
+        }
+        node.debug('original uri: ' + JSON.stringify(uri))
+        const newUri = String(uri)
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+        const parsed = newUri.match(/^(x-rincon-cpcontainer):(.*)\?(.*)/).splice(1)
+        node.debug('new uri ' + JSON.stringify(newUri))
+        // TODO Region? Does that work everywhere?
+        const region = 51463
+        const title = 'Amazon Prime Playlist'
+        const metadata = `
+          <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
+          <item id="${parsed[1]}" restricted="true">
+          <dc:title>${title}</dc:title>
+          <upnp:class>object.container.playlistContainer</upnp:class>
+          <desc id="cdudn" nameSpace="urn:schemas-rinconnetworks-com:metadata-1-0/">SA_RINCON${region}_X_#Svc${region}-0-Token</desc>
+          </item>
+          </DIDL-Lite>`
+        return { uri, metadata }
+      })
+      .then(obj => {
+        return sonosPlayer.queue(obj)
+      })
+      .then(() => {
+        // response something like {"FirstTrackNumberEnqueued":"54","NumTracksAdded":"52","NewQueueLength":"105"}
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Insert all songs from matching SONOS playlist (first match, topic string) into SONOS queue.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *        topic: part of the title name; is search string
+   *        size: maximum amount of playlists being loaded from SONOS player - optinal, default 100
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {object} Success: msg , no modifications!
+   *
+   * @deprecated 2020-05-01
+   */
+  function insertSonosPlaylist (node, msg, sonosPlayer) {
+    const sonosFunction = 'insert sonos playlist'
+
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+
+    // validate msg.size and use default if not available
+    let listDimension = 100 // default
+    if (!isTruthyAndNotEmptyString(msg.size)) {
+      node.debug('msg.size undefined - use default size 100')
+    } else {
+      listDimension = parseInt(msg.size)
+      if (Number.isInteger(listDimension)) {
+        if (listDimension > 0) {
+          node.debug('msg.size will be used: ' + listDimension)
+        } else {
+          failure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction)
+          return
+        }
+      } else {
+        failure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction)
+        return
+      }
+    }
+    // listDimension is either 100 (default) or a positive integer
+
+    sonosPlayer.getMusicLibrary('sonos_playlists', { start: 0, total: listDimension })
+      .then(response => {
+        // validate response
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined playlists list received')
+        }
+        if (response === false) {
+          throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable')
+        }
+        if (typeof response.items === 'undefined' || response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) ||
+          response.items === '') {
+          throw new Error('n-r-c-s-p: undefined playlists list received')
+        }
+        if (!Array.isArray(response.items)) {
+          throw new Error('n-r-c-s-p: did not receive a list')
+        }
+        const playlistArray = response.items
+        if (playlistArray.length === 0) {
+          throw new Error('n-r-c-s-p: no SONOS playlist available')
+        }
+        node.debug('length:' + playlistArray.length)
+        if (playlistArray.length === listDimension) {
+          warning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size')
+        }
+        return playlistArray
+      })
+      .then(playlistArray => {
+        // find topic in title and return uri
+        node.debug('playlist array: ' + JSON.stringify(playlistArray))
+        let position = -1
+        for (let i = 0; i < playlistArray.length; i++) {
+          if (playlistArray[i].title.indexOf(msg.topic) > -1) {
+            position = i
+            break
+          }
+        }
+        if (position === -1) {
+          throw new Error('n-r-c-s-p: could not find playlist name in playlists')
+        } else {
+          // Should have format file:///jffs/settings/savedqueues ...
+          node.debug('founde uri: ' + JSON.stringify(playlistArray[position].uri))
+          return playlistArray[position].uri
+        }
+      })
+      .then(uri => {
+        return sonosPlayer.queue(uri)
+      })
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Activate SONOS queue and start playing first song, optionally set volume
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *               volume is optional
+   * @param  {object} sonosPlayer sonos player Object
+   * @output {object} Success: msg, no modifications!
+   *
+   * @deprecated 2020-05-01
+   */
+  function activateQueue (node, msg, sonosPlayer) {
+    const sonosFunction = 'activate queue'
+    sonosPlayer.getQueue()
+      .then(response => {
+        // validiate queue ist not empty
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined get queue response received')
+        }
+        if (response === false) {
+          // queue is empty
+          throw new Error('n-r-c-s-p: queue is empty')
+        }
+        // queue not empty
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.selectQueue()
+      })
+      .then(() => {
+        // optionally change volume
+        // validate volume: integer, betweent 1 and 99
+        if (isTruthyAndNotEmptyString(msg.volume)) {
+          const newVolume = parseInt(msg.volume)
+          if (Number.isInteger(newVolume)) {
+            if (newVolume > 0 && newVolume < 100) {
+              // play and change volume
+              node.debug('msg.volume is in range 1...99: ' + newVolume)
+              return sonosPlayer.setVolume(msg.volume)
+            } else {
+              node.debug('msg.volume is not in range: ' + newVolume)
+              throw new Error('n-r-c-s-p: msg.volume is out of range 1...99: ' + newVolume)
+            }
+          } else {
+            node.debug('msg.volume is not number')
+            throw new Error('n-r-c-s-p: msg.volume is not a number: ' + JSON.stringify(msg.volume))
+          }
+        } else {
+          return true // dont touch volume
+        }
+      })
+      .then(() => {
+        // show success
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Flushes queue - removes all songs from queue.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message with topic
+   * @param  {object} sonosPlayer sonos player Object
+   * @output {object} Success: msg, no modifications
+   *
+   * @deprecated 2020-05-01
+   */
+  function flushQueue (node, msg, sonosPlayer) {
+    const sonosFunction = 'flush queue'
+    sonosPlayer.flush()
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
   /**  Get the list of current songs in queue.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg, msg.payload: array of songs
+   *
+   * @deprecated 2020-05-01
    */
   function getQueue (node, msg, sonosPlayer) {
     const sonosFunction = 'get queue'
@@ -1094,8 +1202,7 @@ module.exports = function (RED) {
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg, no modification
    *
-   *     D E P R E C I A T E D since 2.0.0
-   *
+   * @deprecated 2020-02-22
    */
   function getMySonosSpotify (node, msg, sonosPlayer) {
     const sonosFunction = 'get spotify playlist'
@@ -1162,8 +1269,7 @@ module.exports = function (RED) {
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg,  msg.payload to current array of My Sonos Amazon Prime playlist
    *
-   *   D E P R E C I A T E D since 2.0.0
-   *
+   * @deprecated 2020-02-22
    */
   function getMySonosAmazonPrimePlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get amazon prime playlist'
@@ -1227,6 +1333,7 @@ module.exports = function (RED) {
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg, msg.payload = list of SONOS playlists
    *
+   * @deprecated 2020-05-01
    */
   function getSonosPlaylists (node, msg, sonosPlayer) {
     const sonosFunction = 'get SONOS playlists'
@@ -1296,76 +1403,13 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /**  Get list of music library playlists (imported).
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   *        size: maximum amount of playlists being loaded from SONOS player
-   * @param  {object} sonosPlayer Sonos Player
-   * @output {object} Success: msg,  msg.payload to current array of playlists
-   * default is 100 entries if not specified msg.size
-   */
-  function getMusicLibraryPlaylists (node, msg, sonosPlayer) {
-    const sonosFunction = 'get music library playlists'
-
-    // validate msg.size and use default if not available
-    let listDimension = 100 // default
-    if (!isTruthyAndNotEmptyString(msg.size)) {
-      node.debug('msg.size undefined - use default size 100')
-    } else {
-      listDimension = parseInt(msg.size)
-      if (Number.isInteger(listDimension)) {
-        if (listDimension > 0) {
-          node.debug('msg.size will be used: ' + listDimension)
-        } else {
-          failure(node, msg, new Error('n-r-c-s-p: msg.size is not positve: ' + msg.size), sonosFunction)
-          return
-        }
-      } else {
-        failure(node, msg, new Error('n-r-c-s-p: msg.size is not an integer: ' + msg.size), sonosFunction)
-        return
-      }
-    }
-    // listDimension is either 100 (default) or a positive integer
-
-    sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
-      .then(response => {
-        // validate response
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined getMusicLibrary response received')
-        }
-        if (response === false) {
-          throw new Error('n-r-c-s-p: Could not find any playlists or player not reachable')
-        }
-        if (typeof response.items === 'undefined' || response.items === null ||
-          (typeof response.items === 'number' && isNaN(response.items)) ||
-          response.items === '') {
-          throw new Error('n-r-c-s-p: undefined playlists list received')
-        }
-        if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list')
-        }
-        const playlistArray = response.items
-        if (playlistArray.length === 0) {
-          throw new Error('n-r-c-s-p: no music libary playlist found')
-        }
-        node.debug('length:' + playlistArray.length)
-        if (playlistArray.length === listDimension) {
-          warning(node, sonosFunction, 'There may be more playlists.', 'Please use/modify msg.size')
-        }
-        return playlistArray
-      })
-      .then(playlistArray => {
-        msg.payload = playlistArray
-        success(node, msg, sonosFunction)
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
   /**  get queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
    * @param  {object} node current node, msg.payload and msg.topic are beeing used
    * @param  {object} msg incoming message
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg
+   *
+   * @deprecated 2020-02-22
    */
   function getQueuemode (node, msg, sonosPlayer) {
     const sonosFunction = 'get queuemode'
@@ -1375,35 +1419,6 @@ module.exports = function (RED) {
           throw new Error('n-r-c-s-p: could not get queue mode from player')
         }
         msg.payload = response
-        success(node, msg, sonosFunction)
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-  /**  Seek means position in current song.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {string} msg.topic format hh:mm:ss hh < 20
-   * @param  {object} sonosPlayer Sonos Player
-   * @output: {object} msg unmodified / stopped in case of error
-   */
-  function seek (node, msg, sonosPlayer) {
-    const sonosFunction = 'seek / move forward in song'
-
-    // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
-      return
-    }
-    if (!REGEX_TIME.test(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: msg.topic must have format hh:mm:ss, hh < 20'), sonosFunction)
-      return
-    }
-    const newValue = msg.topic
-
-    // execute command
-    setCmd(sonosPlayer.baseUrl, 'Seek', { Target: newValue })
-      .then(() => {
-        // msg not modified
         success(node, msg, sonosFunction)
       })
       .catch(error => failure(node, msg, error, sonosFunction))

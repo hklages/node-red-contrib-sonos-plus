@@ -2,13 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.1] 2020-05-02
+
+## Changed
+
+- bug fix spotifiy region (number format)
+
+- "Universal node": get.state now provides the group members, group size, group volume
+
 ## [3.1.0] 2020-04-30
 
 ### Added
 
 - "Universal node": New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
 
-## Changed
+### Changed
 
 - CAUTION: Universal node: play.export by default clears the queue if export.queue is true. Use msg.clearQueue = false to avoid.
 

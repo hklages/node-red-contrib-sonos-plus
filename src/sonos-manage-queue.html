@@ -45,7 +45,7 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-queue">
-  <p> Incoming message is being converted to valid command and send to SONOS player. The <i>get ... </i> provides information about the current queue or playlists.</p>
+  <p> Incoming message is being converted to valid command and send to SONOS player. The <i>get ... </i> provides information about music library playlists.</p>
 
   <h1>Input</h3>
   
@@ -83,25 +83,15 @@
   <ul>
       <li><b>insert_uri</b> Inserts a song or a complete playlist into queue. <code>topic</code> provides uri</li>
       <li><b>insert_spotify_uri</b> Inserts a spotify song, album, playlist into queue. <code>topic</code> provides uri. <code>region</code> specifies the Spotify region</li>
-      <li><b>insert_prime_playlisturi</b> Inserts all songs of a Amazon Prime playlist into queue. <code>topic</code> provides uri</li>
-      <li><b>insert_sonos_playlist</b> Inserts all songs of a Sonos playlist into queue. <code>topic</code> provides search string</li>
       <li><b>insert_musiclibrary_playlist</b> Inserts all songs of a Music Library playlist into queue. <code>topic</code> provides search string</li>
-      <br/>
       <li><b>play_song</b> Plays a specific song in queue - automatiacally activates queue. <code>topic</code> provides search index</li>
       <li><b>seek</b> Moves inside current (QUEUE) song to specified time. <code>topic</code> provides time in hh:mm:ss format</li>
-      <br/>
-      <li><b>flush_queue</b> Erases the queue and stops playing!</li>
       <li><b>remove_song</b> Removes several (numberOfSongs) songs from queue. <code>topic</code> provides start index</li>
-      <br/>
       <li><b>set_queuemode</b> Set queue mode. <code>topic</code> provides mode NORMAL, REPEAT_ONE, REPEAT_ALL, SHUFFLE, SHUFFLE_NOREPEAT, SHUFFLE_REPEAT_ONE</li>
-      <br/>
-      <li><b>get_queuemode</b> Gets the current queue mode</li>
-      <li><b>get_sonos_playlists</b> Outputs an array of all Sonos playlists</li>
       <li><b>get_musiclibrary_playlists</b> Outputs an array of all Music Library playlists</li>
   </ul>
   The scope for the search string is:
   <ul>
-      <li>all SONOS playlists for insert_sonos_playlist/ get</li>
       <li>all imported Music Library playlists for insert_musiclibrary_playlist/ get</li>
   </ul>
 </script>

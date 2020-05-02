@@ -100,26 +100,10 @@ module.exports = function (RED) {
     // dispatch
     if (command === 'get_basics') {
       getBasicsV1(node, msg, sonosPlayer)
-    } else if (command === 'get_state') {
-      getPlayerStateV3(node, msg, sonosPlayer)
-    } else if (command === 'get_volume') {
-      getPlayerVolumeV3(node, msg, sonosPlayer)
-    } else if (command === 'get_muted') {
-      getPlayerMutedV3(node, msg, sonosPlayer)
-    } else if (command === 'get_name') {
-      getPlayerNameV3(node, msg, sonosPlayer)
     } else if (command === 'get_led') {
       getPlayerLedStatus(node, msg, sonosPlayer)
     } else if (command === 'get_properties') {
       getPlayerProperties(node, msg, sonosPlayer)
-    } else if (command === 'get_songmedia') {
-      getPlayerSongMediaV1(node, msg, sonosPlayer)
-    } else if (command === 'get_songinfo') {
-      getPlayerCurrentSongV1(node, msg, sonosPlayer)
-    } else if (command === 'get_mediainfo') {
-      getMediaInfoV1(node, msg, sonosPlayer)
-    } else if (command === 'get_positioninfo') {
-      getPositionInfoV1(node, msg, sonosPlayer)
     } else if (command === 'get_groups') {
       getGroupsInfo(node, msg, sonosPlayer)
     } else if (command === 'get_eq') {
@@ -132,19 +116,36 @@ module.exports = function (RED) {
       getRemainingSleepTimerDuration(node, msg, sonosPlayer)
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer)
-      // depreciated commands
+    // depreciated since 3.1.0 2020-05-01
+    } else if (command === 'get_songmedia') {
+      getPlayerSongMediaV1(node, msg, sonosPlayer)
+    } else if (command === 'get_songinfo') {
+      getPlayerCurrentSongV1(node, msg, sonosPlayer)
+    } else if (command === 'get_mediainfo') {
+      getMediaInfoV1(node, msg, sonosPlayer)
+    } else if (command === 'get_positioninfo') {
+      getPositionInfoV1(node, msg, sonosPlayer)
+    } else if (command === 'get_state') {
+      getPlayerStateV3(node, msg, sonosPlayer)
+    } else if (command === 'get_volume') {
+      getPlayerVolumeV3(node, msg, sonosPlayer)
+    } else if (command === 'get_muted') {
+      getPlayerMutedV3(node, msg, sonosPlayer)
+    } else if (command === 'get_name') {
+      getPlayerNameV3(node, msg, sonosPlayer)
+    // depreciated since 2020-02-22
     } else if (command === 'get_mysonos') {
       getMySonosAll(node, msg, sonosPlayer)
-    } else if (command === 'lab') {
-      labFunction(node, msg, sonosPlayer)
     } else {
       warning(node, sonosFunction, 'dispatching commands - invalid command', 'command-> ' + JSON.stringify(command))
     }
   }
 
-  // -----------------------------------------------------
-  // Commands
-  // -----------------------------------------------------
+  // ========================================================================
+  //
+  //             COMMANDS
+  //
+  // ========================================================================
 
   /** Get the SONOS basic data and output to msg.
    * @param  {object} node current node
@@ -224,96 +225,6 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /** Get the sonos player state and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output changes msg.payload
-   */
-  function getPlayerStateV3 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get player state'
-
-    sonosPlayer.getCurrentState()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined player state received')
-        }
-        node.debug('got valid player state')
-        msg.payload = response
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the sonos player volume and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output changes msg.payload
-   */
-  function getPlayerVolumeV3 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get player volume'
-
-    sonosPlayer.getVolume()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response) || isNaN(response)) {
-          throw new Error('n-r-c-s-p: undefined player volume received')
-        }
-        if (!Number.isInteger(response)) {
-          throw new Error('n-r-c-s-p: invalid volume received')
-        }
-        node.debug('got valid player volume')
-        msg.payload = response
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the sonos player muted state and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output changes msg.payload
-   */
-  function getPlayerMutedV3 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get player muted state'
-
-    sonosPlayer.getMuted()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined mute state received')
-        }
-        node.debug('got valid mute state')
-        msg.payload = response
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the sonos player name and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output changes msg.payload
-   */
-  function getPlayerNameV3 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get player name'
-    sonosPlayer.getName()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined player name received')
-        }
-        node.debug('got valid player name')
-        msg.payload = response
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
   /** Get the sonos player LED light status and outputs to payload.
    * @param  {object} node current node
    * @param  {object} msg incoming message
@@ -352,317 +263,6 @@ module.exports = function (RED) {
         node.debug('got valid group attributes')
         msg.uuid = response.UDN.substring('uuid:'.length)
         msg.payload = response
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the sonos player current song, media and position and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output msg: artist, title, albumArtURL, queueActivated, song, media and position
-   * This command send serveral api requests and combines them.
-   */
-  function getPlayerSongMediaV1 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get songmedia'
-
-    let artist = 'unknown' // as default
-    let title = 'unknown' // as default
-    let albumArtURL = ''
-
-    let suppressWarnings = false // default
-    if (!isTruthyAndNotEmptyString(msg.suppressWarnings)) {
-      suppressWarnings = false
-    } else {
-      if (typeof msg.suppressWarnings === 'boolean') {
-        suppressWarnings = msg.suppressWarnings
-      } else {
-        failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction)
-        return
-      }
-    }
-    sonosPlayer.currentTrack()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined current song received')
-        }
-        msg.song = response
-        // modify albumArtURL property
-        if (
-          typeof response.albumArtURI === 'undefined' ||
-          response.albumArtURI === null ||
-          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) ||
-          response.albumArtURI === ''
-        ) {
-          // TuneIn does not provide AlbumArtURL -so we continue
-        } else {
-          node.debug('got valid albumArtURI')
-          albumArtURL = sonosPlayer.baseUrl + response.albumArtURI
-        }
-        // extract artist and title if available V2
-        if (
-          typeof response.artist === 'undefined' ||
-          response.artist === null ||
-          (typeof response.artist === 'number' && isNaN(response.artist)) ||
-          response.artist === ''
-        ) {
-          // missing artist: TuneIn provides artist and title in title field
-          if (typeof response.title === 'undefined' || response.title === null ||
-            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            if (!suppressWarnings) {
-              warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response))
-            }
-            msg.artist = artist
-            msg.title = title
-            return
-          } else {
-            if (response.title.indexOf(' - ') > 0) {
-              node.debug('could split data to artist and title')
-              artist = response.title.split(' - ')[0]
-              title = response.title.split(' - ')[1]
-            } else {
-              if (!suppressWarnings) {
-                warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response))
-              }
-              msg.artist = artist
-              msg.title = response.title
-              return
-            }
-          }
-        } else {
-          artist = response.artist
-          if (typeof response.title === 'undefined' || response.title === null ||
-            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            // title unknown
-          } else {
-            title = response.title
-            node.debug('got artist and title')
-          }
-        }
-        node.debug('got valid song info')
-        // msg.song = response already set before
-        msg.albumArtURL = albumArtURL
-        msg.artist = artist
-        msg.title = title
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.avTransportService().GetMediaInfo()
-      })
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined media info received')
-        }
-        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
-          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
-          throw new Error('n-r-c-s-p: undefined CurrentURI received')
-        }
-        const uri = response.CurrentURI
-        msg.queueActivated = uri.startsWith('x-rincon-queue')
-        if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
-          const end = uri.indexOf('?sid=254')
-          const start = 'x-sonosapi-stream:'.length
-          msg.radioId = uri.substring(start, end)
-        }
-        msg.media = response
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.avTransportService().GetPositionInfo()
-      })
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined position info received')
-        }
-        msg.position = response
-        return true
-      })
-      .then(() => {
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the sonos player current song and outputs.
-  * @param  {object} node current node
-  * @param  {object} msg incoming message
-            msg.suppressWarnings  will suppress warning if exist and true
-  * @param  {object} sonosPlayer sonos player object
-  * @output msg:  artist, title, albumArtURL and song
-  */
-  function getPlayerCurrentSongV1 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get current song'
-
-    let artist = 'unknown' // as default
-    let title = 'unknown' // as default
-    let albumArtURL = ''
-
-    let suppressWarnings = false // default
-    if (!isTruthyAndNotEmptyString(msg.suppressWarnings)) {
-      suppressWarnings = false
-    } else {
-      if (typeof msg.suppressWarnings === 'boolean') {
-        suppressWarnings = msg.suppressWarnings
-      } else {
-        failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction)
-        return
-      }
-    }
-
-    sonosPlayer.currentTrack()
-      .then(response => {
-        msg.payload = response
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined current song received')
-        }
-        // modify albumArtURL property
-        if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
-          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {
-          // TuneIn does not provide AlbumArtURL -so we continure
-        } else {
-          node.debug('got valid albumArtURI')
-          albumArtURL = sonosPlayer.baseUrl + response.albumArtURI
-        }
-        // extract artist and title if available V2
-        if (typeof response.artist === 'undefined' || response.artist === null ||
-          (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
-          // missing artist: TuneIn provides artist and title in title field
-          if (typeof response.title === 'undefined' || response.title === null ||
-            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            if (!suppressWarnings) {
-              warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response))
-            }
-            msg.artist = artist
-            msg.title = title
-            return
-          } else {
-            if (response.title.indexOf(' - ') > 0) {
-              node.debug('could split data to artist and title')
-              artist = response.title.split(' - ')[0]
-              title = response.title.split(' - ')[1]
-            } else {
-              if (!suppressWarnings) {
-                warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response))
-              }
-              msg.artist = artist
-              msg.title = response.title
-              return
-            }
-          }
-        } else {
-          artist = response.artist
-          if (typeof response.title === 'undefined' || response.title === null ||
-            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
-            // title unknown
-          } else {
-            title = response.title
-            node.debug('got artist and title')
-          }
-        }
-        node.debug('got valid song info')
-        // msg.payload = response already done above
-        msg.albumArtURL = albumArtURL
-        msg.artist = artist
-        msg.title = title
-      })
-      .then(() => {
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the media info and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output msg: queueActivated, payload = media
-   */
-  function getMediaInfoV1 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get media info'
-
-    sonosPlayer.avTransportService().GetMediaInfo()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined media info received')
-        }
-        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
-          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
-          throw new Error('n-r-c-s-p: undefined CurrentURI received')
-        }
-        const uri = response.CurrentURI
-        msg.queueActivated = uri.startsWith('x-rincon-queue')
-        if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
-          const end = uri.indexOf('?sid=254')
-          const start = 'x-sonosapi-stream:'.length
-          msg.radioId = uri.substring(start, end)
-        }
-        msg.payload = response
-        return true
-      })
-      .then(() => {
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /** Get the position info and outputs.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output msg: payload = position
-   */
-  function getPositionInfoV1 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get position info'
-
-    sonosPlayer.avTransportService().GetPositionInfo()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined position info received')
-        }
-        msg.payload = response
-        return true
-      })
-      .then(() => {
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  // depreciated command
-
-  /**  Get list of all My Sonos items.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer Sonos Player
-   * change msg.payload to array of all My Sonos items
-   */
-  function getMySonosAll (node, msg, sonosPlayer) {
-    // get list of My Sonos items
-    const sonosFunction = 'get my sonos all'
-    sonosPlayer.getFavorites()
-      .then(response => {
-        // validate response
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined getFavorites response received')
-        }
-        if (typeof response.items === 'undefined' || response.items === null ||
-          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
-          throw new Error('n-r-c-s-p: undefined favorite list received')
-        }
-        if (!Array.isArray(response.items)) {
-          throw new Error('n-r-c-s-p: did not receive a list')
-        }
-        const list = response.items
-        if (list.length === 0) {
-          throw new Error('n-r-c-s-p: no my sonos items found')
-        }
-        msg.payload = list
         success(node, msg, sonosFunction)
         return true
       })
@@ -863,14 +463,427 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /**  Test area
+  // ========================================================================
+  //
+  //             DEPRECIATED - USE UNIVERSAL node
+  //
+  // ========================================================================
+
+  /** Get the sonos player state and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   *
+   * @deprecated 2020-05-01
    */
-  function labFunction (node, msg, sonosPlayer) {
-    const sonosFunction = 'lab'
-    getCmd(sonosPlayer.baseUrl, 'GetGroupVolume')
-      .then((response) => {
+  function getPlayerStateV3 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get player state'
+
+    sonosPlayer.getCurrentState()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player state received')
+        }
+        node.debug('got valid player state')
         msg.payload = response
         success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the sonos player volume and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   *
+   * @deprecated 2020-05-01
+   */
+  function getPlayerVolumeV3 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get player volume'
+
+    sonosPlayer.getVolume()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response) || isNaN(response)) {
+          throw new Error('n-r-c-s-p: undefined player volume received')
+        }
+        if (!Number.isInteger(response)) {
+          throw new Error('n-r-c-s-p: invalid volume received')
+        }
+        node.debug('got valid player volume')
+        msg.payload = response
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the sonos player muted state and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   *
+   * @deprecated 2020-05-01
+   */
+  function getPlayerMutedV3 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get player muted state'
+
+    sonosPlayer.getMuted()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined mute state received')
+        }
+        node.debug('got valid mute state')
+        msg.payload = response
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the sonos player name and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output changes msg.payload
+   *
+   * @deprecated 2020-05-01
+   */
+  function getPlayerNameV3 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get player name'
+    sonosPlayer.getName()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player name received')
+        }
+        node.debug('got valid player name')
+        msg.payload = response
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the sonos player current song, media and position and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: artist, title, albumArtURL, queueActivated, song, media and position
+   * This command send serveral api requests and combines them.
+   *
+   * @deprecated 2020-05-01
+   */
+  function getPlayerSongMediaV1 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get songmedia'
+
+    let artist = 'unknown' // as default
+    let title = 'unknown' // as default
+    let albumArtURL = ''
+
+    let suppressWarnings = false // default
+    if (!isTruthyAndNotEmptyString(msg.suppressWarnings)) {
+      suppressWarnings = false
+    } else {
+      if (typeof msg.suppressWarnings === 'boolean') {
+        suppressWarnings = msg.suppressWarnings
+      } else {
+        failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction)
+        return
+      }
+    }
+    sonosPlayer.currentTrack()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined current song received')
+        }
+        msg.song = response
+        // modify albumArtURL property
+        if (
+          typeof response.albumArtURI === 'undefined' ||
+          response.albumArtURI === null ||
+          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) ||
+          response.albumArtURI === ''
+        ) {
+          // TuneIn does not provide AlbumArtURL -so we continue
+        } else {
+          node.debug('got valid albumArtURI')
+          albumArtURL = sonosPlayer.baseUrl + response.albumArtURI
+        }
+        // extract artist and title if available V2
+        if (
+          typeof response.artist === 'undefined' ||
+          response.artist === null ||
+          (typeof response.artist === 'number' && isNaN(response.artist)) ||
+          response.artist === ''
+        ) {
+          // missing artist: TuneIn provides artist and title in title field
+          if (typeof response.title === 'undefined' || response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            if (!suppressWarnings) {
+              warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response))
+            }
+            msg.artist = artist
+            msg.title = title
+            return
+          } else {
+            if (response.title.indexOf(' - ') > 0) {
+              node.debug('could split data to artist and title')
+              artist = response.title.split(' - ')[0]
+              title = response.title.split(' - ')[1]
+            } else {
+              if (!suppressWarnings) {
+                warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response))
+              }
+              msg.artist = artist
+              msg.title = response.title
+              return
+            }
+          }
+        } else {
+          artist = response.artist
+          if (typeof response.title === 'undefined' || response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            // title unknown
+          } else {
+            title = response.title
+            node.debug('got artist and title')
+          }
+        }
+        node.debug('got valid song info')
+        // msg.song = response already set before
+        msg.albumArtURL = albumArtURL
+        msg.artist = artist
+        msg.title = title
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.avTransportService().GetMediaInfo()
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined media info received')
+        }
+        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
+          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
+          throw new Error('n-r-c-s-p: undefined CurrentURI received')
+        }
+        const uri = response.CurrentURI
+        msg.queueActivated = uri.startsWith('x-rincon-queue')
+        if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
+          const end = uri.indexOf('?sid=254')
+          const start = 'x-sonosapi-stream:'.length
+          msg.radioId = uri.substring(start, end)
+        }
+        msg.media = response
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.avTransportService().GetPositionInfo()
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined position info received')
+        }
+        msg.position = response
+        return true
+      })
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the sonos player current song and outputs.
+  * @param  {object} node current node
+  * @param  {object} msg incoming message
+            msg.suppressWarnings  will suppress warning if exist and true
+  * @param  {object} sonosPlayer sonos player object
+  * @output msg:  artist, title, albumArtURL and song
+  *
+  * @deprecated 2020-05-01
+  */
+  function getPlayerCurrentSongV1 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get current song'
+
+    let artist = 'unknown' // as default
+    let title = 'unknown' // as default
+    let albumArtURL = ''
+
+    let suppressWarnings = false // default
+    if (!isTruthyAndNotEmptyString(msg.suppressWarnings)) {
+      suppressWarnings = false
+    } else {
+      if (typeof msg.suppressWarnings === 'boolean') {
+        suppressWarnings = msg.suppressWarnings
+      } else {
+        failure(node, msg, new Error('n-r-c-s-p: msg.suppressWarning should be of type boolean'), sonosFunction)
+        return
+      }
+    }
+
+    sonosPlayer.currentTrack()
+      .then(response => {
+        msg.payload = response
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined current song received')
+        }
+        // modify albumArtURL property
+        if (typeof response.albumArtURI === 'undefined' || response.albumArtURI === null ||
+          (typeof response.albumArtURI === 'number' && isNaN(response.albumArtURI)) || response.albumArtURI === '') {
+          // TuneIn does not provide AlbumArtURL -so we continure
+        } else {
+          node.debug('got valid albumArtURI')
+          albumArtURL = sonosPlayer.baseUrl + response.albumArtURI
+        }
+        // extract artist and title if available V2
+        if (typeof response.artist === 'undefined' || response.artist === null ||
+          (typeof response.artist === 'number' && isNaN(response.artist)) || response.artist === '') {
+          // missing artist: TuneIn provides artist and title in title field
+          if (typeof response.title === 'undefined' || response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            if (!suppressWarnings) {
+              warning(node, sonosFunction, 'no artist, no title', 'received-> ' + JSON.stringify(response))
+            }
+            msg.artist = artist
+            msg.title = title
+            return
+          } else {
+            if (response.title.indexOf(' - ') > 0) {
+              node.debug('could split data to artist and title')
+              artist = response.title.split(' - ')[0]
+              title = response.title.split(' - ')[1]
+            } else {
+              if (!suppressWarnings) {
+                warning(node, sonosFunction, 'invalid combination artist title received', 'received-> ' + JSON.stringify(response))
+              }
+              msg.artist = artist
+              msg.title = response.title
+              return
+            }
+          }
+        } else {
+          artist = response.artist
+          if (typeof response.title === 'undefined' || response.title === null ||
+            (typeof response.title === 'number' && isNaN(response.title)) || response.title === '') {
+            // title unknown
+          } else {
+            title = response.title
+            node.debug('got artist and title')
+          }
+        }
+        node.debug('got valid song info')
+        // msg.payload = response already done above
+        msg.albumArtURL = albumArtURL
+        msg.artist = artist
+        msg.title = title
+      })
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the media info and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: queueActivated, payload = media
+   *
+   * @deprecated 2020-05-01
+   */
+  function getMediaInfoV1 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get media info'
+
+    sonosPlayer.avTransportService().GetMediaInfo()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined media info received')
+        }
+        if (typeof response.CurrentURI === 'undefined' || response.CurrentURI === null ||
+          (typeof response.CurrentURI === 'number' && isNaN(response.CurrentURI)) || response.CurrentURI === '') {
+          throw new Error('n-r-c-s-p: undefined CurrentURI received')
+        }
+        const uri = response.CurrentURI
+        msg.queueActivated = uri.startsWith('x-rincon-queue')
+        if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
+          const end = uri.indexOf('?sid=254')
+          const start = 'x-sonosapi-stream:'.length
+          msg.radioId = uri.substring(start, end)
+        }
+        msg.payload = response
+        return true
+      })
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /** Get the position info and outputs.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: payload = position
+   *
+   * @deprecated 2020-05-01
+   */
+  function getPositionInfoV1 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get position info'
+
+    sonosPlayer.avTransportService().GetPositionInfo()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined position info received')
+        }
+        msg.payload = response
+        return true
+      })
+      .then(() => {
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  // depreciated command
+
+  /**  Get list of all My Sonos items.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * change msg.payload to array of all My Sonos items
+   *
+   * @deprecated 2020-05-01
+   */
+  function getMySonosAll (node, msg, sonosPlayer) {
+    // get list of My Sonos items
+    const sonosFunction = 'get my sonos all'
+    sonosPlayer.getFavorites()
+      .then(response => {
+        // validate response
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined getFavorites response received')
+        }
+        if (typeof response.items === 'undefined' || response.items === null ||
+          (typeof response.items === 'number' && isNaN(response.items)) || response.items === '') {
+          throw new Error('n-r-c-s-p: undefined favorite list received')
+        }
+        if (!Array.isArray(response.items)) {
+          throw new Error('n-r-c-s-p: did not receive a list')
+        }
+        const list = response.items
+        if (list.length === 0) {
+          throw new Error('n-r-c-s-p: no my sonos items found')
+        }
+        msg.payload = list
+        success(node, msg, sonosFunction)
+        return true
       })
       .catch(error => failure(node, msg, error, sonosFunction))
   }
