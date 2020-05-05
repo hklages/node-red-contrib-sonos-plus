@@ -504,10 +504,9 @@ module.exports = {
     // playerName !== '' then use playerName
     const searchByName = isTruthyAndNotEmptyString(playerName)
     const allGroupsData = await sonosPlayer.getAllGroups()
-    if (!isTruthyAndNotEmptyString(allGroupsData)) {
+    if (!isTruthyAndNotEmptyString(allGroupsData[0])) {
       throw new Error('n-r-c-s-p: undefined all groups data received')
     }
-
     // find our players group in groups output
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
@@ -550,9 +549,9 @@ module.exports = {
     members.push({ // first push coordinator - sonosName will be updated later!
       urlHostname: coordinatorUrlHostname,
       urlPort: allGroupsData[playerGroupIndex].port,
-      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[playerGroupIndex].port}`,
-      uuid: allGroupsData[0].uuid
+      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[playerGroupIndex].port}`
     })
+
     let memberUrl
     for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
       memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
@@ -573,7 +572,7 @@ module.exports = {
 
     // find our player index in members - that helps to figure out role: coordinator, joiner, independent
     const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
-    return { playerIndex: playerIndex, members: members }
+    return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
   },
 
   /**  Get array of all My Sonos items (objects). Version 2 includes Sonos playlists
