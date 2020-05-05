@@ -946,7 +946,6 @@ module.exports = {
       } else {
         itemList = container
       }
-      console.log('xxxx >>' + JSON.stringify(itemList))
       let upnpClass, processingType, id, albumArtURI, firstTrackArtURI
       for (var i = 0; i < itemList.length; i++) {
         if (isValidProperty(itemList[i], ['id'])) {
@@ -989,7 +988,6 @@ module.exports = {
         })
       }
     }
-    console.log('list >>' + JSON.stringify(list))
     return list
   },
 

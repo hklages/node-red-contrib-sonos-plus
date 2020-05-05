@@ -343,10 +343,10 @@ module.exports = function (RED) {
    */
   async function groupPlayTuneIn (node, msg, sonosPlayer) {
     // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
+    if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} TuneIn radio id (msg.topic) is undefined/invalid`)
     }
-    if (!REGEX_RADIO_ID.test(msg.topic)) {
+    if (typeof msg.topic !== 'string' || !REGEX_RADIO_ID.test(msg.topic)) {
       throw new Error(`${NRCSP_ERRORPREFIX} TuneIn radio id (msg.topic) has wrong syntax: ${JSON.stringify(msg.topic)}`)
     }
 
@@ -391,10 +391,10 @@ module.exports = function (RED) {
    */
   async function groupPlayStreamHttp (node, msg, sonosPlayer) {
     // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
+    if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} uri (msg.topic) is undefined/invalid`)
     }
-    if (!msg.topic.startsWith('http')) {
+    if (typeof msg.topic !== 'string' || !msg.topic.startsWith('http')) {
       throw new Error(`${NRCSP_ERRORPREFIX} uri (msg.topic) does not start with http`)
     }
 
@@ -508,10 +508,12 @@ module.exports = function (RED) {
    */
   async function joinerPlayNotification (node, msg, sonosPlayer) {
     // validate all properties and use defaults
-    if (!isValidPropertyNotEmptyString(msg, ['topic'])) {
+    if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} uri (msg.topic) is invalid`)
     }
-
+    if (typeof msg.topic !== 'string' || msg.topic.length === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} uri (msg.topic) is not a string or empty string`)
+    }
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -929,7 +931,7 @@ module.exports = function (RED) {
     if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} title (msg.topic) is invalid`)
     }
-    if (typeof msg.topic !== 'string') {
+    if (typeof msg.topic !== 'string' || msg.topic.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} title (msg.topic) is not string`)
     }
     // it is a string
@@ -976,7 +978,7 @@ module.exports = function (RED) {
     if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} title (msg.topic) is invalid`)
     }
-    if (typeof msg.topic !== 'string') {
+    if (typeof msg.topic !== 'string' || msg.topic.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} title (msg.topic) is not string`)
     }
     const searchTitle = msg.topic
@@ -1036,12 +1038,11 @@ module.exports = function (RED) {
     if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} player to join name (msg.topic) is invalid/missing`)
     }
-    if (typeof msg.topic !== 'string') {
+    if (typeof msg.topic !== 'string' || msg.topic.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} player to join name (msg.topic) is not string`)
     }
     const toJoinPlayerName = msg.topic
 
-    // TODO check error message. Now we use toJointPlayerName and not playerName as usual!
     const groupDataToJoin = await getGroupMemberDataV2(sonosPlayer, toJoinPlayerName)
     const coordinatorIndex = 0
 

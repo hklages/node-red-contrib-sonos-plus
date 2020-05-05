@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - "Universal node":  role names now coordinator, joiner, standalone (instead of independent)
 
-- "Universal node": get.state now provides groupName and groupId
+- "Universal node": get.state now provides groupName and groupId, bug fix regarding empty topic
 
 - "My Sonos": bug fix: no sonos playlists
 
