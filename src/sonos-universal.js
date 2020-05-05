@@ -9,7 +9,7 @@ const {
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
   createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllSonosPlaylists,
-  setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, getGroupQueue
+  setGroupMute, getGroupMute, setGroupVolumeRelative, getGroupVolume, getCmd, setCmd, getGroupQueue
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -132,6 +132,10 @@ module.exports = function (RED) {
         return groupSetMute(node, msg, sonosPlayer)
       case 'player.set.mutestate':
         return playerSetMute(node, msg, sonosPlayer)
+      case 'set.crossfade':
+        return groupSetCrossfade(node, msg, sonosPlayer)
+      case 'set.sleeptimer':
+        return groupSetSleeptimer(node, msg, sonosPlayer)
       case 'create.snap':
         return groupCreateSnapshot(node, msg, sonosPlayer)
       case 'save.queue':
@@ -156,6 +160,10 @@ module.exports = function (RED) {
         return groupGetMute(node, msg, sonosPlayer)
       case 'player.get.mutestate':
         return playerGetMute(node, msg, sonosPlayer)
+      case 'get.crossfade':
+        return groupGetCrossfadeMode(node, msg, sonosPlayer)
+      case 'get.sleeptimer':
+        return groupGetSleeptimer(node, msg, sonosPlayer)
       case 'player.get.role':
         return playerGetRole(node, msg, sonosPlayer)
       case 'get.queue':
@@ -164,8 +172,6 @@ module.exports = function (RED) {
         return playerGetQueue(node, msg, sonosPlayer)
       case 'get.trackplus':
         return groupGetTrackPlus(node, msg, sonosPlayer)
-      case 'lab':
-        return lab(node, msg, sonosPlayer)
       default:
         throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is invalid >>${msg.payload} `)
     }
@@ -692,7 +698,7 @@ module.exports = function (RED) {
   /**  Adjust group volume
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {number}  msg.topic +/- 1 .. 99
+   * @param  {string}  msg.topic +/- 1 .. 99 integer
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
@@ -724,7 +730,7 @@ module.exports = function (RED) {
   /**  Adjust player volume.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {number}  msg.topic +/- 1 .. 99
+   * @param  {string}  msg.topic +/- 1 .. 99 integer
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
@@ -757,7 +763,7 @@ module.exports = function (RED) {
   /**  Set volume for given player.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {number}  msg.topic volume, integer 1 .. 99
+   * @param  {string}  msg.topic volume, integer 1 .. 99
    * @param  {number}  [msg.volume] volume - if missing do not touch volume
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
@@ -808,7 +814,7 @@ module.exports = function (RED) {
   /**  Set group mute.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {number}  msg.topic On/Off
+   * @param  {string}  msg.topic On/Off
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
@@ -868,6 +874,69 @@ module.exports = function (RED) {
     return {} // means untouched msg
   }
 
+  /**  Set group crossfade On Off
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.topic On/Off
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} msg unchanged
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupSetCrossfade (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} crossfade (msg.topic) is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${NRCSP_ERRORPREFIX} crossfade (msg.topic) is not string`)
+    }
+    if (!(msg.topic === 'On' || msg.topic === 'Off')) {
+      throw new Error(`${NRCSP_ERRORPREFIX} crossfade (msg.topic) is not On/Off`)
+    }
+
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinatorBaseUrl = groupData.members[0].baseUrl
+    const newValue = msg.topic === 'On' ? 1 : 0
+    await setCmd(coordinatorBaseUrl, 'SetCrossfadeMode', { CrossfadeMode: newValue })
+    return {} // means untouched msg
+  }
+
+  /**  Set group sleep timer.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.topic format hh:mm:ss hh < 20
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {} msg unchanged
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupSetSleeptimer (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    // msg.topic is requried
+    if (!isValidProperty(msg, ['topic'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} sleeptimer (msg.topic) is invalid`)
+    }
+    if (typeof msg.topic !== 'string') {
+      throw new Error(`${NRCSP_ERRORPREFIX} sleeptimer (msg.topic) is not string`)
+    }
+    if (!REGEX_TIME.test(msg.topic)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} sleeptimer (msg.topic) is not hh:mm:ss`)
+    }
+
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinatorBaseUrl = groupData.members[0].baseUrl
+    await setCmd(coordinatorBaseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: msg.topic })
+    return {} // means untouched msg
+  }
+
   /**  Create a snapshot of the given group of players.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
@@ -916,7 +985,7 @@ module.exports = function (RED) {
   /**  Save SONOS queue to Sonos playlist.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {number}  msg.topic title of Sonos playlist
+   * @param  {string}  msg.topic title of Sonos playlist
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
@@ -1020,7 +1089,7 @@ module.exports = function (RED) {
   /**  Join a group.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {number}  msg.topic SONOS player name of group to join
+   * @param  {string}  msg.topic SONOS player name of group to join
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
@@ -1230,6 +1299,44 @@ module.exports = function (RED) {
     return { payload: (state ? 'On' : 'Off') }
   }
 
+  /**  Get group crossfade mode.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {payload: crossfade mode} On/Off
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupGetCrossfadeMode (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinatorBaseUrl = groupData.members[0].baseUrl
+    const muteState = await getCmd(coordinatorBaseUrl, 'GetCrossfadeMode')
+    return { payload: (muteState === '1' ? 'On' : 'Off') }
+  }
+
+  /**  Get group sleeptimer.
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {payload: crossfade mode} hh:mm:ss
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function groupGetSleeptimer (node, msg, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const coordinatorBaseUrl = groupData.members[0].baseUrl
+    const sleeptimer = await getCmd(coordinatorBaseUrl, 'GetRemainingSleepTimerDuration')
+    return { payload: (sleeptimer === '' ? 'no time set' : sleeptimer) }
+  }
+
   /**  Get group SONOS queue - the SONOS queue of the coordinator.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
@@ -1384,22 +1491,6 @@ module.exports = function (RED) {
       radioId: radioId,
       positionData: positionData
     }
-  }
-
-  /**  Lab
-   * @param  {object}  node - used for debug and warning
-   * @param  {object}  msg incoming message
-   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
-   *
-   * @return {promise} object to update msg. msg.payload to role of player as string.
-   *
-   * @throws  all from validatedGroupProperties
-   *          all from getGroupMemberDataV2
-   */
-  async function lab (node, msg, sonosPlayer) {
-    const response = await getCmd(sonosPlayer.baseUrl, 'GetGroupVolume')
-    return { payload: response }
   }
 
   // ========================================================================
