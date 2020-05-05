@@ -2,9 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.2] 2020-05-05
+
+### Changed
+
+- "Universal node":  role names now coordinator, joiner, standalone (instead of independent)
+
+- "Universal node": get.state now provides groupName and groupId
+
+- "My Sonos": bug fix: no sonos playlists
+
+### Added
+
+- "Universal node": player.join.group, player.leave.group
+
 ## [3.1.1] 2020-05-02
 
-## Changed
+### Changed
 
 - bug fix spotifiy region (number format)
 

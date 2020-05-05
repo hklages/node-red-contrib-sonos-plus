@@ -238,11 +238,13 @@ module.exports = {
         await membersAsPlayerPlus[index].setVolume(snapshot.memberVolumes[index])
       }
     }
-    await membersAsPlayerPlus[coordinatorIndex].setAVTransportURI({
-      uri: snapshot.mediaInfo.CurrentURI,
-      metadata: snapshot.mediaInfo.CurrentURIMetaData,
-      onlySetUri: true // means dont play
-    })
+    if (!options.uri.includes('x-sonos-vli')) { // that means initiated by Spotify or Amazon Alexa - can not recover) {
+      await membersAsPlayerPlus[coordinatorIndex].setAVTransportURI({
+        uri: snapshot.mediaInfo.CurrentURI,
+        metadata: snapshot.mediaInfo.CurrentURIMetaData,
+        onlySetUri: true // means dont play
+      })
+    }
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
       await membersAsPlayerPlus[coordinatorIndex].selectTrack(snapshot.positionInfo.Track)
         .catch(reason => {
@@ -257,7 +259,9 @@ module.exports = {
         })
     }
     if (snapshot.wasPlaying) {
-      await membersAsPlayerPlus[coordinatorIndex].play()
+      if (!options.uri.includes('x-sonos-vli')) {
+        await membersAsPlayerPlus[coordinatorIndex].play()
+      }
     }
   },
 
@@ -504,10 +508,9 @@ module.exports = {
     // playerName !== '' then use playerName
     const searchByName = isTruthyAndNotEmptyString(playerName)
     const allGroupsData = await sonosPlayer.getAllGroups()
-    if (!isTruthyAndNotEmptyString(allGroupsData)) {
+    if (!isTruthyAndNotEmptyString(allGroupsData[0])) {
       throw new Error('n-r-c-s-p: undefined all groups data received')
     }
-
     // find our players group in groups output
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
@@ -550,9 +553,9 @@ module.exports = {
     members.push({ // first push coordinator - sonosName will be updated later!
       urlHostname: coordinatorUrlHostname,
       urlPort: allGroupsData[playerGroupIndex].port,
-      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[playerGroupIndex].port}`,
-      uuid: allGroupsData[0].uuid
+      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[playerGroupIndex].port}`
     })
+
     let memberUrl
     for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
       memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
@@ -573,7 +576,7 @@ module.exports = {
 
     // find our player index in members - that helps to figure out role: coordinator, joiner, independent
     const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
-    return { playerIndex: playerIndex, members: members }
+    return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
   },
 
   /**  Get array of all My Sonos items (objects). Version 2 includes Sonos playlists
@@ -612,21 +615,11 @@ module.exports = {
       }
     })
 
-    // get all Sonos playlists (ObjectID SQ)
-    // response = await module.exports.getCmd(sonosPlayerBaseUrl, 'BrowseSQ')
-    // if (!isTruthyAndNotEmptyString(response)) {
-    //   throw new Error(`n-r-c-s-p: browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
-    // }
-    // const listSonosPlaylists = await module.exports.parseSonosPlaylistsResult(response)
-    // if (!isTruthyAndNotEmptyString(listSonosPlaylists)) {
-    //   throw new Error(`n-r-c-s-p: response form parsing Browse SQ invalid. Response >>${JSON.stringify(listSonosPlaylists)}`)
-    // }
-
     const listSonosPlaylists = await module.exports.getAllSonosPlaylists(sonosPlayerBaseUrl)
     return listMySonos.concat(listSonosPlaylists)
   },
 
-  /**  Get array of all Sonos playlists (objects). Caution: Upper limit 100
+  /**  Get array of all Sonos playlists (objects). Caution: Upper limit 100. Emtpy array if no sonos playlists.
    * @param  {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
    *
    * @return {promise} array of Sonos playlists - could be emtpy
@@ -888,40 +881,48 @@ module.exports = {
     }
     const list = []
     let sid, upnpClass, processingType
-    const original = result['DIDL-Lite'].item
-    for (var i = 0; i < original.length; i++) {
-      sid = ''
-      if (isValidProperty(original[i], ['res', tag])) {
-        sid = module.exports.getSid(original[i].res[tag])
+    if (isValidProperty(result, ['DIDL-Lite', 'item'])) {
+      const item = result['DIDL-Lite'].item
+      let itemList = [] // parseSoapBodyV1 does not create array in case of one item! See parseSoapBodyV1 options
+      if (!Array.isArray(item)) {
+        itemList.push(item)
+      } else {
+        itemList = item
       }
-      upnpClass = ''
-      if (isValidProperty(original[i], ['r:resMD'])) {
-        upnpClass = module.exports.getUpnpClass(original[i]['r:resMD'])
+      for (var i = 0; i < itemList.length; i++) {
+        sid = ''
+        if (isValidProperty(itemList[i], ['res', tag])) {
+          sid = module.exports.getSid(itemList[i].res[tag])
+        }
+        upnpClass = ''
+        if (isValidProperty(itemList[i], ['r:resMD'])) {
+          upnpClass = module.exports.getUpnpClass(itemList[i]['r:resMD'])
+        }
+        processingType = 'unsupported'
+        if (module.exports.UPNP_CLASSES_STREAM.includes(upnpClass)) {
+          processingType = 'stream'
+        }
+        if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
+          processingType = 'queue'
+        }
+        list.push({
+          title: itemList[i]['dc:title'],
+          albumArt: itemList[i]['upnp:albumArtURI'],
+          uri: itemList[i].res[tag],
+          metadata: itemList[i]['r:resMD'],
+          sid: sid,
+          upnpClass: upnpClass,
+          processingType: processingType
+        })
       }
-      processingType = 'unsupported'
-      if (module.exports.UPNP_CLASSES_STREAM.includes(upnpClass)) {
-        processingType = 'stream'
-      }
-      if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
-        processingType = 'queue'
-      }
-      list.push({
-        title: original[i]['dc:title'],
-        albumArt: original[i]['upnp:albumArtURI'],
-        uri: original[i].res[tag],
-        metadata: original[i]['r:resMD'],
-        sid: sid,
-        upnpClass: upnpClass,
-        processingType: processingType
-      })
     }
     return list
   },
 
-  /** Creates a list of items from given Browse output - Sonos playlists SQ:
+  /** Creates a list of items from given Browse output - Sonos playlists SQ:.
    * @param   {string}  sonosPlaylistsSoapString string is Browse response, favorites from SONOS player
    *
-   * @return {promise} Array of objects (see above) in JSON format. May return empty array
+   * @return {promise} Array of objects (see above) in JSON format. Empty array if no sonos playlists exists.
    *                    {title, albumArt (of first track), uri, metadata (empty string), sid (empty string), id, upnpClass, processingType}
    *
    * @throws if parseSoapBody is in error
@@ -936,49 +937,59 @@ module.exports = {
     if (!isTruthyAndNotEmptyString(result)) {
       throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBody is invalid. Response >>${JSON.stringify(result)}`)
     }
-    const list = []
-    const container = result['DIDL-Lite'].container
-    let upnpClass, processingType, id, albumArtURI, firstTrackArtURI
-    for (var i = 0; i < container.length; i++) {
-      if (isValidProperty(container[i], ['id'])) {
-        id = container[i].id
-      } else { // should never happen
-        throw new Error(`${NRCSP_ERRORPREFIX} id is missing`)
-      }
-      upnpClass = ''
-      if (isValidProperty(container[i], ['upnp:class'])) {
-        upnpClass = container[i]['upnp:class']
-      }
-      processingType = 'unsupported'
-      if (module.exports.UPNP_CLASSES_STREAM.includes(upnpClass)) {
-        processingType = 'stream'
-      }
-      if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
-        processingType = 'queue'
-      }
-      firstTrackArtURI = ''
-      if (isValidProperty(container[i], ['upnp:albumArtURI'])) {
-        albumArtURI = container[i]['upnp:albumArtURI']
-        if (Array.isArray(albumArtURI)) {
-          if (albumArtURI.length > 0) {
-            firstTrackArtURI = albumArtURI[0]
-          }
-        }
+    const list = [] // no sonos playlists
+    if (isValidProperty(result, ['DIDL-Lite', 'container'])) {
+      const container = result['DIDL-Lite'].container
+      let itemList = [] // parseSoapBodyV1 does not create array in case of one item! See parseSoapBodyV1 options
+      if (!Array.isArray(container)) {
+        itemList.push(container)
       } else {
-        throw new Error(`${NRCSP_ERRORPREFIX} AlbumARTURI is missing`)
+        itemList = container
       }
+      console.log('xxxx >>' + JSON.stringify(itemList))
+      let upnpClass, processingType, id, albumArtURI, firstTrackArtURI
+      for (var i = 0; i < itemList.length; i++) {
+        if (isValidProperty(itemList[i], ['id'])) {
+          id = itemList[i].id
+        } else { // should never happen
+          throw new Error(`${NRCSP_ERRORPREFIX} id is missing`)
+        }
+        upnpClass = ''
+        if (isValidProperty(itemList[i], ['upnp:class'])) {
+          upnpClass = itemList[i]['upnp:class']
+        }
+        processingType = 'unsupported'
+        if (module.exports.UPNP_CLASSES_STREAM.includes(upnpClass)) {
+          processingType = 'stream'
+        }
+        if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
+          processingType = 'queue'
+        }
+        firstTrackArtURI = ''
+        if (isValidProperty(itemList[i], ['upnp:albumArtURI'])) {
+          albumArtURI = itemList[i]['upnp:albumArtURI']
+          if (Array.isArray(albumArtURI)) {
+            if (albumArtURI.length > 0) {
+              firstTrackArtURI = albumArtURI[0]
+            }
+          }
+        } else {
+          throw new Error(`${NRCSP_ERRORPREFIX} AlbumARTURI is missing`)
+        }
 
-      list.push({
-        title: container[i]['dc:title'],
-        albumArt: firstTrackArtURI,
-        uri: container[i].res[tag],
-        metadata: '',
-        sid: '',
-        id: id,
-        upnpClass: upnpClass,
-        processingType: processingType
-      })
+        list.push({
+          title: itemList[i]['dc:title'],
+          albumArt: firstTrackArtURI,
+          uri: itemList[i].res[tag],
+          metadata: '',
+          sid: '',
+          id: id,
+          upnpClass: upnpClass,
+          processingType: processingType
+        })
+      }
     }
+    console.log('list >>' + JSON.stringify(list))
     return list
   },
 
