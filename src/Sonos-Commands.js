@@ -350,14 +350,15 @@ module.exports = {
   },
 
   /** Get array of all SONOS queue items. Adds baseUrl to albumArtURL
-   * @param  {object} sonosPlayer valid player object
+   * @param  {object} sonosPlayerPlus valid player object with baseUrl
+   *
    * @return {promise} array of items:
    *
    * @throws all getQueue
    *
    */
-  getGroupQueue: async function (sonosPlayer) {
-    const queue = await sonosPlayer.getQueue()
+  getPlayerQueue: async function (sonosPlayerPlus) {
+    const queue = await sonosPlayerPlus.getQueue()
     if (!isTruthyAndNotEmptyString(queue)) {
       throw new Error('n-r-c-s-p: undefined getqueue response received')
     }
@@ -381,7 +382,7 @@ module.exports = {
         // ignore this item
       } else {
         track.albumArtURI = track.albumArtURL
-        track.albumArtURL = sonosPlayer.baseUrl + track.albumArtURI
+        track.albumArtURL = sonosPlayerPlus.baseUrl + track.albumArtURI
       }
     })
     return tracksArray
