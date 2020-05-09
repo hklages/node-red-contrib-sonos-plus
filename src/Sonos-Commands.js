@@ -350,21 +350,21 @@ module.exports = {
   },
 
   /** Get array of all SONOS queue items. Adds baseUrl to albumArtURL
-   * @param  {object} sonosPlayerPlus valid player object with baseUrl
+   * @param  {object} sonosPlayer valid sonos player object with baseUrl
    *
    * @return {promise} array of items:
    *
    * @throws all getQueue
    *
    */
-  getPlayerQueue: async function (sonosPlayerPlus) {
-    const queue = await sonosPlayerPlus.getQueue()
+  getPlayerQueue: async function (sonosPlayer) {
+    const queue = await sonosPlayer.getQueue()
     if (!isTruthyAndNotEmptyString(queue)) {
-      throw new Error('n-r-c-s-p: undefined getqueue response received')
+      throw new Error(`${NRCSP_ERRORPREFIX} getqueue response undefined`)
     }
 
     if (!isValidPropertyNotEmptyString(queue, ['returned'])) {
-      throw new Error('n-r-c-s-p: undefined queue size received')
+      throw new Error(`${NRCSP_ERRORPREFIX} queue size is undefined`)
     }
 
     let tracksArray = []
@@ -372,7 +372,7 @@ module.exports = {
       /// keep the []
     } else {
       if (!isValidPropertyNotEmptyString(queue, ['items'])) {
-        throw new Error('n-r-c-s-p: did not receive any items')
+        throw new Error(`${NRCSP_ERRORPREFIX} did not receive any items`)
       }
       tracksArray = queue.items
     }
@@ -382,7 +382,7 @@ module.exports = {
         // ignore this item
       } else {
         track.albumArtURI = track.albumArtURL
-        track.albumArtURL = sonosPlayerPlus.baseUrl + track.albumArtURI
+        track.albumArtURL = sonosPlayer.baseUrl + track.albumArtURI
       }
     })
     return tracksArray

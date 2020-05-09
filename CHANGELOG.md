@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.3] 2020-05-14
+
+### Added
+
+- "Universal node": set/get.sleeptimer, set/get.crossfade, set.queuemode
+
+- "Universal node": play.track, seek
+
+- "Universal node": remove.track
+
 ## [3.1.2] 2020-05-05
 
 ### Changed
