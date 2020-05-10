@@ -8,9 +8,9 @@ All notable changes to this project will be documented in this file.
 
 - "Universal node": set/get.sleeptimer, set/get.crossfade, set.queuemode
 
-- "Universal node": play.track, seek
+- "Universal node": play.track, seek, remove.track
 
-- "Universal node": remove.track
+- "Universal node": household.get.groups
 
 ## [3.1.2] 2020-05-05
 

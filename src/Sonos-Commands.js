@@ -88,11 +88,11 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
     let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[0].baseUrl, options.uri, metadata)
     if (!response) {
-      throw new Error('n-r-c-s-p: setAVTransportURI response is false')
+      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is false`)
     }
     response = await module.exports.play(membersAsPlayerPlus[0].baseUrl)
     if (!response) {
-      throw new Error('n-r-c-s-p: play response is false')
+      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
     }
     await membersAsPlayerPlus[0].setVolume(options.volume)
     if (options.sameVolume) { // all other members, starting at 1
@@ -197,11 +197,11 @@ module.exports = {
 
     let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[coordinatorIndex].baseUrl, options.uri, metadata)
     if (!response) {
-      throw new Error('n-r-c-s-p: setAVTransportURI response is invalid')
+      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is invalid`)
     }
     response = await module.exports.play(membersAsPlayerPlus[coordinatorIndex].baseUrl)
     if (!response) {
-      throw new Error('n-r-c-s-p: play response is false')
+      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
     }
     if (options.volume !== -1) {
       await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
@@ -309,11 +309,11 @@ module.exports = {
     // set the joiner to notification - joiner will leave group!
     let response = await module.exports.setAVTransportURI(joinerPlus.baseUrl, options.uri, metadata)
     if (!response) {
-      throw new Error('n-r-c-s-p: setAVTransportURI response is false')
+      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is false`)
     }
     response = await module.exports.play(joinerPlus.baseUrl)
     if (!response) {
-      throw new Error('n-r-c-s-p: play response is false')
+      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
     }
     if (options.volume !== -1) {
       await joinerPlus.setVolume(options.volume)
@@ -510,7 +510,7 @@ module.exports = {
     const searchByName = isTruthyAndNotEmptyString(playerName)
     const allGroupsData = await sonosPlayer.getAllGroups()
     if (!isTruthyAndNotEmptyString(allGroupsData[0])) {
-      throw new Error('n-r-c-s-p: undefined all groups data received')
+      throw new Error(`${NRCSP_ERRORPREFIX} all groups data undefined`)
     }
     // find our players group in groups output
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
@@ -544,36 +544,9 @@ module.exports = {
       }
     }
     if (playerGroupIndex === -1) {
-      throw new Error('n-r-c-s-p: could not find given player in any group')
+      throw new Error(`${NRCSP_ERRORPREFIX} could not find given player in any group`)
     }
-
-    // create array of members with data {urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
-    //                                    sonosName: "Küche", uuid: RINCON_xxxxxxx}. Coordinator is first!
-    const members = []
-    const coordinatorUrlHostname = allGroupsData[playerGroupIndex].host
-    members.push({ // first push coordinator - sonosName will be updated later!
-      urlHostname: coordinatorUrlHostname,
-      urlPort: allGroupsData[playerGroupIndex].port,
-      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[playerGroupIndex].port}`
-    })
-
-    let memberUrl
-    for (let memberIndex = 0; memberIndex < allGroupsData[playerGroupIndex].ZoneGroupMember.length; memberIndex++) {
-      memberUrl = new URL(allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].Location)
-      if (memberUrl.hostname !== coordinatorUrlHostname) {
-        members.push({
-          urlHostname: memberUrl.hostname,
-          urlPort: memberUrl.port,
-          baseUrl: `http://${memberUrl.hostname}:${memberUrl.port}`,
-          sonosName: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName,
-          uuid: allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
-        })
-      } else {
-        // update coordinator on positon 0 with name
-        members[0].sonosName = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].ZoneName
-        members[0].uuid = allGroupsData[playerGroupIndex].ZoneGroupMember[memberIndex].UUID
-      }
-    }
+    const members = await module.exports.sortedGroupArray(allGroupsData, playerGroupIndex)
 
     // find our player index in members - that helps to figure out role: coordinator, joiner, independent
     const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
@@ -600,11 +573,11 @@ module.exports = {
     // get all My Sonos items - but not Sonos playlists (ObjectID FV:2)
     const response = await module.exports.getCmd(sonosPlayerBaseUrl, 'Browse')
     if (!isTruthyAndNotEmptyString(response)) {
-      throw new Error(`n-r-c-s-p: Browse FV-2 response is invalid. Response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} Browse FV-2 response is invalid. Response >>${JSON.stringify(response)}`)
     }
     const listMySonos = await module.exports.parseMySonosWithoutSonosPlaylistsResult(response)
     if (!isTruthyAndNotEmptyString(listMySonos)) {
-      throw new Error(`n-r-c-s-p: response form parsing Browse FV-2 invalid. Response >>${JSON.stringify(listMySonos)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse FV-2 is invalid. Response >>${JSON.stringify(listMySonos)}`)
     }
     // Music library items have special albumArt, without host
     // We have to add the baseurl
@@ -774,25 +747,25 @@ module.exports = {
     const response = await sendToPlayerV1(baseUrl, path, name, action, args)
     // check response - select/transform item properties
     if (!isValidProperty(response, ['statusCode'])) {
-      throw new Error(`n-r-c-s-p: invalid status code from sendToPlayer - response.statusCode >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
     }
     if (response.statusCode !== 200) {
-      throw new Error(`n-r-c-s-p: status code not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
     }
     if (!isValidProperty(response, ['body'])) {
-      throw new Error(`n-r-c-s-p: invalid body from sendToPlayer - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     const bodyXml = await parseSoapBodyV1(response.body, '')
 
     // check response - select/transform item properties
     const key = actionParameter.responsePath
     if (!isValidProperty(bodyXml, key)) {
-      throw new Error(`n-r-c-s-p: invalid body from sendToPlayer - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     const result = getNestedProperty(bodyXml, key)
 
     if (result !== actionParameter.responseValue) {
-      throw new Error(`n-r-c-s-p: unexpected response from player >>${JSON.stringify(result)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} response from player not expected >>${JSON.stringify(result)}`)
     }
     return true
   },
@@ -812,25 +785,25 @@ module.exports = {
 
     // check response - select/transform item properties
     if (!isValidProperty(response, ['statusCode'])) {
-      throw new Error(`n-r-c-s-p: invalid status code from sendToPlayer - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     if (response.statusCode !== 200) {
-      throw new Error(`n-r-c-s-p: status code not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
     }
     if (!isValidProperty(response, ['body'])) {
-      throw new Error(`n-r-c-s-p: invalid body (UPNP) from sendToPlayer - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} body (UPNP) from sendToPlayer is invalid- response >>${JSON.stringify(response)}`)
     }
     const bodyXml = await parseSoapBodyV1(response.body, '')
     // check response - select/transform item properties
     const key = actionParameter.responsePath
     if (!isValidProperty(bodyXml, key)) {
-      throw new Error(`n-r-c-s-p: invalid body XML from sendToPlayer - response >>${JSON.stringify(response)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} invalid body XML from sendToPlayer - response >>${JSON.stringify(response)}`)
     }
     const result = getNestedProperty(bodyXml, key)
     if (typeof result !== 'string') {
       // Caution: this check does only work for primitive values (not objects)
       console.log('response >>' + JSON.stringify(result)) // please leave for debugging
-      throw new Error('n-r-c-s-p: could not get string value from player')
+      throw new Error(`${NRCSP_ERRORPREFIX} could not get string value from player`)
     }
     return result
   },
@@ -861,7 +834,7 @@ module.exports = {
       }
     }
     // not found
-    throw new Error('n-r-c-s-p: No title machting msg.topic found. Modify msg.topic')
+    throw new Error(`${NRCSP_ERRORPREFIX} No title machting msg.topic found. Modify msg.topic`)
   },
 
   /** Creates a list of items from given Browse FV:2 (My Sonos but without Sonos playlists) output.
@@ -990,6 +963,50 @@ module.exports = {
       }
     }
     return list
+  },
+
+  /**  Returs a sorted array with all group members. Coordinator is in first place.
+  * @param {array} allGroupsData output form sonos getAllGroups()
+  * @param {number} groupIndex pointing to the specific group 0 ... allGroupsData.length-1
+  * @return {promise} array of objects (player) in that group
+  *      player: { urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
+  *         sonosName: "Küche", uuid: RINCON_xxxxxxx }
+  *
+  * @throws if index out of range
+  *
+  */
+
+  sortedGroupArray: async function (allGroupsData, groupIndex) {
+    if (groupIndex < 0 || groupIndex >= allGroupsData.length) {
+      throw new Error(`${NRCSP_ERRORPREFIX} index is out of range`)
+    }
+
+    const members = []
+    const coordinatorUrlHostname = allGroupsData[groupIndex].host
+    members.push({ // first push coordinator - sonosName will be updated later!
+      urlHostname: coordinatorUrlHostname,
+      urlPort: allGroupsData[groupIndex].port,
+      baseUrl: `http://${coordinatorUrlHostname}:${allGroupsData[groupIndex].port}`
+    })
+
+    let memberUrl
+    for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+      memberUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+      if (memberUrl.hostname !== coordinatorUrlHostname) {
+        members.push({
+          urlHostname: memberUrl.hostname,
+          urlPort: memberUrl.port,
+          baseUrl: `http://${memberUrl.hostname}:${memberUrl.port}`,
+          sonosName: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName,
+          uuid: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID
+        })
+      } else {
+        // update coordinator on positon 0 with name
+        members[0].sonosName = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
+        members[0].uuid = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID
+      }
+    }
+    return members
   },
 
   /**  Get sid from uri.

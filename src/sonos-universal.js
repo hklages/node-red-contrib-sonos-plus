@@ -8,7 +8,7 @@ const {
 
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
-  createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllSonosPlaylists,
+  createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllSonosPlaylists, sortedGroupArray,
   getGroupVolume, getGroupMute, getPlayerQueue, setGroupVolumeRelative, setGroupMute, getCmd, setCmd
 } = require('./Sonos-Commands.js')
 
@@ -156,6 +156,8 @@ module.exports = function (RED) {
         return groupJoin(node, msg, sonosPlayer)
       case 'player.leave.group':
         return groupLeave(node, msg, sonosPlayer)
+      case 'household.get.groups':
+        return householdGetGroups(node, msg, sonosPlayer)
       case 'get.state':
         return groupGetState(node, msg, sonosPlayer)
       case 'get.playbackstate':
@@ -1404,6 +1406,27 @@ module.exports = function (RED) {
     // baseUrl not needed
     await sonosSingleplayer.leaveGroup()
     return {}
+  }
+
+  /**  Get household groups
+   * @param  {object}  node - used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} array of all group array of members :-)
+   *
+   * @throws  all from validatedGroupProperties
+   *          all from getGroupMemberDataV2
+   */
+  async function householdGetGroups (node, msg, sonosPlayer) {
+    const allGroupsData = await sonosPlayer.getAllGroups()
+    const allGroupsArray = []
+    let group
+    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
+      group = await sortedGroupArray(allGroupsData, groupIndex)
+      allGroupsArray.push(group)
+    }
+    return { payload: allGroupsArray }
   }
 
   /**  Get state (see return) of that group, the specified player belongs to.

@@ -1,6 +1,6 @@
 const {
   REGEX_IP, REGEX_SERIAL, REGEX_TIME,
-  failure, warning, success,
+  failure, warning, success, NRCSP_ERRORPREFIX,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthy, isTruthyAndNotEmptyString
 } = require('./Helper.js')
@@ -24,7 +24,7 @@ module.exports = function (RED) {
 
     if (!((isValidProperty(configNode, ['ipaddress']) && REGEX_IP.test(configNode.ipaddress)) ||
         (isValidProperty(configNode, ['serialnum']) && REGEX_SERIAL.test(configNode.serialnum)))) {
-      failure(node, null, new Error('n-r-c-s-p: invalid config node - missing ip or serial number'), sonosFunction)
+      failure(node, null, new Error(`${NRCSP_ERRORPREFIX} invalid config node - missing ip or serial number`), sonosFunction)
       return
     }
 
@@ -185,11 +185,11 @@ module.exports = function (RED) {
                   return sonosPlayer.setVolume(msg.volume)
                 } else {
                   node.debug('msg.volume is not in range: ' + newVolume)
-                  throw new Error(`n-r-c-s-p: msg.volume is out of range 1...99: ${newVolume}`)
+                  throw new Error(`${NRCSP_ERRORPREFIX} msg.volume is out of range 1...99: ${newVolume}`)
                 }
               } else {
                 node.debug('msg.volume is not number')
-                throw new Error(`n-r-c-s-p: msg.volume is not a number: ${JSON.stringify(msg.volume)}`)
+                throw new Error(`${NRCSP_ERRORPREFIX} msg.volume is not a number: ${JSON.stringify(msg.volume)}`)
               }
             } else {
               return true // dont touch volume
