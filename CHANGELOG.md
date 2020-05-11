@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.3] 2020-05-14
+
+### Added
+
+- "Universal node": player.join.group, player.leave.group documentation
+
+- "Universal node": set/get.sleeptimer, set/get.crossfade, set.queuemode
+
+- "Universal node": play.track, seek, remove.track
+
+- "Universal node": household.get.groups
+
 ## [3.1.2] 2020-05-05
 
 ### Changed

@@ -108,6 +108,7 @@ module.exports = function (RED) {
       getMusicLibraryPlaylists(node, msg, sonosPlayer)
     } else if (command === 'insert_musiclibrary_playlist') {
       insertMusicLibraryPlaylist(node, msg, sonosPlayer)
+    // depreciated since 3.1.3 2020-05-14
     } else if (command === 'play_song') {
       playSong(node, msg, sonosPlayer, msg.topic)
     } else if (command === 'remove_song') {
@@ -396,11 +397,19 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
+  // ========================================================================
+  //
+  //             DEPRECIATED - USE UNIVERSAL NODE or MY SONOS node
+  //
+  // ========================================================================
+
   /**  Play song with specified index (msg.topic) in SONOS queue. Activates also SONOS Queue.
    * @param  {object} node current node
    * @param  {object} msg incoming message with topic: first, last, <positiv number between 1 and queueSize>
    * @param  {object} sonosPlayer sonos player object
    * @output {object} Success: msg, no modifications!
+   *
+   * @deprecated 2020-05-14
    */
   function playSong (node, msg, sonosPlayer) {
     const sonosFunction = 'play song'
@@ -472,6 +481,9 @@ module.exports = function (RED) {
    * @param  {object} sonosPlayer Sonos Player
    * @return {promise} ok
    * @output {object} Success: msg, no modifications!
+   *
+   * @deprecated 2020-05-14
+   *
    * @throws missing or invalid response from player (getqueue, removeTracks), missing or invalid msg.topic, invalid msg.numberOfSongs
    */
   async function removeSongFromQueue (node, msg, sonosPlayer) {
@@ -544,6 +556,8 @@ module.exports = function (RED) {
    * @param  {object} msg incoming message, msg.payload and msg.topic are beeing used
    * @param  {object} sonosPlayer Sonos Player
    * @output {object} Success: msg
+   *
+   * @deprecated 2020-05-14
    */
   function setQueuemode (node, msg, sonosPlayer) {
     const sonosFunction = 'set queuemode'
@@ -620,6 +634,8 @@ module.exports = function (RED) {
    * @param  {string} msg.topic format hh:mm:ss hh < 20
    * @param  {object} sonosPlayer Sonos Player
    * @output: {object} msg unmodified / stopped in case of error
+   *
+   * @deprecated 2020-05-14
    */
   function seek (node, msg, sonosPlayer) {
     const sonosFunction = 'seek / move forward in song'
@@ -643,12 +659,6 @@ module.exports = function (RED) {
       })
       .catch(error => failure(node, msg, error, sonosFunction))
   }
-
-  // ========================================================================
-  //
-  //             DEPRECIATED - USE UNIVERSAL NODE or MY SONOS node
-  //
-  // ========================================================================
 
   /** Insert all songs of specified Amazon Prime playlist (URI format) into SONOS queue.
    * @param  {object} node current node

@@ -50,15 +50,15 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-universal">
-<p>Incoming message acts on the whole <b>GROUP</b>! Only if explicitly stated (command prefix: joiner, player) the message acts on the given player.
-The group is identified by the given player. playerName overrides the configuration node player.</br>
+<p>Incoming message is a command and acts on the whole <b>GROUP</b>!
+Only if explicitly stated (command prefix: joiner, player) the message acts on the given player.<p>
 
-The <b>playerName</b> is the name of the SONOS player (aka room, zone) and NOT the name of a configuration node!</br>
+The group is identified by the given player. <b>msg.playerName<b> overrides the configuration node player. 
+The <b>msg.playerName</b> is the name of the SONOS player (aka room, zone) and NOT the name of a configuration node!</br>
 
 <b>Joiner</b> is the "opposite" of <b>coordinator</b>. A group always consist of a unique coordinator and optional joiners.</br>
 <br>
 Only <b>get.*, create.snap</b> modify the incoming message.</b>
-</p>
 
 <h1>Input (msg properties before processing)</h3>
 
@@ -100,6 +100,9 @@ Only <b>get.*, create.snap</b> modify the incoming message.</b>
   <dt class="optional">ignoreNotExists (remove.sonosplaylist) <span class="property-type">boolean</span></dt>
   <dd>If the playlist is not found The uri (string), metadata(string) and queue(boolean) identifier of the content to be played.</dd>
 
+  <dt class="optional">numberOfTracks (remove.tracks) <span class="property-type">string/number</span></dt>
+  <dd>number of tracks to be removed as integer in range 1 .. </dd>
+
 </dl>
 
 <h1>Output (msg properties after processing)</h3>
@@ -125,6 +128,11 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   </li>
   <li>
     <code>play.queue</code> Activates and starts playing the SONOS queue. Queue must not be empty<br>
+    Optional properties: playerName (overrides config node player), volume, sameVolume 
+  </li>
+  <li>
+    <code>play.track</code> Activates and starts playing the SONOS queue with a specific track. Queue must not be empty<br>
+    Required property: topic: tracknumber 1 .. lenght of queue<br>
     Optional properties: playerName (overrides config node player), volume, sameVolume 
   </li>
   <li>
@@ -158,23 +166,6 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties: playerName (overrides config node player)
   </li>
   <li>
-    <code>next.track</code> Skips to next track (if supported by current stream).<br>
-    Optional properties: playerName (overrides config node player)    
-  </li>
-  <li>
-    <code>previous.track</code> Skips back track (if supported by current stream).<br>
-    Optional property: playerName (overrides config node player)    
-  </li>
-  <li>
-    <code>player.join.group</code> The given player joins the group, specified in topic<br>
-    Required property : topic: name of any player in target group<br>
-    Optional property: playerName (overrides config node player)
-  </li>
-  <li>
-    <code>player.leave.group</code> The given player will leave the group = standalone<br>
-    Optional property: playerName (overrides config node player)
-  </li>
-  <li>
     <code>toggle.playback</code> Toggles playback in the group (playing, paused)<br>
     Optional properties are: playerName (overrides config node player)
   </li>
@@ -185,6 +176,14 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   <li>
     <code>stop</code> Stops playing in the group.<br>
     Optional properties are: playerName (overrides config node player)
+  </li>
+  <li>
+    <code>next.track</code> Skips to next track (if supported by current stream).<br>
+    Optional properties: playerName (overrides config node player)    
+  </li>
+  <li>
+    <code>previous.track</code> Skips back track (if supported by current stream).<br>
+    Optional property: playerName (overrides config node player)    
   </li>
   <li>
     <code>adjust.volume</code> Adjusts the group volume.<br> 
@@ -212,12 +211,32 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties are: playerName (overrides config node player)  
   </li>
   <li>
+    <code>set.queuemode</code> Sets the group queue mode<br>
+    Requried property: topic: normal shuffle repeat_one repeat_all shuffle_norepeat shuffle_repeat_one<br>
+    Optional properties are: playerName (overrides config node player)  
+  </li>
+  <li>
+    <code>seek</code> Sets the group position in current track if supported<br>
+    Requried property: topic: time in format hh:mm:ss<br>
+    Optional properties are: playerName (overrides config node player)  
+  </li>
+  <li>
+    <code>set.sleeptimer</code> Sets the group sleep timer<br>
+    Requried property: topic: time in format hh:mm:ss<br>
+    Optional properties are: playerName (overrides config node player)  
+  </li>
+  <li>
+    <code>set.crossfade</code> Sets the group crossfade if supported<br>
+    Requried property: topic: On or Off<br>
+    Optional properties are: playerName (overrides config node player)  
+  </li>
+  <li>
     <code>create.snap</code> Creates a snapshot<br>
     Optional properties are: playerName (overrides config node player), snapMutestate, snapVolumes
   </li>
   <li>
     <code>save.queue</code> Saves the current queue to a Sonos playlist.<br>
-    Required property: topic - title of Sonos playlist
+    Required property: topic - title of Sonos playlist<br>
     Optional properties: playerName (overrides config node player)  
   </li>
   <li>
@@ -225,9 +244,27 @@ In general the commands are "GROUP" oriented and only those commands with prefix
     Optional properties: playerName (overrides config node player)  
   </li>
   <li>
+    <code>remove.tracks</code> Removes/deletes tracks from group queue<br>
+    Required property: topic: the start track<br>
+    Optional properties: playerName (overrides config node player), numberOfTracks 1 .. 
+  </li>
+  <li>
     <code>remove.sonosplaylist</code> Removes/deletes the given Sonos playlist.<br>
     Required property: topic - the playlist title
     Optional properties: playerName (overrides config node player), ignoreNotExist
+  </li>
+  <li>
+    <code>player.join.group</code> The given player joins the group, specified in topic<br>
+    Required property : topic: name of any player in target group<br>
+    Optional property: playerName (overrides config node player)
+  </li>
+  <li>
+    <code>player.leave.group</code> The given player will leave the group = standalone<br>
+    Optional property: playerName (overrides config node player)
+  </li>
+  <li>
+    <code>household.get.groups</code> Outputs all groups and all members. First member is coordinator<br>
+    Optional property: playerName (overrides config node player)
   </li>
   <li>
     <code>get.state</code> Outputs the current playback state, queue status, queue mode, coordinator name, mute state<br>
@@ -252,6 +289,14 @@ In general the commands are "GROUP" oriented and only those commands with prefix
   <li>
     <code>player.get.mutestate</code> Outputs the mute state of the specified player<br> 
     Optional property: playerName (overrides config node player)
+  </li>
+  <li>
+    <code>get.crossfade</code> Outputs the group crossfade mode.<br> 
+    Optional properties are: playerName (overrides config node player)  
+  </li>
+  <li>
+    <code>get.sleeptimer</code> Outputs the group remaining sleeptimer.<br> 
+    Optional properties are: playerName (overrides config node player)  
   </li>
   <li>
     <code>player.get.role</code> Outputs the current state: coordinator|joiner|independent and the SONOS player name.<br>

@@ -2,7 +2,7 @@
 const request = require('axios')
 const xml2js = require('xml2js')
 
-const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1 } = require('./Helper.js')
+const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1, NRCSP_ERRORPREFIX } = require('./Helper.js')
 
 module.exports = {
   // SOAP related data
@@ -72,7 +72,7 @@ module.exports = {
               }
               const errorMessage = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
               console.log('sendToPlayerV1.  status code 500 errorCode >>' + JSON.stringify(errorCode)) // please leave for debugging
-              throw new Error(`n-r-c-s-p: statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
+              throw new Error(`${NRCSP_ERRORPREFIX} statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
             } else {
               console.log('error.message is not code 500  >>' + JSON.stringify(error.message)) // please leave for debugging
               throw new Error('error.message is not code 500' + JSON.stringify(error, Object.getOwnPropertyNames(error)))

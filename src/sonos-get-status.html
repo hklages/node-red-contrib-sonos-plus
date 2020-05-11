@@ -45,7 +45,7 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-get-status">
-<p>Outputs different kind of SONOS player status data. Incoming message is used as command. The command <i>get basics</i> is an aggregation.</p>
+<p>Outputs different kind of SONOS player status data. Incoming message is used as command.</p>
 
 <h1>Input (required)</h3>
 
@@ -65,30 +65,6 @@
 The commands <b>led/properties/</b> outputs only to <code>payload</code>.
 <dl class="message-properties">
 
-    <dt>state <span class="property-type">string | playing/stopped/paused</span> </dt>
-    <dd>current playing state: playing, stopped, ...</dd>
-
-    <dt>muted <span class="property-type">boolean</span> </dt>
-    <dd> current mute state</dd>
-
-    <dt>volume <span class="property-type">int | 1..99</span> </dt>
-    <dd> current volume value</dd>
-
-    <dt>volumeNormalized <span class="property-type">float | 0-1</span></dt>
-    <dd> normalized current volume value (from 0.0 to 1.0)</dd>
-
-    <dt>name <span class="property-type">string</span></dt>
-    <dd> SONOS player name</dd>
-
-    <dt>group <span class="property-type">Object</span></dt>
-    <dd> SONOS player group attributes</dd>
-
-    <dt>role <span class="property-type">string</span></dt>
-    <dd> SONOS player role (master, client or independent)</dd>
-
-    <dt>title <span class="property-type">string</span></dt>
-    <dd> current title only in case of TuneIn, Amazon Prime</dd>
-
     <dt>info <span class="property-type">String</span></dt>
     <dd> provides more info for test_connected</dd>
 
@@ -96,14 +72,10 @@ The commands <b>led/properties/</b> outputs only to <code>payload</code>.
 
 <h1>Details</h3> Accepted values for <code>payload</code> are:
 <ul>
-    <li><b>get_basics</b> Outputs current state, volume, muted, player name, group attributes</li>
+    
     <li><b>get_properties</b> Outputs player properties - now also uuid</li>
-    <li><b>get_groups</b> Outputs group information - the players role (coordinator, client, independent), array of groups with members, etc</li>
-    <li><b>get_songmedia</b> Outputs song, media and position info</li>
     <li><b>get_eq</b> Outputs EQType value. EQType has to be specified in msg.topic</li>
-    <li><b>get_crossfade</b> Outputs current crossfade (On/Off)</li>
     <li><b>get_loudness</b> Outputs loundness (On/Off)</li>
-    <li><b>get_sleeptimer</b> Outputs remaining sleep timer</li>
     <br/>
     <li><b>test_connected</b> Outputs boolean true, if player is reachable</li>
 </ul>

@@ -98,24 +98,25 @@ module.exports = function (RED) {
     command = command.toLowerCase()
 
     // dispatch
-    if (command === 'get_basics') {
-      getBasicsV1(node, msg, sonosPlayer)
-    } else if (command === 'get_led') {
+    if (command === 'get_led') {
       getPlayerLedStatus(node, msg, sonosPlayer)
     } else if (command === 'get_properties') {
       getPlayerProperties(node, msg, sonosPlayer)
-    } else if (command === 'get_groups') {
-      getGroupsInfo(node, msg, sonosPlayer)
     } else if (command === 'get_eq') {
       getEQ(node, msg, sonosPlayer)
-    } else if (command === 'get_crossfade') {
-      getCrossfadeMode(node, msg, sonosPlayer)
     } else if (command === 'get_loudness') {
       getLoudnessMode(node, msg, sonosPlayer)
-    } else if (command === 'get_sleeptimer') {
-      getRemainingSleepTimerDuration(node, msg, sonosPlayer)
     } else if (command === 'test_connected') {
       testConnected(node, msg, sonosPlayer)
+    // depreciated since 3.1.3 2020-05-14
+    } else if (command === 'get_sleeptimer') {
+      getRemainingSleepTimerDuration(node, msg, sonosPlayer)
+    } else if (command === 'get_crossfade') {
+      getCrossfadeMode(node, msg, sonosPlayer)
+    } else if (command === 'get_basics') {
+      getBasicsV1(node, msg, sonosPlayer)
+    } else if (command === 'get_groups') {
+      getGroupsInfo(node, msg, sonosPlayer)
     // depreciated since 3.1.0 2020-05-01
     } else if (command === 'get_songmedia') {
       getPlayerSongMediaV1(node, msg, sonosPlayer)
@@ -146,84 +147,6 @@ module.exports = function (RED) {
   //             COMMANDS
   //
   // ========================================================================
-
-  /** Get the SONOS basic data and output to msg.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer sonos player object
-   * @output msg: state, volume, volumeNormalized, muted, name, group
-   * This command will send several api calls and combine the results.
-   */
-  function getBasicsV1 (node, msg, sonosPlayer) {
-    const sonosFunction = 'get basics'
-    let state
-    let volume
-    let normalizedVolume
-    let muted
-    let sonosName
-    let sonosGroup
-
-    sonosPlayer.getCurrentState()
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined player state received')
-        }
-        state = response
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.getVolume()
-      })
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined player volume received')
-        }
-        volume = response
-        normalizedVolume = response / 100.0
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.getMuted()
-      })
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined player muted state received')
-        }
-        muted = response
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.getName()
-      })
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined player name received')
-        }
-        sonosName = response
-        return true
-      })
-      .then(() => {
-        return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
-      })
-      .then(response => {
-        if (!isTruthyAndNotEmptyString(response)) {
-          throw new Error('n-r-c-s-p: undefined zone group attributes received')
-        }
-        sonosGroup = response
-        return true
-      })
-      .then(() => {
-        msg.state = state
-        msg.volume = volume
-        msg.volumeNormalized = normalizedVolume
-        msg.muted = muted
-        msg.name = sonosName
-        msg.group = sonosGroup
-        success(node, msg, sonosFunction)
-        return true
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
 
   /** Get the sonos player LED light status and outputs to payload.
    * @param  {object} node current node
@@ -306,6 +229,91 @@ module.exports = function (RED) {
       })
   }
 
+  /** Get EQ information (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV-
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   *                 msg.topic specifies EQtype
+   * @param  {object} sonosPlayer sonos player object
+   * @output {object} payload with nightMode, SpeechEnhancement, subGain
+   */
+  function getEQ (node, msg, sonosPlayer) {
+    const sonosFunction = 'get EQ'
+
+    // validate msg.topic
+    if (!isTruthyAndNotEmptyString(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
+      return
+    }
+    if (!ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
+      failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()), sonosFunction)
+      return
+    }
+    const eqType = msg.topic
+
+    sonosPlayer.deviceDescription()
+      .then(response => {
+        // ensure that SONOS player has TV mode
+        if (!isValidPropertyNotEmptyString(response, ['modelName'])) {
+          throw new Error('n-r-c-s-p: undefined model name received')
+        }
+        if (!PLAYER_WITH_TV.includes(response.modelName)) {
+          throw new Error('n-r-c-s-p: your player does not support TV')
+        }
+        return true
+      })
+      .then(() => {
+        // send request to SONOS player
+        return getCmd(sonosPlayer.baseUrl, 'GetEQ-' + eqType)
+      })
+      .then(result => {
+        if (eqType === 'SubGain') {
+          msg.payload = result
+        } else {
+          msg.payload = result === '1' ? 'On' : 'Off'
+        }
+        success(node, msg, sonosFunction)
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  /**  Get current loudness mode.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {string} msg.payload On Off
+   */
+  function getLoudnessMode (node, msg, sonosPlayer) {
+    const sonosFunction = 'get loudness mode'
+    getCmd(sonosPlayer.baseUrl, 'GetLoudness')
+      .then(result => {
+        msg.payload = result === '1' ? 'On' : 'Off'
+        success(node, msg, sonosFunction)
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
+  // ========================================================================
+  //
+  //             DEPRECIATED - USE UNIVERSAL node
+  //
+  // ========================================================================
+
+  /**  Get current crossfade mode.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer Sonos Player
+   * @output {string} msg.payload On Off
+   */
+  function getCrossfadeMode (node, msg, sonosPlayer) {
+    const sonosFunction = 'get crossfade mode'
+    getCmd(sonosPlayer.baseUrl, 'GetCrossfadeMode')
+      .then(result => {
+        msg.payload = result === '1' ? 'On' : 'Off'
+        success(node, msg, sonosFunction)
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
+
   /** getGroupsInfo: get all available data about the topology = group
    * @param  {object} node current node
    * @param  {object} msg incoming message
@@ -368,85 +376,6 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  /** Get EQ information (for specified EQTypes eg NightMode, DialogLevel (akak Speech Enhancement) and SubGain (aka sub Level)) for player with TV-
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   *                 msg.topic specifies EQtype
-   * @param  {object} sonosPlayer sonos player object
-   * @output {object} payload with nightMode, SpeechEnhancement, subGain
-   */
-  function getEQ (node, msg, sonosPlayer) {
-    const sonosFunction = 'get EQ'
-
-    // validate msg.topic
-    if (!isTruthyAndNotEmptyString(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: undefined topic'), sonosFunction)
-      return
-    }
-    if (!ACTIONS_TEMPLATES.SetEQ.eqTypeValues.includes(msg.topic)) {
-      failure(node, msg, new Error('n-r-c-s-p: invalid topic. Should be one of ' + ACTIONS_TEMPLATES.SetEQ.eqTypeValues.toString()), sonosFunction)
-      return
-    }
-    const eqType = msg.topic
-
-    sonosPlayer.deviceDescription()
-      .then(response => {
-        // ensure that SONOS player has TV mode
-        if (!isValidPropertyNotEmptyString(response, ['modelName'])) {
-          throw new Error('n-r-c-s-p: undefined model name received')
-        }
-        if (!PLAYER_WITH_TV.includes(response.modelName)) {
-          throw new Error('n-r-c-s-p: your player does not support TV')
-        }
-        return true
-      })
-      .then(() => {
-        // send request to SONOS player
-        return getCmd(sonosPlayer.baseUrl, 'GetEQ-' + eqType)
-      })
-      .then(result => {
-        if (eqType === 'SubGain') {
-          msg.payload = result
-        } else {
-          msg.payload = result === '1' ? 'On' : 'Off'
-        }
-        success(node, msg, sonosFunction)
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /**  Get current crossfade mode.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer Sonos Player
-   * @output {string} msg.payload On Off
-   */
-  function getCrossfadeMode (node, msg, sonosPlayer) {
-    const sonosFunction = 'get crossfade mode'
-    getCmd(sonosPlayer.baseUrl, 'GetCrossfadeMode')
-      .then(result => {
-        msg.payload = result === '1' ? 'On' : 'Off'
-        success(node, msg, sonosFunction)
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
-  /**  Get current loudness mode.
-   * @param  {object} node current node
-   * @param  {object} msg incoming message
-   * @param  {object} sonosPlayer Sonos Player
-   * @output {string} msg.payload On Off
-   */
-  function getLoudnessMode (node, msg, sonosPlayer) {
-    const sonosFunction = 'get loudness mode'
-    getCmd(sonosPlayer.baseUrl, 'GetLoudness')
-      .then(result => {
-        msg.payload = result === '1' ? 'On' : 'Off'
-        success(node, msg, sonosFunction)
-      })
-      .catch(error => failure(node, msg, error, sonosFunction))
-  }
-
   /**  Get remaining sleep timer duration.
    * @param  {object} node current node
    * @param  {object} msg incoming message
@@ -463,11 +392,83 @@ module.exports = function (RED) {
       .catch(error => failure(node, msg, error, sonosFunction))
   }
 
-  // ========================================================================
-  //
-  //             DEPRECIATED - USE UNIVERSAL node
-  //
-  // ========================================================================
+  /** Get the SONOS basic data and output to msg.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {object} sonosPlayer sonos player object
+   * @output msg: state, volume, volumeNormalized, muted, name, group
+   * This command will send several api calls and combine the results.
+   */
+  function getBasicsV1 (node, msg, sonosPlayer) {
+    const sonosFunction = 'get basics'
+    let state
+    let volume
+    let normalizedVolume
+    let muted
+    let sonosName
+    let sonosGroup
+
+    sonosPlayer.getCurrentState()
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player state received')
+        }
+        state = response
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.getVolume()
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player volume received')
+        }
+        volume = response
+        normalizedVolume = response / 100.0
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.getMuted()
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player muted state received')
+        }
+        muted = response
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.getName()
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined player name received')
+        }
+        sonosName = response
+        return true
+      })
+      .then(() => {
+        return sonosPlayer.zoneGroupTopologyService().GetZoneGroupAttributes()
+      })
+      .then(response => {
+        if (!isTruthyAndNotEmptyString(response)) {
+          throw new Error('n-r-c-s-p: undefined zone group attributes received')
+        }
+        sonosGroup = response
+        return true
+      })
+      .then(() => {
+        msg.state = state
+        msg.volume = volume
+        msg.volumeNormalized = normalizedVolume
+        msg.muted = muted
+        msg.name = sonosName
+        msg.group = sonosGroup
+        success(node, msg, sonosFunction)
+        return true
+      })
+      .catch(error => failure(node, msg, error, sonosFunction))
+  }
 
   /** Get the sonos player state and outputs.
    * @param  {object} node current node
