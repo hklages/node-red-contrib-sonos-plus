@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- "Universal node": player.join.group, player.leave.group documentation
+
 - "Universal node": set/get.sleeptimer, set/get.crossfade, set.queuemode
 
 - "Universal node": play.track, seek, remove.track
