@@ -16,13 +16,11 @@ See the full scope of commands [here.](https://github.com/hklages/node-red-contr
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- CAUTION: Univerals node: play.export by default clears the queue if export.queue = true. Use msg.clearQueue = false to avoid.
+- New commands household.get.groups, play.track, seek, remove.track, set/get.sleeptimer, set/get.crossfade, set.queuemode, play.track, seek, remove.track
 
 - New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
 
 - "Manage Radio" is depreciated - please use Universal node instead.
-
-- "Universal node": throws error in case of an invalid command (msg.payload)
 
 - "My Sonos" node: new command export.item works together with Universal node command play.export
 

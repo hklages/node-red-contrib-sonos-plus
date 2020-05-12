@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.1.3] 2020-05-14
+## [3.1.3] 2020-05-13
 
 ### Added
 
@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - "Universal node":  role names now coordinator, joiner, standalone (instead of independent)
 
 - "Universal node": get.state now provides groupName and groupId, bug fix regarding empty topic
+
+- "Universal node": now all group commands may have prefix group. Example group.get.state
 
 - "My Sonos": bug fix: no sonos playlists
 
