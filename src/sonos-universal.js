@@ -17,6 +17,84 @@ const { Sonos } = require('sonos')
 module.exports = function (RED) {
   'use strict'
 
+  const COMMAND_TABLE = {
+    'group.play': groupPlay,
+    play: groupPlay,
+    'group.play.queue': groupPlayQueue,
+    'play.queue': groupPlayQueue,
+    'group.play.track': groupPlayTrack,
+    'play.track': groupPlayTrack,
+    'group.play.export': groupPlayExport,
+    'play.export': groupPlayExport,
+    'group.play.tunein': groupPlayTuneIn,
+    'play.tunein': groupPlayTuneIn,
+    'group.play.streamhttp': groupPlayStreamHttp,
+    'play.streamhttp': groupPlayStreamHttp,
+    'group.play.notification': groupPlayNotification,
+    'play.notification': groupPlayNotification,
+    'joiner.play.notification': joinerPlayNotification,
+    'group.play.snap': groupPlaySnapshot,
+    'play.snap': groupPlaySnapshot,
+    'group.toggle.playback': groupTogglePlayback,
+    'toggle.playback': groupTogglePlayback,
+    'group.pause': groupPause,
+    pause: groupPause,
+    'group.stop': groupStop,
+    stop: groupStop,
+    'group.next.track': groupNextTrack,
+    'next.track': groupNextTrack,
+    'group.previous.track': groupPreviousTrack,
+    'previous.track': groupPreviousTrack,
+    'group.adjust.volume': groupAdjustVolume,
+    'adjust.volume': groupAdjustVolume,
+    'player.adjust.volume': playerAdjustVolume,
+    'player.set.volume': playerSetVolume,
+    'group.set.mutestate': groupSetMute,
+    'set.mutestate': groupSetMute,
+    'player.set.mutestate': playerSetMute,
+    'group.set.queuemode': groupSetQueuemode,
+    'set.queuemode': groupSetQueuemode,
+    'group.seek': groupSeek,
+    seek: groupSeek,
+    'group.set.sleeptimer': groupSetSleeptimer,
+    'set.sleeptimer': groupSetSleeptimer,
+    'group.set.crossfade': groupSetCrossfade,
+    'set.crossfade': groupSetCrossfade,
+    'group.create.snap': groupCreateSnapshot,
+    'create.snap': groupCreateSnapshot,
+    'group.save.queue': groupSaveQueueToSonosPlaylist,
+    'save.queue': groupSaveQueueToSonosPlaylist,
+    'group.clear.queue': groupClearQueue,
+    'clear.queue': groupClearQueue,
+    'group.remove.tracks': groupRemoveTracks,
+    'remove.tracks': groupRemoveTracks,
+    'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
+    'remove.sonosplaylist': householdRemoveSonosPlaylist,
+    'player.join.group': playerJoinGroup,
+    'player.leave.group': playerLeaveGroup,
+    'household.get.groups': householdGetGroups,
+    'group.get.state': groupGetState,
+    'get.state': groupGetState,
+    'group.get.playbackstate': groupGetPlaybackstate,
+    'get.playbackstate': groupGetPlaybackstate,
+    'group.get.volume': groupGetVolume,
+    'get.volume': groupGetVolume,
+    'player.get.volume': playerGetVolume,
+    'group.get.mutestate': groupGetMute,
+    'get.mutestate': groupGetMute,
+    'player.get.mutestate': playerGetMute,
+    'group.get.crossfade': groupGetCrossfadeMode,
+    'get.crossfade': groupGetCrossfadeMode,
+    'group.get.sleeptimer': groupGetSleeptimer,
+    'get.sleeptimer': groupGetSleeptimer,
+    'player.get.role': playerGetRole,
+    'group.get.queue': groupGetQueue,
+    'get.queue': groupGetQueue,
+    'player.get.queue': playerGetQueue,
+    'group.get.trackplus': groupGetTrackPlus,
+    'get.trackplus': groupGetTrackPlus
+  }
+
   /** Create Universal node and subscribe to messages.
    * @param  {object} config current node configuration data
    */
@@ -95,128 +173,10 @@ module.exports = function (RED) {
     let command = String(msg.payload)
     command = command.toLowerCase()
 
-    switch (command) {
-      case 'group.play':
-      case 'play':
-        return groupPlay(node, msg, sonosPlayer)
-      case 'group.play.queue':
-      case 'play.queue':
-        return groupPlayQueue(node, msg, sonosPlayer)
-      case 'group.play.track':
-      case 'play.track':
-        return groupPlayTrack(node, msg, sonosPlayer)
-      case 'group.play.export':
-      case 'play.export':
-        return groupPlayExport(node, msg, sonosPlayer)
-      case 'group.play.tunein':
-      case 'play.tunein':
-        return groupPlayTuneIn(node, msg, sonosPlayer)
-      case 'group.play.streamhttp':
-      case 'play.streamhttp':
-        return groupPlayStreamHttp(node, msg, sonosPlayer)
-      case 'group.play.notification':
-      case 'play.notification':
-        return groupPlayNotification(node, msg, sonosPlayer)
-      case 'joiner.play.notification':
-        return joinerPlayNotification(node, msg, sonosPlayer)
-      case 'group.play.snap':
-      case 'play.snap':
-        return groupPlaySnapshot(node, msg, sonosPlayer)
-      case 'group.toggle.playback':
-      case 'toggle.playback':
-        return groupTogglePlayback(node, msg, sonosPlayer)
-      case 'group.pause':
-      case 'pause':
-        return groupPause(node, msg, sonosPlayer)
-      case 'group.stop':
-      case 'stop':
-        return groupStop(node, msg, sonosPlayer)
-      case 'group.next.track':
-      case 'next.track':
-        return groupNextTrack(node, msg, sonosPlayer)
-      case 'group.previous.track':
-      case 'previous.track':
-        return groupPreviousTrack(node, msg, sonosPlayer)
-      case 'group.adjust.volume':
-      case 'adjust.volume':
-        return groupAdjustVolume(node, msg, sonosPlayer)
-      case 'player.adjust.volume':
-        return playerAdjustVolume(node, msg, sonosPlayer)
-      case 'player.set.volume':
-        return playerSetVolume(node, msg, sonosPlayer)
-      case 'group.set.mutestate':
-      case 'set.mutestate':
-        return groupSetMute(node, msg, sonosPlayer)
-      case 'player.set.mutestate':
-        return playerSetMute(node, msg, sonosPlayer)
-      case 'group.set.queuemode':
-      case 'set.queuemode':
-        return groupSetQueuemode(node, msg, sonosPlayer)
-      case 'group.seek':
-      case 'seek':
-        return groupSeek(node, msg, sonosPlayer)
-      case 'group.set.sleeptimer':
-      case 'set.sleeptimer':
-        return groupSetSleeptimer(node, msg, sonosPlayer)
-      case 'group.set.crossfade':
-      case 'set.crossfade':
-        return groupSetCrossfade(node, msg, sonosPlayer)
-      case 'group.create.snap':
-      case 'create.snap':
-        return groupCreateSnapshot(node, msg, sonosPlayer)
-      case 'group.save.queue':
-      case 'save.queue':
-        return groupSaveQueueToSonosPlaylist(node, msg, sonosPlayer)
-      case 'group.clear.queue':
-      case 'clear.queue':
-        return groupClearQueue(node, msg, sonosPlayer)
-      case 'group.remove.tracks':
-      case 'remove.tracks':
-        return groupRemoveTracks(node, msg, sonosPlayer)
-      case 'household.remove.sonosplaylist':
-      case 'remove.sonosplaylist':
-        return householdRemoveSonosPlaylist(node, msg, sonosPlayer)
-      case 'player.join.group':
-        return playerJoinGroup(node, msg, sonosPlayer)
-      case 'player.leave.group':
-        return playerLeaveGroup(node, msg, sonosPlayer)
-      case 'household.get.groups':
-        return householdGetGroups(node, msg, sonosPlayer)
-      case 'group.get.state':
-      case 'get.state':
-        return groupGetState(node, msg, sonosPlayer)
-      case 'group.get.playbackstate':
-      case 'get.playbackstate':
-        return groupGetPlaybackstate(node, msg, sonosPlayer)
-      case 'group.get.volume':
-      case 'get.volume':
-        return groupGetVolume(node, msg, sonosPlayer)
-      case 'player.get.volume':
-        return playerGetVolume(node, msg, sonosPlayer)
-      case 'group.get.mutestate':
-      case 'get.mutestate':
-        return groupGetMute(node, msg, sonosPlayer)
-      case 'player.get.mutestate':
-        return playerGetMute(node, msg, sonosPlayer)
-      case 'group.get.crossfade':
-      case 'get.crossfade':
-        return groupGetCrossfadeMode(node, msg, sonosPlayer)
-      case 'group.get.sleeptimer':
-      case 'get.sleeptimer':
-        return groupGetSleeptimer(node, msg, sonosPlayer)
-      case 'player.get.role':
-        return playerGetRole(node, msg, sonosPlayer)
-      case 'group.get.queue':
-      case 'get.queue':
-        return groupGetQueue(node, msg, sonosPlayer)
-      case 'player.get.queue':
-        return playerGetQueue(node, msg, sonosPlayer)
-      case 'group.get.trackplus':
-      case 'get.trackplus':
-        return groupGetTrackPlus(node, msg, sonosPlayer)
-      default:
-        throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is invalid >>${msg.payload} `)
+    if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE, command)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} command (msg.payload) is invalid >>${msg.payload} `)
     }
+    return COMMAND_TABLE[command](node, msg, sonosPlayer)
   }
 
   // ========================================================================
