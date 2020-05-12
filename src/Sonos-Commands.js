@@ -946,8 +946,6 @@ module.exports = {
               firstTrackArtURI = albumArtURI[0]
             }
           }
-        } else {
-          throw new Error(`${NRCSP_ERRORPREFIX} AlbumARTURI is missing`)
         }
 
         list.push({

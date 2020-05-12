@@ -14,6 +14,10 @@ All notable changes to this project will be documented in this file.
 
 - "Universal node": household.get.groups
 
+### Changed
+
+- "My Sonos" node: bug fix Sonos playlist without AlbumArtURI issue #35
+
 ## [3.1.2] 2020-05-05
 
 ### Changed
