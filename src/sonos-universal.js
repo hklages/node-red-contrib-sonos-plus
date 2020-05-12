@@ -96,90 +96,122 @@ module.exports = function (RED) {
     command = command.toLowerCase()
 
     switch (command) {
+      case 'group.play':
       case 'play':
         return groupPlay(node, msg, sonosPlayer)
+      case 'group.play.queue':
       case 'play.queue':
         return groupPlayQueue(node, msg, sonosPlayer)
+      case 'group.play.track':
       case 'play.track':
         return groupPlayTrack(node, msg, sonosPlayer)
+      case 'group.play.export':
       case 'play.export':
         return groupPlayExport(node, msg, sonosPlayer)
+      case 'group.play.tunein':
       case 'play.tunein':
         return groupPlayTuneIn(node, msg, sonosPlayer)
+      case 'group.play.streamhttp':
       case 'play.streamhttp':
         return groupPlayStreamHttp(node, msg, sonosPlayer)
+      case 'group.play.notification':
       case 'play.notification':
         return groupPlayNotification(node, msg, sonosPlayer)
       case 'joiner.play.notification':
         return joinerPlayNotification(node, msg, sonosPlayer)
+      case 'group.play.snap':
       case 'play.snap':
         return groupPlaySnapshot(node, msg, sonosPlayer)
+      case 'group.toggle.playback':
       case 'toggle.playback':
         return groupTogglePlayback(node, msg, sonosPlayer)
+      case 'group.pause':
       case 'pause':
         return groupPause(node, msg, sonosPlayer)
+      case 'group.stop':
       case 'stop':
         return groupStop(node, msg, sonosPlayer)
+      case 'group.next.track':
       case 'next.track':
         return groupNextTrack(node, msg, sonosPlayer)
+      case 'group.previous.track':
       case 'previous.track':
         return groupPreviousTrack(node, msg, sonosPlayer)
+      case 'group.adjust.volume':
       case 'adjust.volume':
         return groupAdjustVolume(node, msg, sonosPlayer)
       case 'player.adjust.volume':
         return playerAdjustVolume(node, msg, sonosPlayer)
       case 'player.set.volume':
         return playerSetVolume(node, msg, sonosPlayer)
+      case 'group.set.mutestate':
       case 'set.mutestate':
         return groupSetMute(node, msg, sonosPlayer)
       case 'player.set.mutestate':
         return playerSetMute(node, msg, sonosPlayer)
+      case 'group.set.queuemode':
       case 'set.queuemode':
         return groupSetQueuemode(node, msg, sonosPlayer)
+      case 'group.seek':
       case 'seek':
         return groupSeek(node, msg, sonosPlayer)
+      case 'group.set.sleeptimer':
       case 'set.sleeptimer':
         return groupSetSleeptimer(node, msg, sonosPlayer)
+      case 'group.set.crossfade':
       case 'set.crossfade':
         return groupSetCrossfade(node, msg, sonosPlayer)
+      case 'group.create.snap':
       case 'create.snap':
         return groupCreateSnapshot(node, msg, sonosPlayer)
+      case 'group.save.queue':
       case 'save.queue':
         return groupSaveQueueToSonosPlaylist(node, msg, sonosPlayer)
+      case 'group.clear.queue':
       case 'clear.queue':
         return groupClearQueue(node, msg, sonosPlayer)
+      case 'group.remove.tracks':
       case 'remove.tracks':
         return groupRemoveTracks(node, msg, sonosPlayer)
+      case 'household.remove.sonosplaylist':
       case 'remove.sonosplaylist':
-        return groupRemoveSonosPlaylist(node, msg, sonosPlayer)
+        return householdRemoveSonosPlaylist(node, msg, sonosPlayer)
       case 'player.join.group':
         return playerJoinGroup(node, msg, sonosPlayer)
       case 'player.leave.group':
         return playerLeaveGroup(node, msg, sonosPlayer)
       case 'household.get.groups':
         return householdGetGroups(node, msg, sonosPlayer)
+      case 'group.get.state':
       case 'get.state':
         return groupGetState(node, msg, sonosPlayer)
+      case 'group.get.playbackstate':
       case 'get.playbackstate':
         return groupGetPlaybackstate(node, msg, sonosPlayer)
+      case 'group.get.volume':
       case 'get.volume':
         return groupGetVolume(node, msg, sonosPlayer)
       case 'player.get.volume':
         return playerGetVolume(node, msg, sonosPlayer)
+      case 'group.get.mutestate':
       case 'get.mutestate':
         return groupGetMute(node, msg, sonosPlayer)
       case 'player.get.mutestate':
         return playerGetMute(node, msg, sonosPlayer)
+      case 'group.get.crossfade':
       case 'get.crossfade':
         return groupGetCrossfadeMode(node, msg, sonosPlayer)
+      case 'group.get.sleeptimer':
       case 'get.sleeptimer':
         return groupGetSleeptimer(node, msg, sonosPlayer)
       case 'player.get.role':
         return playerGetRole(node, msg, sonosPlayer)
+      case 'group.get.queue':
       case 'get.queue':
         return groupGetQueue(node, msg, sonosPlayer)
       case 'player.get.queue':
         return playerGetQueue(node, msg, sonosPlayer)
+      case 'group.get.trackplus':
       case 'get.trackplus':
         return groupGetTrackPlus(node, msg, sonosPlayer)
       default:
@@ -1300,7 +1332,7 @@ module.exports = function (RED) {
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
    */
-  async function groupRemoveSonosPlaylist (node, msg, sonosPlayer) {
+  async function householdRemoveSonosPlaylist (node, msg, sonosPlayer) {
     // msg.topic is requried
     if (!isValidProperty(msg, ['topic'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} title (msg.topic) is invalid`)
