@@ -509,8 +509,11 @@ module.exports = {
     // playerName !== '' then use playerName
     const searchByName = isTruthyAndNotEmptyString(playerName)
     const allGroupsData = await sonosPlayer.getAllGroups()
-    if (!isTruthyAndNotEmptyString(allGroupsData[0])) {
+    if (!isTruthyAndNotEmptyString(allGroupsData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} all groups data undefined`)
+    }
+    if (!Array.isArray(allGroupsData)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} all groups data is not array`)
     }
     // find our players group in groups output
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
@@ -738,26 +741,34 @@ module.exports = {
    * @param  {object} modifiedArgs only those properties being modified
    *
    * @return {promise} true if succesfull
+   *
+   * Everything OK if statusCode === 200 and body includes expected response value.
    */
   setCmd: async function (baseUrl, actionName, newArgs) {
-    // copy action parameter and update
+    // get action defaults from definition file and update with new arguments
     const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName]
     Object.assign(actionParameter.args, newArgs)
     const { path, name, action, args } = actionParameter
     const response = await sendToPlayerV1(baseUrl, path, name, action, args)
-    // check response - select/transform item properties
+
+    // check response statusCode:
+    //   Everything OK if statusCode === 200 and body includes expected response value.
+    //   Some action return additional data for instance NewVolume
     if (!isValidProperty(response, ['statusCode'])) {
+      // This should never happen. Avoiding unhandled exception.
       throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
     }
     if (response.statusCode !== 200) {
+      // This should not happen as long as axios is being used.
       throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
     }
     if (!isValidProperty(response, ['body'])) {
+      // This should not happen. Avoiding unhandled exception.
       throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     const bodyXml = await parseSoapBodyV1(response.body, '')
 
-    // check response - select/transform item properties
+    // check body response - select/transform item properties
     const key = actionParameter.responsePath
     if (!isValidProperty(bodyXml, key)) {
       throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
