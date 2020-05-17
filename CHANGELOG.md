@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] 2020-05-20
+
+### Added
+
+- "Universal node": player.get.led, player.get.nightmode, player.get.subgain, player.get.dialoglevel, player.test.connection
+
+### Changed
+
+- "Universal" node: payload of *.get.mutestate, get.crossfade is now lowercase on/off
+
+- "Universal" node: create.snap mutestate is  now lowercase on/off
+
+- "Universal" node: restore.snap mutestate should be now lowercase
+
 ## [3.1.3] 2020-05-13
 
 ### Added

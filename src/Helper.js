@@ -14,6 +14,8 @@ module.exports = {
   REGEX_2DIGITS: /^\d{1,2}$/,
   REGEX_3DIGITS: /^\d{1,3}$/,
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
+  REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,
+  REGEX_ANYCHAR: /.+/,
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
@@ -221,6 +223,118 @@ module.exports = {
       nestedObj
     )
     return module.exports.isTruthyAndNotEmptyString(property)
+  },
+
+  /** Validates whether property exists and is string on/off (Not case sentive)
+   * @param  {object} message Node-RED message
+   * @param  {string} property property name
+   * @param  {string} propertyMeaning additional information
+   * @param  {string} packageName package name
+   *
+   * @return {boolean} true (on), false (off)
+   *
+   * @throws if is missing/invalid, not string, not on/off NOT case sensitive
+   *
+   */
+  onOff2boolean: (message, property, propertyMeaning, packageName) => {
+    const path = []
+    path.push(property)
+    if (!module.exports.isValidProperty(message, path)) {
+      throw new Error(`${packageName} ${propertyMeaning} (${property}) is missing/invalid`)
+    }
+    const value = message[property]
+    if (typeof value !== 'string') {
+      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not string`)
+    }
+    if (!(value.toLowerCase() === 'on' || value.toLowerCase() === 'off')) {
+      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not on/off`)
+    }
+    return (value.toLowerCase() === 'on')
+  },
+
+  /** Validates value and returns integer if string/number and in range.
+   * @param  {object} message Node-RED message
+   * @param  {string} property property name (string maximum 3 digits)
+   * @param  {number} min minimum
+   * @param  {number} max maximum
+   * @param  {string} propertyMeaning additional information
+   * @param  {string} packageName package name
+   * @param  {number} [defaultValue] specifies the default value. If missing property is required == throw error
+   *
+   * @return {promise} type number but integer in range [min,max]
+   *
+   * @throws if is missing/invalid, not number/string, not integer, not in range
+   *
+   */
+  string2ValidInteger: (message, property, min, max, propertyMeaning, packageName, defaultValue) => {
+    // if defaultValue is missing and error will be throw in case property is not defined or missing
+    const requiredProperty = (typeof defaultValue === 'undefined')
+    const path = []
+    path.push(property)
+    if (!module.exports.isValidProperty(message, path)) {
+      if (requiredProperty) {
+        throw new Error(`${packageName} ${propertyMeaning} (${property}) is missing/invalid`)
+      } else {
+        // set default
+        return defaultValue
+      }
+    }
+    let value = message[property]
+
+    if (typeof value !== 'number' && typeof value !== 'string') {
+      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not type string/number`)
+    }
+    if (typeof value === 'number') {
+      if (!Number.isInteger(value)) {
+        throw new Error(`${packageName} ${propertyMeaning} (${property}) is not integer`)
+      }
+    } else {
+      // it is a string - allow signed/unsigned
+      if (!module.exports.REGEX_3DIGITSSIGN.test(value)) {
+        throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) is not 3 signed digits only`)
+      }
+      value = parseInt(value)
+    }
+    if (!(value >= min && value <= max)) {
+      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value})  is out of range`)
+    }
+    return value
+  },
+
+  /** Validates string value against regex and returns string.
+   * @param  {object} message Node-RED message
+   * @param  {string} property property name (string maximum 3 digits)
+   * @param  {string} regex expression to evaluate string
+   * @param  {string} propertyMeaning additional information
+   * @param  {string} packageName package name
+   * @param  {number} [defaultValue] specifies the default value. If missing property is required == throw error
+   *
+   * @return {promise} string
+   *
+   * @throws if is missing/invalid, not number/string, not integer, not in range
+   *
+   */
+  stringValidRegex: (message, property, regex, propertyMeaning, packageName, defaultValue) => {
+    // if defaultValue is missing and error will be throw in case property is not defined or missing
+    const requiredProperty = (typeof defaultValue === 'undefined')
+    const path = []
+    path.push(property)
+    if (!module.exports.isValidProperty(message, path)) {
+      if (requiredProperty) {
+        throw new Error(`${packageName} ${propertyMeaning} (${property}) is missing/invalid`)
+      } else {
+        // set default
+        return defaultValue
+      }
+    }
+    const value = message[property]
+    if (typeof value !== 'string') {
+      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not type string`)
+    }
+    if (!regex.test(value)) {
+      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) does not match regex`)
+    }
+    return value
   },
 
   // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4

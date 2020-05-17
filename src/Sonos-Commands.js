@@ -424,7 +424,7 @@ module.exports = {
       playersMutestate = null // means not captured
       if (options.snapMutestates) {
         playersMutestate = await membersAsPlayersPlus[index].getMuted()
-        playersMutestate = (playersMutestate ? 'On' : 'Off')
+        playersMutestate = (playersMutestate ? 'on' : 'off')
       }
       snapshot.memberData[index].volume = playersVolume
       snapshot.memberData[index].mutestate = playersMutestate
@@ -487,7 +487,7 @@ module.exports = {
       }
       mutestate = snapshot.memberData[index].mutestate
       if (mutestate != null) {
-        digit = (mutestate === 'On')
+        digit = (mutestate === 'on')
         await membersAsPlayersPlus[index].setMuted(digit)
       }
     }
