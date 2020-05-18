@@ -16,6 +16,7 @@ module.exports = {
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,
   REGEX_ANYCHAR: /.+/,
+  REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/,
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
@@ -295,6 +296,8 @@ module.exports = {
       }
       value = parseInt(value)
     }
+    console.log('value >>' + JSON.stringify(value))
+    console.log('min >>' + JSON.stringify(min))
     if (!(value >= min && value <= max)) {
       throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value})  is out of range`)
     }
@@ -307,7 +310,7 @@ module.exports = {
    * @param  {string} regex expression to evaluate string
    * @param  {string} propertyMeaning additional information
    * @param  {string} packageName package name
-   * @param  {number} [defaultValue] specifies the default value. If missing property is required == throw error
+   * @param  {string} [defaultValue] specifies the default value. If missing property is required == throw error
    *
    * @return {promise} string
    *
