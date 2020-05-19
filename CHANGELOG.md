@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - "My Sonos" node: get.items added radioId for TuneIn stations
 
-- "Universal node": for play.notification added msg.delayPlay
+- "Universal node": for play.notification changed order volume/play
 
 ## [3.1.3] 2020-05-13
 
