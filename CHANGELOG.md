@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.4] 2020-05-19
+
+### Added
+
+- "My Sonos" node: get.items added radioId for TuneIn stations
+
+- "Universal node": for play.notification added msg.delayPlay
+
 ## [3.1.3] 2020-05-13
 
 ### Added
