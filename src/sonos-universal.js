@@ -36,6 +36,7 @@ module.exports = function (RED) {
     'joiner.play.notification': joinerPlayNotification,
     'group.play.snap': groupPlaySnapshot,
     'play.snap': groupPlaySnapshot,
+    'player.play.avtransport': playerPlayAvtransport,
     'group.toggle.playback': groupTogglePlayback,
     'toggle.playback': groupTogglePlayback,
     'group.pause': groupPause,
@@ -78,8 +79,8 @@ module.exports = function (RED) {
     'remove.sonosplaylist': householdRemoveSonosPlaylist,
     'player.join.group': playerJoinGroup,
     'player.leave.group': playerLeaveGroup,
-    'player.create.stereopair': playerCreateStereoPair,
-    'player.separate.stereopair': playerSeparateStereoPair,
+    'household.create.stereopair': householdCreateStereoPair,
+    'household.separate.stereopair': householdSeparateStereoPair,
     'household.get.groups': householdGetGroups,
     'group.get.state': groupGetState,
     'get.state': groupGetState,
@@ -648,6 +649,37 @@ module.exports = function (RED) {
     return {}
   }
 
+  /**  Player play AVTransport uri: LineIn, TV
+   * @param  {object}  node only used for debug and warning
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.xuri notification uri.
+   * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {object}  sonosPlayer Sonos player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   *
+   */
+  async function playerPlayAvtransport (node, msg, sonosPlayer) {
+    // msg.xuri is required: eg x-rincon-stream:RINCON_5CAAFD00223601400 for line in
+    const validatedUri = stringValidRegex(msg, 'xuri', REGEX_ANYCHAR, 'xuri', NRCSP_ERRORPREFIX)
+
+    // validate msg.playerName, msg.volume
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+
+    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    // baseUrl not needed
+    console.log('volume >>' + JSON.stringify(validated.volume))
+    await sonosSinglePlayer.setAVTransportURI(validatedUri)
+    if (validated.volume !== -1) {
+      await sonosSinglePlayer.setVolume(validated.volume)
+    }
+    return {}
+  }
+
   /**  Toggle playback on given group of players.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
@@ -805,13 +837,12 @@ module.exports = function (RED) {
   async function playerSetVolume (node, msg, sonosPlayer) {
     // one of msg.volume msg.topic is required. if first one exist it overrides msg.topic
     const preferedProperty = (isValidProperty(msg, ['volume']) ? 'volume' : 'topic')
-    const newVolume = string2ValidInteger(msg, preferedProperty, 1, +99, 'volume', NRCSP_ERRORPREFIX)
-
-    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX, true)
-    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const validatedVolume = string2ValidInteger(msg, preferedProperty, 1, +99, 'volume', NRCSP_ERRORPREFIX)
+    const validatedPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validatedPlayerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     // baseUrl not needed
-    await sonosSinglePlayer.setVolume(newVolume)
+    await sonosSinglePlayer.setVolume(validatedVolume)
     return {} // means untouched msg
   }
 
@@ -1314,7 +1345,7 @@ module.exports = function (RED) {
    * Caution: In setCmd it should be left: playerLeftBaseUrl
    *
    */
-  async function playerCreateStereoPair (node, msg, sonosPlayer) {
+  async function householdCreateStereoPair (node, msg, sonosPlayer) {
     // both player are requried
     const playerRight = stringValidRegex(msg, 'playerNameRight', REGEX_ANYCHAR, 'player name right', NRCSP_ERRORPREFIX)
     const playerLeft = stringValidRegex(msg, 'playerNameLeft', REGEX_ANYCHAR, 'player name left', NRCSP_ERRORPREFIX)
@@ -1369,7 +1400,7 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    *
    */
-  async function playerSeparateStereoPair (node, msg, sonosPlayer) {
+  async function householdSeparateStereoPair (node, msg, sonosPlayer) {
     // both player are requried
     const playerLeft = stringValidRegex(msg, 'playerNameLeft', REGEX_ANYCHAR, 'player name left', NRCSP_ERRORPREFIX)
 
@@ -1950,7 +1981,6 @@ module.exports = function (RED) {
    * @param  {boolean}       [msg.sameVolume = true] sameVolume
    * @param  {boolean}       [msg.clearQueue = true] indicator for clear queue
    * @param  {string}        pkgPrefix package identifier
-   * @param  {boolean}       [excludeVolume = false] exclude check of volume
    *
    * @return {promise} object {playerName, volume, sameVolume, flushQueue}
    * playerName is '' if missing.
@@ -1961,20 +1991,11 @@ module.exports = function (RED) {
    * @throws error for all invalid values
    */
   async function validatedGroupProperties (msg, pkgPrefix, excludeVolume) {
-    // if missing set to ''
-    let newPlayerName = '' // default
-    if (isValidProperty(msg, ['playerName'])) {
-      if (typeof msg.playerName !== 'string' || msg.playerName.length === 0) {
-        throw new Error(`${pkgPrefix}: player name (msg.playerName) is not string/empty string`)
-      }
-      newPlayerName = msg.playerName
-    }
+    // if missing set to ''.
+    const newPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
 
-    // if missing set to -1. throws error if invalid
-    let newVolume = -1
-    if (excludeVolume !== 'undefined' && excludeVolume === true) {
-      newVolume = string2ValidInteger(msg, 'volume', 1, 99, 'volume', NRCSP_ERRORPREFIX, -1)
-    }
+    // if missing set to -1.
+    const newVolume = string2ValidInteger(msg, 'volume', 1, 99, 'volume', NRCSP_ERRORPREFIX, -1)
 
     // if missing set to true - throws errors if invalid
     let newSameVolume = true
