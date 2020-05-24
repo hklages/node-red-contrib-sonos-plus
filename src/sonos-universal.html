@@ -11,17 +11,27 @@
         value: '',
         type: 'sonos-config'
       },
-      name: {
-        value: ''
-      }
+      command: { value: 'message' },
+      playerName: { value: '' },
+      compatibilityMode: { value: false },
+      name: { value: '' }, 
     },
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
     icon: 'sonos.png', // saved in  icons/myicon.png
     color: '#AAAAAA',
     label: function() {
-      return this.name || 'Universal';
+      let found = cmdList.find(item => item.cmd === this.command);
+      return this.name || found.name || "Universal";
     },
+    oneditprepare: function() {             
+      for (var i = 0; i < cmdList.length; i++) {
+       $('#node-input-command').append($("<option></option>").attr("value", cmdList[i].cmd).text(cmdList[i].name));
+      }
+         
+      // Make sure the selected value is also selected in the <select> tag
+      $('#node-input-command').val(this.command);
+    }, 
     paletteLabel: 'Universal'
   });
 </script>
@@ -33,19 +43,101 @@
       <label for="node-input-confignode"> Config Node</label>
       <input type="text" id="node-input-confignode"/>
     </div>
-    <!-- Node name-->
+    <!-- Compatibility mode style-->
     <div class="form-row">
-      <label for="node-input-name">
-        <i class="fa fa-tag"></i> Name
-      </label>
-      <input type="text" id="node-input-name" placeholder="This Node Name"/>
+      <label for="node-input-compatibilityMode"> Compatibility</label>
+      <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
     </div>
+    <!-- Command selection -->
+    <div class="form-row">
+      <label for="node-input-command"> Command</label>
+      <select id="node-input-command">
+      </select>
+    </div>
+    <!-- SONOS player name-->
+    <div class="form-row">
+      <label for="node-input-playername"><i class="fa fa-tag"></i>Player name</label>
+      <input type="text" id="node-input-playername" placeholder="SONOS player name"/>
+    </div>
+    
     <!-- Explanation-->
     <div class="text">
-      The serial number is only being used in case of missing ip address. The ip address should be static/permanent.</br>
-      The corresponding SONOS player is being used as default and can be overwritten with msg.playerName.  
+            
+      Omit the command to supply it via msg.<br><br>
+      
+      Compatibility style means that msg.payload holds the command and msg.topic the new state. <br>
+      Otherwise msg.payload holds the state and msg.cmd the command
     </div>
   </div>
+</script>
+
+<script type="text/javascript">
+// TODO find a comman base for cmdList and COMMAND_TABLE_UNIVERSAL
+// We need two properties for <select>
+// cmdList has to be kept in sync with the java file! First item is message! 
+  const cmdList = [
+    {cmd: "message", name: "using message"},
+    {cmd: "group.play", name: "group.play"},
+    {cmd: "group.play.queue", name: "group.play.queue"},
+    {cmd: "group.play.track", name: "group.play.track"},
+    {cmd: "group.play.export", name: "group.play.export"},
+    {cmd: "group.play.tunein", name: "group.play.tunein"},
+    {cmd: "group.play.streamhttp", name: "group.play.streamhttp"},
+    {cmd: "group.play.notification", name: "group.play.notification"},
+    {cmd: "joiner.play.notification", name: "joiner.play.notification"},
+    {cmd: "group.play.snap", name: "group.play.snap"},
+    {cmd: "player.play.avtransport", name: "player.play.avtransport"},
+    {cmd: "group.toggle.playback", name: "group.toggle.playback"},
+    {cmd: "group.pause", name: "group.pause"},
+    {cmd: "group.stop", name: "group.stop"},
+    {cmd: "group.next.track", name: "group.next.track"},
+    {cmd: "group.previous.track", name: "group.previous.track"},
+    {cmd: "group.adjust.volume", name: "group.adjust.volume"},
+    {cmd: "player.set.volume", name: "player.set.volume"},
+    {cmd: "group.set.mutestate", name: "group.set.mutestate"},
+    {cmd: "player.set.mutestate", name: "player.set.mutestate"},
+    {cmd: "group.set.queuemode", name: "group.set.queuemode"},
+    {cmd: "group.seek", name: "group.seek"},
+    {cmd: "group.set.sleeptimer", name: "group.set.sleeptimer"},
+    {cmd: "group.set.crossfade", name: "group.set.crossfade"},
+    {cmd: "player.set.led", name: "player.set.led"},
+    {cmd: "player.set.loudness", name: "player.set.loudness"},
+    {cmd: "player.set.nightmode", name: "player.set.nightmode"},
+    {cmd: "player.set.dialoglevel", name: "player.set.dialoglevel"},
+    {cmd: "player.set.subgain", name: "player.set.subgain"},
+    {cmd: "group.create.snap", name: "group.create.snap"},
+    {cmd: "create.snap", name: "create.snap"},
+    {cmd: "group.save.queue", name: "group.save.queue"},
+    {cmd: "save.queue", name: "save.queue"},
+    {cmd: "group.clear.queue", name: "group.clear.queue"},
+    {cmd: "group.remove.tracks", name: "group.remove.tracks"},
+    {cmd: "household.remove.sonosplaylist", name: "household.remove.sonosplaylist"},
+    {cmd: "remove.sonosplaylist", name: "remove.sonosplaylist"},
+    {cmd: "player.join.group", name: "player.join.group"},
+    {cmd: "player.leave.group", name: "player.leave.group"},
+    {cmd: "household.create.stereopair", name: "household.create.stereopair"},
+    {cmd: "household.separate.stereopair", name: "household.separate.stereopair"},
+    {cmd: "household.get.groups", name: "household.get.groups"},
+    {cmd: "group.get.state", name: "group.get.state"},
+    {cmd: "group.get.playbackstate", name: "group.get.playbackstate"},
+    {cmd: "group.get.volume", name: "group.get.volume"},
+    {cmd: "player.get.volume", name: "player.get.volume"},
+    {cmd: "group.get.mutestate", name: "group.get.mutestate"},
+    {cmd: "player.get.mutestate", name: "player.get.mutestate"},
+    {cmd: "group.get.crossfade", name: "group.get.crossfade"},
+    {cmd: "group.get.sleeptimer", name: "group.get.sleeptimer"},
+    {cmd: "player.get.properties", name: "player.get.properties"},
+    {cmd: "player.get.loudness", name: "player.get.loudness"},
+    {cmd: "player.get.led", name: "player.get.led"},
+    {cmd: "player.get.nightmode", name: "player.get.nightmode"},
+    {cmd: "player.get.subgain", name: "player.get.subgain"},
+    {cmd: "player.get.dialoglevel", name: "player.get.dialoglevel"},
+    {cmd: "player.test.online", name: "player.test.online"},
+    {cmd: "player.get.role", name: "player.get.role"},
+    {cmd: "group.get.queue", name: "group.get.queue"},
+    {cmd: "player.get.queue", name: "player.get.queue"},
+    {cmd: "group.get.trackplus", name: "group.get.trackplus"}
+];
 </script>
 
 <!-- Help text (HTML) -->
@@ -53,7 +145,7 @@
 <p>Incoming message is a command and acts on the whole <b>GROUP</b>!
 Only if explicitly stated (command prefix: joiner, player) the message acts on the given player.<p>
 
-The group is identified by the given player. <b>msg.playerName<b> overrides the configuration node player. 
+The group is identified by the given player. <b>msg.playerName</b> overrides the configuration node player. 
 The <b>msg.playerName</b> is the name of the SONOS player (aka room, zone) and NOT the name of a configuration node!</br>
 
 <b>Joiner</b> is the "opposite" of <b>coordinator</b>. A group always consist of a unique coordinator and optional joiners.</br>

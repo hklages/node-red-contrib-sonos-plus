@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file.
 
 - "Universal" node: restore.snap mutestate should be now lowercase
 
+- "Universal" node: remove.sonosplaylist changed to household.remove.sonosplaylist
+
 ## [3.1.3] 2020-05-13
 
 ### Added
