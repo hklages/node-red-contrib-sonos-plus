@@ -14,13 +14,13 @@ See the full scope of commands [here.](https://github.com/hklages/node-red-contr
 
 ## NEWS
 
+- Usage of nodes "Control Player", "Get Status", "Manage Radio" are depreciated. Please use node "Universal"
+
+- Usage of "msg.topic" is depreciated in "Universal node" and "My Sonos" node. Please use the descriptive property - see help.
+
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- New commands household.get.groups, play.track, seek, remove.track, set/get.sleeptimer, set/get.crossfade, set.queuemode, play.track, seek, remove.track
-
-- New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
-
-- "Manage Radio" is depreciated - please use Universal node instead.
+- All commands from "Control Player" and "Get Status" are now available in "Universal" - some are renamed - see help
 
 - "My Sonos" node: new command export.item works together with Universal node command play.export
 

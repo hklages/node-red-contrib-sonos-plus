@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.2.0] 2020-05-20
+## [3.2.0] 2020-05-27
+
+### Depreciated - dont use anymore
+
+- Use of "Control player" node is depreciated. Please use "Universal" node
+
+- Use of "Get Status" node is depreciated. Please us "Universal" node
+
+- "Universal Node": usage of msg.topic is depreciated. Instead use the new property - see help
 
 ### Added
 
-- "Universal node": player.get.led, player.get.nightmode, player.get.subgain, player.get.dialoglevel, player.test.connection
+- "Universal node": player.get/set.led, player.get/set.nightmode, player.get/set.subgain, player.get/set.dialoglevel, player.get/set.loudness, player.test.online
+
+- "Universal node": household.create.stereopair, household.separate.stereopair, player.play.avtransport
 
 ### Changed
 
