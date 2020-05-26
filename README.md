@@ -14,15 +14,18 @@ See the full scope of commands [here.](https://github.com/hklages/node-red-contr
 
 ## NEWS
 
-- Usage of nodes "Control Player", "Get Status", "Manage Radio" are depreciated. Please use node "Universal"
+C A U T I O N:  M A J O R   C H A N G E  -  S E E  CHANGELOG.md
 
-- Usage of "msg.topic" is depreciated in "Universal node" and "My Sonos" node. Please use the descriptive property - see help.
+For the new nodes "Universal", "My Sonos" I now follow the Node-RED default: msg.payload holds the change (on/off, uri, new volume, ... ). msg.cmd holds the command.
+You can change to old mode with "compatiblity" tic box in combination with command "using msg"
+
+- "Universal" node now supports selecting the command and includes all commands from "Control Player, "Get Status", "Manage Radio" and almost all from "Manage Queue"
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- All commands from "Control Player" and "Get Status" are now available in "Universal" - some are renamed - see help
+- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos".
 
-- "My Sonos" node: new command export.item works together with Universal node command play.export
+- Please use msg.payload for the changes (on/off, uri, volume, ...) and msg.cmd for the command (and not msg.topic for changes and msg.payload for command)
 
 ## Installation
 
@@ -36,7 +39,6 @@ Install directly from your Node-RED's setting pallete.
 - Stream stations from Amazon, Napster, TuneIn, Radioplayer, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
 - Basic functions: play, stop, pause, mute, group, activate line in, ...
-- Spotify: Insert playlists, album, songs with uri
 - Playlists: Insert Music Library playlist or Sonos playlist - using search string in playlist name
 - Notification: Interrupt current song and play a notification
 - Special options: Set Loudness, Crossface, NightMode, SpeechEnhancement mode, ...

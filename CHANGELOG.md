@@ -2,31 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.2.0] 2020-05-27
+## [4.0.0] 2020-06-xx
 
 ### Depreciated - dont use anymore
 
-- Use of "Control player" node is depreciated. Please use "Universal" node
+- Use of "Control Player", "Get Status", "Manage Radio", Manage Queue" node is depreciated. Please use "Universal" node
 
-- Use of "Get Status" node is depreciated. Please us "Universal" node
-
-- "Universal Node": usage of msg.topic is depreciated. Instead use the new property - see help
+- "Universal", "My Sonos" node: usage of msg.topic is depreciated. Please use msg.payload for changes (on/off, uri, ..) and msg.cmd for the command.
 
 ### Added
 
-- "Universal node": player.get/set.led, player.get/set.nightmode, player.get/set.subgain, player.get/set.dialoglevel, player.get/set.loudness, player.test.online
-
-- "Universal node": household.create.stereopair, household.separate.stereopair, player.play.avtransport
+- "Universal" node: added selection box for commands
 
 ### Changed
 
-- "Universal" node: payload of *.get.mutestate, get.crossfade is now lowercase on/off
+- "Universal node": all commands from "Control Player", "Get Status" node and almost all from "Manage Queue" node
 
-- "Universal" node: create.snap mutestate is  now lowercase on/off
+- "Universal" node: payload of *.get.mutestate/crossfade is now lowercase on/off
+
+- "Universal" node: create.snap mutestate is now lowercase on/off
 
 - "Universal" node: restore.snap mutestate should be now lowercase
 
 - "Universal" node: remove.sonosplaylist changed to household.remove.sonosplaylist
+
+- "Universal" node: group.play.snap now expects snap in payload and not in msg.snap!
 
 ## [3.1.3] 2020-05-13
 
