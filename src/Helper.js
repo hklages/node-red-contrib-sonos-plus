@@ -16,7 +16,7 @@ module.exports = {
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,
   REGEX_ANYCHAR: /.+/,
-  REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/,
+  REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
@@ -296,8 +296,6 @@ module.exports = {
       }
       value = parseInt(value)
     }
-    console.log('value >>' + JSON.stringify(value))
-    console.log('min >>' + JSON.stringify(min))
     if (!(value >= min && value <= max)) {
       throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value})  is out of range`)
     }
