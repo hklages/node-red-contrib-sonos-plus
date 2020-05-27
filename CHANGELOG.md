@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.5] 2020-05-27
+
+### Changed
+
+- "My Sonos" node: bugfix get.items for Apple playlists
+
 ## [3.1.4] 2020-05-19
 
 ### Added

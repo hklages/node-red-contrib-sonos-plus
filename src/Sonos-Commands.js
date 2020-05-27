@@ -587,7 +587,8 @@ module.exports = {
         item.radioId = module.exports.getRadioId(item.uri)
       }
       if (isValidProperty(item, ['albumArt'])) {
-        if (item.albumArt.startsWith('/getaa')) {
+        // double check album art
+        if (typeof item.albumArt === 'string' && item.albumArt.startsWith('/getaa')) {
           item.albumArt = sonosPlayerBaseUrl + item.albumArt
         }
       }
@@ -858,7 +859,7 @@ module.exports = {
       throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBodyV1 is invalid. Response >>${JSON.stringify(result)}`)
     }
     const list = []
-    let sid, upnpClass, processingType
+    let sid, upnpClass, processingType, albumArtUriData, albumArtUri
     if (isValidProperty(result, ['DIDL-Lite', 'item'])) {
       const item = result['DIDL-Lite'].item
       let itemList = [] // parseSoapBodyV1 does not create array in case of one item! See parseSoapBodyV1 options
@@ -883,9 +884,22 @@ module.exports = {
         if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
           processingType = 'queue'
         }
+        // albumArtUri may be an array - then provide only first item
+        albumArtUri = ''
+        if (isValidProperty(itemList[i], ['upnp:albumArtURI'])) {
+          albumArtUriData = itemList[i]['upnp:albumArtURI']
+          if (typeof albumArtUriData === 'string') {
+            albumArtUri = albumArtUriData
+          } else if (Array.isArray(albumArtUriData)) {
+            if (albumArtUriData.length > 0) {
+              albumArtUri = albumArtUri[0]
+            }
+          }
+        }
+
         list.push({
           title: itemList[i]['dc:title'],
-          albumArt: itemList[i]['upnp:albumArtURI'],
+          albumArt: albumArtUri,
           uri: itemList[i].res[tag],
           metadata: itemList[i]['r:resMD'],
           sid: sid,
@@ -924,7 +938,7 @@ module.exports = {
       } else {
         itemList = container
       }
-      let upnpClass, processingType, id, albumArtURI, firstTrackArtURI
+      let upnpClass, processingType, id, albumArtUri, firstTrackArtUri
       for (var i = 0; i < itemList.length; i++) {
         if (isValidProperty(itemList[i], ['id'])) {
           id = itemList[i].id
@@ -942,19 +956,19 @@ module.exports = {
         if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
           processingType = 'queue'
         }
-        firstTrackArtURI = ''
+        firstTrackArtUri = ''
+        // albumArtURI is an array (album art for each track)
         if (isValidProperty(itemList[i], ['upnp:albumArtURI'])) {
-          albumArtURI = itemList[i]['upnp:albumArtURI']
-          if (Array.isArray(albumArtURI)) {
-            if (albumArtURI.length > 0) {
-              firstTrackArtURI = albumArtURI[0]
+          albumArtUri = itemList[i]['upnp:albumArtURI']
+          if (Array.isArray(albumArtUri)) {
+            if (albumArtUri.length > 0) {
+              firstTrackArtUri = albumArtUri[0]
             }
           }
         }
-
         list.push({
           title: itemList[i]['dc:title'],
-          albumArt: firstTrackArtURI,
+          albumArt: firstTrackArtUri,
           uri: itemList[i].res[tag],
           metadata: '',
           sid: '',
