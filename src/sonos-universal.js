@@ -161,13 +161,10 @@ module.exports = function (RED) {
     const payloadPath = []
     payloadPath.push(node.nrcspCompatibilty ? 'topic' : 'payload')
 
-    // node dialog overrides msg - throws error if both are provided. Store lowercase version in command
+    // node dialog overrides msg Store lowercase version in command
     let command
     if (node.nrcspCommand !== 'message') { // command specified in node dialog
       command = node.nrcspCommand
-      if (isValidPropertyNotEmptyString(msg, cmdPath)) {
-        throw new Error(`${NRCSP_ERRORPREFIX} node dialog and msg hold data - not allowed.`)
-      }
     } else {
       if (!isValidPropertyNotEmptyString(msg, cmdPath)) {
         throw new Error(`${NRCSP_ERRORPREFIX} command is undefined/invalid`)
