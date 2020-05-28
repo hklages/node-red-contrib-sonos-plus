@@ -22,7 +22,10 @@
     color: '#AAAAAA',
     label: function() {
       let found = cmdList.find(item => item.cmd === this.command);
-      return this.name || found.name || "Universal";
+      // mark all nodes with depreciated compatibility mode
+      let nodeLabel = this.name || found.name || "Universal"
+      nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
+      return nodeLabel;
     },
     oneditprepare: function() {             
       for (var i = 0; i < cmdList.length; i++) {
@@ -98,7 +101,7 @@
     {cmd: "group.get.queue", name: "group: get queue"},
     {cmd: "group.get.sleeptimer", name: "group: get sleeptimer"},
     {cmd: "group.get.state", name: "group: get state"},
-    {cmd: "group.get.trackplus", name: "group: get track plus more data"},
+    {cmd: "group.get.trackplus", name: "group: get track ... "},
     {cmd: "group.get.volume", name: "group: get volume"},
     {cmd: "group.next.track", name: "group: next track"},
     {cmd: "group.pause", name: "group: pause"},
@@ -107,13 +110,13 @@
     {cmd: "group.play.notification", name: "group: play notification"},
     {cmd: "group.play.queue", name: "group: play queue"},
     {cmd: "group.play.snap", name: "group: play snapshot"},
-    {cmd: "group.play.streamhttp", name: "group: play stream with http"},
+    {cmd: "group.play.streamhttp", name: "group: play http stream "},
     {cmd: "group.play.track", name: "group: play track in queue"},
     {cmd: "group.play.tunein", name: "group: play tunein"},
     {cmd: "group.previous.track", name: "group: previous track"},
     {cmd: "group.remove.tracks", name: "group: remove tracks"},
     {cmd: "group.save.queue", name: "group: save queue to Sonos playlists"},
-    {cmd: "group.seek", name: "group: seek in current track"},
+    {cmd: "group.seek", name: "group: seek in track"},
     {cmd: "group.set.crossfade", name: "group: set crossfade mode"},
     {cmd: "group.set.mutestate", name: "group: set mute state"},
     {cmd: "group.set.queuemode", name: "group: set queue mode"},

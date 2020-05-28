@@ -2004,7 +2004,7 @@ module.exports = function (RED) {
         throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is not boolean`)
       }
       if (newVolume === -1 && msg.sameVolume === true) {
-        throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is true but but msg.volume is not specified`)
+        throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is true but msg.volume is not specified`)
       }
       newSameVolume = msg.sameVolume
     }
