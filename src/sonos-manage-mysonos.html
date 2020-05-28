@@ -1,4 +1,4 @@
-<!-- Sonos Manage My Sonos Node -->
+<!-- Sonos My Sonos Node -->
 
 <!-- Registering Node (JavaScript) -->
 <script type="text/javascript">
@@ -11,16 +11,29 @@
         value: '',
         type: 'sonos-config'
       },
-      name: {
-        value: ''
-      }
+      command: { value: 'message' },
+      playerName: { value: '' },
+      compatibilityMode: { value: false },
+      name: {value: ''}
     },
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
     icon: 'sonos.png', // saved in  icons/myicon.png
     color: '#95c292',
     label: function() {
-      return this.name || 'Manage My Sonos';
+      let found = mySonoscmdList.find(item => item.cmd === this.command);
+      // mark all nodes with depreciated compatibility mode
+      let nodeLabel = this.name || found.name || "My Sonos"
+      nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
+      return nodeLabel;
+    },
+    oneditprepare: function() {             
+      for (var i = 0; i < mySonoscmdList.length; i++) {
+       $('#node-input-command').append($("<option></option>").attr("value", mySonoscmdList[i].cmd).text(mySonoscmdList[i].name));
+      }
+         
+      // Make sure the selected value is also selected in the <select> tag
+      $('#node-input-command').val(this.command);
     },
     paletteLabel: 'My Sonos'
   });
@@ -33,15 +46,55 @@
       <label for="node-input-confignode"> Config Node</label>
       <input type="text" id="node-input-confignode"/>
     </div>
-    <!-- Node name-->
+    <!-- Compatibility mode style-->
     <div class="form-row">
-      <label for="node-input-name">
-        <i class="fa fa-tag"></i> Name
-      </label>
-      <input type="text" id="node-input-name" placeholder="This Node Name"/>
+      <label for="node-input-compatibilityMode"> Compatibility</label>
+      <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
     </div>
+    <!-- Command selection -->
+    <div class="form-row">
+      <label for="node-input-command"> Command</label>
+      <select id="node-input-command">
+      </select>
+    </div>
+    <!-- node name-->
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="This node name"/>
+    </div>
+    
+    <!-- Explanation-->
+    <div class="text">
+    
+      The new standard for using the input message is: 
+      <ul>
+        <li><code>msg.cmd</code> holds the command</li>
+        <li><code>msg.payload</code> holds additional parameter like on/off, uri, ...</li>
+      </ul>
+      Tic <b>Compatibility</b> to get the old style:
+      <ul>
+        <li><code>msg.payload</code> holds the command</li>
+        <li><code>msg.topic</code> holds additional parameter like on/off, uri, ...</li>
+      </ul>
+      <b>Command</b> provides a pick up list of all available commmands<br>
+      and "using msg".
+     </div>
   </div>
 </script>
+
+<script type="text/javascript">
+  // mySonoscmdList has to be kept in sync with the java file! First item is message! 
+  // TODO find a comman base for mySonoscmdList and COMMAND_TABLE_MYSONOS
+  // We need two properties for <select>
+  // message first, all others in lexi order, ascending
+    const mySonoscmdList = [
+    {cmd: "message", name: "using msg"},
+    {cmd: "export.item", name: "export item"},
+    {cmd: "stream.item", name: "stream item"},
+    {cmd: "queue.item", name: "queue item"},
+    {cmd: "get.items", name: "get all items"}
+  ];
+  </script>
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">

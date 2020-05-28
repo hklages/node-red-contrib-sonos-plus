@@ -21,15 +21,15 @@
     icon: 'sonos.png', // saved in  icons/myicon.png
     color: '#AAAAAA',
     label: function() {
-      let found = cmdList.find(item => item.cmd === this.command);
+      let found = universalCmdList.find(item => item.cmd === this.command);
       // mark all nodes with depreciated compatibility mode
       let nodeLabel = this.name || found.name || "Universal"
       nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
     },
     oneditprepare: function() {             
-      for (var i = 0; i < cmdList.length; i++) {
-       $('#node-input-command').append($("<option></option>").attr("value", cmdList[i].cmd).text(cmdList[i].name));
+      for (var i = 0; i < universalCmdList.length; i++) {
+       $('#node-input-command').append($("<option></option>").attr("value", universalCmdList[i].cmd).text(universalCmdList[i].name));
       }
          
       // Make sure the selected value is also selected in the <select> tag
@@ -86,11 +86,11 @@
 </script>
 
 <script type="text/javascript">
-// cmdList has to be kept in sync with the java file! First item is message! 
-// TODO find a comman base for cmdList and COMMAND_TABLE_UNIVERSAL
+// universalCmdList has to be kept in sync with the java file! First item is message! 
+// TODO find a comman base for universalCmdList and COMMAND_TABLE_UNIVERSAL
 // We need two properties for <select>
 // message first, all others in lexi order, ascending
-  const cmdList = [
+  const universalCmdList = [
   {cmd: "message", name: "using msg"},
     {cmd: "group.adjust.volume", name: "group: adjust volume"},
     {cmd: "group.clear.queue", name: "group: clear queue"},
