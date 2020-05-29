@@ -15,17 +15,13 @@ module.exports = function (RED) {
   'use strict'
 
   const COMMAND_TABLE_MYSONOS = {
-    export: exportItem,
-    queue: queueItem,
-    stream: streamItem,
-    queueItem: queueItem,
-    'stream.item': streamItem,
-    'export.item': exportItem,
-    'get.items': getMySonosItems,
-    get_items: getMySonosItems
+    'mysonos.export.item': exportItem,
+    'mysonos.queue.item': queueItem,
+    'mysonos.stream.item': streamItem,
+    'mysonos.get.items': getMySonosItems
   }
 
-  /**  Create Universal node, get valid ipaddress, store nodeDialog and subscribe to messages.
+  /**  Create My Sonos node, get valid ipaddress, store nodeDialog and subscribe to messages.
    * @param  {object} config current node configuration data
    */
   function SonosManageMySonosNode (config) {
@@ -108,7 +104,7 @@ module.exports = function (RED) {
     const payloadPath = []
     payloadPath.push(node.nrcspCompatibilty ? 'topic' : 'payload')
 
-    // node dialog overrides msg Store lowercase version in command
+    // node dialog overrides msg, store lowercase version in command
     let command
     if (node.nrcspCommand !== 'message') { // command specified in node dialog
       command = node.nrcspCommand
@@ -119,7 +115,13 @@ module.exports = function (RED) {
       command = String(msg[cmdPath[0]])
       command = command.toLowerCase()
     }
-    msg.backupCmd = command // sets msg.backupCmd - is also used in playerSetEQ
+
+    // you may omitt mysonos. prefix - so we add it here
+    const REGEX_PREFIX = /^(mysonos|musiclibrary)/
+    if (!REGEX_PREFIX.test(command)) {
+      command = `mysonos.${command}`
+    }
+    msg.backupCmd = command // sets msg.backupCmd
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)

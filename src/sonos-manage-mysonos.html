@@ -12,7 +12,6 @@
         type: 'sonos-config'
       },
       command: { value: 'message' },
-      playerName: { value: '' },
       compatibilityMode: { value: false },
       name: {value: ''}
     },
@@ -21,18 +20,18 @@
     icon: 'sonos.png', // saved in  icons/myicon.png
     color: '#95c292',
     label: function() {
-      let found = mySonoscmdList.find(item => item.cmd === this.command);
+      let found = mySonosCmdList.find(item => item.cmd === this.command);
       // mark all nodes with depreciated compatibility mode
-      let nodeLabel = this.name || found.name || "My Sonos"
+      let nodeLabel = this.name || found.text || "My Sonos"
       nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
     },
     oneditprepare: function() {             
-      for (var i = 0; i < mySonoscmdList.length; i++) {
-       $('#node-input-command').append($("<option></option>").attr("value", mySonoscmdList[i].cmd).text(mySonoscmdList[i].name));
+      for (var i = 0; i < mySonosCmdList.length; i++) {
+       $('#node-input-command').append($("<option></option>").attr("value", mySonosCmdList[i].cmd).text(mySonosCmdList[i].text));
       }
          
-      // Make sure the selected value is also selected in the <select> tag
+      // select command
       $('#node-input-command').val(this.command);
     },
     paletteLabel: 'My Sonos'
@@ -64,12 +63,13 @@
     </div>
     
     <!-- Explanation-->
-    <div class="text">
+    <div class="text">        
+      <b>Config Node</b> provides the default SONOS player.<br><br>
     
       The new standard for using the input message is: 
       <ul>
         <li><code>msg.cmd</code> holds the command</li>
-        <li><code>msg.payload</code> holds additional parameter like on/off, uri, ...</li>
+        <li><code>msg.payload</code> holds the "change data" like on/off, uri, ...</li>
       </ul>
       Tic <b>Compatibility</b> to get the old style:
       <ul>
@@ -78,23 +78,23 @@
       </ul>
       <b>Command</b> provides a pick up list of all available commmands<br>
       and "using msg".
-     </div>
+    </div>
   </div>
 </script>
 
 <script type="text/javascript">
-  // mySonoscmdList has to be kept in sync with the java file! First item is message! 
-  // TODO find a comman base for mySonoscmdList and COMMAND_TABLE_MYSONOS
+  // mySonosCmdList has to be kept in sync with the java file! First item is message! 
+  // TODO find a comman base for mySonosCmdList and COMMAND_TABLE_MYSONOS
   // We need two properties for <select>
   // message first, all others in lexi order, ascending
-    const mySonoscmdList = [
-    {cmd: "message", name: "using msg"},
-    {cmd: "export.item", name: "export item"},
-    {cmd: "stream.item", name: "stream item"},
-    {cmd: "queue.item", name: "queue item"},
-    {cmd: "get.items", name: "get all items"}
-  ];
-  </script>
+    const mySonosCmdList = [
+    {cmd: "message", text: "using msg"},
+    {cmd: "mysonos.export.item", text: "export item"},
+    {cmd: "mysonos.get.items", text: "get all items"},
+    {cmd: "mysonos.queue.item", text: "queue item"},
+    {cmd: "mysonos.stream.item", text: "stream item"}
+    ];
+</script>
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">
@@ -130,12 +130,12 @@ The <b>get</b> command outputs data to payload. The <b>export</b> command output
 
 <ul>
     <li>
-        <code>queue</code> queues the found item (Playlist, Album, Track) to SONOS queue.<br>
+        <code>queue.item</code> queues the found item (Playlist, Album, Track) to SONOS queue.<br>
         Required property topic: title search string - cAsE sEnSiTiVe<br>
         Optional properties are: volume
     </li>
     <li>
-        <code>stream</code> streams the found item (stream, radio).<br> 
+        <code>stream<.item/code> streams the found item (stream, radio).<br> 
         Required property topic: title search string - cAsE sEnSiTiVe<br>
         Optional properties are: volume
     </li>
@@ -143,7 +143,7 @@ The <b>get</b> command outputs data to payload. The <b>export</b> command output
         <code>get.items</code> Outputs the array of all My Sonos items.
     </li>
     <li>
-      <code>export</code> Outputs found item data. This is used in combination with Universal node play.export.<br>
+      <code>export.item</code> Outputs found item data. This is used in combination with Universal node group.play.export.<br>
       Required property topic: title search string - cAsE sEnSiTiVe<br>
   </li>
 </ul>

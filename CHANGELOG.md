@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 
 - "Universal node": all commands from "Control Player", "Get Status" node and almost all from "Manage Queue" node
 
+- "My sonos" node: get_items is now mysonos.get.items, queue is mysonos.queue.item, stream is mysonos.stream.item, export is mysonos.export.item
+
 - "Universal" node: payload of *.get.mutestate/crossfade is now lowercase on/off
 
 - "Universal" node: create.snap mutestate is now lowercase on/off
