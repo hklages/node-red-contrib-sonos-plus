@@ -10,7 +10,7 @@ const {
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
   createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllSonosPlaylists, sortedGroupArray,
-  getGroupVolume, getGroupMute, getPlayerQueue, setGroupVolumeRelative, setGroupMute, getCmd, setCmd
+  getGroupVolume, getGroupMute, getPlayerQueue, setGroupVolumeRelative, getRadioId, setGroupMute, getCmd, setCmd
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -1477,7 +1477,7 @@ module.exports = function (RED) {
     const muteState = await getGroupMute(sonosCoordinator.baseUrl)
     const volume = await getGroupVolume(sonosCoordinator.baseUrl)
 
-    // get current media data and extract queueActivated, radioId
+    // get current media data and extract queueActivated
     const mediaData = await sonosCoordinator.avTransportService().GetMediaInfo()
     if (!isTruthyAndNotEmptyString(mediaData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} current media data is invalid`)
@@ -1941,12 +1941,7 @@ module.exports = function (RED) {
     }
     const uri = mediaData.CurrentURI
     const queueActivated = uri.startsWith('x-rincon-queue')
-    let radioId = ''
-    if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
-      const end = uri.indexOf('?sid=254')
-      const start = 'x-sonosapi-stream:'.length
-      radioId = uri.substring(start, end)
-    }
+    const radioId = getRadioId(uri)
 
     // get current position data
     const positionData = await sonosCoordinator.avTransportService().GetPositionInfo()

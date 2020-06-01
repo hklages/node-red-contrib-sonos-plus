@@ -199,10 +199,6 @@ module.exports = {
     if (!response) {
       throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is invalid`)
     }
-    response = await module.exports.play(membersAsPlayerPlus[coordinatorIndex].baseUrl)
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
-    }
     if (options.volume !== -1) {
       await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
       node.debug('same Volume' + options.sameVolume)
@@ -211,6 +207,10 @@ module.exports = {
           await membersAsPlayerPlus[index].setVolume(options.volume)
         }
       }
+    }
+    response = await module.exports.play(membersAsPlayerPlus[coordinatorIndex].baseUrl)
+    if (!response) {
+      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
     }
     node.debug('Playing notification started - now figuring out the end')
 
@@ -582,11 +582,16 @@ module.exports = {
     if (!isTruthyAndNotEmptyString(listMySonos)) {
       throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse FV-2 is invalid. Response >>${JSON.stringify(listMySonos)}`)
     }
+    // Add TuneIn Radio id in case of TuneIn and
     // Music library items have special albumArt, without host
     // We have to add the baseurl
     listMySonos.forEach(item => {
+      if (isValidProperty(item, ['uri'])) {
+        item.radioId = module.exports.getRadioId(item.uri)
+      }
       if (isValidProperty(item, ['albumArt'])) {
-        if (item.albumArt.startsWith('/getaa')) {
+        // double check album art
+        if (typeof item.albumArt === 'string' && item.albumArt.startsWith('/getaa')) {
           item.albumArt = sonosPlayerBaseUrl + item.albumArt
         }
       }
@@ -866,7 +871,7 @@ module.exports = {
       throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBodyV1 is invalid. Response >>${JSON.stringify(result)}`)
     }
     const list = []
-    let sid, upnpClass, processingType
+    let sid, upnpClass, processingType, albumArtUriData, albumArtUri
     if (isValidProperty(result, ['DIDL-Lite', 'item'])) {
       const item = result['DIDL-Lite'].item
       let itemList = [] // parseSoapBodyV1 does not create array in case of one item! See parseSoapBodyV1 options
@@ -891,9 +896,22 @@ module.exports = {
         if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
           processingType = 'queue'
         }
+        // albumArtUri may be an array - then provide only first item
+        albumArtUri = ''
+        if (isValidProperty(itemList[i], ['upnp:albumArtURI'])) {
+          albumArtUriData = itemList[i]['upnp:albumArtURI']
+          if (typeof albumArtUriData === 'string') {
+            albumArtUri = albumArtUriData
+          } else if (Array.isArray(albumArtUriData)) {
+            if (albumArtUriData.length > 0) {
+              albumArtUri = albumArtUri[0]
+            }
+          }
+        }
+
         list.push({
           title: itemList[i]['dc:title'],
-          albumArt: itemList[i]['upnp:albumArtURI'],
+          albumArt: albumArtUri,
           uri: itemList[i].res[tag],
           metadata: itemList[i]['r:resMD'],
           sid: sid,
@@ -932,7 +950,7 @@ module.exports = {
       } else {
         itemList = container
       }
-      let upnpClass, processingType, id, albumArtURI, firstTrackArtURI
+      let upnpClass, processingType, id, albumArtUri, firstTrackArtUri
       for (var i = 0; i < itemList.length; i++) {
         if (isValidProperty(itemList[i], ['id'])) {
           id = itemList[i].id
@@ -950,19 +968,19 @@ module.exports = {
         if (module.exports.UPNP_CLASSES_QUEUE.includes(upnpClass)) {
           processingType = 'queue'
         }
-        firstTrackArtURI = ''
+        firstTrackArtUri = ''
+        // albumArtURI is an array (album art for each track)
         if (isValidProperty(itemList[i], ['upnp:albumArtURI'])) {
-          albumArtURI = itemList[i]['upnp:albumArtURI']
-          if (Array.isArray(albumArtURI)) {
-            if (albumArtURI.length > 0) {
-              firstTrackArtURI = albumArtURI[0]
+          albumArtUri = itemList[i]['upnp:albumArtURI']
+          if (Array.isArray(albumArtUri)) {
+            if (albumArtUri.length > 0) {
+              firstTrackArtUri = albumArtUri[0]
             }
           }
         }
-
         list.push({
           title: itemList[i]['dc:title'],
-          albumArt: firstTrackArtURI,
+          albumArt: firstTrackArtUri,
           uri: itemList[i].res[tag],
           metadata: '',
           sid: '',
@@ -1020,24 +1038,40 @@ module.exports = {
   },
 
   /**  Get sid from uri.
-   * @param  {string} uri uri e.g. x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&flags=8300&sn=14
+   * @param  {string} xuri uri e.g. x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&flags=8300&sn=14
    * @return {string} service id or if not found empty
    *
    * prereq: uri is string where the sid is in between ?sid= and &flags=
    */
 
-  getSid: uri => {
+  getSid: xuri => {
     let sid = '' // default even if uri undefined.
-    if (isTruthyAndNotEmptyString(uri)) {
-      const positionStart = uri.indexOf('?sid=') + '$sid='.length
-      const positionEnd = uri.indexOf('&flags=')
+    if (isTruthyAndNotEmptyString(xuri)) {
+      const positionStart = xuri.indexOf('?sid=') + '$sid='.length
+      const positionEnd = xuri.indexOf('&flags=')
       if (positionStart > 1 && positionEnd > positionStart) {
-        sid = uri.substring(positionStart, positionEnd)
+        sid = xuri.substring(positionStart, positionEnd)
       }
     }
     return sid
   },
 
+  /**  Get radioId from uri.
+   * @param  {string} xuri uri e.g. x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
+   * @return {string} service id or if not found empty
+   *
+   * prereq: uri is string where the sid is in between ?sid= and &flags=
+   */
+
+  getRadioId: xuri => {
+    let radioId = ''
+    if (xuri.startsWith('x-sonosapi-stream:') && xuri.includes('sid=254')) {
+      const end = xuri.indexOf('?sid=254')
+      const start = 'x-sonosapi-stream:'.length
+      radioId = xuri.substring(start, end)
+    }
+    return radioId
+  },
   /**  Get UpnP class. If not found provide empty string.
    * @param  {string} metadata metadata must exist!
    * @return {string} UpnP class
