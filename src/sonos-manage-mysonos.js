@@ -3,7 +3,7 @@ const {
   NRCSP_ERRORPREFIX,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
-  stringValidRegex,
+  stringValidRegex, string2ValidInteger,
   failure, success
 } = require('./Helper.js')
 
@@ -18,7 +18,10 @@ module.exports = function (RED) {
     'mysonos.export.item': exportItem,
     'mysonos.queue.item': queueItem,
     'mysonos.stream.item': streamItem,
-    'mysonos.get.items': getMySonosItems
+    'mysonos.get.items': getMySonosItems,
+    'library.export.playlist': exportLibraryPlaylist,
+    'library.queue.playlist': queueLibraryPlaylist,
+    'library.get.playlists': getLibraryPlaylists
   }
 
   /**  Create My Sonos node, get valid ipaddress, store nodeDialog and subscribe to messages.
@@ -117,7 +120,7 @@ module.exports = function (RED) {
     }
 
     // you may omitt mysonos. prefix - so we add it here
-    const REGEX_PREFIX = /^(mysonos|musiclibrary)/
+    const REGEX_PREFIX = /^(mysonos|library)/
     if (!REGEX_PREFIX.test(command)) {
       command = `mysonos.${command}`
     }
@@ -273,7 +276,7 @@ module.exports = function (RED) {
   /**  Outputs array of My Sonos items as object.
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   * @param  {array}  payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}  payloadPath not used
    * @param  {array}  cmdPath not used
    * @param  {object} sonosPlayer Sonos Player
    *
@@ -288,6 +291,93 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
     return { payload: mySonosItems }
+  }
+
+  /**  Outputs array of Music library items as object.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {number} [msg.size = 200] maxim number of playlists to be retrieved
+   * @param  {array}  payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}  cmdPath not used
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @output {array} payload is array of playlist objects, maybe empty array.
+   * Object: id, title, uri, ...
+   *
+   * @throws all functions
+   */
+  async function getLibraryPlaylists (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // msg.size is optional - if missing default is 200
+    const listDimension = string2ValidInteger(msg, 'size', 1, 1000, 'size', NRCSP_ERRORPREFIX, 200)
+    const libraryPlaylists = await sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
+    if (!isValidPropertyNotEmptyString(libraryPlaylists, ['items'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} list of playlist seems to be in error`)
+    }
+    if (!Array.isArray(libraryPlaylists.items)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} list is not an array`)
+    }
+
+    return { payload: libraryPlaylists.items }
+  }
+
+  /**  Queues (aka add) first Music Libary playlist matching search string.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} msg.[payloadPath[0]] search string
+   * @param  {number} [msg.size = 200] maxim number of playlists to be retrieved
+   * @param  {array}  payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}  cmdPath not used
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @return {promise} {}
+   *
+   * @throws all functions
+   */
+  async function queueLibraryPlaylist (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload title search string is required.
+    const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
+    const result = await getLibraryPlaylists(node, msg, payloadPath, cmdPath, sonosPlayer)
+    const libraryPlaylists = result.payload
+    if (libraryPlaylists.length === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any Music library playlist`)
+    }
+    const found = libraryPlaylists.find(item => (item.title).includes(validatedSearchString))
+    if (!found) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any title matching search string`)
+    }
+    await sonosPlayer.queue(found.uri)
+    return {}
+  }
+
+  /**  Exports first Music Libary playlist matching search string.
+   * @param  {object} node current node
+   * @param  {object} msg incoming message
+   * @param  {string} msg.[payloadPath[0]] search string
+   * @param  {number} [msg.size = 200] maxim number of playlists to be retrieved
+   * @param  {array}  payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}  cmdPath default: msg.cmd - in compatibility mode: payload
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @return {promise} {}
+   *
+   * @throws all functions
+   */
+  async function exportLibraryPlaylist (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload title search string is required.
+    const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
+    const result = await getLibraryPlaylists(node, msg, payloadPath, cmdPath, sonosPlayer)
+    const libraryPlaylists = result.payload
+    if (libraryPlaylists.length === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any Music library playlist`)
+    }
+    const found = libraryPlaylists.find(item => (item.title).includes(validatedSearchString))
+    if (!found) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any title matching search string`)
+    }
+    const args = {}
+    args[cmdPath[0]] = 'play.export'
+    args.export = { uri: found.uri, metadata: '', queue: true }
+    return args
   }
 
   RED.nodes.registerType('sonos-manage-mysonos', SonosManageMySonosNode)

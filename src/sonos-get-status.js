@@ -1,3 +1,11 @@
+//
+//
+// THIS NODE IS DEPRECIATED since 4.0.0 2020-06-01
+//
+// NO MAINTENANCE
+//
+//
+
 const {
   REGEX_IP,
   REGEX_SERIAL,

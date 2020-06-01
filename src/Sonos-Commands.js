@@ -833,6 +833,7 @@ module.exports = {
    * @throws error if string not found
    */
 
+  // TODO is that function needed - could us .find in array.
   findStringInMySonosTitleV1: async function (items, searchString) {
     for (var i = 0; i < items.length; i++) {
       if (items[i].title.includes(searchString)) {
@@ -845,7 +846,7 @@ module.exports = {
       }
     }
     // not found
-    throw new Error(`${NRCSP_ERRORPREFIX} No title machting msg.topic found. Modify msg.topic`)
+    throw new Error(`${NRCSP_ERRORPREFIX} No title machting search string.`)
   },
 
   /** Creates a list of items from given Browse FV:2 (My Sonos but without Sonos playlists) output.
