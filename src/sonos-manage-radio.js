@@ -1,3 +1,10 @@
+//
+//
+// THIS NODE IS DEPRECIATED since 3.0.0
+//
+// NO MAINTENANCE
+//
+//
 const {
   REGEX_IP,
   REGEX_SERIAL,

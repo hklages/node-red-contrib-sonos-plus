@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0] 2020-06-04
+
+### Depreciated - dont use anymore
+
+- Use of "Control Player", "Get Status", "Manage Radio", Manage Queue" node is depreciated. Please use "Universal" / "My Sonos" node
+
+- "Universal", "My Sonos" node: usage of msg.topic is depreciated. Please use msg.payload for changes (on/off, uri, ..) and selection box (or msg.cmd) for commands.
+
+### Added
+
+- "Universal" / "My Sonos" node: added selection box for commands and compatibility mode for V3 flow style.
+
+### Changed
+
+- "Universal node": now holds allmost all commands from "Control Player", "Get Status", "Manage Queue" node
+
+- "My sonos" node: get_items is now mysonos.get.items, queue is mysonos.queue.item, stream is mysonos.stream.item, export is mysonos.export.item
+
+- "My sonos" node: Music library functions are not available
+
+- "Universal" node: payload of *.get.mutestate/crossfade is now lowercase on/off
+
+- "Universal" node: create.snap mutestate is now lowercase on/off
+
+- "Universal" node: restore.snap mutestate should be now lowercase
+
+- "Universal" node: remove.sonosplaylist changed to household.remove.sonosplaylist
+
+- "Universal" node: group.play.snap now expects snap in payload and not in msg.snap!
+
 ## [3.1.5] 2020-05-27
 
 ### Changed

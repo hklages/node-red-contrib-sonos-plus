@@ -8,21 +8,30 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network. Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
-Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sonos" using the original SONOS app. Play any of these items by using the "My Sonos" node (command export.item) in combination with "Universal node" (command play.export).
+Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sonos" using the original SONOS app. Play any of these items by using the "My Sonos" node (command mysonos.export.item) in combination with "Universal node" (command group.play.export).
 
 See the full scope of commands [here.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.1-Universal-Node)
 
-## NEWS
+## C A U T I O N : MAJOR CHANGES !!!!
+
+> **ACTION REQUIRED** - Modify all existing Universal / My Sonos nodes!<br><br>
+> **Quick solution:** Open the node, tic the compatibility box and select "using msg" in the command selection box.<br><br>
+> **Recommendat solution:** Change your flow and use msg.payload as "change" property (former msg.topic). Use the command selection box to choose the appropriate command.
+
+## NEWS:  See all changes in change log
+
+For the new nodes "Universal", "My Sonos" I now follow the Node-RED default: msg.payload holds the "change" (on/off, uri, new volume, ... ). msg.cmd holds the command.
+msg.topic is "reserved" for future usage.
+
+You can still use the old style with "compatiblity" tic box in combination with command "using msg".
+
+- "Universal" node now supports selecting the command and includes all commands from "Control Player, "Get Status", "Manage Radio" , "Manage Queue".
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- New commands household.get.groups, play.track, seek, remove.track, set/get.sleeptimer, set/get.crossfade, set.queuemode, play.track, seek, remove.track
+- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos".
 
-- New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
-
-- "Manage Radio" is depreciated - please use Universal node instead.
-
-- "My Sonos" node: new command export.item works together with Universal node command play.export
+- Please use msg.payload for "changes" (on/off, uri, volume, ...) and node selection box (or msg.cmd) for commands and NOT msg.topic for "changes" and msg.payload for command.
 
 ## Installation
 
@@ -31,17 +40,15 @@ Install directly from your Node-RED's setting pallete.
 ## Major Functions
 
 - SONOS Player: Simply select the SONOS player in ConfigNode by search button.
-- Universal node: Use SONOS player names - commands act on whole group by default. Works with My Sonos via export.item, play.export.
+- Universal node: Use SONOS player names - commands act on whole group/room by default. Works with My Sonos via export.item, play.export.
 - Queue playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
 - Stream stations from Amazon, Napster, TuneIn, Radioplayer, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id
 - Basic functions: play, stop, pause, mute, group, activate line in, ...
-- Spotify: Insert playlists, album, songs with uri
 - Playlists: Insert Music Library playlist or Sonos playlist - using search string in playlist name
 - Notification: Interrupt current song and play a notification
 - Special options: Set Loudness, Crossface, NightMode, SpeechEnhancement mode, ...
-- Test: Test command to check whether SONOS player is reachable ( means on and really a SONOS player)
-- Information: Provides many kinds of current song information: artist, title, media information and radio station name
+- Data: Provides many kinds of current song data: artist, title, media information and radio station name
 
 ## Restrictions
 
