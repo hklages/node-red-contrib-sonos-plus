@@ -12,11 +12,14 @@ Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sono
 
 See the full scope of commands [here.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.1-Universal-Node)
 
-## C A U T I O N : MAJOR CHANGES !!!!
+## C A U T I O N : MAJOR CHANGES!
 
-> **ACTION REQUIRED** - Modify all existing Universal / My Sonos nodes!<br><br>
+> **ACTION REQUIRED** - Modify all existing Universal / My Sonos nodes!<br> <br>
 > **Quick solution:** Open the node, tic the compatibility box and select "using msg" in the command selection box.<br><br>
 > **Recommendat solution:** Change your flow and use msg.payload as "change" property (former msg.topic). Use the command selection box to choose the appropriate command.
+
+Special case "My Sonos" node command mysonos.export.item in combination with "Universal" node command group.play.export:<br>
+mysonos.export.item provide now the data to msg.payload (in compatibility mode to msg.topic). group.play.export expects the data in msg.payload (in compatibilty mode in msg.topic).
 
 ## NEWS:  See all changes in change log
 

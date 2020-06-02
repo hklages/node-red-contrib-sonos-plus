@@ -125,7 +125,7 @@ module.exports = function (RED) {
       processInputMsg(node, msg, configNode.ipaddress)
         .then((msgUpdate) => {
           Object.assign(msg, msgUpdate) // defines the ouput message
-          success(node, msg, msg.backupCmd)
+          success(node, msg, msg.cmd)
         })
         .catch((error) => failure(node, msg, error, 'processing input msg'))
     })
@@ -177,7 +177,7 @@ module.exports = function (RED) {
         command = `group.${command}`
       }
     }
-    msg.backupCmd = command // sets msg.backupCmd - is also used in playerSetEQ
+    msg.cmd = command // sets msg.cmd - is also used in playerSetEQ
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_UNIVERSAL, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)
@@ -328,15 +328,15 @@ module.exports = function (RED) {
   /**  Play data being exported form My Sonos (uri/metadata) on a gvien group of players
    * @param  {object}   node only used for debug and warning
    * @param  {object}   msg incoming message
-   * @param  {string}   msg.export content to be played
-   * @param  {string}   msg.export.uri uri to be played/queued
-   * @param  {boolean}  msg.export.queue indicator: has to be queued
-   * @param  {string}   [msg.export.metadata] metadata in case of queue = true
+   * @param  {string}   msg.[payloadPath[0]] content to be played
+   * @param  {string}   msg.[payloadPath[0]].uri uri to be played/queued
+   * @param  {boolean}  msg.[payloadPath[0]].queue indicator: has to be queued
+   * @param  {string}   [msg.[payloadPath[0]].metadata] metadata in case of queue = true
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean}  [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {boolean}  [msg.clearQueue] if true and export.queue = true the queue is cleared. Default is true.
    * @param  {string}   [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}    payloadPath not used
+   * @param  {array}    payloadPath: payload - in compatibility mode: topic
    * @param  {object}   sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
@@ -345,11 +345,13 @@ module.exports = function (RED) {
    */
   async function groupPlayExport (node, msg, payloadPath, sonosPlayer) {
     // simple validation of export and activation
-    if (!isValidPropertyNotEmptyString(msg, ['export', 'queue'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} queue identifier is missing`)
-    }
-    if (!isValidPropertyNotEmptyString(msg, ['export', 'uri'])) {
+
+    const exportData = msg[payloadPath[0]]
+    if (!isValidPropertyNotEmptyString(exportData, ['uri'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} uri is missing`)
+    }
+    if (!isValidPropertyNotEmptyString(exportData, ['queue'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} queue identifier is missing`)
     }
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
@@ -361,11 +363,12 @@ module.exports = function (RED) {
 
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
     sonosCoordinator.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
-    if (msg.export.queue) {
+
+    if (exportData.queue) {
       if (validated.clearQueue) {
         await sonosCoordinator.flush()
       }
-      await sonosCoordinator.queue({ uri: msg.export.uri, metadata: msg.export.metadata })
+      await sonosCoordinator.queue({ uri: exportData.uri, metadata: exportData.metadata })
       await sonosCoordinator.selectQueue()
     } else {
       await sonosCoordinator.setAVTransportURI(msg.export.uri)
@@ -1416,7 +1419,9 @@ module.exports = function (RED) {
             playerLeftUuid = playerUuid
             const playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
             playerLeftBaseUrl = `http://${playerUrl.host}`
-            // TODO check exist ;
+            if (!playerChannelMap.includes(';')) {
+              throw new Error(`${NRCSP_ERRORPREFIX} channelmap is in error - could not get right uuid`)
+            }
             playerRightUuid = playerChannelMap.split(';')[1]
             playerRightUuid = playerRightUuid.replace(':RF,RF', '')
           }

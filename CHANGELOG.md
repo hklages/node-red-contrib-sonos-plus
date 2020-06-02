@@ -20,7 +20,11 @@ All notable changes to this project will be documented in this file.
 
 - "My sonos" node: get_items is now mysonos.get.items, queue is mysonos.queue.item, stream is mysonos.stream.item, export is mysonos.export.item
 
-- "My sonos" node: Music library functions are not available
+- "My sonos" node: export.item outputs now to msg.payload (in compatibilty mode to msg.topic) instead to msg.export. Also msg.payload is NOT set to command.You have to select the command.
+
+- "Universal" node: play.export not expects data in msg.payload (in compatibility mode to msg.topic) instead of msg.export
+
+- "My sonos" node: Music library functions are now available
 
 - "Universal" node: payload of *.get.mutestate/crossfade is now lowercase on/off
 
@@ -416,7 +420,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - code more readable (.then, .catch), more error handling, coding standard
-- Wiki overwork, added URI information
+- Wiki reviesed, added URI information
 
 ## [0.4.2] 2019-09-12
 
@@ -462,7 +466,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- overwork node documentation
+- reviesed node documentation
 - fixed some documentation errors (get_songmedia)
 
 ### Changed

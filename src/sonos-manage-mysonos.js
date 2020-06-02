@@ -70,7 +70,7 @@ module.exports = function (RED) {
       processInputMsg(node, msg, configNode.ipaddress)
         .then((msgUpdate) => {
           Object.assign(msg, msgUpdate) // defines the ouput message
-          success(node, msg, msg.backupCmd)
+          success(node, msg, msg.cmd)
         })
         .catch((error) => failure(node, msg, error, 'processing input msg'))
     })
@@ -124,7 +124,7 @@ module.exports = function (RED) {
     if (!REGEX_PREFIX.test(command)) {
       command = `mysonos.${command}`
     }
-    msg.backupCmd = command // sets msg.backupCmd
+    msg.cmd = command //
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)
@@ -163,8 +163,7 @@ module.exports = function (RED) {
     }
     const foundItem = await findStringInMySonosTitleV1(mySonosItems, validatedSearchString)
     const args = {}
-    args[cmdPath[0]] = 'play.export'
-    args.export = { uri: foundItem.uri, metadata: foundItem.metadata, queue: foundItem.queue }
+    args[payloadPath[0]] = { uri: foundItem.uri, metadata: foundItem.metadata, queue: foundItem.queue }
     return args
   }
 
@@ -181,7 +180,7 @@ module.exports = function (RED) {
    *
    * @throws all functions
    *
-   * Info:  content valdidation of mediaType, serviceName in findStringInMySonosTitleV1
+   * Info:  msg.filter currently undocumented feature.
    */
   // TODO: filter not enabled
   // TODO: clearQueue as parameter?
@@ -252,23 +251,10 @@ module.exports = function (RED) {
     // this does setting the uri AND plays it!
     await sonosPlayer.setAVTransportURI(foundItem.uri)
 
-    // TODO use my standard procedure
-    // change volume
-    if (isValidPropertyNotEmptyString(msg, ['volume'])) {
-      const newVolume = parseInt(msg.volume)
-      if (Number.isInteger(newVolume)) {
-        if (newVolume > 0 && newVolume < 100) {
-          // play and change volume
-          node.debug('msg.volume is in range 1...99: ' + newVolume)
-          return sonosPlayer.setVolume(msg.volume)
-        } else {
-          node.debug('msg.volume is not in range: ' + newVolume)
-          throw new Error(`${NRCSP_ERRORPREFIX} msg.volume is out of range 1...99: ` + newVolume)
-        }
-      } else {
-        node.debug('msg.volume is not number')
-        throw new Error(`${NRCSP_ERRORPREFIX} msg.volume is not a number: ` + JSON.stringify(msg.volume))
-      }
+    // change volume if is provided
+    const newVolume = string2ValidInteger(msg, 'volume', 1, 99, 'volume', NRCSP_ERRORPREFIX, -1)
+    if (newVolume !== -1) {
+      await sonosPlayer.setVolume(msg.volume)
     }
     return {} // dont touch volume
   }
@@ -296,25 +282,32 @@ module.exports = function (RED) {
   /**  Outputs array of Music library items as object.
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   * @param  {number} [msg.size = 200] maxim number of playlists to be retrieved
+   * @param  {number} [msg.size = 200] maximum number of playlists to be retrieved, integer 1 .. 1000
    * @param  {array}  payloadPath default: payload - in compatibility mode: topic
    * @param  {array}  cmdPath not used
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @output {array} payload is array of playlist objects, maybe empty array.
+   * @output {array} payload is array of playlist objects. Empty array allowed.
    * Object: id, title, uri, ...
    *
-   * @throws all functions
+   * @throws all functions. if total is missing or total is !== 0 and items are missing
    */
   async function getLibraryPlaylists (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // msg.size is optional - if missing default is 200
     const listDimension = string2ValidInteger(msg, 'size', 1, 1000, 'size', NRCSP_ERRORPREFIX, 200)
     const libraryPlaylists = await sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
+    if (!isValidPropertyNotEmptyString(libraryPlaylists, ['total'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} response from sonos does not provide >total`)
+    }
+    if (libraryPlaylists.total === '0') {
+      return { payload: [] }
+    }
+
     if (!isValidPropertyNotEmptyString(libraryPlaylists, ['items'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} list of playlist seems to be in error`)
+      throw new Error(`${NRCSP_ERRORPREFIX} list of playlist does not provide >items)`)
     }
     if (!Array.isArray(libraryPlaylists.items)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} list is not an array`)
+      throw new Error(`${NRCSP_ERRORPREFIX} response list of playlists is not an array`)
     }
 
     return { payload: libraryPlaylists.items }
@@ -358,7 +351,7 @@ module.exports = function (RED) {
    * @param  {array}  cmdPath default: msg.cmd - in compatibility mode: payload
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @return {promise} {}
+   * @return {promise} {payload: uri metadata queue}
    *
    * @throws all functions
    */
@@ -375,8 +368,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any title matching search string`)
     }
     const args = {}
-    args[cmdPath[0]] = 'play.export'
-    args.export = { uri: found.uri, metadata: '', queue: true }
+    args[payloadPath[0]] = { uri: found.uri, metadata: '', queue: true }
     return args
   }
 

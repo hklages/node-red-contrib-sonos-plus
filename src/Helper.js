@@ -165,7 +165,7 @@ module.exports = {
       }
     }
 
-    node.error(`${functionName}: ${msgShort} :: Details: ${msgDetails}`, msg)
+    node.error(`${functionName}:${msgShort} :: Details: ${msgDetails}`, msg)
     node.status({
       fill: 'red',
       shape: 'dot',
@@ -283,21 +283,21 @@ module.exports = {
     let value = message[property]
 
     if (typeof value !== 'number' && typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not type string/number`)
+      throw new Error(`${packageName} ${propertyMeaning} (msg.${property}) is not type string/number`)
     }
     if (typeof value === 'number') {
       if (!Number.isInteger(value)) {
-        throw new Error(`${packageName} ${propertyMeaning} (${property}) is not integer`)
+        throw new Error(`${packageName} ${propertyMeaning} (msg.${property}) is not integer`)
       }
     } else {
       // it is a string - allow signed/unsigned
       if (!module.exports.REGEX_3DIGITSSIGN.test(value)) {
-        throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) is not 3 signed digits only`)
+        throw new Error(`${packageName} ${propertyMeaning} (msg.${property} >>${value}) is not 3 signed digits only`)
       }
       value = parseInt(value)
     }
     if (!(value >= min && value <= max)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value})  is out of range`)
+      throw new Error(`${packageName} ${propertyMeaning} (msg.${property} >>${value}) is out of range`)
     }
     return value
   },
@@ -333,7 +333,7 @@ module.exports = {
       throw new Error(`${packageName} ${propertyMeaning} (${property}) is not type string`)
     }
     if (!regex.test(value)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) does not match regex`)
+      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) has wrong syntax/regex >>${regex}`)
     }
     return value
   },

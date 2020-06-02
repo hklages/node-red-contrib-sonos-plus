@@ -50,7 +50,7 @@ module.exports = {
    *
    */
 
-  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
   // TODO maybe part better in Node file not commands
   playNotificationRevised: async function (node, membersAsPlayerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
@@ -162,7 +162,7 @@ module.exports = {
    * @throws if invalid response from setAVTransportURI, play,
    */
 
-  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
   playGroupNotification: async function (node, membersAsPlayerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -282,7 +282,7 @@ module.exports = {
    * Hint: joiner will leave group, play notification and rejoin the group. State will be imported from group.
    */
 
-  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
   playJoinerNotification: async function (node, coordinatorPlus, joinerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -402,7 +402,7 @@ module.exports = {
    *
   */
   // TODO capture also the group id for verifcation
-  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
   createGroupSnapshot: async function (node, membersAsPlayersPlus, options) {
     // getCurrentState will return playing for a non-coordinator player even if group is playing
@@ -453,7 +453,7 @@ module.exports = {
    */
 
   // TODO next release with group identifier to ensure that group is not mixed up
-  // TODO has to be overwork - mixture of different calls: members[].xxx and function(members[])
+  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
   // TODO await error handling
   restoreGroupSnapshot: async function (node, membersAsPlayersPlus, snapshot) {
     // restore content: URI and track
