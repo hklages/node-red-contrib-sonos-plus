@@ -3,7 +3,7 @@ const {
   NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, isTruthy,
-  onOff2boolean, string2ValidInteger, stringValidRegex,
+  isOnOff, string2ValidInteger, stringValidRegex,
   failure, success
 } = require('./Helper.js')
 
@@ -853,7 +853,7 @@ module.exports = function (RED) {
    */
   async function groupSetMute (node, msg, payloadPath, sonosPlayer) {
     // payload mute state is required.
-    const newState = onOff2boolean(msg, payloadPath[0], 'mute state', NRCSP_ERRORPREFIX)
+    const newState = isOnOff(msg, payloadPath[0], 'mute state', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -875,7 +875,7 @@ module.exports = function (RED) {
    */
   async function playerSetMute (node, msg, payloadPath, sonosPlayer) {
     // payload mute state is required.
-    const newState = onOff2boolean(msg, payloadPath[0], 'mute state', NRCSP_ERRORPREFIX)
+    const newState = isOnOff(msg, payloadPath[0], 'mute state', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -982,7 +982,7 @@ module.exports = function (RED) {
    */
   async function groupSetCrossfade (node, msg, payloadPath, sonosPlayer) {
     // payload crossfade sate is required.
-    let newState = onOff2boolean(msg, payloadPath[0], 'crosssfade state', NRCSP_ERRORPREFIX)
+    let newState = isOnOff(msg, payloadPath[0], 'crosssfade state', NRCSP_ERRORPREFIX)
     newState = (newState ? 1 : 0)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -1006,7 +1006,7 @@ module.exports = function (RED) {
    */
   async function playerSetLed (node, msg, payloadPath, sonosPlayer) {
     // msg.state is required
-    let newState = onOff2boolean(msg, payloadPath[0], 'led state', NRCSP_ERRORPREFIX)
+    let newState = isOnOff(msg, payloadPath[0], 'led state', NRCSP_ERRORPREFIX)
     newState = newState ? 'On' : 'Off'
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -1032,7 +1032,7 @@ module.exports = function (RED) {
    */
   async function playerSetLoudness (node, msg, payloadPath, sonosPlayer) {
     // msg.state is required
-    let newState = onOff2boolean(msg, payloadPath[0], 'loudness state', NRCSP_ERRORPREFIX)
+    let newState = isOnOff(msg, payloadPath[0], 'loudness state', NRCSP_ERRORPREFIX)
     newState = (newState ? 1 : 0)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -1076,14 +1076,14 @@ module.exports = function (RED) {
 
     if (msg.backupCmd === 'player.set.nightmode') {
       eqType = 'NightMode'
-      eqValue = onOff2boolean(msg, payloadPath[0], 'nightmode', NRCSP_ERRORPREFIX) // required
+      eqValue = isOnOff(msg, payloadPath[0], 'nightmode', NRCSP_ERRORPREFIX) // required
       eqValue = (eqValue ? 1 : 0)
     } else if (msg.backupCmd === 'player.set.subgain') {
       eqType = 'SubGain'
       eqValue = string2ValidInteger(msg, payloadPath[0], -15, 15, 'subgain', NRCSP_ERRORPREFIX) // required
     } else {
       eqType = 'DialogLevel'
-      eqValue = onOff2boolean(msg, payloadPath[0], 'dialoglevel', NRCSP_ERRORPREFIX) // required
+      eqValue = isOnOff(msg, payloadPath[0], 'dialoglevel', NRCSP_ERRORPREFIX) // required
       eqValue = (eqValue ? 1 : 0)
     }
 

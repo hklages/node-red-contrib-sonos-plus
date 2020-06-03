@@ -237,7 +237,7 @@ module.exports = {
    * @throws if is missing/invalid, not string, not on/off NOT case sensitive
    *
    */
-  onOff2boolean: (message, property, propertyMeaning, packageName) => {
+  isOnOff: (message, property, propertyMeaning, packageName) => {
     const path = []
     path.push(property)
     if (!module.exports.isValidProperty(message, path)) {
