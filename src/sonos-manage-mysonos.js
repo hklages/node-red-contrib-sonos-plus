@@ -103,7 +103,7 @@ module.exports = function (RED) {
 
     // handle compatibility to older nrcsp version - depreciated 2020-05-25
     const cmdPath = []
-    cmdPath.push(node.nrcspCompatibilty ? 'payload' : 'cmd')
+    cmdPath.push(node.nrcspCompatibilty ? 'payload' : 'topic')
     const payloadPath = []
     payloadPath.push(node.nrcspCompatibilty ? 'topic' : 'payload')
 

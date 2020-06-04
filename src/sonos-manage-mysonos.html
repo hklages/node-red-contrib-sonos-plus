@@ -22,7 +22,7 @@
     label: function() {
       let found = mySonosCmdList.find(item => item.cmd === this.command);
       // mark all nodes with depreciated compatibility mode
-      let nodeLabel = this.name || found.text || "My Sonos"
+      let nodeLabel = this.name || found.cmd || "My Sonos"
       nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
     },
@@ -41,11 +41,12 @@
 <!-- Setting design and inputs for node panel (HTML)-->
 <script type="text/x-red" data-template-name="sonos-manage-mysonos">
   <div id="main-props">
+    <!-- Config node -->
     <div class="form-row">
       <label for="node-input-confignode"> Config Node</label>
       <input type="text" id="node-input-confignode"/>
     </div>
-    <!-- Compatibility mode style-->
+    <!-- Compatibility mode -->
     <div class="form-row">
       <label for="node-input-compatibilityMode"> Compatibility</label>
       <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
@@ -56,25 +57,27 @@
       <select id="node-input-command">
       </select>
     </div>
-    <!-- node name-->
+    <!-- Node name -->
     <div class="form-row">
       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
       <input type="text" id="node-input-name" placeholder="This node name"/>
     </div>
     
-    <!-- Explanation-->
+    <!-- Dialog help -->
     <div class="text">        
       <b>Config Node</b> provides the default SONOS player.<br><br>
     
-      The new standard for using the input message is: 
+      The new standard/default for using the input message is: 
       <ul>
-        <li><code>msg.cmd</code> holds the command</li>
-        <li><code>msg.payload</code> holds the "change data" like on/off, uri, ...</li>
+        <li><code>msg.topic</code> holds the command</li>
+        <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
+      It is recommended to use this <b>default mode!</b><br><br>
+
       Tic <b>Compatibility</b> to get the old style:
       <ul>
         <li><code>msg.payload</code> holds the command</li>
-        <li><code>msg.topic</code> holds additional parameter like on/off, uri, ...</li>
+        <li><code>msg.topic</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
       <b>Command</b> provides a pick up list of all available commmands<br>
       and "using msg".
@@ -83,72 +86,59 @@
 </script>
 
 <script type="text/javascript">
-  // mySonosCmdList has to be kept in sync with the java file! First item is message! 
+  // mySonosCmdList has to be kept in sync with the table in .js file! First item is message! 
   // TODO find a comman base for mySonosCmdList and COMMAND_TABLE_MYSONOS
   // We need two properties for <select>
-  // message first, all others in lexi order, ascending
+  // Message first, all others in lexi order, ascending
     const mySonosCmdList = [
     {cmd: "message", text: "using msg"},
-    {cmd: "mysonos.export.item", text: "My Sonos: export item"},
+    {cmd: "mysonos.export.item", text: "My Sonos: export the specified item"},
     {cmd: "mysonos.get.items", text: "My Sonos: get all items"},
-    {cmd: "mysonos.queue.item", text: "My Sonos: queue item"},
-    {cmd: "mysonos.stream.item", text: "My Sonos: stream item"},
-    {cmd: "library.export.playlist", text: "Library: export playlist"},
-    {cmd: "library.queue.playlist", text: "Library: queue playlist"},
-    {cmd: "library.get.playlists", text: "Library: get playlists"}
+    {cmd: "mysonos.queue.item", text: "My Sonos: queue the specified item"},
+    {cmd: "mysonos.stream.item", text: "My Sonos: stream the specified item"},
+    {cmd: "library.export.playlist", text: "Library: export the specified playlist"},
+    {cmd: "library.queue.playlist", text: "Library: queue the specified playlist"},
+    {cmd: "library.get.playlists", text: "Library: get all playlists"}
     ];
 </script>
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">
-<p>Incoming message is a command.<p>
-  
-The <b>get</b> command outputs data to payload. The <b>export</b> command outputs data to payload and msg.export. All other commands do not modify msg.
+<p>This node provides all commands related to My Sonos and the Music Library. Default is My Sonos.<p>
+<br>
 
-<h1>Input (required)</h3>
+<h1>Input</h1>
 
-<dl class="message-properties">
+Each command has specific input and output properties.
+Details: <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
+<br>
 
-  <dt>payload (always required) <span class="property-type">string</span></dt>
-  <dd>A command. Valid commands see section Commands.</dd>
-
-  <dt class="optional">topic <span class="property-type">string</span></dt>
-  <dd>Parameter - part of the My Sonos title. cAsE sEnSiTiVe!</dd>
-
-</dl>
-
-<h1>Outputs</h3>
+The most important properties are: 
 
 <dl class="message-properties">
-    <dt>payload <span class="property-type">string</span> </dt>
-    <dd><b>get.items:</b> the array of items. <b>get.item:</b>play.export </dd>
+
+  <dt>payload <span class="property-type">depend on command</span></dt>
+  <dd>The case sensitive new state/message like on/off, uri, .... </dd>
+
+  <dt class="required">topic <span class="property-type">string</span></dt>
+  <dd>The command like group.play, group.play.queue, ...</dd>
+
 </dl>
+<br>
+
+<h1>Outputs</h1>
+
+The incoming command (msg.topic) is converted to the full command name in lowercase. Furthermore all "get/export" commands outputs to msg.payload.
+Details: <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
 
 <dl class="message-properties">
-  <dt>export <span class="property-type">object</span> </dt>
-  <dd>uri, metadata and queue identifier. </dd>
+    <dt>payload <span class="property-type">depend on command</span> </dt>
+    <dd>In case of <b>get/export</b> the requested data is being provided. </dd>
 </dl>
+<br>
 
-<h1>Commands</h3>
+<h1>Available Commands</h3>
 
-<ul>
-    <li>
-        <code>queue.item</code> queues the found item (Playlist, Album, Track) to SONOS queue.<br>
-        Required property topic: title search string - cAsE sEnSiTiVe<br>
-        Optional properties are: volume
-    </li>
-    <li>
-        <code>stream<.item/code> streams the found item (stream, radio).<br> 
-        Required property topic: title search string - cAsE sEnSiTiVe<br>
-        Optional properties are: volume
-    </li>
-    <li>
-        <code>get.items</code> Outputs the array of all My Sonos items.
-    </li>
-    <li>
-      <code>export.item</code> Outputs found item data. This is used in combination with Universal node group.play.export.<br>
-      Required property topic: title search string - cAsE sEnSiTiVe<br>
-  </li>
-</ul>
+See the node dialog (field command) and details <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
   
 </script>
