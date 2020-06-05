@@ -124,7 +124,7 @@ module.exports = function (RED) {
     if (!REGEX_PREFIX.test(command)) {
       command = `mysonos.${command}`
     }
-    msg.cmd = command //
+    msg[cmdPath[0]] = command
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)
@@ -139,11 +139,11 @@ module.exports = function (RED) {
   // ========================================================================
 
   /**  Export first My Sonos item matching search string.
-   * @param  {object} node only used for debug and warning
+   * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} msg.[payloadPath[0]] search string
    * @param  {array}  payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}  cmdPath default: cmd - in compatibility mode: payload
+   * @param  {array}  cmdPath not used
    * @param  {object} sonosPlayer Sonos Player
    *
    * @return {promise} see return
@@ -168,7 +168,7 @@ module.exports = function (RED) {
   }
 
   /**  Queues (aka add) first My Sonos item matching search string.
-   * @param  {object} node current node
+   * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} msg.[payloadPath[0]] search string
    * @param  {array}  payloadPath default: payload - in compatibility mode: topic
@@ -219,11 +219,11 @@ module.exports = function (RED) {
   }
 
   /** Stream (aka play) first My Sonos item matching search string.
-   * @param  {object} node current node
+   * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} msg.[payloadPath[0]] search string
    * @param  {array}  payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}  cmdPath default: cmd - in compatibility mode: payload
+   * @param  {array}  cmdPath not used
    * @param  {object} sonosPlayer Sonos Player
    *
    * @return {promise} {}
@@ -260,7 +260,7 @@ module.exports = function (RED) {
   }
 
   /**  Outputs array of My Sonos items as object.
-   * @param  {object} node current node
+   * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {array}  payloadPath not used
    * @param  {array}  cmdPath not used
@@ -314,7 +314,7 @@ module.exports = function (RED) {
   }
 
   /**  Queues (aka add) first Music Libary playlist matching search string.
-   * @param  {object} node current node
+   * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg.[payloadPath[0]] search string
    * @param  {number} [msg.size = 200] maxim number of playlists to be retrieved
@@ -343,7 +343,7 @@ module.exports = function (RED) {
   }
 
   /**  Exports first Music Libary playlist matching search string.
-   * @param  {object} node current node
+   * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg.[payloadPath[0]] search string
    * @param  {number} [msg.size = 200] maxim number of playlists to be retrieved

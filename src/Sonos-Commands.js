@@ -62,7 +62,6 @@ module.exports = {
     } else {
       metadata = options.metadata
     }
-    node.debug('metadata >>' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
