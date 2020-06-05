@@ -11,8 +11,16 @@
         value: '',
         type: 'sonos-config'
       },
-      command: { value: 'message' },
       compatibilityMode: { value: false },
+      command: { 
+        value: 'message',
+        required: true
+      },
+      state: { 
+        value: '',
+        validate: RED.validators.typedInput('stateType') 
+      },
+      stateType: { value: 'str'},
       name: {value: ''}
     },
     inputs: 1, // set the number of inputs - only 0 or 1
@@ -22,17 +30,24 @@
     label: function() {
       let found = mySonosCmdList.find(item => item.cmd === this.command);
       // mark all nodes with depreciated compatibility mode
-      let nodeLabel = this.name || found.cmd || "My Sonos"
+      let nodeLabel = this.name || found.cmd || 'My Sonos'
       nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
     },
     oneditprepare: function() {             
+      // set up list for command 
       for (var i = 0; i < mySonosCmdList.length; i++) {
-       $('#node-input-command').append($("<option></option>").attr("value", mySonosCmdList[i].cmd).text(mySonosCmdList[i].text));
+       $('#node-input-command').append($('<option></option>').attr('value', mySonosCmdList[i].cmd).text(mySonosCmdList[i].text));
       }
-         
       // select command
       $('#node-input-command').val(this.command);
+      
+      // set up typed input for state
+      $('#node-input-state').typedInput({
+        default: 'str',
+        typeField: $('#node-input-stateType'),
+        types: ['str']
+      });
     },
     paletteLabel: 'My Sonos'
   });
@@ -46,17 +61,26 @@
       <label for="node-input-confignode"> Config Node</label>
       <input type="text" id="node-input-confignode"/>
     </div>
+    
     <!-- Compatibility mode -->
     <div class="form-row">
       <label for="node-input-compatibilityMode"> Compatibility</label>
       <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
     </div>
+    
     <!-- Command selection -->
     <div class="form-row">
-      <label for="node-input-command"> Command</label>
-      <select id="node-input-command">
-      </select>
+      <label for="node-input-command"><i class="fa fa-tasks"></i> Command</label>
+      <select id="node-input-command" style="width:70%"></select>
     </div>
+    
+    <!-- input state -->
+    <div class="form-row">
+      <label for="node-input-state"><i class="fa fa-envelope"></i> State</label>
+      <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank to use msg property"/>
+      <input type="hidden" id="node-input-stateType"/>
+    </div>
+
     <!-- Node name -->
     <div class="form-row">
       <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
@@ -79,8 +103,11 @@
         <li><code>msg.payload</code> holds the command</li>
         <li><code>msg.topic</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
+
       <b>Command</b> provides a pick up list of all available commmands<br>
-      and "using msg".
+      and "using msg".<br><br>
+
+      <b>State</b> is used to input the state<br>
     </div>
   </div>
 </script>

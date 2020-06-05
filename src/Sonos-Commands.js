@@ -850,7 +850,7 @@ module.exports = {
       }
     }
     // not found
-    throw new Error(`${NRCSP_ERRORPREFIX} No title machting search string.`)
+    throw new Error(`${NRCSP_ERRORPREFIX} No title matching search string >>${searchString}`)
   },
 
   /** Creates a list of items from given Browse FV:2 (My Sonos but without Sonos playlists) output.

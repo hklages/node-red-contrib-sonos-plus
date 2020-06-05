@@ -85,11 +85,7 @@ module.exports = function (RED) {
   function SonosUniversalNode (config) {
     RED.nodes.createNode(this, config)
     const nrcspFunction = 'create and subscribe'
-
     const node = this
-    // this is only used in processInputMessage.
-    node.nrcspCompatibilty = config.compatibilityMode // defines what propoerty holds command, additional data
-    node.nrcspCommand = config.command // holds the dialog command if selected
 
     // ipaddress overriding serialnum - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
@@ -122,10 +118,10 @@ module.exports = function (RED) {
     // subscribe and handle input message
     node.on('input', function (msg) {
       node.debug('node - msg received')
-      processInputMsg(node, msg, configNode.ipaddress)
+      processInputMsg(node, config, msg, configNode.ipaddress)
         .then((msgUpdate) => {
           Object.assign(msg, msgUpdate) // defines the ouput message
-          success(node, msg, msg.cmd)
+          success(node, msg, msg[config.compatibilty ? 'payload' : 'topic'])
         })
         .catch((error) => failure(node, msg, error, 'processing input msg'))
     })
@@ -133,8 +129,10 @@ module.exports = function (RED) {
 
   /** Validate sonos player object, command and dispatch further.
    * @param  {object}  node current node
-   * @param  {string}  node.nrcspCommand the command from node dialog
-   * @param  {boolean} node.nrcspCompatibilty tic from node dialog
+   * @param  {object}  config current node configuration
+   * @param  {string}  config.command the command from node dialog
+   * @param  {string}  config.state the state from node dialog
+   * @param  {boolean} config.compatibilty tic from node dialog
    * @param  {object}  msg incoming message
    * @param  {string}  ipaddress IP address of sonos player
    *
@@ -142,7 +140,7 @@ module.exports = function (RED) {
    * example: returning {} means message is not modified
    * example: returning { payload: true} means the orignal msg.payload will be modified and set to true
    */
-  async function processInputMsg (node, msg, ipaddress) {
+  async function processInputMsg (node, config, msg, ipaddress) {
     const sonosPlayer = new Sonos(ipaddress)
     // set baseUrl
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
@@ -155,15 +153,17 @@ module.exports = function (RED) {
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // usefull for my extensions
 
     // handle compatibility to older nrcsp version - depreciated 2020-05-25
-    const cmdPath = []
-    cmdPath.push(node.nrcspCompatibilty ? 'payload' : 'topic')
-    const statePath = []
-    statePath.push(node.nrcspCompatibilty ? 'topic' : 'payload')
+    let cmdPath = ['topic']
+    let payloadPath = ['payload']
+    if (config.compatibilityMode) {
+      cmdPath = ['payload']
+      payloadPath = ['topic']
+    }
 
-    // node dialog overrides msg. Store lowercase version in command
+    // command, required: node dialog overrides msg, store lowercase version in command
     let command
-    if (node.nrcspCommand !== 'message') { // command specified in node dialog
-      command = node.nrcspCommand
+    if (config.command !== 'message') { // command specified in node dialog
+      command = config.command
     } else {
       if (!isValidPropertyNotEmptyString(msg, cmdPath)) {
         throw new Error(`${NRCSP_ERRORPREFIX} command is undefined/invalid`)
@@ -179,10 +179,15 @@ module.exports = function (RED) {
     }
     msg[cmdPath[0]] = command // sets topic - is also used in playerSetEQ
 
+    // state: node dialog overrides msg.
+    // TODO seperate checks for boolean, string, number necessary?
+    if (config.state && config.state !== '') { // payload specified in node dialog
+      msg[payloadPath[0]] = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
+    }
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_UNIVERSAL, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)
     }
-    return COMMAND_TABLE_UNIVERSAL[command](node, msg, statePath, cmdPath, sonosPlayer)
+    return COMMAND_TABLE_UNIVERSAL[command](node, msg, payloadPath, cmdPath, sonosPlayer)
   }
 
   // ========================================================================
