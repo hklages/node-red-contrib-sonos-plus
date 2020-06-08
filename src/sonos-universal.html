@@ -28,7 +28,7 @@
     color: '#AAAAAA',
     label: function() {
       let found = universalCmdList.find(item => item.cmd === this.command);
-      // mark all nodes with depreciated compatibility mode
+      // mark all nodes with depreciated compatibilityMode
       let nodeLabel = this.name || found.cmd || 'Universal'
       nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
