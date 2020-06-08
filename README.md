@@ -10,31 +10,23 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sonos" using the original SONOS app. Play any of these items by using the "My Sonos" node (command mysonos.export.item) in combination with "Universal node" (command group.play.export).
 
-See the full scope of commands [here.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.1-Universal-Node)
+See the full scope of commands in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
-## C A U T I O N : MAJOR CHANGES!
+## ACTION REQUIRED VERSION 4.0.0
 
-> **ACTION REQUIRED** - Modify all existing Universal / My Sonos nodes!<br> <br>
-> **Quick solution:** Open the node, tic the compatibility box and select "using msg" in the command selection box.<br><br>
-> **Recommendat solution:** Change your flow and use msg.payload as "change" property (former msg.topic). Use the command selection box to choose the appropriate command.
+> See required action here: [issue 67](https://github.com/hklages/node-red-contrib-sonos-plus/issues/67)
 
-Special case "My Sonos" node command mysonos.export.item in combination with "Universal" node command group.play.export:<br>
-mysonos.export.item provide now the data to msg.payload (in compatibility mode to msg.topic). group.play.export expects the data in msg.payload (in compatibilty mode in msg.topic).
+## NEWS
 
-## NEWS:  See all changes in change log
+- In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (e. g. on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
 
-For the new nodes "Universal", "My Sonos" I now follow the Node-RED default: msg.payload holds the "change" (on/off, uri, new volume, ... ). msg.cmd holds the command.
-msg.topic is "reserved" for future usage.
+- In "Universal", "My Sonos" node: You can now select the command and provide the state inside the node. Please use it! It works in default and in compatibility mode.
 
-You can still use the old style with "compatiblity" tic box in combination with command "using msg".
-
-- "Universal" node now supports selecting the command and includes all commands from "Control Player, "Get Status", "Manage Radio" , "Manage Queue".
+- In "Universal", "My Sonos" node: Some commands are renamed and the ouput is now always in msg.payload. State input is expected in msg.payload.
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
 - Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos".
-
-- Please use msg.payload for "changes" (on/off, uri, volume, ...) and node selection box (or msg.cmd) for commands and NOT msg.topic for "changes" and msg.payload for command.
 
 ## Installation
 
@@ -43,7 +35,7 @@ Install directly from your Node-RED's setting pallete.
 ## Major Functions
 
 - SONOS Player: Simply select the SONOS player in ConfigNode by search button.
-- Universal node: Use SONOS player names - commands act on whole group/room by default. Works with My Sonos via export.item, play.export.
+- Universal node: Use SONOS player names - commands act on whole group/room by default. Works with My Sonos via mysonos.export.item, group.play.export.
 - Queue playlists, albums, tracks from Spotify, Napster, Amazon, ... with My Sonos by using a title search string
 - Stream stations from Amazon, Napster, TuneIn, Radioplayer, ... with My Sonos by using a title search string
 - TuneIn radio ID: Select and play TuneIn stations by simply submitting the TuneIn radio id

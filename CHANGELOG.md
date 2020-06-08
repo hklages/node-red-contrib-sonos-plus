@@ -2,29 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.0.0] 2020-06-04
+## [4.0.0] 2020-06-09
 
-### Depreciated - dont use anymore
+### Depreciated
 
-- Use of "Control Player", "Get Status", "Manage Radio", Manage Queue" node is depreciated. Please use "Universal" / "My Sonos" node
-
-- "Universal", "My Sonos" node: usage of msg.topic is depreciated. Please use msg.payload for changes (on/off, uri, ..) and selection box (or msg.cmd) for commands.
+- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos".
 
 ### Added
 
-- "Universal" / "My Sonos" node: added selection box for commands and compatibility mode for V3 flow style.
+- "Universal" / "My Sonos" node: added selection box for commands, imput field for state; and compatibility mode for old Version 3 flow style.
+
+- "Universal" / "My Sonos" node: added now all missing commands (music library, ... ) from "Control Player", "Get Status", "Manage Radio" node
 
 ### Changed
 
-- "Universal node": now holds allmost all commands from "Control Player", "Get Status", "Manage Queue" node
+- In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (e. g. on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
 
-- "My sonos" node: get_items is now mysonos.get.items, queue is mysonos.queue.item, stream is mysonos.stream.item, export is mysonos.export.item
+- "My Sonos" node: get_items is now mysonos.get.items, queue is mysonos.queue.item, stream is mysonos.stream.item, export is mysonos.export.item
 
-- "My sonos" node: export.item outputs now to msg.payload (in compatibilty mode to msg.topic) instead to msg.export. Also msg.payload is NOT set to command.You have to select the command.
+- "My Sonos" node: export.item outputs now to msg.payload instead to msg.export. Also msg.payload is NOT set to command. You have to select the command.
 
-- "Universal" node: play.export not expects data in msg.payload (in compatibility mode to msg.topic) instead of msg.export
-
-- "My sonos" node: Music library functions are now available
+- "Universal" node: play.export does now expects data in msg.payload instead of msg.export
 
 - "Universal" node: payload of *.get.mutestate/crossfade is now lowercase on/off
 
@@ -34,7 +32,7 @@ All notable changes to this project will be documented in this file.
 
 - "Universal" node: remove.sonosplaylist changed to household.remove.sonosplaylist
 
-- "Universal" node: group.play.snap now expects snap in payload and not in msg.snap!
+- "Universal" node: group.create.snaps outputs to payload and group.play.snap now expects snap in payload and not in msg.snap!
 
 ## [3.1.5] 2020-05-27
 

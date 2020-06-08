@@ -1,5 +1,4 @@
 <!-- Sonos My Sonos Node -->
-
 <!-- Registering Node (JavaScript) -->
 <script type="text/javascript">
   /* global  RED */
@@ -68,17 +67,17 @@
       <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
     </div>
     
+    <!-- input state -->
+    <div class="form-row">
+      <label for="node-input-state"><i class="fa fa-envelope"></i> State</label>
+      <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank (type string) to use msg property"/>
+      <input type="hidden" id="node-input-stateType"/>
+    </div>
+
     <!-- Command selection -->
     <div class="form-row">
       <label for="node-input-command"><i class="fa fa-tasks"></i> Command</label>
       <select id="node-input-command" style="width:70%"></select>
-    </div>
-    
-    <!-- input state -->
-    <div class="form-row">
-      <label for="node-input-state"><i class="fa fa-envelope"></i> State</label>
-      <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank to use msg property"/>
-      <input type="hidden" id="node-input-stateType"/>
     </div>
 
     <!-- Node name -->
@@ -91,23 +90,20 @@
     <div class="text">        
       <b>Config Node</b> provides the default SONOS player.<br><br>
     
-      The new standard/default for using the input message is: 
+      The new standard for <b>input message usage</b> is: 
       <ul>
         <li><code>msg.topic</code> holds the command</li>
         <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
-      It is recommended to use this <b>default mode!</b><br><br>
-
-      Tic <b>Compatibility</b> to get the old style:
-      <ul>
-        <li><code>msg.payload</code> holds the command</li>
-        <li><code>msg.topic</code> holds the "state/message" like on/off, uri, ...</li>
-      </ul>
+      
+      Tic <b>Compatibility (NOT recommended)</b> to get the old style with <code>msg.payload</code><br>
+      for commands and <code>msg.topic</code> for the state/message.<br><br>
+      
+      <b>State</b> is used to input the state.<br><br>
 
       <b>Command</b> provides a pick up list of all available commmands<br>
-      and "using msg".<br><br>
+      and "using msg".
 
-      <b>State</b> is used to input the state<br>
     </div>
   </div>
 </script>

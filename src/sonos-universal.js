@@ -180,10 +180,22 @@ module.exports = function (RED) {
     msg[cmdPath[0]] = command // sets topic - is also used in playerSetEQ
 
     // state: node dialog overrides msg.
-    // TODO seperate checks for boolean, string, number necessary?
-    if (config.state && config.state !== '') { // payload specified in node dialog
-      msg[payloadPath[0]] = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
+    let state
+    if (config.state) { // payload specified in node dialog
+      state = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
+      if (typeof state === 'string') {
+        if (state !== '') {
+          msg[payloadPath[0]] = state
+        }
+      } else if (typeof state === 'number') {
+        if (state !== '') {
+          msg[payloadPath[0]] = state
+        }
+      } else if (typeof state === 'boolean') {
+        msg[payloadPath[0]] = state
+      }
     }
+
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_UNIVERSAL, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)
     }
@@ -1537,6 +1549,7 @@ module.exports = function (RED) {
     }
     const uri = mediaData.CurrentURI
     const queueActivated = uri.startsWith('x-rincon-queue')
+    const tvActivated = uri.startsWith('x-sonos-htastream')
 
     // queue mode
     const queueMode = await sonosCoordinator.getPlayMode()
@@ -1550,6 +1563,7 @@ module.exports = function (RED) {
         coordinatorName: groupData.members[0].sonosName, // 0 stands for coordinator
         volume: volume,
         muteState: muteState,
+        tvActivated: tvActivated,
         queueActivated: queueActivated,
         queueMode: queueMode,
         members: groupData.members,
