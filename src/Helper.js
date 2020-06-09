@@ -286,7 +286,6 @@ module.exports = {
       throw new Error(`${packageName} ${propertyMeaning} (msg.${property}) is not type string/number`)
     }
     if (typeof value === 'number') {
-      console.log('1value >>' + JSON.stringify(value))
       if (!Number.isInteger(value)) {
         throw new Error(`${packageName} ${propertyMeaning} (msg.${property}) is not integer`)
       }

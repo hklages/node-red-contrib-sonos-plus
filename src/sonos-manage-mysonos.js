@@ -127,9 +127,20 @@ module.exports = function (RED) {
     msg[cmdPath[0]] = command
 
     // state: node dialog overrides msg.
-    if (config.state !== '') { // payload specified in node dialog
-      const dialogState = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
-      msg[payloadPath[0]] = dialogState
+    let state
+    if (config.state) { // payload specified in node dialog
+      state = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
+      if (typeof state === 'string') {
+        if (state !== '') {
+          msg[payloadPath[0]] = state
+        }
+      } else if (typeof state === 'number') {
+        if (state !== '') {
+          msg[payloadPath[0]] = state
+        }
+      } else if (typeof state === 'boolean') {
+        msg[payloadPath[0]] = state
+      }
     }
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
@@ -161,6 +172,8 @@ module.exports = function (RED) {
    */
   async function exportItem (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload title search string is required.
+    console.log('payloadPath[0] >>' + JSON.stringify(payloadPath[0]))
+    console.log('value>>' + JSON.stringify(msg.topic))
     const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
 
     const mySonosItems = await getAllMySonosItemsV2(sonosPlayer.baseUrl)
