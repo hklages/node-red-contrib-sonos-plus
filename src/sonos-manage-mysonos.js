@@ -66,7 +66,7 @@ module.exports = function (RED) {
       processInputMsg(node, config, msg, configNode.ipaddress)
         .then((msgUpdate) => {
           Object.assign(msg, msgUpdate) // defines the ouput message
-          success(node, msg, msg[config.compatibilityMode ? 'payload' : 'topic'])
+          success(node, msg, msg.nrcspCmd)
         })
         .catch((error) => failure(node, msg, error, 'processing input msg'))
     })
@@ -82,6 +82,8 @@ module.exports = function (RED) {
    * @param  {boolean} config.compatibilityMode tic from node dialog
    * @param  {object}  msg incoming message
    * @param  {string}  ipaddress IP address of sonos player
+   *
+   * Creates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command)
    *
    * @return {promise} All commands have to return a promise - object
    * example: returning {} means message is not modified
@@ -124,6 +126,7 @@ module.exports = function (RED) {
         command = `mysonos.${command}`
       }
     }
+    msg.nrcspCmd = command // store command as get commands will overreid msg.payload
     msg[cmdPath[0]] = command
 
     // state: node dialog overrides msg.
