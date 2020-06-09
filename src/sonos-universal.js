@@ -300,7 +300,7 @@ module.exports = function (RED) {
   /**  Play a specific track in queue. Queue must not be empty.
    * @param  {object}         node not used
    * @param  {object}         msg incoming message
-   * @param  {string/number}  msg.[payloadPath[0]] position of track in queue. 1 ... queueLenght.
+   * @param  {string/number}  msg[payloadPath[0]] position of track in queue. 1 ... queueLenght.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean}        [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}         [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -348,10 +348,10 @@ module.exports = function (RED) {
   /**  Play data being exported form My Sonos (uri/metadata) on a gvien group of players
    * @param  {object}   node not used
    * @param  {object}   msg incoming message
-   * @param  {string}   msg.[payloadPath[0]] content to be played
-   * @param  {string}   msg.[payloadPath[0]].uri uri to be played/queued
-   * @param  {boolean}  msg.[payloadPath[0]].queue indicator: has to be queued
-   * @param  {string}   [msg.[payloadPath[0]].metadata] metadata in case of queue = true
+   * @param  {string}   msg[payloadPath[0]] content to be played
+   * @param  {string}   msg[payloadPath[0]].uri uri to be played/queued
+   * @param  {boolean}  msg[payloadPath[0]].queue indicator: has to be queued
+   * @param  {string}   [msg[payloadPath[0]].metadata] metadata in case of queue = true
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean}  [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {boolean}  [msg.clearQueue] if true and export.queue = true the queue is cleared. Default is true.
@@ -414,7 +414,7 @@ module.exports = function (RED) {
   /**  Play tuneIn station. Optional set volume, use playerName.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] TuneIn id
+   * @param  {string}  msg[payloadPath[0]] TuneIn id
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean} [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -461,7 +461,7 @@ module.exports = function (RED) {
   /**  Play stream from http. Optional set volume, use playerName.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] http uri.
+   * @param  {string}  msg[payloadPath[0]] http uri.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean} [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -507,7 +507,7 @@ module.exports = function (RED) {
   /**  Play notification on a given group of players. Group topology will not being touched.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] notification uri.
+   * @param  {string}  msg[payloadPath[0]] notification uri.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean} [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -566,7 +566,7 @@ module.exports = function (RED) {
   /**  Play notification on a joiner (in group) specified by sonosPlayer (default) or by playerName.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] notification uri.
+   * @param  {string}  msg[payloadPath[0]] notification uri.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {string}  [msg.duration] duration of notification hh:mm:ss - default is calculation, if that fails then 00:00:05
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -628,7 +628,7 @@ module.exports = function (RED) {
   /**  Play a given snapshot on the given group of players.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {object}  msg.[payloadPath[0]] snapshot - output form groupCreateSnapshot
+   * @param  {object}  msg[payloadPath[0]] snapshot - output form groupCreateSnapshot
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath not used
    * @param  {array}   cmdPath not used
@@ -670,7 +670,7 @@ module.exports = function (RED) {
   /**  Player play AVTransport uri: LineIn, TV
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] extended uri x-***:
+   * @param  {string}  msg[payloadPath[0]] extended uri x-***:
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
@@ -829,7 +829,7 @@ module.exports = function (RED) {
   /**  Adjust player volume.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string/number}  msg.[payloadPath[0]] +/- 1 .. 99 integer.
+   * @param  {string/number}  msg[payloadPath[0]] +/- 1 .. 99 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
@@ -854,7 +854,7 @@ module.exports = function (RED) {
   /**  Set volume for given player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {number/string} msg.[payloadPath[0]] volume, integer 1 .. 99 integer.
+   * @param  {number/string} msg[payloadPath[0]] volume, integer 1 .. 99 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
@@ -1088,8 +1088,8 @@ module.exports = function (RED) {
   /**  Set player EQ type
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.backupCmd the lowercase, player.set.nightmode/subgain/dialoglevel
-   * @param  {string}  msg.[payloadPath[0]] value on,off or -15 .. 15 in case of subgain
+   * @param  {string}  msg[cmdPath[0]] the lowercase, player.set.nightmode/subgain/dialoglevel
+   * @param  {string}  msg[payloadPath[0]] value on,off or -15 .. 15 in case of subgain
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath default: cmd - in compatibility mode: payload
@@ -1117,13 +1117,11 @@ module.exports = function (RED) {
     let eqType
     let eqValue
 
-    // we use msg.backupCmd to split
-
     if (msg[cmdPath[0]] === 'player.set.nightmode') {
       eqType = 'NightMode'
       eqValue = isOnOff(msg, payloadPath[0], 'nightmode', NRCSP_ERRORPREFIX) // required
       eqValue = (eqValue ? 1 : 0)
-    } else if (msg.backupCmd === 'player.set.subgain') {
+    } else if (msg[cmdPath[0]] === 'player.set.subgain') {
       eqType = 'SubGain'
       eqValue = string2ValidInteger(msg, payloadPath[0], -15, 15, 'subgain', NRCSP_ERRORPREFIX) // required
     } else {
