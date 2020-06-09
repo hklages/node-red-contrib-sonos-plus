@@ -1827,7 +1827,6 @@ module.exports = function (RED) {
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
     const properties = await sonosSinglePlayer.deviceDescription()
-    console.log('properties >>' + JSON.stringify(properties))
     if (properties._) { // strange attribute - remove it
       delete properties._
     }
