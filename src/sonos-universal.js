@@ -392,7 +392,7 @@ module.exports = function (RED) {
       await sonosCoordinator.queue({ uri: exportData.uri, metadata: exportData.metadata })
       await sonosCoordinator.selectQueue()
     } else {
-      await sonosCoordinator.setAVTransportURI(msg.export.uri)
+      await sonosCoordinator.setAVTransportURI(exportData.uri)
     }
     if (validated.volume !== -1) {
       let sonosSinglePlayer
