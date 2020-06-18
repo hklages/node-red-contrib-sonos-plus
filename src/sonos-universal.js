@@ -1545,10 +1545,10 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(mediaData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} current media data is invalid`)
     }
-    if (!isValidPropertyNotEmptyString(mediaData, ['CurrentURI'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} CurrentUri is invalid`)
+    let uri = '' // set as default if not available
+    if (isValidPropertyNotEmptyString(mediaData, ['CurrentURI'])) {
+      uri = mediaData.CurrentURI
     }
-    const uri = mediaData.CurrentURI
     const queueActivated = uri.startsWith('x-rincon-queue')
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
@@ -2020,10 +2020,10 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(mediaData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} current media data is invalid`)
     }
-    if (!isValidPropertyNotEmptyString(mediaData, ['CurrentURI'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} CurrentUri is invalid`)
+    let uri = ''
+    if (isValidPropertyNotEmptyString(mediaData, ['CurrentURI'])) {
+      uri = mediaData.CurrentURI
     }
-    const uri = mediaData.CurrentURI
     const queueActivated = uri.startsWith('x-rincon-queue')
     const radioId = getRadioId(uri)
 
