@@ -274,7 +274,7 @@ module.exports = function (RED) {
     await sonosPlayer.setAVTransportURI(foundItem.uri)
 
     // change volume if is provided
-    const newVolume = string2ValidInteger(msg, 'volume', 1, 99, 'volume', NRCSP_ERRORPREFIX, -1)
+    const newVolume = string2ValidInteger(msg, 'volume', 0, 100, 'volume', NRCSP_ERRORPREFIX, -1)
     if (newVolume !== -1) {
       await sonosPlayer.setVolume(msg.volume)
     }

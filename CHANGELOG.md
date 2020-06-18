@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.1] 2020-06-18
+
+### Changed
+
+- bugfix: Volume range now from 0 .. 100
+
+- bugfix: Sonos Arc added to player with TV port
+
 ## [4.0.0] 2020-06-09
 
 ### Depreciated

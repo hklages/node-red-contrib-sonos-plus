@@ -809,7 +809,7 @@ module.exports = function (RED) {
   /**  Adjust group volume
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPaht[0]] +/- 1 .. 99 integer
+   * @param  {string}  msg[payloadPaht[0]] -100 to + 100, integer
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
@@ -821,7 +821,7 @@ module.exports = function (RED) {
    */
   async function groupAdjustVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload adusted volume is required
-    const adjustVolume = string2ValidInteger(msg, payloadPath[0], -99, +99, 'adjust volume', NRCSP_ERRORPREFIX)
+    const adjustVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -832,7 +832,7 @@ module.exports = function (RED) {
   /**  Adjust player volume.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string/number}  msg[payloadPath[0]] +/- 1 .. 99 integer.
+   * @param  {string/number}  msg[payloadPath[0]] -100 to +100 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
@@ -844,7 +844,7 @@ module.exports = function (RED) {
    */
   async function playerAdjustVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload volume is required.
-    const adjustVolume = string2ValidInteger(msg, payloadPath[0], -99, +99, 'adjust volume', NRCSP_ERRORPREFIX)
+    const adjustVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -857,7 +857,7 @@ module.exports = function (RED) {
   /**  Set volume for given player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {number/string} msg[payloadPath[0]] volume, integer 1 .. 99 integer.
+   * @param  {number/string} msg[payloadPath[0]] volume, integer 0 .. 100 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
@@ -869,7 +869,7 @@ module.exports = function (RED) {
    */
   async function playerSetVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload volume is required.
-    const validatedVolume = string2ValidInteger(msg, payloadPath[0], 1, +99, 'volume', NRCSP_ERRORPREFIX)
+    const validatedVolume = string2ValidInteger(msg, payloadPath[0], 0, 100, 'volume', NRCSP_ERRORPREFIX)
     const validatedPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
     const groupData = await getGroupMemberDataV2(sonosPlayer, validatedPlayerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2062,7 +2062,7 @@ module.exports = function (RED) {
    *
    * @return {promise} object {playerName, volume, sameVolume, flushQueue}
    * playerName is '' if missing.
-   * volume is -1 if missing. Otherwise number, integer in range 1 .. 99
+   * volume is -1 if missing. Otherwise number, integer in range 0 ... 100
    * sameVolume is true if missing.
    * clearQueue is true if missing.
    *
@@ -2073,7 +2073,7 @@ module.exports = function (RED) {
     const newPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
 
     // if missing set to -1.
-    const newVolume = string2ValidInteger(msg, 'volume', 1, 99, 'volume', NRCSP_ERRORPREFIX, -1)
+    const newVolume = string2ValidInteger(msg, 'volume', 0, 100, 'volume', NRCSP_ERRORPREFIX, -1)
 
     // if missing set to true - throws errors if invalid
     let newSameVolume = true
