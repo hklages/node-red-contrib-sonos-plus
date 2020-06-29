@@ -8,21 +8,20 @@ assignees: hklages
 ---
 
 ### Description
-...
+<!--- description  -->
 
 ### What node/command (topic)/state (payload)
-Node: Universal | My Sonos
-command: group... ?
-state: ?
+Node: <!--- Universal | My Sonos  -->
+command: <!--- group... ?  -->
+state: <!--- ?  -->
 
-### In case of a bug report: Are you able to reproduce the error
-Yes|No
+### In case of a bug: Are you able to reproduce the error?
+<!--- Yes|No -->
 
-### Infrastructure
-What system: Docker on Synology | Windows 10 | CCU3 | Raspberry Pi ? 
-node-red-contrib-sonos-plus: 4.0.1? 
-Node-RED: 1.0.5?
-NodeJS: 10.20.0?
+### Versions and Infrastructure
+**What system:** <!--- Docker on Synology | Windows 10 | CCU3 | Raspberry Pi ?  -->
+**node-red-contrib-sonos-plus version:** <!--- 4.0.1?  -->
+**Node-RED version:** <!--- 1.0.5?  -->
+**NodeJS version:** <!--- 10.20.0?  -->
 
-For some systems you can find the flows here: 
-(flows)[https://flows.nodered.org/flow/a5c42641bf33dd0da9bfd4426a06950a]
+see: https://flows.nodered.org/flow/a5c42641bf33dd0da9bfd4426a06950a
