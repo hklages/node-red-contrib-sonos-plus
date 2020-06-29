@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 
 - Universal node: player.set.bass, player.set.treble, player.get.bass, player.get.bass
 
+- Universal node: group.queue.uri and group.queue.urispotify are added
+
 ## [4.0.1] 2020-06-18
 
 ### Changed

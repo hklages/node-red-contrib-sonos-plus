@@ -42,6 +42,8 @@ module.exports = function (RED) {
     'group.play.track': groupPlayTrack,
     'group.play.tunein': groupPlayTuneIn,
     'group.previous.track': groupPreviousTrack,
+    'group.queue.uri': groupQueueUri,
+    'group.queue.urispotify': groupQueueUriFromSpotify,
     'group.remove.tracks': groupRemoveTracks,
     'group.save.queue': groupSaveQueueToSonosPlaylist,
     'group.seek': groupSeek,
@@ -1031,6 +1033,69 @@ module.exports = function (RED) {
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
     // baseUrl not needed
     await sonosCoordinator.previous()
+    return {}
+  }
+
+  /**  Queue uri on given group queue.
+   * @param  {object}       node not used
+   * @param  {object}       msg incoming message
+   * @param  {string}       [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {string/number} msg.[payloadPath[0]] valid uri
+   * @param  {array}        cmdPath not used
+   * @param  {object}       sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function groupQueueUri (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload uri is required.
+    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
+
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
+    // baseUrl not needed
+    await sonosCoordinator.queue(validatedUri)
+    return {}
+  }
+
+  /**  Queue spotify uri on given group queue.
+   * @param  {object}       node not used
+   * @param  {object}       msg incoming message
+   * @param  {string}       [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {string/number} msg.[payloadPath[0]] valid uri from spotify
+   * @param  {array}        cmdPath not used
+   * @param  {object}       sonosPlayer Sonos player - as default and anchor player
+   *
+   * Valid examples
+   * spotify:track:5AdoS3gS47x40nBNlNmPQ8
+   * spotify:album:1TSZDcvlPtAnekTaItI3qO
+   * spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d
+   * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
+   *
+   * Caution: Currently only support European region '2311' (US = 3079?)
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function groupQueueUriFromSpotify (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload uri is required.
+    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'spotify uri', NRCSP_ERRORPREFIX)
+    if (!(validatedUri.startsWith('spotify:track:') ||
+        validatedUri.startsWith('spotify:album:') ||
+        validatedUri.startsWith('spotify:artistTopTracks:') ||
+        validatedUri.startsWith('spotify:user:spotify:playlist:'))) {
+      throw new Error(`${NRCSP_ERRORPREFIX} not supported type of spotify uri`)
+    }
+
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
+    // baseUrl not needed
+    await sonosCoordinator.setSpotifyRegion('2311')
+    await sonosCoordinator.queue(validatedUri)
     return {}
   }
 
