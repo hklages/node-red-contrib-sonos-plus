@@ -493,7 +493,7 @@ module.exports = {
     return true
   },
 
-  /** Get array of all SONOS player data in same group as player. Coordinator is first in array.
+  /** Get array of all SONOS player data in same group as player. Coordinator is first in array. hidden player are ignored!
    * @param  {object} sonosPlayer valid player object
    * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
    * @return {promise} returns object
@@ -523,21 +523,23 @@ module.exports = {
     let usedPlayerHostname
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
-        if (searchByName) {
-          name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
-          if (name === playerName) {
-            playerGroupIndex = groupIndex
+        if (!allGroupsData[groupIndex].ZoneGroupMember[memberIndex].invisible) { // only check visible player
+          if (searchByName) {
+            name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
+            if (name === playerName) {
+              playerGroupIndex = groupIndex
+              playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+              usedPlayerHostname = playerUrl.hostname
+              break
+            }
+          } else {
+            // extact hostname (eg 192.168.178.1) from Locaton field
             playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-            usedPlayerHostname = playerUrl.hostname
-            break
-          }
-        } else {
-          // extact hostname (eg 192.168.178.1) from Locaton field
-          playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-          if (playerUrl.hostname === sonosPlayer.host) {
-            playerGroupIndex = groupIndex
-            usedPlayerHostname = playerUrl.hostname
-            break
+            if (playerUrl.hostname === sonosPlayer.host) {
+              playerGroupIndex = groupIndex
+              usedPlayerHostname = playerUrl.hostname
+              break
+            }
           }
         }
       }
@@ -546,12 +548,17 @@ module.exports = {
       }
     }
     if (playerGroupIndex === -1) {
-      throw new Error(`${NRCSP_ERRORPREFIX} could not find given player in any group`)
+      throw new Error(`${NRCSP_ERRORPREFIX} could not find given player (must be visible) in any group`)
     }
-    const members = await module.exports.sortedGroupArray(allGroupsData, playerGroupIndex)
+    // reorder members that coordinator is at position 0
+    let members = await module.exports.sortedGroupArray(allGroupsData, playerGroupIndex)
+
+    // only accept visible player (in stereopair there is one invisible)
+    members = members.filter(member => member.invisible === false)
 
     // find our player index in members - that helps to figure out role: coordinator, joiner, independent
     const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
+
     return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
   },
 
@@ -992,11 +999,11 @@ module.exports = {
     return list
   },
 
-  /**  Returs a sorted array with all group members. Coordinator is in first place.
+  /**  Returns a sorted array with all group members. Coordinator is in first place.
   * @param {array} allGroupsData output form sonos getAllGroups()
   * @param {number} groupIndex pointing to the specific group 0 ... allGroupsData.length-1
   * @return {promise} array of objects (player) in that group
-  *      player: { urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400",
+  *      player: { urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400", invisible: boolean
   *         sonosName: "Küche", uuid: RINCON_xxxxxxx }
   *
   * @throws if index out of range
@@ -1017,20 +1024,27 @@ module.exports = {
     })
 
     let memberUrl
+    let invisible
     for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
       memberUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+      invisible = false
+      if (allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible) {
+        invisible = (allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible === '1')
+      }
       if (memberUrl.hostname !== coordinatorUrlHostname) {
         members.push({
           urlHostname: memberUrl.hostname,
           urlPort: memberUrl.port,
           baseUrl: `http://${memberUrl.hostname}:${memberUrl.port}`,
           sonosName: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName,
-          uuid: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID
+          uuid: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID,
+          invisible: invisible
         })
       } else {
         // update coordinator on positon 0 with name
         members[0].sonosName = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
         members[0].uuid = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID
+        members[0].invisible = invisible
       }
     }
     return members
