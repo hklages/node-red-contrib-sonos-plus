@@ -134,6 +134,70 @@
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Seek with REL_TIME move to position in current song - type string hh:mm:ss"
   },
+  "SetBass": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "SetBass",
+    "args": {
+      "InstanceID": 0,
+      "DesiredBass": "0"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetBassResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+    "info": "Set bass, value in range -10 ... 10 "
+  },
+  "GetBass": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "GetBass",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetBassResponse",
+      "CurrentBass"
+    ],
+    "info": "Type is string"
+  },
+  "SetTreble": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "SetTreble",
+    "args": {
+      "InstanceID": 0,
+      "DesiredTreble": "0"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetTrebleResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+    "info": "Set treble, value in range -10 ... 10 "
+  },
+  "GetTreble": {
+    "path": "/MediaRenderer/RenderingControl/Control",
+    "name": "RenderingControl",
+    "action": "GetTreble",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:GetTrebleResponse",
+      "CurrentTreble"
+    ],
+    "info": "Type is string"
+  },
   "SetEQ": {
     "path": "/MediaRenderer/RenderingControl/Control",
     "name": "RenderingControl",

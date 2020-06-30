@@ -112,16 +112,16 @@
   // mySonosCmdList has to be kept in sync with the table in .js file! First item is message! 
   // TODO find a comman base for mySonosCmdList and COMMAND_TABLE_MYSONOS
   // We need two properties for <select>
-  // Message first, all others in lexi order, ascending
+  // Message first, all others in lexical order, ascending
     const mySonosCmdList = [
     {cmd: "message", text: "using msg"},
+    {cmd: "library.export.playlist", text: "Library: export the specified playlist"},
+    {cmd: "library.get.playlists", text: "Library: get all playlists"},
+    {cmd: "library.queue.playlist", text: "Library: queue the specified playlist"},
     {cmd: "mysonos.export.item", text: "My Sonos: export the specified item"},
     {cmd: "mysonos.get.items", text: "My Sonos: get all items"},
     {cmd: "mysonos.queue.item", text: "My Sonos: queue the specified item"},
-    {cmd: "mysonos.stream.item", text: "My Sonos: stream the specified item"},
-    {cmd: "library.export.playlist", text: "Library: export the specified playlist"},
-    {cmd: "library.queue.playlist", text: "Library: queue the specified playlist"},
-    {cmd: "library.get.playlists", text: "Library: get all playlists"}
+    {cmd: "mysonos.stream.item", text: "My Sonos: stream the specified item"}
     ];
 </script>
 

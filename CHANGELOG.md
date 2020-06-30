@@ -2,11 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.1.0] 2020-06-30
+## [4.1.0] 2020-07-02
 
 ### Changed
 
 - category for depreciated nodes is now old-sonosplus, for new sonosplus
+
+- Universal node: group.save.queue now throws an error in case of empty queue (nothing to save)
+
+- Universal/My Sonos node: bug fix ipaddress not show in debug mode
+
+- Universal node: group.get.state information now includes property invisible and does not show invisible player by default
+
+- Universal node: household.get.groups will not show anymore hidden player (e. g. stereopair)
+
+- Universal node: all commands will throw an error if player is hidden (in msg.playerName, config.node)
+
+- Universal node: renamed speech enhance to dialog level
+
+### Added
+
+- Universal node: player.set.bass, player.set.treble, player.get.bass, player.get.bass
+
+- Universal node: group.queue.uri and group.queue.urispotify are added
 
 ## [4.0.1] 2020-06-18
 

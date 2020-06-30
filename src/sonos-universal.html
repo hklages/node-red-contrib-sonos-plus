@@ -113,7 +113,7 @@
 // universalCmdList has to be kept in sync with the .js file! First item is message! 
 // TODO find a comman base for universalCmdList and COMMAND_TABLE_UNIVERSAL
 // We need two properties for <select>
-// message first, all others in lexi order, ascending
+// message first, all others in lexical order, ascending
   const universalCmdList = [
     {cmd: "message", text: "using msg"},
     {cmd: "group.adjust.volume", text: "group: adjust volume"},
@@ -138,6 +138,8 @@
     {cmd: "group.play.track", text: "group: play track in queue"},
     {cmd: "group.play.tunein", text: "group: play tunein station"},
     {cmd: "group.previous.track", text: "group: previous track"},
+    {cmd: "group.queue.uri", text: "group: queue uri"},
+    {cmd: "group.queue.urispotify", text: "group: queue uri from spotify"},
     {cmd: "group.remove.tracks", text: "group: remove tracks"},
     {cmd: "group.save.queue", text: "group: save queue to Sonos playlists"},
     {cmd: "group.seek", text: "group: seek/move in current track"},
@@ -154,7 +156,8 @@
     {cmd: "household.test.player", text:"household: test player"},
     {cmd: "joiner.play.notification", text: "joiner: play notification"},
     {cmd: "player.adjust.volume", text: "player: adjust volume"},
-    {cmd: "player.get.dialoglevel", text:  "player: get speech enhancement"},
+    {cmd: "player.get.bass", text:  "player: get bass level"},
+    {cmd: "player.get.dialoglevel", text:  "player: get dialog level"},
     {cmd: "player.get.led", text:  "player:  get led state"},
     {cmd: "player.get.loudness", text:  "player: get loudness state"},
     {cmd: "player.get.mutestate", text:  "player: get mute state"},
@@ -163,16 +166,19 @@
     {cmd: "player.get.queue", text:  "player: get queue"},
     {cmd: "player.get.role", text:  "player: get role"},
     {cmd: "player.get.subgain", text:  "player: get subgain"},
+    {cmd: "player.get.treble", text:  "player: get treble level"},
     {cmd: "player.get.volume", text:  "player: get volume"},
     {cmd: "player.join.group", text:  "player: join group"},
     {cmd: "player.leave.group", text:  "player: leave group"},
     {cmd: "player.play.avtransport", text:  "player: play avtransport"},
-    {cmd: "player.set.dialoglevel", text:  "player: speech enhancement"},
+    {cmd: "player.set.bass", text:  "player: set bass level"},
+    {cmd: "player.set.dialoglevel", text:  "player: set dialog level"},
     {cmd: "player.set.led", text:  "player: set led state"},
     {cmd: "player.set.loudness", text:  "player: set loudness"},
     {cmd: "player.set.mutestate", text:  "player: set mute state"},
     {cmd: "player.set.nightmode", text:  "player: set nightmode"},
     {cmd: "player.set.subgain", text:  "player: set.subgain"},
+    {cmd: "player.set.treble", text:  "player: set treble level"},
     {cmd: "player.set.volume", text:  "player: set volume"}
 ];
 </script>
