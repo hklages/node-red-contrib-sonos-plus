@@ -26,7 +26,7 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 - New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
 
-- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos".
+- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
 
 ## Installation
 
