@@ -521,25 +521,27 @@ module.exports = {
     let name
     let playerUrl
     let usedPlayerHostname
+    let visible
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
-        if (!allGroupsData[groupIndex].ZoneGroupMember[memberIndex].invisible) { // only check visible player
-          if (searchByName) {
-            name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
-            if (name === playerName) {
-              playerGroupIndex = groupIndex
-              playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-              usedPlayerHostname = playerUrl.hostname
-              break
-            }
-          } else {
-            // extact hostname (eg 192.168.178.1) from Locaton field
+        visible = !allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
+        if (searchByName) {
+          name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
+          if (name === playerName && visible) {
+            playerGroupIndex = groupIndex
             playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-            if (playerUrl.hostname === sonosPlayer.host) {
-              playerGroupIndex = groupIndex
-              usedPlayerHostname = playerUrl.hostname
-              break
-            }
+            usedPlayerHostname = playerUrl.hostname
+            break
+          }
+        } else {
+          // extact hostname (eg 192.168.178.1) from Locaton field
+          playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+          if (playerUrl.hostname === sonosPlayer.host && visible) {
+            console.log('hostname >>' + JSON.stringify(playerUrl.hostname))
+            console.log('host >>' + JSON.stringify(sonosPlayer.host))
+            playerGroupIndex = groupIndex
+            usedPlayerHostname = playerUrl.hostname
+            break
           }
         }
       }

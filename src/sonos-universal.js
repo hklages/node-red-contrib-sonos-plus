@@ -97,7 +97,7 @@ module.exports = function (RED) {
     // ipaddress overriding serialnum - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
     if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
-      node.debug(`OK config node IP address ${configNode.ipaddress} is being used`)
+      // ip address is being used - default case
     } else {
       if (isValidProperty(configNode, ['serialnum']) && typeof configNode.serialnum === 'string' && REGEX_SERIAL.test(configNode.serialnum)) {
         discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
@@ -130,7 +130,13 @@ module.exports = function (RED) {
           Object.assign(msg, msgUpdate) // defines the ouput message
           success(node, msg, msg.nrcspCmd)
         })
-        .catch((error) => failure(node, msg, error, 'processing input msg'))
+        .catch((error) => {
+          let functionName = 'processing input msg'
+          if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
+            functionName = msg.nrcspCmd
+          }
+          failure(node, msg, error, functionName)
+        })
     })
   }
 
