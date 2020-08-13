@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-sonos-plus",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "A set of NodeRED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {
@@ -37,11 +37,10 @@
     "axios": "^0.19.2",
     "fs-extra": "^9.0.1",
     "path": "^0.12.7",
-    "sonos": "^1.13.1",
+    "sonos": "^1.13.2",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-node": "^11.1.0",

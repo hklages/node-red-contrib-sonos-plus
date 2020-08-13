@@ -275,8 +275,6 @@ module.exports = function (RED) {
    */
   async function mysonosExportItem (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload title search string is required.
-    console.log('payloadPath[0] >>' + JSON.stringify(payloadPath[0]))
-    console.log('value>>' + JSON.stringify(msg.topic))
     const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
 
     const mySonosItems = await getAllMySonosItemsV2(sonosPlayer.baseUrl)

@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.1.1] 2020-08-14
+
+### Added
+
+- Universal node: group.get.actions
+
+- Universal node: group.seek.delta
+
 ## [4.1.0] 2020-07-02
 
 ### Changed

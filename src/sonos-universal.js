@@ -1,5 +1,5 @@
 const {
-  REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_RADIO_ID,
+  REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
   NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, isTruthy,
@@ -23,6 +23,7 @@ module.exports = function (RED) {
     'group.adjust.volume': groupAdjustVolume,
     'group.clear.queue': groupClearQueue,
     'group.create.snap': groupCreateSnapshot,
+    'group.get.actions': groupGetTransportActions,
     'group.get.crossfade': groupGetCrossfadeMode,
     'group.get.mutestate': groupGetMute,
     'group.get.playbackstate': groupGetPlaybackstate,
@@ -47,6 +48,7 @@ module.exports = function (RED) {
     'group.remove.tracks': groupRemoveTracks,
     'group.save.queue': groupSaveQueueToSonosPlaylist,
     'group.seek': groupSeek,
+    'group.seek.delta': groupSeekDelta,
     'group.set.crossfade': groupSetCrossfade,
     'group.set.mutestate': groupSetMute,
     'group.set.queuemode': groupSetQueuemode,
@@ -314,6 +316,25 @@ module.exports = function (RED) {
     return { payload: snap }
   }
 
+  /**  Get group transport actions.
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {array}   payloadPath not used
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {payload: transportActions}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function groupGetTransportActions (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const actions = await getCmd(groupData.members[0].baseUrl, 'GetCurrentTransportActions') // 0 stands for coordinator
+    return { payload: actions }
+  }
+
   /**  Get group crossfade mode.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
@@ -474,7 +495,7 @@ module.exports = function (RED) {
     }
   }
 
-  /**  Get group track media position info.
+  /**  Get group track and media and position info.
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
@@ -1187,6 +1208,28 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     await setCmd(groupData.members[0].baseUrl, 'Seek', { Target: validTime }) // 0 stands for coordinator
+    return {}
+  }
+
+  /**  Group seek with delta time to specific time.
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.[payloadPath[0]] +/- hh:mm:ss time in song.
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function groupSeekDelta (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload seek time is required.
+    const validTime = stringValidRegex(msg, payloadPath[0], REGEX_TIME_DELTA, 'relative seek time', NRCSP_ERRORPREFIX)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    await setCmd(groupData.members[0].baseUrl, 'Seek-delta', { Target: validTime }) // 0 stands for coordinator
     return {}
   }
 

@@ -537,8 +537,6 @@ module.exports = {
           // extact hostname (eg 192.168.178.1) from Locaton field
           playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
           if (playerUrl.hostname === sonosPlayer.host && visible) {
-            console.log('hostname >>' + JSON.stringify(playerUrl.hostname))
-            console.log('host >>' + JSON.stringify(sonosPlayer.host))
             playerGroupIndex = groupIndex
             usedPlayerHostname = playerUrl.hostname
             break

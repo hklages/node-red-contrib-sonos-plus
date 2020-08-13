@@ -24,7 +24,7 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 - In "Universal", "My Sonos" node: Some commands are renamed and the ouput is now always in msg.payload. State input is expected in msg.payload.
 
-- New "Universal" node allows usage of SONOS player names (room names) and makes group handling much easier.
+- In "Universal" node: added command group.get.actions, group.seek.delta
 
 - Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
 

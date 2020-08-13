@@ -134,6 +134,24 @@
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Seek with REL_TIME move to position in current song - type string hh:mm:ss"
   },
+  "Seek-delta": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "Seek",
+    "args": {
+      "InstanceID": 0,
+      "Unit": "TIME_DELTA",
+      "Target": "00:00:15"
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SeekResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "Seek with TIME_DELTA move to position in current song- type string hh:mm:ss"
+  },
   "SetBass": {
     "path": "/MediaRenderer/RenderingControl/Control",
     "name": "RenderingControl",
