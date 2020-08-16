@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 
 - small bug fixing related to baseUrl
 
+- node-sonos now 1.14.0
+
 ### Added
 
 - Universal node: group.get.trackplus with new property stationArtUri (in case of x-sonosapi-stream)
