@@ -25,7 +25,6 @@ module.exports = {
    * @return {promise} response from player
    */
   sendToPlayerV1: async function (baseUrl, path, name, action, args) {
-    console.log('sendToPlayer1. Action >>' + action) // please leave for debugging
     // create action used in header
     const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`
 
@@ -59,7 +58,6 @@ module.exports = {
         // That goes usually together with status code 500 - triggering catch
         // Experience: When using reject(error) the error.reponse get lost.
         // Thats why error.response is checked and handled here!
-        console.log('sendToPlayerV1. entering catch error') // please leave for debugging
         if (isValidProperty(error, ['response'])) {
         // Indicator for SOAP Error
           if (isValidProperty(error, ['message'])) {
@@ -71,10 +69,8 @@ module.exports = {
                 serviceErrorList = module.exports.ERROR_CODES[name.toUpperCase()]
               }
               const errorMessage = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
-              console.log('sendToPlayerV1.  status code 500 errorCode >>' + JSON.stringify(errorCode)) // please leave for debugging
               throw new Error(`${NRCSP_ERRORPREFIX} statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
             } else {
-              console.log('error.message is not code 500  >>' + JSON.stringify(error.message)) // please leave for debugging
               throw new Error('error.message is not code 500' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
             }
           } else {

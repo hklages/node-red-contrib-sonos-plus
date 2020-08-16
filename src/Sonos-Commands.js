@@ -824,7 +824,6 @@ module.exports = {
     const result = getNestedProperty(bodyXml, key)
     if (typeof result !== 'string') {
       // Caution: this check does only work for primitive values (not objects)
-      console.log('response >>' + JSON.stringify(result)) // please leave for debugging
       throw new Error(`${NRCSP_ERRORPREFIX} could not get string value from player`)
     }
     return result

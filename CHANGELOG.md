@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.1.2] 2020-08-16
+
+### Changed
+
+- removed all console.log
+
+- small bug fixing related to baseUrl
+
+### Added
+
+- Universal node: group.get.trackplus with new property stationArtUri (in case of x-sonosapi-stream)
+
 ## [4.1.1] 2020-08-13
 
 ### Added

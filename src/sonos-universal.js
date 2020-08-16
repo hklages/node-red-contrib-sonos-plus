@@ -511,7 +511,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    // baseUrl not needed
+    sonosCoordinator.baseUrl = groupData.members[0].baseUrl
 
     // get currentTrack data and extract artist, title. Add baseUrl to albumArtURL.
     const trackData = await sonosCoordinator.currentTrack()
@@ -564,6 +564,12 @@ module.exports = function (RED) {
     }
     const queueActivated = uri.startsWith('x-rincon-queue')
     const radioId = getRadioId(uri)
+    
+    // get station uri for all "x-sonosapi-stream"
+    let stationArtUri = ''
+    if (uri.startsWith('x-sonosapi-stream')) {
+      stationArtUri = sonosCoordinator.baseUrl + "/getaa?s=1&u=" + uri
+    }
 
     // get current position data
     const positionData = await sonosCoordinator.avTransportService().GetPositionInfo()
@@ -579,6 +585,7 @@ module.exports = function (RED) {
         mediaData: mediaData,
         queueActivated: queueActivated,
         radioId: radioId,
+        stationArtUri: stationArtUri,
         positionData: positionData
       }
     }
@@ -725,7 +732,7 @@ module.exports = function (RED) {
     }
 
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    sonosCoordinator.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
+    sonosCoordinator.baseUrl = groupData.members[0].baseUrl
 
     if (exportData.queue) {
       if (validated.clearQueue) {
@@ -1361,6 +1368,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
+    // baseUrl not needed
     await sonosCoordinator.stop()
     return {}
   }
