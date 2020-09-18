@@ -1745,7 +1745,7 @@ module.exports = function (RED) {
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {array}   cmdPath is used!
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload the Loudness state LED state on/off
@@ -1770,9 +1770,9 @@ module.exports = function (RED) {
     }
 
     let eqType
-    if (msg.payload === 'player.get.nightmode') {
+    if (msg[cmdPath] === 'player.get.nightmode') {
       eqType = 'NightMode'
-    } else if (msg.payload === 'player.get.subgain') {
+    } else if (msg[cmdPath] === 'player.get.subgain') {
       eqType = 'SubGain'
     } else {
       eqType = 'DialogLevel'

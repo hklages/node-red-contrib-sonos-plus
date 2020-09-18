@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.1.3] 2020-09-18
+
+### Changed
+
+- Universal node, bug fixing night mode, dialog level
+
 ## [4.1.2] 2020-08-16
 
 ### Changed
