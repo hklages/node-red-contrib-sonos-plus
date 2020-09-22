@@ -23,6 +23,7 @@ module.exports = function (RED) {
     'group.adjust.volume': groupAdjustVolume,
     'group.clear.queue': groupClearQueue,
     'group.create.snap': groupCreateSnapshot,
+    'group.create.volumesnap': groupCreateVolumeSnapshot,
     'group.get.actions': groupGetTransportActions,
     'group.get.crossfade': groupGetCrossfadeMode,
     'group.get.mutestate': groupGetMute,
@@ -53,6 +54,7 @@ module.exports = function (RED) {
     'group.set.mutestate': groupSetMute,
     'group.set.queuemode': groupSetQueuemode,
     'group.set.sleeptimer': groupSetSleeptimer,
+    'group.set.volume': groupSetVolume,
     'group.stop': groupStop,
     'group.toggle.playback': groupTogglePlayback,
     'household.create.stereopair': householdCreateStereoPair,
@@ -314,6 +316,26 @@ module.exports = function (RED) {
     }
     const snap = await createGroupSnapshot(node, sonosPlayermembers, options)
     return { payload: snap }
+  }
+
+  /**  Group create volume snap shot (used for adjust group volume)
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.[payloadPath[0]] not used
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function groupCreateVolumeSnapshot (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    await setCmd(groupData.members[0].baseUrl, 'SnapshotGroupVolume', {}) // 0 stands for coordinator
+    return {}
   }
 
   /**  Get group transport actions.
@@ -1349,6 +1371,27 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     await setCmd(groupData.members[0].baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: validTime }) // 0 stands for coordinator
+    return {}
+  }
+
+  /**  Group set volume (all player same volume)
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.[payloadPath[0]] new volume
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function groupSetVolume(node, msg, payloadPath, cmdPath, sonosPlayer) {
+    const newVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'new volume', NRCSP_ERRORPREFIX)
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    await setCmd(groupData.members[0].baseUrl, 'SetGroupVolume', { DesiredVolume: newVolume }) // 0 stands for coordinator
     return {}
   }
 

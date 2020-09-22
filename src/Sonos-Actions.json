@@ -531,6 +531,39 @@
     ],
   "info": "get group mute on (1) or off (0)"
   }, 
+  "SnapshotGroupVolume": {
+    "path": "/MediaRenderer/GroupRenderingControl/Control",
+    "name": "GroupRenderingControl",
+    "action": "SnapshotGroupVolume",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SnapshotGroupVolumeResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
+    "info": "snapshots the current volume relation in group for usage of set relative group volume"
+  },
+  "SetGroupVolume": {
+    "path": "/MediaRenderer/GroupRenderingControl/Control",
+    "name": "GroupRenderingControl",
+    "action": "SetGroupVolume",
+    "args": {
+      "InstanceID": 0,
+      "DesiredVolume": 10
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:SetGroupVolumeResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
+    "info": "set the specified volume to all players"
+  },
   "SaveQueue": {
     "path": "/MediaRenderer/AVTransport/Control",
     "name": "AVTransport",

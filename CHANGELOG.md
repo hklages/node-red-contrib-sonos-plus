@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.1.4] 2020-09-22
+
+### Added
+
+- Universal node, command group.create.volumesnap, group.set.volume
+
 ## [4.1.3] 2020-09-18
 
 ### Changed
