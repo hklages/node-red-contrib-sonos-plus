@@ -581,5 +581,39 @@
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Save queue to Sonos playlist"
+  },
+  "DelegateGroupCoordinationTo": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "DelegateGroupCoordinationTo",
+    "args": {
+      "InstanceID": 0,
+      "NewCoordinator": "RINCON_xxxxx01400",
+      "RejoinGroup": true
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:DelegateGroupCoordinationToResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "player will delegate coordination and optionally leave group (Rejoingroup = false). NewCoordinator must exist!"
+  }, 
+  "BecomeCoordinatorOfStandaloneGroup": {
+    "path": "/MediaRenderer/AVTransport/Control",
+    "name": "AVTransport",
+    "action": "BecomeCoordinatorOfStandaloneGroup",
+    "args": {
+      "InstanceID": 0
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:BecomeCoordinatorOfStandaloneGroupResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "info": "player becomes a stand alone group"
   }
 }

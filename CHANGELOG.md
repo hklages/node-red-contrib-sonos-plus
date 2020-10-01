@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.2.0] 2020-10-03
+
+### Changed
+
+- dependencies update axio, eslint-plugin-import
+
+### Added
+
+- Universal node, command player.become.standalone
+
 ## [4.1.4] 2020-09-22
 
 ### Added
