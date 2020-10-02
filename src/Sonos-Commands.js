@@ -130,14 +130,14 @@ module.exports = {
     })
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
       await membersAsPlayerPlus[0].selectTrack(snapshot.positionInfo.Track)
-        .catch(reason => {
+        .catch(() => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
       await membersAsPlayerPlus[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
-        .catch(reason => {
+        .catch(() => {
           node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
         })
     }
@@ -246,14 +246,14 @@ module.exports = {
     }
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
       await membersAsPlayerPlus[coordinatorIndex].selectTrack(snapshot.positionInfo.Track)
-        .catch(reason => {
+        .catch(() => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>' + JSON.stringify(snapshot.positionInfo.RelTime))
       await membersAsPlayerPlus[coordinatorIndex].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
-        .catch(reason => {
+        .catch(() => {
           node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
         })
     }
@@ -464,14 +464,14 @@ module.exports = {
     })
     if (snapshot.Track && snapshot.Track > 1 && snapshot.NrTracks > 1) {
       await membersAsPlayersPlus[coordinatorIndex].selectTrack(snapshot.Track)
-        .catch(reason => {
+        .catch(() => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>', JSON.stringify(snapshot.RelTime))
       await membersAsPlayersPlus[coordinatorIndex].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.RelTime })
-        .catch(reason => {
+        .catch(() => {
           node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
         })
     }
@@ -562,18 +562,16 @@ module.exports = {
     return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
   },
 
-  /** Get array of groups in household. Each group is an array of members, coordinator is in position. hidden player are ignored!
+  /** Get array of all players in household. 
    * @param  {object} sonosPlayer valid player object
-   * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
-   * @return {promise} returns array of all groups. Every group is array of members
-   *          members[]: urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
+   * @return {promise} returns array of all groups. Every group is array of members. First member is coordinator
+   *          members[]: urlHostname, urlPort, baseUrl, uuid, sonosName, isCoordinator, groupIndex
    *
    * @throws if getAllGroups returns invalid value
    *         if player name not found in any group
    */
-  xxxx: async function (sonosPlayer, playerName) {
-    // playerName !== '' then use playerName
-    const searchByName = isTruthyAndNotEmptyString(playerName)
+  getAllPlayerList: async function (sonosPlayer) {
+    
     const allGroupsData = await sonosPlayer.getAllGroups()
     if (!isTruthyAndNotEmptyString(allGroupsData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} all groups data undefined`)
@@ -582,53 +580,37 @@ module.exports = {
       throw new Error(`${NRCSP_ERRORPREFIX} all groups data is not array`)
     }
     
-    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
-    // ZoneGroupMembers is an array of all members with properties ip address and more
-    // let playerGroupIndex = -1 // indicator for no player found
-    let name
+    // allGroupsData is an array of groups. Each group has properties Coordinator(eg. RINCON_5CAAFD00223601400), host (eg. 192.168.178.35),
+    // port (eg 1400), ID (eg RINCON_5CAAFD00223601400:434), Name (eg. Küche), ZoneGroupMembers
+    // ZoneGroupMembers is an array of all members with properties UUID (eg RINCON_5CAAFD00223601400), ZoneName (eg. Küche), 
+    // Location(eg. http://192.168.178.37:1400/xml/device_description.xmlLocation), Invisible (optional, only if true) and more ...
+    let player
     let playerUrl
-    let usedPlayerHostname
     let visible
+    let playerList = []
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
-        visible = !allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
-        if (searchByName) {
-          name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
-          if (name === playerName && visible) {
-            playerGroupIndex = groupIndex
-            playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-            usedPlayerHostname = playerUrl.hostname
-            break
-          }
-        } else {
-          // extact hostname (eg 192.168.178.1) from Locaton field
+        visible = true
+        if (Object.prototype.hasOwnProperty.call(allGroupsData[groupIndex].ZoneGroupMember[memberIndex],'Invisible')) {
+            visible = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
+        } 
+        if (visible) {
           playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
-          if (playerUrl.hostname === sonosPlayer.host && visible) {
-            playerGroupIndex = groupIndex
-            usedPlayerHostname = playerUrl.hostname
-            break
+          player = {
+            sonosName: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName,
+            urlHostname: playerUrl.hostname,
+            urlPort: playerUrl.port,
+            baseUrl: `http://${playerUrl.hostname}:${playerUrl.port}`,
+            uuid: allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID,
+            isCoordinator: (allGroupsData[groupIndex].Coordinator === allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID),
+            groupIndex: groupIndex
           }
+          playerList.push(player)
         }
       }
-      if (playerGroupIndex >= 0) {
-        break
-      }
     }
-    if (playerGroupIndex === -1) {
-      throw new Error(`${NRCSP_ERRORPREFIX} could not find given player (must be visible) in any group`)
-    }
-    // reorder members that coordinator is at position 0
-    let members = await module.exports.sortedGroupArray(allGroupsData, playerGroupIndex)
-
-    // only accept visible player (in stereopair there is one invisible)
-    members = members.filter(member => member.invisible === false)
-
-    // find our player index in members - that helps to figure out role: coordinator, joiner, independent
-    const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
-
-    return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
+    return playerList
   },
-
 
 
   /**  Get array of all My Sonos items (objects). Version 2 includes Sonos playlists

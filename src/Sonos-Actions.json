@@ -630,7 +630,7 @@
       "u:AddMemberResponse",
       "xmlns:u"
     ],
-    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
+    "responseValue": "urn:schemas-upnp-org:service:GroupManagement:1",
     "info": "adds a member to that device. MemberID is the newly added device. Should be send to coordinator!"
   }
 }

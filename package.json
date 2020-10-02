@@ -41,6 +41,7 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
+    "eslint": "^7.10.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",

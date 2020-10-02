@@ -9,7 +9,7 @@ const {
 
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
-  createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllSonosPlaylists, sortedGroupArray,
+  createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllPlayerList, getAllSonosPlaylists, sortedGroupArray,
   getGroupVolume, getGroupMute, getPlayerQueue, setGroupVolumeRelative, getRadioId, setGroupMute, getCmd, setCmd
 } = require('./Sonos-Commands.js')
 
@@ -1441,10 +1441,10 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Create a new group in household.
+  /**  Create a new group in household. 
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] csv list of playerNames, first will be coordinator
+   * @param  {string}  msg.[payloadPath[0]] comma separated list of playerNames, first will become coordinator
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
@@ -1459,25 +1459,8 @@ module.exports = function (RED) {
     const newGroupPlayerArray = validatedPlayerList.split(',')
     
     // get groups with members and convert multi dimensioal array to simple array where objects have new property groupIndex, memberIndex
-    const allGroupsData = await sonosPlayer.getAllGroups()  
-    let householdPlayerList = [] // 
-    let player
-    let playerUrl
-    for (let i = 0; i < allGroupsData.length; i++) {
-      for (let j = 0; j < allGroupsData[i].ZoneGroupMember.length; j++) {
-        playerUrl = new URL(allGroupsData[i].ZoneGroupMember[j].Location)
-        player = {
-          sonosName: allGroupsData[i].ZoneGroupMember[j].ZoneName,
-          uuid: allGroupsData[i].ZoneGroupMember[j].UUID,
-          baseUrl: `http://${playerUrl.host}`,  // extract ip address and port
-          groupIndex: i,
-          memberIndex: j
-        }
-        householdPlayerList.push(player)
-      }
-    }
-    console.log('household >>' + JSON.stringify(householdPlayerList))
-    
+    const householdPlayerList = await getAllPlayerList(sonosPlayer)
+
     // validate all player names in newGroupPlayerArray and get index of new coordinator
     let indexInList
     let indexNewCoordinator
@@ -1490,39 +1473,40 @@ module.exports = function (RED) {
         indexNewCoordinator = indexInList
       }
     }
-    console.log('coordinator index >>' + JSON.stringify(indexNewCoordinator))
-    
-    // Is first player (coordinator) already a coordinator in its group? Then use this group and adjust
+    // Is new coordinator already the coordinator in its group? Then use this group and adjust
     let args = {}
-    if (householdPlayerList[indexNewCoordinator].memberIndex = 0) { // means is a coordinator
+    if (householdPlayerList[indexNewCoordinator].isCoordinator) { // means is a coordinator
       // modify this group (remove those not needed and add some)
       let found
+      let sonosPl  // node sonos player object
       for (let i = 0; i < householdPlayerList.length; i++) {
         // should this player be in group?
         found = newGroupPlayerArray.indexOf(householdPlayerList[i].sonosName)
         if (found === -1) {
           // remove if in new coordinator group
-          if (householdPlayerList[found].groupIndex === householdPlayerList[indexNewCoordinator].groupIndex) {
+          if (householdPlayerList[i].groupIndex === householdPlayerList[indexNewCoordinator].groupIndex) {
             // leave group
             args = {} // no changes
-            await setCmd(householdPlayerList[found].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+            await setCmd(householdPlayerList[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
           }
         } else {
-          if (householdPlayerList[found].groupIndex != householdPlayerList[indexNewCoordinator].groupIndex) {
+          if (householdPlayerList[i].groupIndex !== householdPlayerList[indexNewCoordinator].groupIndex) {
             // join group
-            args = {MemberID: householdPlayerList[found].uuid}
-            await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'AddMember', args)
+            sonosPl = new Sonos(householdPlayerList[i].urlHostname)
+            await sonosPl.joinGroup(householdPlayerList[indexNewCoordinator].sonosName)
           }
         }
       }
     } else {
       args = {} // no changes
       await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
-      let playerIndex
-      for (let k = 1; k < newGroupPlayerArray.length; k++) {
-        playerIndex = householdPlayerList.findIndex(p => p.playerName === newGroupPlayerArray[k])
-        args = { MemberID: householdPlayerList[playerIndex].uuid }
-        await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'AddMember', args)
+      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) // because it takes time to BecomeCoordinator
+      let indexPlayer
+      let sonosPl // node sonos player object
+      for (let i = 1; i < newGroupPlayerArray.length; i++) { // start with 1
+        indexPlayer = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i])
+        sonosPl = new Sonos(householdPlayerList[indexPlayer].urlHostname)
+        await sonosPl.joinGroup(householdPlayerList[indexNewCoordinator].sonosName)
       }
     }
     return {}
@@ -2515,7 +2499,7 @@ module.exports = function (RED) {
    *
    * @throws error for all invalid values
    */
-  async function validatedGroupProperties (msg, pkgPrefix, excludeVolume) {
+  async function validatedGroupProperties (msg, pkgPrefix) {
     // if missing set to ''.
     const newPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
 
