@@ -10,7 +10,7 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
-- Universal node, command player.become.standalone
+- Universal node: command player.become.standalone, player.delegate.coordination, household.separate.group
 
 ## [4.1.4] 2020-09-22
 

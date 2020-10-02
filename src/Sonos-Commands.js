@@ -562,6 +562,75 @@ module.exports = {
     return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
   },
 
+  /** Get array of groups in household. Each group is an array of members, coordinator is in position. hidden player are ignored!
+   * @param  {object} sonosPlayer valid player object
+   * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
+   * @return {promise} returns array of all groups. Every group is array of members
+   *          members[]: urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
+   *
+   * @throws if getAllGroups returns invalid value
+   *         if player name not found in any group
+   */
+  xxxx: async function (sonosPlayer, playerName) {
+    // playerName !== '' then use playerName
+    const searchByName = isTruthyAndNotEmptyString(playerName)
+    const allGroupsData = await sonosPlayer.getAllGroups()
+    if (!isTruthyAndNotEmptyString(allGroupsData)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} all groups data undefined`)
+    }
+    if (!Array.isArray(allGroupsData)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} all groups data is not array`)
+    }
+    
+    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
+    // ZoneGroupMembers is an array of all members with properties ip address and more
+    // let playerGroupIndex = -1 // indicator for no player found
+    let name
+    let playerUrl
+    let usedPlayerHostname
+    let visible
+    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+        visible = !allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
+        if (searchByName) {
+          name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
+          if (name === playerName && visible) {
+            playerGroupIndex = groupIndex
+            playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+            usedPlayerHostname = playerUrl.hostname
+            break
+          }
+        } else {
+          // extact hostname (eg 192.168.178.1) from Locaton field
+          playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)
+          if (playerUrl.hostname === sonosPlayer.host && visible) {
+            playerGroupIndex = groupIndex
+            usedPlayerHostname = playerUrl.hostname
+            break
+          }
+        }
+      }
+      if (playerGroupIndex >= 0) {
+        break
+      }
+    }
+    if (playerGroupIndex === -1) {
+      throw new Error(`${NRCSP_ERRORPREFIX} could not find given player (must be visible) in any group`)
+    }
+    // reorder members that coordinator is at position 0
+    let members = await module.exports.sortedGroupArray(allGroupsData, playerGroupIndex)
+
+    // only accept visible player (in stereopair there is one invisible)
+    members = members.filter(member => member.invisible === false)
+
+    // find our player index in members - that helps to figure out role: coordinator, joiner, independent
+    const playerIndex = members.findIndex((member) => member.urlHostname === usedPlayerHostname)
+
+    return { playerIndex: playerIndex, members: members, groupId: allGroupsData[playerGroupIndex].ID, groupName: allGroupsData[playerGroupIndex].Name }
+  },
+
+
+
   /**  Get array of all My Sonos items (objects). Version 2 includes Sonos playlists
    * @param   {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
    *

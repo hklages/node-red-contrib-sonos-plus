@@ -615,5 +615,22 @@
     ],
     "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "player becomes a stand alone group"
+  },
+  "AddMember": {
+    "path": "/GroupManagement/Control",
+    "name": "GroupManagement",
+    "action": "AddMember",
+    "args": {
+      "InstanceID": 0,
+      "MemberID": ""
+    },
+    "responsePath": [
+      "s:Envelope",
+      "s:Body",
+      "u:AddMemberResponse",
+      "xmlns:u"
+    ],
+    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
+    "info": "adds a member to that device. MemberID is the newly added device. Should be send to coordinator!"
   }
 }

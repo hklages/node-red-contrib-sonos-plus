@@ -1,6 +1,6 @@
 const {
   REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
-  NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_QUEUEMODES,
+  NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_CSV, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, isTruthy,
   isOnOff, string2ValidInteger, stringValidRegex,
@@ -57,9 +57,11 @@ module.exports = function (RED) {
     'group.set.volume': groupSetVolume,
     'group.stop': groupStop,
     'group.toggle.playback': groupTogglePlayback,
+    'household.create.group': householdCreateGroup,
     'household.create.stereopair': householdCreateStereoPair,
     'household.get.groups': householdGetGroups,
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
+    'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
     'household.test.player': householdTestPlayerOnline,
     'joiner.play.notification': joinerPlayNotification,
@@ -1439,6 +1441,93 @@ module.exports = function (RED) {
     return {}
   }
 
+  /**  Create a new group in household.
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg.[payloadPath[0]] csv list of playerNames, first will be coordinator
+   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} array of all group array of members :-)
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function householdCreateGroup (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    
+    const validatedPlayerList = stringValidRegex(msg, payloadPath[0], REGEX_CSV, 'player list', NRCSP_ERRORPREFIX)
+    const newGroupPlayerArray = validatedPlayerList.split(',')
+    
+    // get groups with members and convert multi dimensioal array to simple array where objects have new property groupIndex, memberIndex
+    const allGroupsData = await sonosPlayer.getAllGroups()  
+    let householdPlayerList = [] // 
+    let player
+    let playerUrl
+    for (let i = 0; i < allGroupsData.length; i++) {
+      for (let j = 0; j < allGroupsData[i].ZoneGroupMember.length; j++) {
+        playerUrl = new URL(allGroupsData[i].ZoneGroupMember[j].Location)
+        player = {
+          sonosName: allGroupsData[i].ZoneGroupMember[j].ZoneName,
+          uuid: allGroupsData[i].ZoneGroupMember[j].UUID,
+          baseUrl: `http://${playerUrl.host}`,  // extract ip address and port
+          groupIndex: i,
+          memberIndex: j
+        }
+        householdPlayerList.push(player)
+      }
+    }
+    console.log('household >>' + JSON.stringify(householdPlayerList))
+    
+    // validate all player names in newGroupPlayerArray and get index of new coordinator
+    let indexInList
+    let indexNewCoordinator
+    for (let i = 0; i < newGroupPlayerArray.length; i++) {
+      indexInList = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i]) 
+      if (indexInList === -1) {
+        throw new Error(`${NRCSP_ERRORPREFIX} Could not find player: ${newGroupPlayerArray[i]}`)
+      }
+      if (i === 0) {
+        indexNewCoordinator = indexInList
+      }
+    }
+    console.log('coordinator index >>' + JSON.stringify(indexNewCoordinator))
+    
+    // Is first player (coordinator) already a coordinator in its group? Then use this group and adjust
+    let args = {}
+    if (householdPlayerList[indexNewCoordinator].memberIndex = 0) { // means is a coordinator
+      // modify this group (remove those not needed and add some)
+      let found
+      for (let i = 0; i < householdPlayerList.length; i++) {
+        // should this player be in group?
+        found = newGroupPlayerArray.indexOf(householdPlayerList[i].sonosName)
+        if (found === -1) {
+          // remove if in new coordinator group
+          if (householdPlayerList[found].groupIndex === householdPlayerList[indexNewCoordinator].groupIndex) {
+            // leave group
+            args = {} // no changes
+            await setCmd(householdPlayerList[found].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+          }
+        } else {
+          if (householdPlayerList[found].groupIndex != householdPlayerList[indexNewCoordinator].groupIndex) {
+            // join group
+            args = {MemberID: householdPlayerList[found].uuid}
+            await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'AddMember', args)
+          }
+        }
+      }
+    } else {
+      args = {} // no changes
+      await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+      let playerIndex
+      for (let k = 1; k < newGroupPlayerArray.length; k++) {
+        playerIndex = householdPlayerList.findIndex(p => p.playerName === newGroupPlayerArray[k])
+        args = { MemberID: householdPlayerList[playerIndex].uuid }
+        await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'AddMember', args)
+      }
+    }
+    return {}
+  }
+
   /**  Create a stereo pair of players. Right one will be hidden! Is only support for some type of SONOS player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
@@ -1500,7 +1589,6 @@ module.exports = function (RED) {
   /**  Get household groups. Ignore hidden player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    * @param  {array}   payloadPath not used
    * @param  {array}   cmdPath not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
@@ -1565,6 +1653,29 @@ module.exports = function (RED) {
       }
     } else {
       await sonosPlayer.deletePlaylist(id)
+    }
+    return {}
+  }
+
+  /**  Seperate group in household.
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function householdSeparateGroup (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const args = {} // no changes
+    for (let i = 1; i < groupData.members.length; i++) {  // start with 1 - coordinator is last
+      groupData.members[i];
+      await setCmd(groupData.members[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
     }
     return {}
   }
