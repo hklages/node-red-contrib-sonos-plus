@@ -20,6 +20,7 @@ module.exports = function (RED) {
 
   // function lexical order, ascending
   const COMMAND_TABLE_UNIVERSAL = {
+    'coordinator.delegate': coordinatorDelegateCoordination,
     'group.adjust.volume': groupAdjustVolume,
     'group.clear.queue': groupClearQueue,
     'group.create.snap': groupCreateSnapshot,
@@ -67,7 +68,6 @@ module.exports = function (RED) {
     'joiner.play.notification': joinerPlayNotification,
     'player.adjust.volume': playerAdjustVolume,
     'player.become.standalone': playerBecomeStandalone,
-    'player.delegate.coordination': playerDelegateCoordination,
     'player.get.bass': playerGetBass,
     'player.get.dialoglevel': playerGetEq,
     'player.get.led': playerGetLed,
@@ -232,6 +232,44 @@ module.exports = function (RED) {
   //
   // ========================================================================
 
+  /**  Coordinator delegate coordination of group. New player must be in same group!
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {string}  msg[payloadPath[0]]  name of new coordinator - must be in same group as player!
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer - must be coordinator
+   * @param  {array}   payloadPath payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}   cmdPath not used
+   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   */
+  async function coordinatorDelegateCoordination (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload new player name is required.
+    const validatedPlayerName= stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX)
+
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    // player must be coordinator to be able to delegate
+    if (groupData.playerIndex != 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Player must be coordinator`)
+    }
+    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
+
+    // check PlayerName is in group and then get the UUID 
+    const indexNewCoordinator = groupData.members.findIndex(p => p.sonosName === validatedPlayerName)
+    if (indexNewCoordinator === -1) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Could not find player name in current group`)
+    }
+    
+    const args = { "NewCoordinator": groupData.members[indexNewCoordinator].uuid } // will not leave group as default
+    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', args)
+
+    return {}
+  }
+  
   /**  Adjust group volume.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
@@ -1882,44 +1920,6 @@ module.exports = function (RED) {
 
     const args = {} // no changes
     await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
-
-    return {}
-  }
-
-  /**  Player delegate coordination of group. Player must be coordinator!
-   * @param  {object}  node not used
-   * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]]  name of new coordinator - must be in same group as player!
-   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer - must be coordinator
-   * @param  {array}   payloadPath payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
-   * @param  {object}  sonosPlayer Sonos player - as default and anchor player
-   *
-   * @return {promise} {}
-   *
-   * @throws any functions throws error and explicit throws
-   */
-  async function playerDelegateCoordination (node, msg, payloadPath, cmdPath, sonosPlayer) {
-    // payload new player name is required.
-    const validatedPlayerName= stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX)
-
-    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
-    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    // player must be coordinator to be able to delegate
-    if (groupData.playerIndex != 0) {
-      throw new Error(`${NRCSP_ERRORPREFIX} Player must be coordinator`)
-    }
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
-
-    // check PlayerName is in group and then get the UUID 
-    const indexNewCoordinator = groupData.members.findIndex(p => p.sonosName === validatedPlayerName)
-    if (indexNewCoordinator === -1) {
-      throw new Error(`${NRCSP_ERRORPREFIX} Could not find player name in current group`)
-    }
-    
-    const args = { "NewCoordinator": groupData.members[indexNewCoordinator].uuid } // will not leave group as default
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', args)
 
     return {}
   }
