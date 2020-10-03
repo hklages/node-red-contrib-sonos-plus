@@ -258,12 +258,15 @@ module.exports = function (RED) {
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
-    // check PlayerName is in group and then get the UUID 
+    // check PlayerName is in group and not same as old coordinator 
     const indexNewCoordinator = groupData.members.findIndex(p => p.sonosName === validatedPlayerName)
     if (indexNewCoordinator === -1) {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find player name in current group`)
     }
-    
+    if (indexNewCoordinator === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} New coordinator must be differerent from current coordinator`)
+    }
+
     const args = { "NewCoordinator": groupData.members[indexNewCoordinator].uuid } // will not leave group as default
     await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', args)
 
