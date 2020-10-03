@@ -592,7 +592,7 @@ module.exports = {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         visible = true
         if (Object.prototype.hasOwnProperty.call(allGroupsData[groupIndex].ZoneGroupMember[memberIndex],'Invisible')) {
-            visible = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
+          visible = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
         } 
         if (visible) {
           playerUrl = new URL(allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Location)

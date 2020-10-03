@@ -115,7 +115,7 @@ module.exports = function (RED) {
       getMusicLibraryPlaylists(node, msg, sonosPlayer)
     } else if (command === 'insert_musiclibrary_playlist') {
       insertMusicLibraryPlaylist(node, msg, sonosPlayer)
-    // depreciated since 3.1.3 2020-05-14
+      // depreciated since 3.1.3 2020-05-14
     } else if (command === 'play_song') {
       playSong(node, msg, sonosPlayer, msg.topic)
     } else if (command === 'remove_song') {
@@ -129,7 +129,7 @@ module.exports = function (RED) {
       setQueuemode(node, msg, sonosPlayer)
     } else if (command === 'seek') {
       seek(node, msg, sonosPlayer)
-    // depreciated since 3.1.0 2020-05-01
+      // depreciated since 3.1.0 2020-05-01
     } else if (command === 'get_queue') {
       getQueue(node, msg, sonosPlayer)
     } else if (command === 'get_sonos_playlists') {
@@ -841,25 +841,25 @@ module.exports = function (RED) {
         spotifyId = spotifyId.substring(0, idEnd)
         let newUri
         switch (spotifyType) {
-          case 'playlist':
-            newUri = `spotify:user:spotify:playlist:${spotifyId}`
-            break
-          case 'album':
-            if (onlyPlaylists) {
-              throw new Error('n-r-c-s-p: album found but no playlist')
-            } else {
-              newUri = `spotify:album:${spotifyId}`
-            }
-            break
-          case 'track':
-            if (onlyPlaylists) {
-              throw new Error('n-r-c-s-p: album found but no playlist')
-            } else {
-              newUri = `spotify:track:${spotifyId}`
-            }
-            break
-          default:
-            throw new Error('n-r-c-s-p: invalid spotify type: ' + spotifyType)
+        case 'playlist':
+          newUri = `spotify:user:spotify:playlist:${spotifyId}`
+          break
+        case 'album':
+          if (onlyPlaylists) {
+            throw new Error('n-r-c-s-p: album found but no playlist')
+          } else {
+            newUri = `spotify:album:${spotifyId}`
+          }
+          break
+        case 'track':
+          if (onlyPlaylists) {
+            throw new Error('n-r-c-s-p: album found but no playlist')
+          } else {
+            newUri = `spotify:track:${spotifyId}`
+          }
+          break
+        default:
+          throw new Error('n-r-c-s-p: invalid spotify type: ' + spotifyType)
         }
         node.debug('uri> ' + JSON.stringify(newUri))
         return newUri

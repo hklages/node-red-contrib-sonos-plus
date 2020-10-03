@@ -126,16 +126,16 @@ module.exports = {
   encodeXml: xmlData => {
     return xmlData.replace(/[<>&'"]/g, singleChar => {
       switch (singleChar) {
-        case '<':
-          return '&lt;'
-        case '>':
-          return '&gt;'
-        case '&':
-          return '&amp;'
-        case "'":
-          return '&apos;'
-        case '"':
-          return '&quot;'
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+      case '&':
+        return '&amp;'
+      case '\'':
+        return '&apos;'
+      case '"':
+        return '&quot;'
       }
     })
   },

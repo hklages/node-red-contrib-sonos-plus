@@ -267,7 +267,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} New coordinator must be differerent from current coordinator`)
     }
 
-    const args = { "NewCoordinator": groupData.members[indexNewCoordinator].uuid } // will not leave group as default
+    const args = { 'NewCoordinator': groupData.members[indexNewCoordinator].uuid } // will not leave group as default
     await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', args)
 
     return {}
@@ -635,7 +635,7 @@ module.exports = function (RED) {
     // get station uri for all "x-sonosapi-stream"
     let stationArtUri = ''
     if (uri.startsWith('x-sonosapi-stream')) {
-      stationArtUri = sonosCoordinator.baseUrl + "/getaa?s=1&u=" + uri
+      stationArtUri = sonosCoordinator.baseUrl + '/getaa?s=1&u=' + uri
     }
 
     // get current position data
@@ -1705,7 +1705,7 @@ module.exports = function (RED) {
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const args = {} // no changes
     for (let i = 1; i < groupData.members.length; i++) {  // start with 1 - coordinator is last
-      groupData.members[i];
+      groupData.members[i]
       await setCmd(groupData.members[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
     }
     return {}
