@@ -24,7 +24,9 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 - In Universal node: new commands household.create.group, household.separate.group, player.become.standalone, coordinator.delegate
 
-- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
+- Usage of nodes "Control Player", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
+
+- Node "Get Status" and "Manage Radio" removed
 
 ## Installation
 

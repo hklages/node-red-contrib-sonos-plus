@@ -16,8 +16,6 @@
     "nodes": {
       "sonos-config": "src/sonos-config.js",
       "sonos-control-player": "src/sonos-control-player.js",
-      "sonos-get-status": "src/sonos-get-status.js",
-      "sonos-manage-radio": "src/sonos-manage-radio.js",
       "sonos-manage-queue": "src/sonos-manage-queue.js",
       "sonos-manage-mysonos": "src/sonos-manage-mysonos.js",
       "sonos-universal": "src/sonos-universal.js"

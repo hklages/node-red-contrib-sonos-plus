@@ -8,7 +8,7 @@ All notable changes to this project are documented in this file.
 
 - dependencies update axio, eslint-plugin-import
 
-- removed node manage-radio and get_status
+- removed node: manage-radio and get_status n
 
 ### Added
 
