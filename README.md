@@ -22,11 +22,11 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 - In "Universal", "My Sonos" node: You can now select the command and provide the state inside the node. Please use it! It works in default and in compatibility mode.
 
-- In "Universal", "My Sonos" node: Some commands are renamed and the ouput is now always in msg.payload. State input is expected in msg.payload.
+- In Universal node: new commands household.create.group, household.separate.group, player.become.standalone, coordinator.delegate
 
-- In "Universal" node: added commands group.set.volume, group.create.volumesnap
+- Usage of nodes "Control Player", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
 
-- Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
+- Node "Get Status" and "Manage Radio" removed
 
 ## Installation
 

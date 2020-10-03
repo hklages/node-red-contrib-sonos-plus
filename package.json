@@ -16,8 +16,6 @@
     "nodes": {
       "sonos-config": "src/sonos-config.js",
       "sonos-control-player": "src/sonos-control-player.js",
-      "sonos-get-status": "src/sonos-get-status.js",
-      "sonos-manage-radio": "src/sonos-manage-radio.js",
       "sonos-manage-queue": "src/sonos-manage-queue.js",
       "sonos-manage-mysonos": "src/sonos-manage-mysonos.js",
       "sonos-universal": "src/sonos-universal.js"
@@ -34,15 +32,16 @@
   "author": "hklages",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.20.0",
     "fs-extra": "^9.0.1",
     "path": "^0.12.7",
     "sonos": "^1.14.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
+    "eslint": "^7.10.0",
     "eslint-config-standard": "^14.1.1",
-    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1"

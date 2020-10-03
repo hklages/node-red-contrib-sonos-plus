@@ -60,13 +60,14 @@
       <label for="node-input-confignode"> Config Node</label>
       <input type="text" id="node-input-confignode"/>
     </div>
-    
-    <!-- Compatibility mode -->
+
+    <!-- Compatibility mode style -->
     <div class="form-row">
       <label for="node-input-compatibilityMode"> Compatibility</label>
       <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
+        Caution: Compatibility mode is depreciated!
     </div>
-    
+
     <!-- input state -->
     <div class="form-row">
       <label for="node-input-state"><i class="fa fa-envelope"></i> State</label>
@@ -88,22 +89,24 @@
     
     <!-- Dialog help -->
     <div class="text">        
-      <b>Config Node</b> provides the default SONOS player.<br><br>
+      <b>Config Node</b> provides the default SONOS player by ip address or serialnumber.<br>
+      For many commands <code>msg.playerName</code> may be used and should hold the<br>
+      SONOS player name. <code>msg.playerName</code> overrides config node player.<br><br>
     
-      The new standard for <b>input message usage</b> is: 
+      The new standard (since version 4) for <b>input message usage</b> is:
       <ul>
         <li><code>msg.topic</code> holds the command</li>
         <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
-      
-      Tic <b>Compatibility (NOT recommended)</b> to get the old style with <code>msg.payload</code><br>
-      for commands and <code>msg.topic</code> for the state/message.<br><br>
-      
-      <b>State</b> is used to input the state.<br><br>
 
-      <b>Command</b> provides a pick up list of all available commmands<br>
-      and "using msg".
+      <b>Command</b> provides a pick up list of all available commmands and using it will<br>
+      override msg.topic<br><br>
+      
+      <b>State</b> overrides msg.payload<br><br>
 
+      Tic <b>Compatibility (depreciated)</b> to get the old style (before version 4) with <br>
+      <code>msg.payload</code> for commands and <code>msg.topic</code> for the state/message.<br><br>
+      
     </div>
   </div>
 </script>
@@ -127,14 +130,16 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">
-<p>This node provides all commands related to My Sonos and the Music Library. Default is My Sonos.<p>
-<br>
+<p>This node provides all commands related to My Sonos and the Music Library.<p><br>
 
 <h1>Input</h1>
 
-Each command has specific input and output properties.
+The incoming command <code>msg.topic</code> - if used - is converted to the full command name in lowercase.<br>
+
+Each command has specific input and output properties.<br>
+
 Details: <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
-<br>
+<br><br>
 
 The most important properties are: 
 
@@ -144,24 +149,18 @@ The most important properties are:
   <dd>The case sensitive new state/message like on/off, uri, .... </dd>
 
   <dt class="required">topic <span class="property-type">string</span></dt>
-  <dd>The command like group.play, group.play.queue, ...</dd>
+  <dd>The command like mysonos.queue.item, ...</dd>
 
 </dl>
 <br>
 
-<h1>Outputs</h1>
+<h1>Output</h1>
 
-The incoming command (msg.topic) is converted to the full command name in lowercase. Furthermore all "get/export" commands outputs to msg.payload.
-Details: <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
+All "get/export" commands outputs to msg.payload. 
 
 <dl class="message-properties">
     <dt>payload <span class="property-type">depend on command</span> </dt>
     <dd>In case of <b>get/export</b> the requested data is being provided. </dd>
 </dl>
-<br>
-
-<h1>Available Commands</h3>
-
-See the node dialog (field command) and details <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
   
 </script>
