@@ -22,7 +22,9 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 - In "Universal", "My Sonos" node: You can now select the command and provide the state inside the node. Please use it! It works in default and in compatibility mode.
 
-- In Universal node: new commands household.create.group, household.separate.group, player.become.standalone, coordinator.delegate
+- In Universal node: !!!! household.create.group - provide a comma separated list with coordinator at first position
+
+- In Universal node: new commands household.separate.group, player.become.standalone, coordinator.delegate
 
 - Usage of nodes "Control Player", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
 

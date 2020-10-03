@@ -1498,6 +1498,12 @@ module.exports = function (RED) {
     
     const validatedPlayerList = stringValidRegex(msg, payloadPath[0], REGEX_CSV, 'player list', NRCSP_ERRORPREFIX)
     const newGroupPlayerArray = validatedPlayerList.split(',')
+
+    // verify all are unique
+    const uniqueArray = newGroupPlayerArray.filter((x, i, a) => a.indexOf(x) == i)
+    if (uniqueArray.length < newGroupPlayerArray.length) {
+      throw new Error(`${NRCSP_ERRORPREFIX} List includes a player multiple times`)
+    }
     
     // get groups with members and convert multi dimensioal array to simple array where objects have new property groupIndex, memberIndex
     const householdPlayerList = await getAllPlayerList(sonosPlayer)

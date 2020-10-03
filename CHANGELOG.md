@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
-- Universal node: new commands player.become.standalone, coordinator.delegate, household.separate.group, household.create.group
+- Universal node: new commands household.create.group, household.separate.group, player.become.standalone, coordinator.delegate
 
 ## [4.1.4] 2020-09-22
 
