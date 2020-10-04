@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.2.1] 2020-10-04
+
+### Changed
+
+- dependencies dev - removed some eslint packages
+
+- documentation update
+
 ## [4.2.0] 2020-10-03
 
 ### Changed

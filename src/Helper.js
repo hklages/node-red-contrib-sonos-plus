@@ -144,7 +144,7 @@ module.exports = {
           if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
             const upnpErrorCode = module.exports.getErrorCodeFromEnvelope(error.message.substring(module.exports.NODE_SONOS_UPNP500.length))
             msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
-            // TODO service is not known, therefore we can not evaluate the error text.
+            // TODO Notion Helper-Service
             msgDetails = module.exports.getErrorMessageV1(upnpErrorCode, module.exports.ERROR_CODES.UPNP, '') // only UPNP errors
           } else {
             // unlikely as all UPNP errors throw 500

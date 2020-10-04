@@ -68,17 +68,17 @@
         Caution: Compatibility mode is depreciated!
     </div>
 
+    <!-- Command selection -->
+    <div class="form-row">
+      <label for="node-input-command"><i class="fa fa-tasks"></i> Command</label>
+      <select id="node-input-command" style="width:70%"></select>
+    </div>
+
     <!-- input state -->
     <div class="form-row">
       <label for="node-input-state"><i class="fa fa-envelope"></i> State</label>
       <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank (type string) to use msg property"/>
       <input type="hidden" id="node-input-stateType"/>
-    </div>
-
-    <!-- Command selection -->
-    <div class="form-row">
-      <label for="node-input-command"><i class="fa fa-tasks"></i> Command</label>
-      <select id="node-input-command" style="width:70%"></select>
     </div>
 
     <!-- Node name -->
@@ -89,23 +89,21 @@
     
     <!-- Dialog help -->
     <div class="text">        
-      <b>Config Node</b> provides the default SONOS player by ip address or serialnumber.<br>
-      For many commands <code>msg.playerName</code> may be used and should hold the<br>
-      SONOS player name. <code>msg.playerName</code> overrides config node player.<br><br>
+      <b>Config Node</b> provides the default SONOS player by ip address or serialnumber.<br><br>
     
       The new standard (since version 4) for <b>input message usage</b> is:
       <ul>
         <li><code>msg.topic</code> holds the command</li>
         <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
-
-      <b>Command</b> provides a pick up list of all available commmands and using it will<br>
-      override msg.topic<br><br>
-      
-      <b>State</b> overrides msg.payload<br><br>
+      Dialog values override msg properties.<br><br>
 
       Tic <b>Compatibility (depreciated)</b> to get the old style (before version 4) with <br>
       <code>msg.payload</code> for commands and <code>msg.topic</code> for the state/message.<br><br>
+
+      <b>Command</b> provides a pick up list of all available commmands.<br><br>
+      
+      <b>State</b> free form field for additional data e. g. on/off.<br><br>
       
     </div>
   </div>
@@ -113,9 +111,9 @@
 
 <script type="text/javascript">
   // mySonosCmdList has to be kept in sync with the table in .js file! First item is message! 
-  // TODO find a comman base for mySonosCmdList and COMMAND_TABLE_MYSONOS
   // We need two properties for <select>
   // Message first, all others in lexical order, ascending
+  // TODO Notion Command Lists Sync
     const mySonosCmdList = [
     {cmd: "message", text: "using msg"},
     {cmd: "library.export.playlist", text: "Library: export the specified playlist"},
@@ -130,16 +128,16 @@
 
 <!-- Help text (HTML) -->
 <script type="text/x-red" data-help-name="sonos-manage-mysonos">
-<p>This node provides all commands related to My Sonos and the Music Library.<p><br>
+<p>This node provides all commands related to My Sonos and the Music Library.<p>
 
+Command and state can be provided in the dialog or with incoming message - see dialog.<br><br>
+  
+<a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki">Introduction</a><br>
+<a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.2-My-Sonos-Node">Details My Sonos node</a>
+  
 <h1>Input</h1>
 
-The incoming command <code>msg.topic</code> - if used - is converted to the full command name in lowercase.<br>
-
-Each command has specific input and output properties.<br>
-
-Details: <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A400.2-My-Sonos-Node">here.</a>
-<br><br>
+Each command has specific input and output properties.<br><br>
 
 The most important properties are: 
 

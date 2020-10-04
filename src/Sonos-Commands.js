@@ -50,8 +50,7 @@ module.exports = {
    *
    */
 
-  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
-  // TODO maybe part better in Node file not commands
+  // TODO Notion Remove with Node Control Player
   playNotificationRevised: async function (node, membersAsPlayerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -161,7 +160,7 @@ module.exports = {
    * @throws if invalid response from setAVTransportURI, play,
    */
 
-  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
+  // TODO Notion player labeling
   playGroupNotification: async function (node, membersAsPlayerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -281,7 +280,7 @@ module.exports = {
    * Hint: joiner will leave group, play notification and rejoin the group. State will be imported from group.
    */
 
-  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
+  // TODO Notion player labeling
   playJoinerNotification: async function (node, coordinatorPlus, joinerPlus, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -400,9 +399,8 @@ module.exports = {
    * @throws if invalid response from SONOS player
    *
   */
-  // TODO capture also the group id for verifcation
-  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
-  // TODO await error handling
+  // TODO Notion capture group member
+  // TODO Notion player labeling
   createGroupSnapshot: async function (node, membersAsPlayersPlus, options) {
     // getCurrentState will return playing for a non-coordinator player even if group is playing
 
@@ -451,9 +449,9 @@ module.exports = {
    *
    */
 
-  // TODO next release with group identifier to ensure that group is not mixed up
-  // TODO has to be reviesed - mixture of different calls: members[].xxx and function(members[])
-  // TODO await error handling
+  // TODO Notion capture group member
+  // TODO Notion player labeling
+  // TODO Notion await error handling
   restoreGroupSnapshot: async function (node, membersAsPlayersPlus, snapshot) {
     // restore content: URI and track
     const coordinatorIndex = 0
@@ -628,8 +626,7 @@ module.exports = {
    */
   getAllMySonosItemsV2: async function (sonosPlayerBaseUrl) {
     // receive data from player - uses default action for Favorites defined in Sonos-Actions, also only 100 entries!
-    // TODO check whether limit 100 is a problem or better use 200, 500, 1000?
-
+    // TODO Notion limit 100
     // get all My Sonos items - but not Sonos playlists (ObjectID FV:2)
     const response = await module.exports.getCmd(sonosPlayerBaseUrl, 'Browse')
     if (!isTruthyAndNotEmptyString(response)) {
@@ -894,7 +891,7 @@ module.exports = {
    * @throws error if string not found
    */
 
-  // TODO is that function needed - could us .find in array.
+  // TODO Notion use build in
   findStringInMySonosTitleV1: async function (items, searchString) {
     for (var i = 0; i < items.length; i++) {
       if (items[i].title.includes(searchString)) {

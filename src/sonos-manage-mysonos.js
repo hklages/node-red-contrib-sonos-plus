@@ -322,8 +322,8 @@ module.exports = function (RED) {
    *
    * Info:  msg.filter currently undocumented feature.
    */
-  // TODO: filter not enabled
-  // TODO: clearQueue as parameter?
+  // TODO Notion implement filter
+  // TODO Notion clearQueue as parameter
   async function mysonosQueueItem (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
@@ -371,11 +371,11 @@ module.exports = function (RED) {
    * @throws all functions
    *
    */
-  // TODO filter still not defined
+  
   async function mysonosStreamItem (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
-    // TODO similiar to addURI, get service provider!
+    // TODO Notion implement filter
     const filter = {
       processingType: 'stream',
       mediaType: 'all',
@@ -387,7 +387,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
     const foundItem = await findStringInMySonosTitleV1(mySonosItems, validatedSearchString, filter)
-    // TODO switch to set...  current Metadata not used!
+    // TODO Notion replace node-sonos
     // this does setting the uri AND plays it!
     await sonosPlayer.setAVTransportURI(foundItem.uri)
 
