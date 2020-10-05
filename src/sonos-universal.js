@@ -10,7 +10,7 @@ const {
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
   createGroupSnapshot, restoreGroupSnapshot, saveQueue, getAllPlayerList, getAllSonosPlaylists, sortedGroupArray,
-  getGroupVolume, getGroupMute, getPlayerQueue, setGroupVolumeRelative, getRadioId, setGroupMute, getCmd, setCmd
+  getGroupVolume, getGroupMute, getPlayerQueue, setGroupVolumeRelative, getRadioId, setGroupMute, getCmd, setGetCmdV2, 
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -268,7 +268,7 @@ module.exports = function (RED) {
     }
 
     const args = { 'NewCoordinator': groupData.members[indexNewCoordinator].uuid } // will not leave group as default
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', args)
+    await setGetCmdV2(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', args)
 
     return {}
   }
@@ -379,7 +379,7 @@ module.exports = function (RED) {
   async function groupCreateVolumeSnapshot (node, msg, payloadPath, cmdPath, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await setCmd(groupData.members[0].baseUrl, 'SnapshotGroupVolume', {}) // 0 stands for coordinator
+    await setGetCmdV2(groupData.members[0].baseUrl, 'SnapshotGroupVolume', {}) // 0 stands for coordinator
     return {}
   }
 
@@ -1281,7 +1281,7 @@ module.exports = function (RED) {
     const validTime = stringValidRegex(msg, payloadPath[0], REGEX_TIME, 'seek time', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await setCmd(groupData.members[0].baseUrl, 'Seek', { Target: validTime }) // 0 stands for coordinator
+    await setGetCmdV2(groupData.members[0].baseUrl, 'Seek', { Target: validTime }) // 0 stands for coordinator
     return {}
   }
 
@@ -1303,7 +1303,7 @@ module.exports = function (RED) {
     const validTime = stringValidRegex(msg, payloadPath[0], REGEX_TIME_DELTA, 'relative seek time', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await setCmd(groupData.members[0].baseUrl, 'Seek-delta', { Target: validTime }) // 0 stands for coordinator
+    await setGetCmdV2(groupData.members[0].baseUrl, 'Seek-delta', { Target: validTime }) // 0 stands for coordinator
     return {}
   }
 
@@ -1328,7 +1328,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
-    await setCmd(groupData.members[0].baseUrl, 'SetCrossfadeMode', { CrossfadeMode: newState }) // 0 stands for coordinator
+    await setGetCmdV2(groupData.members[0].baseUrl, 'SetCrossfadeMode', { CrossfadeMode: newState }) // 0 stands for coordinator
     return {}
   }
 
@@ -1415,7 +1415,7 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await setCmd(groupData.members[0].baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: validTime }) // 0 stands for coordinator
+    await setGetCmdV2(groupData.members[0].baseUrl, 'ConfigureSleepTimer', { NewSleepTimerDuration: validTime }) // 0 stands for coordinator
     return {}
   }
 
@@ -1436,7 +1436,7 @@ module.exports = function (RED) {
     const newVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'new volume', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await setCmd(groupData.members[0].baseUrl, 'SetGroupVolume', { DesiredVolume: newVolume }) // 0 stands for coordinator
+    await setGetCmdV2(groupData.members[0].baseUrl, 'SetGroupVolume', { DesiredVolume: newVolume }) // 0 stands for coordinator
     return {}
   }
 
@@ -1534,7 +1534,7 @@ module.exports = function (RED) {
           if (householdPlayerList[i].groupIndex === householdPlayerList[indexNewCoordinator].groupIndex) {
             // leave group
             args = {} // no changes
-            await setCmd(householdPlayerList[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+            await setGetCmdV2(householdPlayerList[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
           }
         } else {
           if (householdPlayerList[i].groupIndex !== householdPlayerList[indexNewCoordinator].groupIndex) {
@@ -1546,7 +1546,7 @@ module.exports = function (RED) {
       }
     } else {
       args = {} // no changes
-      await setCmd(householdPlayerList[indexNewCoordinator].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+      await setGetCmdV2(householdPlayerList[indexNewCoordinator].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) // because it takes time to BecomeCoordinator
       let indexPlayer
       let sonosPl // node sonos player object
@@ -1572,7 +1572,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    *
-   * Caution: In setCmd it should be left: playerLeftBaseUrl
+   * Caution: In setGetCmdV2 it should be left: playerLeftBaseUrl
    *
    */
   async function householdCreateStereoPair (node, msg, payloadPath, cmdPath, sonosPlayer) {
@@ -1613,7 +1613,7 @@ module.exports = function (RED) {
     if (playerRightUuid === '') {
       throw new Error(`${NRCSP_ERRORPREFIX} player name right was not found`)
     }
-    await setCmd(playerLeftBaseUrl, 'CreateStereoPair', { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
+    await setGetCmdV2(playerLeftBaseUrl, 'CreateStereoPair', { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
     return {}
   }
 
@@ -1706,7 +1706,7 @@ module.exports = function (RED) {
     const args = {} // no changes
     for (let i = 1; i < groupData.members.length; i++) {  // start with 1 - coordinator is last
       groupData.members[i]
-      await setCmd(groupData.members[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+      await setGetCmdV2(groupData.members[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
     }
     return {}
   }
@@ -1770,7 +1770,7 @@ module.exports = function (RED) {
     if (playerRightUuid === '') {
       throw new Error(`${NRCSP_ERRORPREFIX} player name right was not found`)
     }
-    await setCmd(playerLeftBaseUrl, 'SeparateStereoPair', { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
+    await setGetCmdV2(playerLeftBaseUrl, 'SeparateStereoPair', { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
     return {}
   }
 
@@ -1928,7 +1928,7 @@ module.exports = function (RED) {
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
     const args = {} // no changes
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
+    await setGetCmdV2(groupData.members[groupData.playerIndex].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', args)
 
     return {}
   }
@@ -2303,7 +2303,7 @@ module.exports = function (RED) {
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
     const args = { DesiredBass: newBass }
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'SetBass', args)
+    await setGetCmdV2(groupData.members[groupData.playerIndex].baseUrl, 'SetBass', args)
 
     return {}
   }
@@ -2354,7 +2354,7 @@ module.exports = function (RED) {
     }
 
     const args = { EQType: eqType, DesiredValue: eqValue }
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'SetEQ', args)
+    await setGetCmdV2(groupData.members[groupData.playerIndex].baseUrl, 'SetEQ', args)
     return {}
   }
 
@@ -2405,7 +2405,7 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'SetLoudness', { DesiredLoudness: newState })
+    await setGetCmdV2(groupData.members[groupData.playerIndex].baseUrl, 'SetLoudness', { DesiredLoudness: newState })
     return {}
   }
 
@@ -2457,7 +2457,7 @@ module.exports = function (RED) {
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
     const args = { DesiredTreble: newTreble }
-    await setCmd(groupData.members[groupData.playerIndex].baseUrl, 'SetTreble', args)
+    await setGetCmdV2(groupData.members[groupData.playerIndex].baseUrl, 'SetTreble', args)
 
     return {}
   }

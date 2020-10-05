@@ -10,6 +10,7 @@ module.exports = {
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
   MIME_TYPES: ['.mp3', '.mp4', '.flac', '.m4a', '.ogg', '.wma'],
   ACTIONS_TEMPLATES: require('./Sonos-Actions.json'),
+  ACTIONS_TEMPLATESV2: require('./Sonos-ActionsV2.json'),
   SERVICES: require('./Sonos-Services.json'),
 
   UNPN_CLASSES_UNSUPPORTED: [
@@ -841,8 +842,8 @@ module.exports = {
   },
 
   /**  Get action with new value.
-   * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
-   * @param  {string} actionName the action name
+   * @param  {string} baseUrl the player base url for instance http://192.168.178.37:1400
+   * @param  {string} actionName the action name for instance GetCurrentTransportActions
    * @return {promise} value from action
    *
    * PREREQ: Expectation is that the value is of type string - otherwise an error is
@@ -876,6 +877,75 @@ module.exports = {
     }
     return result
   },
+
+
+  /**  Execute action - handles get and set. Version 2 needs Sonos-ActionsV2.JSON
+   * @param  {string} baseUrl the player base url for instance http://192.168.178.37:1400
+   * @param  {string} actionName the action name for instance Seek
+   * @param  {object} modifiedArgs only those properties being modified
+   *
+   * @return {promise} set: true/false | get: value from action
+   *
+   * Everything OK if statusCode === 200 and body includes expected response value/value.
+   */
+  setGetCmdV2: async function (baseUrl, action, newArgs) {
+    // get action defaults from definition file and update with new arguments
+    const actionParameter = module.exports.ACTIONS_TEMPLATESV2[action] 
+    const { path, args } = actionParameter
+    Object.assign(args, newArgs) 
+
+    // generate other parameter
+    const tmp = path.split('/')  // path is eather /<device>/<name>/Control or /name/Control
+    const name = tmp[tmp.length - 2]
+    const key = ['s:Envelope', 's:Body'] // for response
+    key.push(`u:${action}Response`)
+    // eslint-disable-next-line no-prototype-builtins
+    const isGetAction = actionParameter.hasOwnProperty('returnValueName')  
+    let expectedResponseValue // only needed in case of not isGetAction
+    if (isGetAction) {
+      key.push(actionParameter.returnValueName)
+      // no expected response value
+    } else {
+      key.push('xmlns:u')    
+      expectedResponseValue = `urn:schemas-upnp-org:service:${name}:1`
+    }
+ 
+    const response = await sendToPlayerV1(baseUrl, path, name, action, args)
+
+    // check response statusCode:
+    // Everything OK if statusCode === 200 and body includes expected response value or requested value
+    if (!isValidProperty(response, ['statusCode'])) {
+      // This should never happen. Avoiding unhandled exception.
+      throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
+    }
+    if (response.statusCode !== 200) {
+      // This should not happen as long as axios is being used. Avoiding unhandled exception.
+      throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
+    }
+    if (!isValidProperty(response, ['body'])) {
+      // This should not happen. Avoiding unhandled exception.
+      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
+    }
+    const bodyXml = await parseSoapBodyV1(response.body, '')
+    // check body response - select/transform item properties
+    if (!isValidProperty(bodyXml, key)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
+    }
+    let result = getNestedProperty(bodyXml, key)
+    if (isGetAction) {
+      if (typeof result !== 'string') {
+        // Caution: this check does only work for primitive values (not objects)
+        throw new Error(`${NRCSP_ERRORPREFIX} could not get string value from player`)
+      }
+    } else {
+      if (result !== expectedResponseValue) {
+        throw new Error(`${NRCSP_ERRORPREFIX} response from player not expected >>${JSON.stringify(result)}`)
+      }
+      result = true
+    }
+    return result
+  },
+
 
   // ========================================================================
   //

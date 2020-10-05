@@ -1,8 +1,6 @@
 {
   "Browse": {
     "path": "/MediaServer/ContentDirectory/Control",
-    "name": "ContentDirectory",
-    "action": "Browse",
     "args": {
       "InstanceID": 0,
       "BrowseFlag": "BrowseDirectChildren",
@@ -12,19 +10,11 @@
       "SortCriteria": "",
       "ObjectID": "FV:2"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:BrowseResponse",
-      "Result"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "returnValueName": "Result",
     "info": "ObjectID: FV:2 = Get the My Sonos is default!"
   },
   "BrowseSQ": {
     "path": "/MediaServer/ContentDirectory/Control",
-    "name": "ContentDirectory",
-    "action": "Browse",
     "args": {
       "InstanceID": 0,
       "BrowseFlag": "BrowseDirectChildren",
@@ -34,72 +24,37 @@
       "SortCriteria": "",
       "ObjectID": "SQ:"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:BrowseResponse",
-      "Result"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
+    "returnValueName": "Result",
     "info": "ObjectID: SQ = Sonos playlists"
   },
   "SetAVTransportURI": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "SetAVTransportURI",
     "args": {
       "InstanceID": 0,
       "CurrentURI": "",
       "CurrentURIMetaData": ""
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetAVTransportURIResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "set the player to specific playing mode: queue (x-rincon-queue:<macaddress>0<port>#0), stream, tv, ...",
     "status": ""
   },
   "Play": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "Play",
     "args": {
       "InstanceID": 0,
       "Speed": 1
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:PlayResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "start playing - prereq is that uri is set (either stream or queue) . Response value is boolean" 
   },
   "RemoveAllTracksFromQueue": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "RemoveAllTracksFromQueue",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:RemoveAllTracksFromQueueResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "flush queue",
     "status": "in work"
   },
   "AddURIToQueue": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "AddURIToQueue",
     "args": {
       "InstanceID": 0,
       "EnqueuedURI": "",
@@ -107,119 +62,60 @@
       "DesiredFirstTrackNumberEnqueued": 0,
       "EnqueueAsNext": 1
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:AddURIToQueueResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Add uri to queue, Enqueued meta data in DIDL light format"
   },
   "Seek": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "Seek",
     "args": {
       "InstanceID": 0,
       "Unit": "REL_TIME",
       "Target": "00:01:00"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SeekResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Seek with REL_TIME move to position in current song - type string hh:mm:ss"
   },
   "Seek-delta": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "Seek",
     "args": {
       "InstanceID": 0,
       "Unit": "TIME_DELTA",
       "Target": "00:00:15"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SeekResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Seek with TIME_DELTA move to position in current song- type string hh:mm:ss"
   },
   "SetBass": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "SetBass",
     "args": {
       "InstanceID": 0,
       "DesiredBass": "0"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetBassResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
     "info": "Set bass, value in range -10 ... 10 "
   },
   "GetBass": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "GetBass",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetBassResponse",
-      "CurrentBass"
-    ],
+    "returnValueName": "CurrentBass",
     "info": "Type is string"
   },
   "SetTreble": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "SetTreble",
     "args": {
       "InstanceID": 0,
       "DesiredTreble": "0"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetTrebleResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
     "info": "Set treble, value in range -10 ... 10 "
   },
   "GetTreble": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "GetTreble",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetTrebleResponse",
-      "CurrentTreble"
-    ],
+    "returnValueName": "CurrentTreble",
     "info": "Type is string"
   },
   "SetEQ": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "SetEQ",
     "args": {
       "InstanceID": 0,
       "EQType": "DialogLevel",
@@ -230,393 +126,198 @@
       "NightMode",
       "SubGain"
     ],
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetEQResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
     "info": "Set EQType and DesiredValue have to be set. DesiredValue depend on EQType - type number"
   },
   "GetEQ-DialogLevel": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "GetEQ",
     "args": {
       "InstanceID": 0,
       "EQType": "DialogLevel"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetEQResponse",
-      "CurrentValue"
-    ],
+    "returnValueName": "CurrentValue",
     "info": "Type is string"
   },
   "GetEQ-NightMode": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "GetEQ",
     "args": {
       "InstanceID": 0,
       "EQType": "NightMode"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetEQResponse",
-      "CurrentValue"
-    ],
+    "returnValueName": "CurrentValue",
     "info": "Type is string"
   },
   "GetEQ-SubGain": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "GetEQ",
     "args": {
       "InstanceID": 0,
       "EQType": "SubGain"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetEQResponse",
-      "CurrentValue"
-    ],
+    "returnValueName": "CurrentValue",
     "info": "Type is string"
   },
   "SetCrossfadeMode": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "SetCrossfadeMode",
     "args": {
       "InstanceID": 0,
       "CrossfadeMode": 1
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetCrossfadeModeResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Set CrossfadeMode 0 or 1 - type is number"
   },
   "GetCrossfadeMode": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "GetCrossfadeMode",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetCrossfadeModeResponse",
-      "CrossfadeMode"
-    ],
+    "returnValueName": "CrossfadeMode",
     "info": "will return 0 or 1 - type is string"
   },
   "SetLoudness": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "SetLoudness",
     "args": {
       "InstanceID": 0,
       "Channel": "Master",
       "DesiredLoudness": "1"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetLoudnessResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
     "info": "Set Loudness 0 or 1 - type number"
   },
   "GetLoudness": {
     "path": "/MediaRenderer/RenderingControl/Control",
-    "name": "RenderingControl",
-    "action": "GetLoudness",
     "argsValueName": "CurrentLoudness",
     "dataType": "string",
     "args": {
       "InstanceID": 0,
       "Channel": "Master"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetLoudnessResponse",
-      "CurrentLoudness"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:RenderingControl:1",
+    "returnValueName": "CurrentLoudness",
     "info": "Get Loudness 0 or 1 - type string"
   },
   "ConfigureSleepTimer": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "ConfigureSleepTimer",
     "args": {
       "InstanceID": 0,
       "NewSleepTimerDuration": "00:05:00"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:ConfigureSleepTimerResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Duration in format hh:mm:ss - type string"
   },
   "GetRemainingSleepTimerDuration": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "GetRemainingSleepTimerDuration",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetRemainingSleepTimerDurationResponse",
-      "RemainingSleepTimerDuration"
-    ],
+    "returnValueName": "RemainingSleepTimerDuration",
     "dataType": "string",
     "info": "returns duration in format hh:mm:ss - type string"
   },
   "CreateStereoPair": {
     "path": "/DeviceProperties/Control",
-    "name": "DeviceProperties",
-    "action": "CreateStereoPair",
     "args": {
       "InstanceID": 0,
       "ChannelMapSet": "RINCON_B8E9375831C001400:LF,LF;RINCON_000E58FE3AEA01400:RF,RF"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:CreateStereoPairResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
     "info": "pair stereo speakers, must be same model e.g. Play:1, parameters are uuid, format ${left}:LF,LF;${right}:RF,RF"
   },
   "SeparateStereoPair": {
     "path": "/DeviceProperties/Control",
-    "name": "DeviceProperties",
-    "action": "SeparateStereoPair",
     "args": {
       "InstanceID": 0,
       "ChannelMapSet": "RINCON_B8E9375831C001400:LF,LF;RINCON_000E58FE3AEA01400:RF,RF"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SeparateStereoPairResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:DeviceProperties:1",
     "info": "unpair stereo speakers - caution channelMapSet is only as example!!!!!!"
   },
   "GetTransportInfo": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "GetTransportInfo",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetTransportInfoResponse",
-      "CurrentTransportState"
-    ],
+    "returnValueName": "CurrentTransportState",
     "info": "will return PLAYING, PAUSED_PLAYBACK, ...  CAUTION: Client in group will always return playing. Hint: <currentTransportState> and two more xml items are returnd"
   },
   "GetCurrentTransportActions": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "GetCurrentTransportActions",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetCurrentTransportActionsResponse",
-      "Actions"
-    ],
+    "responsePathreturnValueName": "Actions",
   "info": "returns the current actions: Set, Stop, Pause, Play, X_DLNA_SeekTime, Next, X_DLNA_SeekTrackNr"
   },
   "SetRelativeGroupVolume": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
-    "name": "GroupRenderingControl",
-    "action": "SetRelativeGroupVolume",
     "args": {
       "InstanceID": 0,
       "Adjustment": "40"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetRelativeGroupVolumeResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
     "info": "set group relative volume, number/integer in range -99 ... -1 or +1 .. +99. returns NewVolume"
   },
   "GetGroupVolume": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
-    "name": "GroupRenderingControl",
-    "action": "GetGroupVolume",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetGroupVolumeResponse",
-      "CurrentVolume"
-    ],
+    "returnValueName": "CurrentVolume",
   "info": "returns the current group volume "
   },
   "SetGroupMute": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
-    "name": "GroupRenderingControl",
-    "action": "SetGroupMute",
     "args": {
       "InstanceID": 0,
       "DesiredMute": "1"
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetGroupMuteResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
     "info": "set group mute to on (1) or off (0)"
   },
   "GetGroupMute": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
-    "name": "GroupRenderingControl",
-    "action": "GetGroupMute",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:GetGroupMuteResponse",
-      "CurrentMute"
-    ],
+    "returnValueName": "CurrentMute",
   "info": "get group mute on (1) or off (0)"
   }, 
   "SnapshotGroupVolume": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
-    "name": "GroupRenderingControl",
-    "action": "SnapshotGroupVolume",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SnapshotGroupVolumeResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
     "info": "snapshots the current volume relation in group for usage of set relative group volume"
   },
   "SetGroupVolume": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
-    "name": "GroupRenderingControl",
-    "action": "SetGroupVolume",
     "args": {
       "InstanceID": 0,
       "DesiredVolume": 10
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SetGroupVolumeResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:GroupRenderingControl:1",
     "info": "set the specified volume to all players"
   },
   "SaveQueue": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "SaveQueue",
     "args": {
       "InstanceID": 0,
       "Title": "unknown",
       "ObjectID": ""
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:SaveQueueResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "Save queue to Sonos playlist"
   },
   "DelegateGroupCoordinationTo": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "DelegateGroupCoordinationTo",
     "args": {
       "InstanceID": 0,
       "NewCoordinator": "RINCON_xxxxx01400",
       "RejoinGroup": true
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:DelegateGroupCoordinationToResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "player will delegate coordination and optionally leave group (Rejoingroup = false). NewCoordinator must exist!"
   }, 
   "BecomeCoordinatorOfStandaloneGroup": {
     "path": "/MediaRenderer/AVTransport/Control",
-    "name": "AVTransport",
-    "action": "BecomeCoordinatorOfStandaloneGroup",
     "args": {
       "InstanceID": 0
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:BecomeCoordinatorOfStandaloneGroupResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:AVTransport:1",
     "info": "player becomes a stand alone group"
   },
   "AddMember": {
     "path": "/GroupManagement/Control",
-    "name": "GroupManagement",
-    "action": "AddMember",
     "args": {
       "InstanceID": 0,
       "MemberID": ""
     },
-    "responsePath": [
-      "s:Envelope",
-      "s:Body",
-      "u:AddMemberResponse",
-      "xmlns:u"
-    ],
-    "responseValue": "urn:schemas-upnp-org:service:GroupManagement:1",
     "info": "adds a member to that device. MemberID is the newly added device. Should be send to coordinator!"
   }
 }
