@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [featureDirectCommand] 2020-xx-xx
+
+### Changed
+
+- setCmd, getCmd replaced by setGetCmdV2, new Sonos-ActionsV2.JSON file (also clean up)
+
+- removed Control player and Manage Queue node
+
+### Added
+
+- Universal node: added household.get.sonosplaylists
+
 ## [4.2.1] 2020-10-04
 
 ### Changed

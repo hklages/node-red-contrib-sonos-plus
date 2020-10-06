@@ -13,20 +13,6 @@
     "returnValueName": "Result",
     "info": "ObjectID: FV:2 = Get the My Sonos is default!"
   },
-  "BrowseSQ": {
-    "path": "/MediaServer/ContentDirectory/Control",
-    "args": {
-      "InstanceID": 0,
-      "BrowseFlag": "BrowseDirectChildren",
-      "Filter": "*",
-      "StartingIndex": "0",
-      "RequestedCount": "100",
-      "SortCriteria": "",
-      "ObjectID": "SQ:"
-    },
-    "returnValueName": "Result",
-    "info": "ObjectID: SQ = Sonos playlists"
-  },
   "SetAVTransportURI": {
     "path": "/MediaRenderer/AVTransport/Control",
     "args": {
@@ -128,29 +114,11 @@
     ],
     "info": "Set EQType and DesiredValue have to be set. DesiredValue depend on EQType - type number"
   },
-  "GetEQ-DialogLevel": {
+  "GetEQ": {
     "path": "/MediaRenderer/RenderingControl/Control",
     "args": {
       "InstanceID": 0,
       "EQType": "DialogLevel"
-    },
-    "returnValueName": "CurrentValue",
-    "info": "Type is string"
-  },
-  "GetEQ-NightMode": {
-    "path": "/MediaRenderer/RenderingControl/Control",
-    "args": {
-      "InstanceID": 0,
-      "EQType": "NightMode"
-    },
-    "returnValueName": "CurrentValue",
-    "info": "Type is string"
-  },
-  "GetEQ-SubGain": {
-    "path": "/MediaRenderer/RenderingControl/Control",
-    "args": {
-      "InstanceID": 0,
-      "EQType": "SubGain"
     },
     "returnValueName": "CurrentValue",
     "info": "Type is string"
@@ -237,8 +205,8 @@
     "args": {
       "InstanceID": 0
     },
-    "responsePathreturnValueName": "Actions",
-  "info": "returns the current actions: Set, Stop, Pause, Play, X_DLNA_SeekTime, Next, X_DLNA_SeekTrackNr"
+    "returnValueName": "Actions",
+  "info": "returns the currently avaialble actions: Set, Stop, Pause, Play, X_DLNA_SeekTime, Next, X_DLNA_SeekTrackNr"
   },
   "SetRelativeGroupVolume": {
     "path": "/MediaRenderer/GroupRenderingControl/Control",
@@ -294,7 +262,7 @@
       "Title": "unknown",
       "ObjectID": ""
     },
-    "info": "Save queue to Sonos playlist"
+    "info": "Save queue to SONOS playlist"
   },
   "DelegateGroupCoordinationTo": {
     "path": "/MediaRenderer/AVTransport/Control",

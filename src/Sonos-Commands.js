@@ -7,9 +7,7 @@ const { GenerateMetadata } = require('sonos').Helpers
 module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
-  PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase'],
   MIME_TYPES: ['.mp3', '.mp4', '.flac', '.m4a', '.ogg', '.wma'],
-  ACTIONS_TEMPLATES: require('./Sonos-Actions.json'),
   ACTIONS_TEMPLATESV2: require('./Sonos-ActionsV2.json'),
   SERVICES: require('./Sonos-Services.json'),
 
@@ -34,7 +32,7 @@ module.exports = {
 
   /**  Revised default sonos api playNotification function
    * @param  {object}  node current node
-   * @param  {array}   membersAsPlayersPlus array of sonos players with baseUrl, coordinator/selected player has index 0
+   * @param  {array}   membersAsPlayersPlus array of SONOS players with baseUrl, coordinator/selected player has index 0
    *                   members.length = 1 in case independent
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
@@ -612,11 +610,11 @@ module.exports = {
   },
 
 
-  /**  Get array of all My Sonos items (objects). Version 2 includes Sonos playlists
-   * @param   {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
+  /**  Get array of all My Sonos items (objects). Version 2 includes SONOS playlists
+   * @param   {string} sonosPlayerBaseUrl SONOS Player baseUrl (eg http://192.168.178.37:1400)
    *
    * @return {promise} array of My Sonos items - could be emtpy
-   *                   {title, albumArt, uri, metadata, sid, id (in case of a Sonos playlist), upnpClass, processingType}
+   *                   {title, albumArt, uri, metadata, sid, id (in case of a SONOS playlist), upnpClass, processingType}
    *
    * @throws if invalid SONOS player response
    * if parsing went wrong
@@ -629,7 +627,7 @@ module.exports = {
     // receive data from player - uses default action for Favorites defined in Sonos-Actions, also only 100 entries!
     // TODO Notion limit 100
     // get all My Sonos items - but not Sonos playlists (ObjectID FV:2)
-    const response = await module.exports.getCmd(sonosPlayerBaseUrl, 'Browse')
+    const response = await module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'Browse', {})
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} Browse FV-2 response is invalid. Response >>${JSON.stringify(response)}`)
     }
@@ -656,8 +654,8 @@ module.exports = {
     return listMySonos.concat(listSonosPlaylists)
   },
 
-  /**  Get array of all Sonos playlists (objects). Caution: Upper limit 100. Emtpy array if no sonos playlists.
-   * @param  {string} sonosPlayerBaseUrl Sonos Player baseUrl (eg http://192.168.178.37:1400)
+  /**  Get array of all SONOS playlists (objects). Caution: Upper limit 100. Emtpy array if no SONOS playlists.
+   * @param  {string} sonosPlayerBaseUrl SONOS Player baseUrl (eg http://192.168.178.37:1400)
    *
    * @return {promise} array of Sonos playlists - could be emtpy
    *                   {title, albumArt(array), sid (empty string), uri, metadata(empty string), upnpClass, processingType}
@@ -667,7 +665,8 @@ module.exports = {
    *
    */
   getAllSonosPlaylists: async function (sonosPlayerBaseUrl) {
-    const response = await module.exports.getCmd(sonosPlayerBaseUrl, 'BrowseSQ')
+    const modifiedArgs = { ObjectID: 'SQ:'}  // SONOS Playlists
+    const response = await module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
     }
@@ -696,7 +695,7 @@ module.exports = {
       EnqueuedURI: encodeXml(uri),
       EnqueuedURIMetaData: encodeXml(meta)
     }
-    return module.exports.setCmd(sonosPlayerBaseUrl, 'AddURIToQueue', modifiedArgs)
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'AddURIToQueue', modifiedArgs)
   },
 
   /**  Saves the SONOS queue to a Sonos playlist.
@@ -707,7 +706,7 @@ module.exports = {
     const modifiedArgs = {
       Title: title
     }
-    return module.exports.setCmd(sonosPlayerBaseUrl, 'SaveQueue', modifiedArgs)
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SaveQueue', modifiedArgs)
   },
 
   /**  Start playing the curren uri (must have been set before - either stream or track in queue).
@@ -715,7 +714,7 @@ module.exports = {
    * @return {promise} true or false
    */
   play: async function (sonosPlayerBaseUrl) {
-    return module.exports.setCmd(sonosPlayerBaseUrl, 'Play')
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'Play', {})
   },
 
   /**  Set AVTransportURI (but does not play)
@@ -723,14 +722,14 @@ module.exports = {
    * @param  {string} uri  uri
    * @param  {string} meta  meta data
    *
-   * @return {promise} setCMD
+   * @return {promise} setGetCmdV2
    */
   setAVTransportURI: async function (sonosPlayerBaseUrl, uri, metadata) {
     const modifiedArgs = { CurrentURI: encodeXml(uri) }
     if (metadata !== '') {
       modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
     }
-    return module.exports.setCmd(sonosPlayerBaseUrl, 'SetAVTransportURI', modifiedArgs)
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SetAVTransportURI', modifiedArgs)
   },
 
   /**  Get transport info - means state.
@@ -740,7 +739,7 @@ module.exports = {
   * CAUTION: non-coordinator player in a group will always return playing even when the group is stopped
    */
   getTransportInfo: async function (sonosPlayerBaseUrl) {
-    return module.exports.getCmd(sonosPlayerBaseUrl, 'GetTransportInfo')
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'GetTransportInfo', {})
   },
 
   /**  Get group mute state.
@@ -751,7 +750,7 @@ module.exports = {
   * CAUTION: non-coordinator player will return an error
    */
   getGroupMute: async function (sonosPlayerBaseUrl) {
-    const isMuted = await module.exports.getCmd(sonosPlayerBaseUrl, 'GetGroupMute')
+    const isMuted = await module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'GetGroupMute', {})
     return (isMuted === '1' ? 'On' : 'Off')
   },
 
@@ -762,7 +761,7 @@ module.exports = {
   * CAUTION: non-coordinator player will return an error
    */
   getGroupVolume: async function (sonosPlayerBaseUrl) {
-    return module.exports.getCmd(sonosPlayerBaseUrl, 'GetGroupVolume')
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'GetGroupVolume', {})
   },
 
   /**  Set group mute state.
@@ -774,7 +773,7 @@ module.exports = {
   setGroupMute: async function (sonosPlayerBaseUrl, muteState) {
     const modifiedArgs = { DesiredMute: (muteState ? '1' : '0') }
 
-    return module.exports.setCmd(sonosPlayerBaseUrl, 'SetGroupMute', modifiedArgs)
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SetGroupMute', modifiedArgs)
   },
 
   /**  Set relative group volume.
@@ -786,7 +785,7 @@ module.exports = {
   setGroupVolumeRelative: async function (sonosPlayerBaseUrl, volumeRelative) {
     const modifiedArgs = { Adjustment: volumeRelative }
 
-    return module.exports.setCmd(sonosPlayerBaseUrl, 'SetRelativeGroupVolume', modifiedArgs)
+    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SetRelativeGroupVolume', modifiedArgs)
   },
 
   // ========================================================================
@@ -794,90 +793,6 @@ module.exports = {
   //                          SET GET COMMANDS
   //
   // ========================================================================
-
-  /**  Set action with new arg object.
-   * @param  {string} baseUrl the player base url: http://, ip address, seperator : and property
-   * @param  {string} actionName the action name
-   * @param  {object} modifiedArgs only those properties being modified
-   *
-   * @return {promise} true if succesfull
-   *
-   * Everything OK if statusCode === 200 and body includes expected response value.
-   */
-  setCmd: async function (baseUrl, actionName, newArgs) {
-    // get action defaults from definition file and update with new arguments
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName]
-    Object.assign(actionParameter.args, newArgs)
-    const { path, name, action, args } = actionParameter
-    const response = await sendToPlayerV1(baseUrl, path, name, action, args)
-
-    // check response statusCode:
-    //   Everything OK if statusCode === 200 and body includes expected response value.
-    //   Some action return additional data for instance NewVolume
-    if (!isValidProperty(response, ['statusCode'])) {
-      // This should never happen. Avoiding unhandled exception.
-      throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
-    }
-    if (response.statusCode !== 200) {
-      // This should not happen as long as axios is being used.
-      throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
-    }
-    if (!isValidProperty(response, ['body'])) {
-      // This should not happen. Avoiding unhandled exception.
-      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-    const bodyXml = await parseSoapBodyV1(response.body, '')
-
-    // check body response - select/transform item properties
-    const key = actionParameter.responsePath
-    if (!isValidProperty(bodyXml, key)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-    const result = getNestedProperty(bodyXml, key)
-
-    if (result !== actionParameter.responseValue) {
-      throw new Error(`${NRCSP_ERRORPREFIX} response from player not expected >>${JSON.stringify(result)}`)
-    }
-    return true
-  },
-
-  /**  Get action with new value.
-   * @param  {string} baseUrl the player base url for instance http://192.168.178.37:1400
-   * @param  {string} actionName the action name for instance GetCurrentTransportActions
-   * @return {promise} value from action
-   *
-   * PREREQ: Expectation is that the value is of type string - otherwise an error is
-   */
-  getCmd: async function (baseUrl, actionName) {
-    // copy action parameter and update
-    const actionParameter = module.exports.ACTIONS_TEMPLATES[actionName]
-    const { path, name, action, args } = actionParameter
-    const response = await sendToPlayerV1(baseUrl, path, name, action, args)
-
-    // check response - select/transform item properties
-    if (!isValidProperty(response, ['statusCode'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-    if (response.statusCode !== 200) {
-      throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
-    }
-    if (!isValidProperty(response, ['body'])) {
-      throw new Error(`${NRCSP_ERRORPREFIX} body (UPNP) from sendToPlayer is invalid- response >>${JSON.stringify(response)}`)
-    }
-    const bodyXml = await parseSoapBodyV1(response.body, '')
-    // check response - select/transform item properties
-    const key = actionParameter.responsePath
-    if (!isValidProperty(bodyXml, key)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} invalid body XML from sendToPlayer - response >>${JSON.stringify(response)}`)
-    }
-    const result = getNestedProperty(bodyXml, key)
-    if (typeof result !== 'string') {
-      // Caution: this check does only work for primitive values (not objects)
-      throw new Error(`${NRCSP_ERRORPREFIX} could not get string value from player`)
-    }
-    return result
-  },
-
 
   /**  Execute action - handles get and set. Version 2 needs Sonos-ActionsV2.JSON
    * @param  {string} baseUrl the player base url for instance http://192.168.178.37:1400
