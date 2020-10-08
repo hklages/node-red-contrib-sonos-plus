@@ -29,119 +29,7 @@ module.exports = {
   //                          COMPLEX COMMANDS
   //
   // ========================================================================
-
-  /**  Revised default sonos api playNotification function
-   * @param  {object}  node current node
-   * @param  {array}   membersAsPlayersPlus array of SONOS players with baseUrl, coordinator/selected player has index 0
-   *                   members.length = 1 in case independent
-   * @param  {object}  options options
-   * @param  {string}  options.uri  uri
-   * @param  {string}  options.metadata  metadata - will be generated if missing
-   * @param  {string}  options.volume volumen during notification
-   * @param  {boolean} options.onlyWhenPlaying
-   * @param  {boolean} options.sameVolume all player in group play with same volume level
-   * @param  {boolean} options.automaticDuration
-   * @param  {string}  options.duration format hh:mm:ss
-   * @return {promise} true/false
-   *
-   *
-   *    DEPRECIATED -
-   *
-   */
-
-  // TODO Notion Remove with Node Control Player
-  playNotificationRevised: async function (node, membersAsPlayerPlus, options) {
-    const WAIT_ADJUSTMENT = 2000
-
-    // generate metadata if not provided
-    let metadata
-    if (!isValidProperty(options, ['metadata'])) {
-      metadata = GenerateMetadata(options.uri).metadata
-    } else {
-      metadata = options.metadata
-    }
-
-    // create snapshot state/volume/content
-    // getCurrentState will return playing for a non-coordinator player even if group is playing
-    const snapshot = {}
-    const state = await membersAsPlayerPlus[0].getCurrentState()
-    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
-    node.debug('wasPlaying >>' + snapshot.wasPlaying)
-    if (!snapshot.wasPlaying && options.onlyWhenPlaying === true) {
-      node.debug('player was not playing and onlyWhenPlaying was true')
-      return
-    }
-    snapshot.mediaInfo = await membersAsPlayerPlus[0].avTransportService().GetMediaInfo()
-    snapshot.positionInfo = await membersAsPlayerPlus[0].avTransportService().GetPositionInfo()
-    snapshot.memberVolumes = []
-    snapshot.memberVolumes[0] = await membersAsPlayerPlus[0].getVolume()
-    if (options.sameVolume) { // all other members, starting at 1
-      let vol
-      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
-        vol = await membersAsPlayerPlus[index].getVolume()
-        snapshot.memberVolumes[index] = vol
-      }
-    }
-    node.debug('Snapshot created - now start playing notification')
-    let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[0].baseUrl, options.uri, metadata)
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is false`)
-    }
-    response = await module.exports.play(membersAsPlayerPlus[0].baseUrl)
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
-    }
-    await membersAsPlayerPlus[0].setVolume(options.volume)
-    if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
-        await membersAsPlayerPlus[index].setVolume(options.volume)
-      }
-    }
-    node.debug('Playing notification started - now figuring out the end')
-
-    // waiting either based on SONOS estimation, per default or user specified
-    let waitInMilliseconds = hhmmss2msec(options.duration)
-    if (options.automaticDuration) {
-      const positionInfo = await membersAsPlayerPlus[0].avTransportService().GetPositionInfo()
-      if (isValidProperty(positionInfo, ['TrackDuration'])) {
-        waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
-        node.debug('Did retrieve duration from SONOS player')
-      } else {
-        node.debug('Could NOT retrieve duration from SONOS player - using default/specified lenght')
-      }
-    }
-    node.debug('duration >>' + JSON.stringify(waitInMilliseconds))
-    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
-    node.debug('notification finished - now starting to restore')
-
-    // return to previous state = restore snapshot
-    await membersAsPlayerPlus[0].setVolume(snapshot.memberVolumes[0])
-    if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < membersAsPlayerPlus.length; index++) {
-        await membersAsPlayerPlus[index].setVolume(snapshot.memberVolumes[index])
-      }
-    }
-    await membersAsPlayerPlus[0].setAVTransportURI({ // using node-sonos
-      uri: snapshot.mediaInfo.CurrentURI,
-      metadata: snapshot.mediaInfo.CurrentURIMetaData,
-      onlySetUri: true
-    })
-    if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
-      await membersAsPlayerPlus[0].selectTrack(snapshot.positionInfo.Track)
-        .catch(() => {
-          node.debug('Reverting back track failed, happens for some music services.')
-        })
-    }
-    if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
-      node.debug('Setting back time to >>', JSON.stringify(snapshot.positionInfo.RelTime))
-      await membersAsPlayerPlus[0].avTransportService().Seek({ InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime })
-        .catch(() => {
-          node.debug('Reverting back track time failed, happens for some music services (radio or stream).')
-        })
-    }
-    if (snapshot.wasPlaying) membersAsPlayerPlus[0].play()
-  },
-
+  
   /**  Play notification on a group using coordinator. Coordinator is index 0
    * @param  {object}  node current node - for debugging
    * @param  {array}   membersAsPlayersPlus array of node-sonos player object with baseUrl,
@@ -192,10 +80,16 @@ module.exports = {
     }
     node.debug('Snapshot created - now start playing notification')
 
-    let response = await module.exports.setAVTransportURI(membersAsPlayerPlus[coordinatorIndex].baseUrl, options.uri, metadata)
+    // set AVTranspoart
+    const modifiedArgs = { CurrentURI: encodeXml(options.uri) }
+    if (metadata !== '') {
+      modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
+    }
+    let response = await module.exports.executeAction(membersAsPlayerPlus[coordinatorIndex].baseUrl, 'SetAVTransportURI', modifiedArgs)
     if (!response) {
       throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is invalid`)
     }
+
     if (options.volume !== -1) {
       await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
       node.debug('same Volume' + options.sameVolume)
@@ -205,7 +99,8 @@ module.exports = {
         }
       }
     }
-    response = await module.exports.play(membersAsPlayerPlus[coordinatorIndex].baseUrl)
+    response = await module.exports.executeAction(membersAsPlayerPlus[coordinatorIndex].baseUrl, 'Play', {})
+   
     if (!response) {
       throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
     }
@@ -304,11 +199,15 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    let response = await module.exports.setAVTransportURI(joinerPlus.baseUrl, options.uri, metadata)
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is false`)
+    const modifiedArgs = { CurrentURI: encodeXml(options.uri) }
+    if (metadata !== '') {
+      modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
     }
-    response = await module.exports.play(joinerPlus.baseUrl)
+    let response = await module.exports.executeAction(joinerPlus.baseUrl, 'SetAVTransportURI', modifiedArgs)
+    if (!response) {
+      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is invalid`)
+    }
+    response = await module.exports.executeAction(joinerPlus.baseUrl, 'Play', {})
     if (!response) {
       throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
     }
@@ -627,7 +526,8 @@ module.exports = {
     // receive data from player - uses default action for Favorites defined in Sonos-Actions, also only 100 entries!
     // TODO Notion limit 100
     // get all My Sonos items - but not Sonos playlists (ObjectID FV:2)
-    const response = await module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'Browse', {})
+    const modifiedArgs = { ObjectID: 'FV:2' } // My Sonos but not SONOS Playlists
+    const response = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} Browse FV-2 response is invalid. Response >>${JSON.stringify(response)}`)
     }
@@ -666,7 +566,7 @@ module.exports = {
    */
   getAllSonosPlaylists: async function (sonosPlayerBaseUrl) {
     const modifiedArgs = { ObjectID: 'SQ:'}  // SONOS Playlists
-    const response = await module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
+    const response = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
     }
@@ -680,152 +580,31 @@ module.exports = {
 
   // ========================================================================
   //
-  //             BASIC COMMAND
-  //             They change only the arguments and use standard services
-  //
-  // ========================================================================
-
-  /**  Queues the My Sonos item (aka adds all tracks to SONOS queue): single song, album, playlist.
-   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @param  {string} uri  uri
-   * @param  {string} meta  meta data
-   */
-  queue: async function (sonosPlayerBaseUrl, uri, meta) {
-    const modifiedArgs = {
-      EnqueuedURI: encodeXml(uri),
-      EnqueuedURIMetaData: encodeXml(meta)
-    }
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'AddURIToQueue', modifiedArgs)
-  },
-
-  /**  Saves the SONOS queue to a Sonos playlist.
-   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @param  {string} title
-   */
-  saveQueue: async function (sonosPlayerBaseUrl, title) {
-    const modifiedArgs = {
-      Title: title
-    }
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SaveQueue', modifiedArgs)
-  },
-
-  /**  Start playing the curren uri (must have been set before - either stream or track in queue).
-   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @return {promise} true or false
-   */
-  play: async function (sonosPlayerBaseUrl) {
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'Play', {})
-  },
-
-  /**  Set AVTransportURI (but does not play)
-   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @param  {string} uri  uri
-   * @param  {string} meta  meta data
-   *
-   * @return {promise} setGetCmdV2
-   */
-  setAVTransportURI: async function (sonosPlayerBaseUrl, uri, metadata) {
-    const modifiedArgs = { CurrentURI: encodeXml(uri) }
-    if (metadata !== '') {
-      modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
-    }
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SetAVTransportURI', modifiedArgs)
-  },
-
-  /**  Get transport info - means state.
-  *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-  *  @return {promise} current state
-  *
-  * CAUTION: non-coordinator player in a group will always return playing even when the group is stopped
-   */
-  getTransportInfo: async function (sonosPlayerBaseUrl) {
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'GetTransportInfo', {})
-  },
-
-  /**  Get group mute state.
-  *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-  *
-  *  @return {promise} current group mute state: On, Off
-  *
-  * CAUTION: non-coordinator player will return an error
-   */
-  getGroupMute: async function (sonosPlayerBaseUrl) {
-    const isMuted = await module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'GetGroupMute', {})
-    return (isMuted === '1' ? 'On' : 'Off')
-  },
-
-  /**  Get group volume state.
-  *  @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-  *  @return {promise} current volume 0 ... 100
-  *
-  * CAUTION: non-coordinator player will return an error
-   */
-  getGroupVolume: async function (sonosPlayerBaseUrl) {
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'GetGroupVolume', {})
-  },
-
-  /**  Set group mute state.
-   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @param  {boolean} muteState  the new state
-   *
-   * @return {promise}
-   */
-  setGroupMute: async function (sonosPlayerBaseUrl, muteState) {
-    const modifiedArgs = { DesiredMute: (muteState ? '1' : '0') }
-
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SetGroupMute', modifiedArgs)
-  },
-
-  /**  Set relative group volume.
-   * @param  {string} sonosPlayerBaseUrl Sonos player baseUrl
-   * @param  {number} volumeRelative  volume adjustment +/- 0 .. 100
-   *
-   * @return {promise}
-   */
-  setGroupVolumeRelative: async function (sonosPlayerBaseUrl, volumeRelative) {
-    const modifiedArgs = { Adjustment: volumeRelative }
-
-    return module.exports.setGetCmdV2(sonosPlayerBaseUrl, 'SetRelativeGroupVolume', modifiedArgs)
-  },
-
-  // ========================================================================
-  //
-  //                          SET GET COMMANDS
+  //                          EXECUTE UPNP ACTION COMMAND
   //
   // ========================================================================
 
   /**  Execute action - handles get and set. Version 2 needs Sonos-ActionsV2.JSON
-   * @param  {string} baseUrl the player base url for instance http://192.168.178.37:1400
-   * @param  {string} actionName the action name for instance Seek
-   * @param  {object} modifiedArgs only those properties being modified
+   * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
+   * @param  {string} actionName the action name such as Seek
+   * @param  {object} modifiedArgs only those properties being modified - defaults see SonosActionsV2.JSON
    *
-   * @return {promise} set: true/false | get: value from action
+   * @return {promise} set action: true/false | get action: value from action
    *
-   * Everything OK if statusCode === 200 and body includes expected response value/value.
+   * Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
    */
-  setGetCmdV2: async function (baseUrl, action, newArgs) {
+  executeAction: async function (baseUrl, actionIdentifier, newArgs) {
     // get action defaults from definition file and update with new arguments
-    const actionParameter = module.exports.ACTIONS_TEMPLATESV2[action] 
-    const { path, args } = actionParameter
+    const actionParameter = module.exports.ACTIONS_TEMPLATESV2[actionIdentifier] 
+    const { endpoint, args } = actionParameter
     Object.assign(args, newArgs) 
 
-    // generate other parameter
-    const tmp = path.split('/')  // path is eather /<device>/<name>/Control or /name/Control
-    const name = tmp[tmp.length - 2]
-    const key = ['s:Envelope', 's:Body'] // for response
-    key.push(`u:${action}Response`)
-    // eslint-disable-next-line no-prototype-builtins
-    const isGetAction = actionParameter.hasOwnProperty('returnValueName')  
-    let expectedResponseValue // only needed in case of not isGetAction
-    if (isGetAction) {
-      key.push(actionParameter.returnValueName)
-      // no expected response value
-    } else {
-      key.push('xmlns:u')    
-      expectedResponseValue = `urn:schemas-upnp-org:service:${name}:1`
-    }
- 
-    const response = await sendToPlayerV1(baseUrl, path, name, action, args)
+    // generate serviceName from endpoint - its always the second last
+    // SONOS endpoint is either /<device>/<serviceName>/Control or /<serviceName>/Control
+    const tmp = endpoint.split('/')  
+    const serviceName = tmp[tmp.length - 2]
+  
+    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionIdentifier, args)
 
     // check response statusCode:
     // Everything OK if statusCode === 200 and body includes expected response value or requested value
@@ -842,7 +621,20 @@ module.exports = {
       throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     const bodyXml = await parseSoapBodyV1(response.body, '')
-    // check body response - select/transform item properties
+    // check body response  - generate key (as string array) to access the relevant response
+    // in case of set: also the expectedResponseValue 
+    const key = ['s:Envelope', 's:Body'] // for response
+    key.push(`u:${actionIdentifier}Response`)
+    // eslint-disable-next-line no-prototype-builtins
+    const isGetAction = actionParameter.hasOwnProperty('returnValueName')  
+    let expectedResponseValue // only needed in case of not isGetAction
+    if (isGetAction) {
+      key.push(actionParameter.returnValueName)
+      // no expected response value
+    } else {
+      key.push('xmlns:u')    
+      expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`
+    }
     if (!isValidProperty(bodyXml, key)) {
       throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
@@ -1083,7 +875,7 @@ module.exports = {
   },
 
   /**  Get sid from uri.
-   * @param  {string} xuri uri e.g. x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&flags=8300&sn=14
+   * @param  {string} xuri uri such as x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&flags=8300&sn=14
    * @return {string} service id or if not found empty
    *
    * prereq: uri is string where the sid is in between ?sid= and &flags=
@@ -1102,7 +894,7 @@ module.exports = {
   },
 
   /**  Get radioId from uri.
-   * @param  {string} xuri uri e.g. x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
+   * @param  {string} xuri uri such as x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
    * @return {string} service id or if not found empty
    *
    * prereq: uri is string where the sid is in between ?sid= and &flags=
