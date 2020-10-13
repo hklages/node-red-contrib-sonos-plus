@@ -14,6 +14,10 @@ All notable changes to this project are documented in this file.
 
 - Universal node: added household.get.sonosplaylists
 
+- Universal node: group.cancel.sleeptimer
+
+- Universal node: player.execute.action
+
 ## [4.2.1] 2020-10-04
 
 ### Changed

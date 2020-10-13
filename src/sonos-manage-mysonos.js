@@ -33,7 +33,7 @@ module.exports = function (RED) {
     const nrcspFunction = 'create and subscribe'
     const node = this
 
-    // ipaddress overriding serialnum - at least one must be valid
+    // ipaddress overruling serialnum - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
     if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
       // ip address is being used - default case
@@ -116,7 +116,7 @@ module.exports = function (RED) {
       payloadPath = ['topic']
     }
 
-    // command, required: node dialog overrides msg, store lowercase version in command
+    // command, required: node dialog overrules msg, store lowercase version in command
     let command
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
@@ -136,7 +136,7 @@ module.exports = function (RED) {
     msg.nrcspCmd = command // store command as get commands will overreid msg.payload
     msg[cmdPath[0]] = command
 
-    // state: node dialog overrides msg.
+    // state: node dialog overrules msg.
     let state
     if (config.state) { // payload specified in node dialog
       state = RED.util.evaluateNodeProperty(config.state, config.stateType, node)

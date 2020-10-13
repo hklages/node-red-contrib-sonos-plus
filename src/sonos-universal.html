@@ -91,14 +91,14 @@
     <div class="text">        
       <b>Config Node</b> provides the default SONOS player by ip address or serialnumber.<br>
       For many commands <code>msg.playerName</code> may be used and should hold Sonos player name.<br>
-      <code>msg.playerName</code> overrides config node player.<br><br>
+      <code>msg.playerName</code> overrules config node player.<br><br>
     
       The new standard (since version 4) for <b>input message usage</b> is:
       <ul>
         <li><code>msg.topic</code> holds the command</li>
         <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
-      Dialog values override msg properties.<br><br>
+      Dialog values overrule msg properties.<br><br>
 
       Tic <b>Compatibility (depreciated)</b> to get the old style (before version 4) with <br>
       <code>msg.payload</code> for commands and <code>msg.topic</code> for the state/message.<br><br>
@@ -120,6 +120,7 @@
     {cmd: "message", text: "using msg"},
     {cmd: "coordinator.delegate", text: "coordinator: delegate group coordination"},
     {cmd: "group.adjust.volume", text: "group: adjust volume"},
+    {cmd: "group.cancel.sleeptimer", text: "group: cancel existing sleeptimer"},
     {cmd: "group.clear.queue", text: "group: clear queue"},
     {cmd: "group.create.snap", text: "group: create snapshot"},
     {cmd: "group.create.volumesnap", text: "group: create volume snapshot"},
@@ -221,7 +222,7 @@ The most important properties are:
   <dd>The command like group.play, group.play.queue, ...</dd>
 
   <dt>playerName <span class="property-type">string</span></dt>
-  <dd>The SONOS player name (such as kitchen), will override the given player in config node</dd>
+  <dd>The SONOS player name (such as kitchen), will overrule the given player in config node</dd>
 </dl>
 <br>
 
