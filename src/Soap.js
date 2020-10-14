@@ -161,5 +161,5 @@ module.exports = {
       arg.charkey = tag
     }
     return xml2js.parseStringPromise(body, arg)
-  }
+  },
 }

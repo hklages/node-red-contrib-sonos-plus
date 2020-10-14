@@ -823,6 +823,61 @@ module.exports = {
     return list
   },
 
+  /** Creates a list of items from given Browse output. 
+   * @param   {string}  browseResult string is Browse response
+   *
+   * @return {promise} Array of objects. Empty if Browse does not provide data.
+   *                   
+   * @throws if parseSoapBody is in error
+   *         
+   */
+
+  extractContainers: async function (didlString) {
+    const cleanXml = didlString.replace('\\"', '') // unescape double quotes!
+    const tag = 'uriIdentifier' // uri is character content (_) from <res> 
+    const didlJson = await parseSoapBodyV1(cleanXml, tag)
+
+    if (didlJson === '') {
+      throw new Error(`${NRCSP_ERRORPREFIX} Function parseSoapBodyV2 provides empty string}`)
+    }
+    let containerArray = []
+    let container
+    // handle single container (caused by parseSoapBody) item and no container item
+    if (isValidProperty(didlJson, ['DIDL-Lite', 'container'])) {
+      container = didlJson['DIDL-Lite']['container']
+      if (Array.isArray(container)) { 
+        containerArray = container.slice()
+      } else { // single container item  - convert to array
+        containerArray.push(container) 
+      }
+    } else {
+      containerArray = []
+    }
+
+    // transform properties 
+    let itemList = containerArray.map( element => {
+      let item = {}
+      if (isValidProperty(element, ['id'])) {
+        item.id = element['id']
+      }
+      if (isValidProperty(element, ['upnp:class'])) {
+        item.upnpClass = element['upnp:class']
+      }
+      if (isValidProperty(element, ['dc:title'])) {
+        item.title = element['dc:title']
+      }
+      if (isValidProperty(element, ['dc:creator'])) {
+        item.artist = element['dc:creator']
+      }
+      if (isValidProperty(element, ['res',tag])) {
+        item.uri = element['res'][tag]
+      }
+      return item
+    })
+
+    return itemList
+  },
+
   /**  Returns a sorted array with all group members. Coordinator is in first place.
   * @param {array} allGroupsData output form sonos getAllGroups()
   * @param {number} groupIndex pointing to the specific group 0 ... allGroupsData.length-1

@@ -22,9 +22,11 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 - In "Universal", "My Sonos" node: You can now select the command and provide the state inside the node. Please use it! It works in default and in compatibility mode.
 
-- In Universal node: !!!! household.create.group - provide a comma separated list with coordinator at first position
+- In Universal node: !!!! household.create.group - use a comma separated list with coordinator at first position to create a group
 
 - In Universal node: new commands household.separate.group, player.become.standalone, coordinator.delegate
+
+- In My Sonos node: new command library.export.album
 
 - Node "Get Status", "Manage Radio", "Control player", "Manage Queue" removed - please use node "Universal" and "My Sonos"
 
