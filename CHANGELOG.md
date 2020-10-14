@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.2.2] 2020-10-14
+
+### Changed
+
+- player names in household.create.group may now also include one blank, hyphen (not at beginning / end) and multiple digits
+
 ## [4.2.1] 2020-10-04
 
 ### Changed
