@@ -37,6 +37,6 @@
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "eslint": "^7.10.0"
+    "eslint": "^7.11.0"
   }
 }

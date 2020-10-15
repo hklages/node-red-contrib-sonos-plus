@@ -11,7 +11,7 @@
       "ObjectID": "FV:2"
     },
     "returnValueName": "Result",
-    "info": "USED- Result is DIDL, ObjectID: FV:2 My Sonos without SONOS playlists|SQ: SONOS playlist|R:0/0 Radio station|R:0/1 Radio Shows|Q:0 aktuelle Playlist|S: Share|Categories A:ARTIST  A:ALBUMARTIST A:ALBUM A:GENRE A:COMPOSER A:TRACKS A:PLAYLISTS"
+    "info": "USED- Result is DIDL-Lite, ObjectID: FV:2 My Sonos without SONOS playlists|SQ: SONOS playlist|R:0/0 Radio station|R:0/1 Radio Shows|Q:0 aktuelle Playlist|S: Share|Categories A:ARTIST  A:ALBUMARTIST A:ALBUM A:GENRE A:COMPOSER A:TRACKS A:PLAYLISTS"
   },
   "SetAVTransportURI": {
     "endpoint": "/MediaRenderer/AVTransport/Control",
