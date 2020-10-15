@@ -12,7 +12,7 @@ Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sono
 
 See the full scope of commands in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
-## ACTION REQUIRED VERSION 4.0.0
+## ACTION REQUIRED VERSION 4
 
 > See required action here: [issue 67](https://github.com/hklages/node-red-contrib-sonos-plus/issues/67)
 
