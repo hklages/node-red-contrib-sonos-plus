@@ -8,7 +8,7 @@ module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
   MIME_TYPES: ['.mp3', '.mp4', '.flac', '.m4a', '.ogg', '.wma'],
-  ACTIONS_TEMPLATESV2: require('./Sonos-ActionsV2.json'),
+  ACTIONS_TEMPLATESV2: require('./Sonos-ActionsV3.json'),
   SERVICES: require('./Sonos-Services.json'),
 
   UNPN_CLASSES_UNSUPPORTED: [
@@ -584,7 +584,7 @@ module.exports = {
   //
   // ========================================================================
 
-  /**  Execute action - handles get and set. Version 2 needs Sonos-ActionsV2.JSON
+  /**  Execute action - handles get and set. Version 2 needs Sonos-ActionsV3.JSON
    * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
    * @param  {string} actionName the action name such as Seek
    * @param  {object} modifiedArgs only those properties being modified - defaults see SonosActionsV2.JSON

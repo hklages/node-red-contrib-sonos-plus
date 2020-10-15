@@ -2,11 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.3.1] 2020-10-15
+
+### Changed
+
+- renamed Sonos-ActionsV2 to V3 and type small letters!
+
 ## [4.3.0] 2020-10-15
 
 ### Changed
 
-- setCmd, getCmd replaced by executeAction, new Sonos-ActionsV2.JSON file (also clean up)
+- setCmd, getCmd replaced by executeAction, new Sonos-ActionsV3.json file (also clean up)
 
 - removed Control player, Manage Queue node, clean up code!
 
