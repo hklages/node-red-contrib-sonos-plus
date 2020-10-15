@@ -96,14 +96,14 @@
         <li><code>msg.topic</code> holds the command</li>
         <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
-      Dialog values override msg properties.<br><br>
+      Dialog values overrule msg properties.<br><br>
 
       Tic <b>Compatibility (depreciated)</b> to get the old style (before version 4) with <br>
       <code>msg.payload</code> for commands and <code>msg.topic</code> for the state/message.<br><br>
 
       <b>Command</b> provides a pick up list of all available commmands.<br><br>
       
-      <b>State</b> free form field for additional data e. g. on/off.<br><br>
+      <b>State</b> free form field for additional data such as on/off.<br><br>
       
     </div>
   </div>
@@ -116,6 +116,7 @@
   // TODO Notion Command Lists Sync
     const mySonosCmdList = [
     {cmd: "message", text: "using msg"},
+    {cmd: "library.export.album", text: "Library: export the specified album"},
     {cmd: "library.export.playlist", text: "Library: export the specified playlist"},
     {cmd: "library.get.playlists", text: "Library: get all playlists"},
     {cmd: "library.queue.playlist", text: "Library: queue the specified playlist"},

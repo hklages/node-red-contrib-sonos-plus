@@ -26,7 +26,7 @@ module.exports = {
 
   // functions to be used in other modules
 
-  /** Starts async discovery of sonos player and returns ipAddress - used in callback.
+  /** Starts async discovery of SONOS player and returns ipAddress - used in callback.
    * @param  {object} node current node
    * @param  {string} serialNumber player serial number
    * @param  {function} callback function with parameter err, ipAddress
@@ -35,7 +35,7 @@ module.exports = {
   discoverSonosPlayerBySerial: (node, serialNumber, callback) => {
     const sonos = require('sonos')
 
-    node.debug('Start find Sonos player.')
+    node.debug('Start find SONOS player.')
     let ipAddress = null
 
     // define discovery, find matching player and return ip
@@ -52,7 +52,7 @@ module.exports = {
           // compary serial numbers
           if (module.exports.isTruthyAndNotEmptyString(data.serialNum)) {
             if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-              node.debug('Found sonos player based on serialnumber in device description.')
+              node.debug('Found SONOS player based on serialnumber in device description.')
               if (module.exports.isTruthyAndNotEmptyString(sonosPlayer.host)) {
                 // success
                 node.debug('Got ipaddres from device.host.')
@@ -87,7 +87,7 @@ module.exports = {
 
     // listener 'timeout' only once
     discovery.once('timeout', () => {
-      node.debug('Received time out without finding any matching (serialnumber) sonos player')
+      node.debug('Received time out without finding any matching (serialnumber) SONOS player')
       // error messages in calling function
       callback(null, null)
     })

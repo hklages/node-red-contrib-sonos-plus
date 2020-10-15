@@ -7,7 +7,7 @@ const {
   failure, success
 } = require('./Helper.js')
 
-const { getAllMySonosItemsV2, findStringInMySonosTitleV1 } = require('./Sonos-Commands.js')
+const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeAction, extractContainers } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -16,6 +16,7 @@ module.exports = function (RED) {
 
   // function lexical order, ascending
   const COMMAND_TABLE_MYSONOS = {
+    'library.export.album': libraryExportAlbum,
     'library.export.playlist': libraryExportPlaylist,
     'library.get.playlists': libraryGetPlaylists,
     'library.queue.playlist': libraryQueuePlaylist,
@@ -33,7 +34,7 @@ module.exports = function (RED) {
     const nrcspFunction = 'create and subscribe'
     const node = this
 
-    // ipaddress overriding serialnum - at least one must be valid
+    // ipaddress overruling serialnum - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
     if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
       // ip address is being used - default case
@@ -116,7 +117,7 @@ module.exports = function (RED) {
       payloadPath = ['topic']
     }
 
-    // command, required: node dialog overrides msg, store lowercase version in command
+    // command, required: node dialog overrules msg, store lowercase version in command
     let command
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
@@ -136,7 +137,7 @@ module.exports = function (RED) {
     msg.nrcspCmd = command // store command as get commands will overreid msg.payload
     msg[cmdPath[0]] = command
 
-    // state: node dialog overrides msg.
+    // state: node dialog overrules msg.
     let state
     if (config.state) { // payload specified in node dialog
       state = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
@@ -165,6 +166,37 @@ module.exports = function (RED) {
   //
   // ========================================================================
 
+  /**  Exports first Music Libary album matching search string (is encoded)
+   * @param  {object} node used for debug message
+   * @param  {object} msg incoming message
+   * @param  {string} msg[payloadPath[0]] search string
+   * @param  {array}  payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}  cmdPath default: msg.cmd - in compatibility mode: payload
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @return {promise} {payload: uri metadata queue title artist}
+   *
+   * @throws all functions
+   * TODO Notion libraryExportAlbum
+   */
+  async function libraryExportAlbum (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // payload title search string is required.
+    const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // usefull for my extensions
+    const newArgs = { ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString) }
+    const browseDIDLLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
+    const albumList = await extractContainers(browseDIDLLite)
+    let firstAlbum
+    if (albumList.length === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Could not find any title matching search string`)
+    } else {
+      firstAlbum = albumList[0]
+    }
+    const outputProperties = {}
+    outputProperties[payloadPath[0]] = { uri: firstAlbum.uri, metadata: '', queue: true, artist: firstAlbum.artist, title: firstAlbum.title }
+    return outputProperties
+  }
+  
   /**  Exports first Music Libary playlist matching search string.
    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
@@ -177,18 +209,20 @@ module.exports = function (RED) {
    * @return {promise} {payload: uri metadata queue}
    *
    * @throws all functions
-   */
+   * TODO Notion libraryExportAlbum: msg.size is bosolete
+   **/ 
   async function libraryExportPlaylist (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
+    // msg.size is handled in libraryGetPlaylists 
     const result = await libraryGetPlaylists(node, msg, payloadPath, cmdPath, sonosPlayer)
     const libraryPlaylists = result.payload
     if (libraryPlaylists.length === 0) {
-      throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any Music library playlist`)
+      throw new Error(`${NRCSP_ERRORPREFIX} Could not find any Music library playlist`)
     }
     const found = libraryPlaylists.find(item => (item.title).includes(validatedSearchString))
     if (!found) {
-      throw new Error(`${NRCSP_ERRORPREFIX} Cound not find any title matching search string`)
+      throw new Error(`${NRCSP_ERRORPREFIX} Could not find any title matching search string`)
     }
     const args = {}
     args[payloadPath[0]] = { uri: found.uri, metadata: '', queue: true }
@@ -239,6 +273,8 @@ module.exports = function (RED) {
    * @param  {object} sonosPlayer Sonos Player
    *
    * @return {promise} {}
+   * 
+   * TODO Notion libraryExportAlbum: msg.size
    *
    * @throws all functions
    */

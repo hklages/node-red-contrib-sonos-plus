@@ -5,53 +5,54 @@ const xml2js = require('xml2js')
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1, NRCSP_ERRORPREFIX } = require('./Helper.js')
 
 module.exports = {
-  // SOAP related data
 
   ERROR_CODES: require('./Soap-Error-Codes.json'),
 
   // ========================================================================
   //
-  //                        SOAP related functions
+  //                        SOAP related functions for SONOS player
   //
   // ========================================================================
 
   /** Send http request in SOAP format to specified player.
-   * @param  {string} baseUrl http address including http prefix and port e.g 'http://192.168.178.30:1400'
-   * @param  {string} path SOAP endpoint e. g. '/MediaRenderer/RenderingControl/Control'
-   * @param  {string} name e.g. 'RenderingControl'
-   * @param  {string} action e.g 'SetEQ'
-   * @param  {object} args e.g.  { InstanceID: 0, EQType: '' },
+   * @param  {string} baseUrl http address including http prefix and port such as 'http://192.168.178.30:1400'
+   * @param  {string} endpoint SOAP endpoint such as '/MediaRenderer/RenderingControl/Control'
+   * @param  {string} serviceName such as 'RenderingControl'
+   * @param  {string} actionIdentifier such as 'SetEQ'
+   * @param  {object} args such as { InstanceID: 0, EQType: '' },
    *
-   * @return {promise} response from player
+   * @return {promise} response header/body/error code from player
    */
-  sendToPlayerV1: async function (baseUrl, path, name, action, args) {
-    // create action used in header
-    const messageAction = `"urn:schemas-upnp-org:service:${name}:1#${action}"`
+  sendToPlayerV1: async function (baseUrl, endpoint, serviceName, actionIdentifier, args) {
+    // create action used in header - notice the " inside `
+    const soapAction = `"urn:schemas-upnp-org:service:${serviceName}:1#${actionIdentifier}"`
 
     // create body
-    let messageBody = `<u:${action} xmlns:u="urn:schemas-upnp-org:service:${name}:1">`
+    let httpBody = `<u:${actionIdentifier} xmlns:u="urn:schemas-upnp-org:service:${serviceName}:1">`
     if (args) {
       Object.keys(args).forEach(key => {
-        messageBody += `<${key}>${args[key]}</${key}>`
+        httpBody += `<${key}>${args[key]}</${key}>`
       })
     }
-    messageBody += `</u:${action}>`
-    messageBody = [
+    httpBody += `</u:${actionIdentifier}>`
+
+    // body wrapped in envelope
+    httpBody = [
       // '<?xml version="1.0" encoding="utf-8"?>',
       '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
-      '<s:Body>' + messageBody + '</s:Body>',
+      '<s:Body>' + httpBody + '</s:Body>',
       '</s:Envelope>'
     ].join('')
 
     const response = await request({
       method: 'post',
       baseURL: baseUrl,
-      url: path,
+      url: endpoint,
       headers: {
-        SOAPAction: messageAction,
+        SOAPAction: soapAction,
         'Content-type': 'text/xml; charset=utf8'
       },
-      data: messageBody
+      data: httpBody
     })
       .catch((error) => {
         // In case of an SOAP error error.reponse helds the details.
@@ -64,9 +65,9 @@ module.exports = {
             if (error.message.startsWith('Request failed with status code 500')) {
               const errorCode = getErrorCodeFromEnvelope(error.response.data)
               let serviceErrorList = ''
-              if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [name.toUpperCase()])) {
+              if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [serviceName.toUpperCase()])) {
                 // look up in the service specific error codes 7xx
-                serviceErrorList = module.exports.ERROR_CODES[name.toUpperCase()]
+                serviceErrorList = module.exports.ERROR_CODES[serviceName.toUpperCase()]
               }
               const errorMessage = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
               throw new Error(`${NRCSP_ERRORPREFIX} statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
@@ -117,36 +118,35 @@ module.exports = {
     return errorText
   },
 
-  /** Encodes special XML characters e. g. < to &lt.
+  /** Encodes special XML characters such as < to &lt;.
    * @param  {string} xmlData orignal XML data
    * @return {string} data without any <, >, &, ', "
-   * All params must exist!
    */
 
   encodeXml: xmlData => {
     return xmlData.replace(/[<>&'"]/g, singleChar => {
       switch (singleChar) {
-      case '<':
-        return '&lt;'
-      case '>':
-        return '&gt;'
-      case '&':
-        return '&amp;'
-      case '\'':
-        return '&apos;'
-      case '"':
-        return '&quot;'
+      case '<': return '&lt;'
+      case '>': return '&gt;'
+      case '&': return '&amp;'
+      case '\'': return '&apos;'
+      case '"':  return '&quot;'
       }
     })
   },
 
-  /** Transforms soap response to JSON format.
+  /** Transforms body in SOAP response to JSON format.
+   *  Why this function: 
    * @param  {object} body response from SONOS player on a SOAP request
    * @param  {string} [tag] tag string, not used if empty
    *
    * @return {promise} JSON format
    */
 
+  // Caution: as explicitArray is set to false: its good, if response usually is not an array
+  // but in case of an array, it is only an element if "array length = 1"
+  // TODO Notion SOPA / parseSoapBodyV1
+  
   // documentation: https://www.npmjs.com/package/xml2js#options
   // explicitArray (default: true):
   //    Always put child nodes in an array if true; otherwise an array is created only if there is more than one.
@@ -155,11 +155,11 @@ module.exports = {
   // charkey (default: _):
   //    Prefix that is used to access the character content.Version 0.1 default was #.
 
-  parseSoapBodyV1: async function (body, tag) {
+  parseSoapBodyV1: async (body, tag)=> {
     const arg = { mergeAttrs: true, explicitArray: false }
     if (tag !== '') {
       arg.charkey = tag
     }
     return xml2js.parseStringPromise(body, arg)
-  }
+  },
 }

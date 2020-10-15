@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## [4.2.0] 2020-10-15
+
+### Changed
+
+- setCmd, getCmd replaced by executeAction, new Sonos-ActionsV2.JSON file (also clean up)
+
+- removed Control player, Manage Queue node, clean up code!
+
+### Added
+
+- My sonos node: library.export.album
+
+- Universal node: added household.get.sonosplaylists
+
+- Universal node: group.cancel.sleeptimer
+
+- Universal node: player.execute.action
+
 ## [4.2.2] 2020-10-14
 
 ### Changed
@@ -74,7 +92,7 @@ All notable changes to this project are documented in this file.
 
 - Universal node: group.get.state information now includes property invisible and does not show invisible player by default
 
-- Universal node: household.get.groups will not show anymore hidden player (e. g. stereopair)
+- Universal node: household.get.groups will not show anymore hidden player (such as stereopair)
 
 - Universal node: all commands will throw an error if player is hidden (in msg.playerName, config.node)
 
@@ -108,7 +126,7 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
-- In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (e. g. on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
+- In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (such as on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
 
 - "My Sonos" node: get_items is now mysonos.get.items, queue is mysonos.queue.item, stream is mysonos.stream.item, export is mysonos.export.item
 
@@ -534,7 +552,7 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
-- Control player node: activate_avtransport - to activate a specific stream (e.g. line in)
+- Control player node: activate_avtransport - to activate a specific stream (such as line in)
 - Get status node: get_properties: list all player properties (ip, mac, deviceType, ...)
 - Get status node: get_state, get_volume, get_muted, get_name: output to payload
 - Manage queue node: remove_song: removes a song from the queue

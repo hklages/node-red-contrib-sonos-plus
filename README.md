@@ -18,17 +18,17 @@ See the full scope of commands in the [Wiki.](https://github.com/hklages/node-re
 
 ## NEWS
 
-- In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (e. g. on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
+- In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (such as on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
 
 - In "Universal", "My Sonos" node: You can now select the command and provide the state inside the node. Please use it! It works in default and in compatibility mode.
 
-- In Universal node: !!!! household.create.group - provide a comma separated list with coordinator at first position
+- In Universal node: !!!! household.create.group - use a comma separated list with coordinator at first position to create a group
 
 - In Universal node: new commands household.separate.group, player.become.standalone, coordinator.delegate
 
-- Usage of nodes "Control Player", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos". Therefore these nodes are moved to category oldsonosplus
+- In My Sonos node: new command library.export.album
 
-- Node "Get Status" and "Manage Radio" removed
+- Node "Get Status", "Manage Radio", "Control player", "Manage Queue" removed - please use node "Universal" and "My Sonos"
 
 ## Installation
 
