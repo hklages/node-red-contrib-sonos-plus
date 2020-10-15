@@ -1540,11 +1540,13 @@ module.exports = function (RED) {
     // get groups with members and convert multi dimensioal array to simple array where objects have new property groupIndex, memberIndex
     const householdPlayerList = await getAllPlayerList(sonosPlayer)
 
+
     // validate all player names in newGroupPlayerArray and get index of new coordinator
     let indexInList
     let indexNewCoordinator
     for (let i = 0; i < newGroupPlayerArray.length; i++) {
       indexInList = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i]) 
+ 
       if (indexInList === -1) {
         throw new Error(`${NRCSP_ERRORPREFIX} Could not find player: ${newGroupPlayerArray[i]}`)
       }
