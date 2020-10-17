@@ -4,6 +4,23 @@
   "description": "A set of NodeRED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {
+    "DEV-mtnc-git-version": "git --version",
+    "DEV-mtnc-npm-version": "npm list npm -g",
+    "DEV-mtnc-dev-dependencies-versions": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm list -dev --depth=0",
+    "DEV-mtnc-dependencies-versions": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm list --depth=0",
+    "DEV-mtnc-dependencies-outdated": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm outdated --depth=0",
+    "DEV-mtnc-git-update": "git update-git-for-windows",
+    "DEV-mtnc-npm-update": "npm install npm@latest -g",
+    "DEV-mtnc-eslint-update": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm install eslint@latest",
+    "DEV-mtnc-dependencies-update": "open topic - fallback everyone manual",
+    "TEST-mtnc-nodered-version": "npm list node-red -g",
+    "TEST-mtnc-nodered-update": "npm install node-red@latest -g",
+    "TEST-mtnc-node-red-modules-versions": "cd C:/Users/hekla/.node-red && npm list --depth=0",
+    "TEST-mtnc-node-red-modules-outdated": "cd C:/Users/hekla/.node-red && npm outdated",
+    "TEST-rdply-mypackage-dependencies": "cd C:/Users/hekla/.node-red && npm install C:/Users/hekla/Development/node-red-contrib-sonos-plus",
+    "TEST-rdply-mypackge-code": "not necessary as that is linked to development directory",
+    "TEST-strt-server": "NODE-RED",
+    "TEST-strt-flows": "start http://127.0.0.1:1880/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -26,7 +43,7 @@
   "bugs": {
     "url": "https://github.com/hklages/node-red-contrib-sonos-plus/issues"
   },
-  "homepage": "https://github.com/hklages/node-red-contrib-sonos-plus",
+  "homepage": "https://github.com/hklages/node-red-contrib-sonos-plus/wiki",
   "author": "hklages",
   "license": "MIT",
   "dependencies": {
