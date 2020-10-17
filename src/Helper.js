@@ -12,11 +12,11 @@ module.exports = {
   REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
   REGEX_RADIO_ID: /^[s][0-9]+$/,
-  REGEX_2DIGITS: /^\d{1,2}$/,
-  REGEX_3DIGITS: /^\d{1,3}$/,
+  REGEX_2DIGITS: /^\d{1,2}$/, // up to 2 digits but at least 1
+  REGEX_3DIGITS: /^\d{1,3}$/, // up to 3 digits but at least 1
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
-  REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,
-  REGEX_ANYCHAR: /.+/,
+  REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
+  REGEX_ANYCHAR: /.+/,  // any character but at least 1
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
   REGEX_CSV: /^([a-zA-Z0-9äöüÄÖÜ]+)([ -]){0,1}([a-zA-Z0-9äöüÄÖÜ]+)(,([a-zA-ZäöüÄÖÜ0-9]+)([ -]){0,1}([a-zA-Z0-9äöüÄÖÜ]+))*$/,
 

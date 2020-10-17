@@ -18,6 +18,7 @@ module.exports = function (RED) {
   const COMMAND_TABLE_MYSONOS = {
     'library.export.album': libraryExportAlbum,
     'library.export.playlist': libraryExportPlaylist,
+    'library.get.albums': libraryGetAlbums,
     'library.get.playlists': libraryGetPlaylists,
     'library.queue.playlist': libraryQueuePlaylist,
     'mysonos.export.item': mysonosExportItem,
@@ -26,7 +27,7 @@ module.exports = function (RED) {
     'mysonos.stream.item': mysonosStreamItem
   }
 
-  /**  Create My Sonos node, get valid ipaddress, store nodeDialog and subscribe to messages.
+  /**  Create My Sonos node, get valid ip address, store nodeDialog and subscribe to messages.
    * @param  {object} config current node configuration data
    */
   function SonosManageMySonosNode (config) {
@@ -34,7 +35,7 @@ module.exports = function (RED) {
     const nrcspFunction = 'create and subscribe'
     const node = this
 
-    // ipaddress overruling serialnum - at least one must be valid
+    // ip address overruling serial number - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
     if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
       // ip address is being used - default case
@@ -166,7 +167,7 @@ module.exports = function (RED) {
   //
   // ========================================================================
 
-  /**  Exports first Music Libary album matching search string (is encoded)
+  /**  Exports first Music Library album matching search string (is encoded)
    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[payloadPath[0]] search string
@@ -182,7 +183,7 @@ module.exports = function (RED) {
   async function libraryExportAlbum (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
-    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // usefull for my extensions
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
     const newArgs = { ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString) }
     const browseDIDLLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
     const albumList = await extractContainers(browseDIDLLite)
@@ -197,7 +198,7 @@ module.exports = function (RED) {
     return outputProperties
   }
   
-  /**  Exports first Music Libary playlist matching search string.
+  /**  Exports first Music Library playlist matching search string.
    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[payloadPath[0]] search string
@@ -229,7 +230,49 @@ module.exports = function (RED) {
     return args
   }
 
-  /**  Outputs array of Music library items as object.
+  /**  Get Music Library albums.
+   * @param  {object} node used for debug message
+   * @param  {object} msg incoming message
+   * @param  {string} msg[payloadPath[0]] search string
+   * @param  {string} msg.requestedCount optional, maximum number of found albums, 0...999, default 100
+   * @param  {string} msg.searchTitle search string, optional
+   * @param  {array}  payloadPath default: payload - in compatibility mode: topic
+   * @param  {array}  cmdPath default: msg.cmd - in compatibility mode: payload
+   * @param  {object} sonosPlayer Sonos Player
+   *
+   * @return {promise} {payload: array of objects: uri metadata queue title artist}
+   *
+   * @throws all functions
+   * TODO Notion libraryExportAlbum
+   */
+  async function libraryGetAlbums (node, msg, payloadPath, cmdPath, sonosPlayer) {
+    // msg.requestedCount is optional - if missing default is 100
+    const requestedCount = string2ValidInteger(msg, 'requestedCount', 1, 999, 'requested count', NRCSP_ERRORPREFIX, 100)
+
+    // msg albumName search string is optional - default is empty string
+    let validatedSearchString = stringValidRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_ERRORPREFIX, '')
+    if (validatedSearchString !== '') {
+      validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
+    }
+    console.log('search >>' + JSON.stringify(validatedSearchString))
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
+    const newArgs = { ObjectID: 'A:ALBUM' + validatedSearchString, 'RequestedCount': requestedCount }
+    const browseDidlLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
+    const albumList = await extractContainers(browseDidlLite)
+    let outputArray = []
+    if (albumList.length === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Could not find any album`)
+    } else {
+      outputArray = albumList.map(item => {
+        return { uri: item.uri, metadata: '', queue: true, artist: item.artist, title: item.title }
+      })
+    }
+    const outputProperties = {}
+    outputProperties[payloadPath[0]] = outputArray.slice()  // copy array and assign to payload
+    return outputProperties
+  }
+
+  /**  Outputs array of Music library playlists as object.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {number} [msg.size = 200] maximum number of playlists to be retrieved, integer 1 .. 1000

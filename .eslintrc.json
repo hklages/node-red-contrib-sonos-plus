@@ -1,12 +1,12 @@
 {
     "env": {
-        "browser": true,
+        "node": true,
         "commonjs": true,
-        "es2021": true
+        "es6": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "ecmaVersion": 12
+        "ecmaVersion": 2018
     },
     "rules": {
         "indent": [
@@ -24,6 +24,9 @@
         "semi": [
             "error",
             "never"
-        ]
+        ],
+        "array-bracket-spacing": [ "error", "never" ],
+        "object-curly-spacing": [ "error", "always" ],
+        "space-in-parens": [ "error", "never" ]
     }
 }

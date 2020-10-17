@@ -1,22 +1,28 @@
-# Changelog
+## Changelog
 
 All notable changes to this project are documented in this file.
 
-## [4.3.1] 2020-10-15
+### [4.3.2] 2020-10-17
 
-### Changed
+#### Changed
+
+- My Sonos node: added library.get.albums
+
+### [4.3.1] 2020-10-15
+
+#### Changed
 
 - renamed Sonos-ActionsV2 to V3 and type small letters!
 
-## [4.3.0] 2020-10-15
+### [4.3.0] 2020-10-15
 
-### Changed
+#### Changed
 
 - setCmd, getCmd replaced by executeAction, new Sonos-ActionsV3.json file (also clean up)
 
 - removed Control player, Manage Queue node, clean up code!
 
-### Added
+#### Added
 
 - My sonos node: library.export.album
 
@@ -26,47 +32,47 @@ All notable changes to this project are documented in this file.
 
 - Universal node: player.execute.action
 
-## [4.2.2] 2020-10-14
+### [4.2.2] 2020-10-14
 
-### Changed
+#### Changed
 
 - player names in household.create.group may now also include one blank, hyphen (not at beginning / end) and multiple digits
 
-## [4.2.1] 2020-10-04
+### [4.2.1] 2020-10-04
 
-### Changed
+#### Changed
 
 - dependencies dev - removed some eslint packages
 
 - documentation update
 
-## [4.2.0] 2020-10-03
+### [4.2.0] 2020-10-03
 
-### Changed
+#### Changed
 
 - dependencies update axio, eslint-plugin-import
 
 - removed node: manage-radio and get_status n
 
-### Added
+#### Added
 
 - Universal node: new commands household.create.group, household.separate.group, player.become.standalone, coordinator.delegate
 
-## [4.1.4] 2020-09-22
+### [4.1.4] 2020-09-22
 
-### Added
+#### Added
 
 - Universal node, command group.create.volumesnap, group.set.volume
 
-## [4.1.3] 2020-09-18
+### [4.1.3] 2020-09-18
 
-### Changed
+#### Changed
 
 - Universal node, bug fixing night mode, dialog level
 
-## [4.1.2] 2020-08-16
+### [4.1.2] 2020-08-16
 
-### Changed
+#### Changed
 
 - removed all console.log
 
@@ -74,21 +80,21 @@ All notable changes to this project are documented in this file.
 
 - node-sonos now 1.14.0
 
-### Added
+#### Added
 
 - Universal node: group.get.trackplus with new property stationArtUri (in case of x-sonosapi-stream)
 
-## [4.1.1] 2020-08-13
+### [4.1.1] 2020-08-13
 
-### Added
+#### Added
 
 - Universal node: group.get.actions
 
 - Universal node: group.seek.delta
 
-## [4.1.0] 2020-07-02
+### [4.1.0] 2020-07-02
 
-### Changed
+#### Changed
 
 - category for depreciated nodes is now old-sonosplus, for new sonosplus
 
@@ -104,33 +110,33 @@ All notable changes to this project are documented in this file.
 
 - Universal node: renamed speech enhance to dialog level
 
-### Added
+#### Added
 
 - Universal node: player.set.bass, player.set.treble, player.get.bass, player.get.bass
 
 - Universal node: group.queue.uri and group.queue.urispotify are added
 
-## [4.0.1] 2020-06-18
+### [4.0.1] 2020-06-18
 
-### Changed
+#### Changed
 
 - bugfix: Volume range now from 0 .. 100
 
 - bugfix: Sonos Arc added to player with TV port
 
-## [4.0.0] 2020-06-09
+### [4.0.0] 2020-06-09
 
-### Depreciated
+#### Depreciated
 
 - Usage of nodes "Control Player", "Get Status", "Manage Radio", "Manage Queue" is depreciated. Please use nodes "Universal", "My Sonos".
 
-### Added
+#### Added
 
 - "Universal" / "My Sonos" node: added selection box for commands, imput field for state; and compatibility mode for old Version 3 flow style.
 
 - "Universal" / "My Sonos" node: added now all missing commands (music library, ... ) from "Control Player", "Get Status", "Manage Radio" node
 
-### Changed
+#### Changed
 
 - In "Universal", "My Sonos" node: According to Node-RED standards msg.payload is now being used for the "message/state" (such as on/off, new volume, uri, ...) and msg.topic for the command. There is a compatibility mode that lets you still use the old style (msg.payload holds the command and msg.topic the state). This mode has to be manually activated in each node (tic box compatibility) and can be used as a work around for some month.
 
@@ -150,23 +156,23 @@ All notable changes to this project are documented in this file.
 
 - "Universal" node: group.create.snaps outputs to payload and group.play.snap now expects snap in payload and not in msg.snap!
 
-## [3.1.5] 2020-05-27
+### [3.1.5] 2020-05-27
 
-### Changed
+#### Changed
 
 - "My Sonos" node: bugfix get.items for Apple playlists
 
-## [3.1.4] 2020-05-19
+### [3.1.4] 2020-05-19
 
-### Added
+#### Added
 
 - "My Sonos" node: get.items added radioId for TuneIn stations
 
 - "Universal node": for play.notification changed order volume/play
 
-## [3.1.3] 2020-05-13
+### [3.1.3] 2020-05-13
 
-### Added
+#### Added
 
 - "Universal node": player.join.group, player.leave.group documentation
 
@@ -176,13 +182,13 @@ All notable changes to this project are documented in this file.
 
 - "Universal node": household.get.groups
 
-### Changed
+#### Changed
 
 - "My Sonos" node: bug fix Sonos playlist without AlbumArtURI issue #35
 
-## [3.1.2] 2020-05-05
+### [3.1.2] 2020-05-05
 
-### Changed
+#### Changed
 
 - "Universal node":  role names now coordinator, joiner, standalone (instead of independent)
 
@@ -192,25 +198,25 @@ All notable changes to this project are documented in this file.
 
 - "My Sonos": bug fix: no sonos playlists
 
-### Added
+#### Added
 
 - "Universal node": player.join.group, player.leave.group
 
-## [3.1.1] 2020-05-02
+### [3.1.1] 2020-05-02
 
-### Changed
+#### Changed
 
 - bug fix spotifiy region (number format)
 
 - "Universal node": get.state now provides the group members, group size, group volume
 
-## [3.1.0] 2020-04-30
+### [3.1.0] 2020-04-30
 
-### Added
+#### Added
 
 - "Universal node": New commands get.trackplus, get.state, adjust/get.volume, player.adjust.volume, set/get.mutestate, player.set/get.mutestate, get.queue, player.get.queue, play.streamhttp, create.snap, play.snap, save.queue, clear.queue, remove.sonosplaylist
 
-### Changed
+#### Changed
 
 - CAUTION: Universal node: play.export by default clears the queue if export.queue is true. Use msg.clearQueue = false to avoid.
 
@@ -224,43 +230,43 @@ All notable changes to this project are documented in this file.
 
 - more error handling (helper failure, isV...)
 
-## [3.0.2] 2020-04-23
+### [3.0.2] 2020-04-23
 
-### Changed
+#### Changed
 
 - Control Player: bug fix serialnum
 
 - Helper, error codes: new error handling
 
-## [3.0.1] 2020-04-18
+### [3.0.1] 2020-04-18
 
-### Changed
+#### Changed
 
 - My Sonos: bug fix in queue, stream. Changed metaData to metadata
 
-## [3.0.0] 2020-04-17
+### [3.0.0] 2020-04-17
 
-### Added
+#### Added
 
 - New Universal node: SONOS player names are supported, easier group handling, different kinds of notification
 
 - My Sonos node: new command export.item to export content data of a My Sonos item. That is input to Universal node play.export
 
-### Changed
+#### Changed
 
 - Control player node: play_notification is depreciated. Please use Universal node joiner.play.notification or play.notification
 
 - Control player node: play_noti is depreciated. Please use  Universal node with play.notification
 
-## [2.1.10] 2020-04-09
+### [2.1.10] 2020-04-09
 
-### Changes
+#### Changes
 
 - My Sonos: bug fix insert_spotify
 
-## [2.1.9] 2020-04-08
+### [2.1.9] 2020-04-08
 
-### Changes
+#### Changes
 
 - All nodes: bug fixes (get_items)
 
@@ -270,35 +276,35 @@ All notable changes to this project are documented in this file.
 
 - New node-sonos 1.13.0 including bug fixes for error messages and Spotify
 
-## [2.1.8] 2020-04-02
+### [2.1.8] 2020-04-02
 
-### Changes
+#### Changes
 
 - All nodes: bug fixes: remove_song
 
-## [2.1.7] 2020-03-25
+### [2.1.7] 2020-03-25
 
-### Changes
+#### Changes
 
 - bug fixes, preparation new play notification
 
-## [2.1.6] 2020-03-20
+### [2.1.6] 2020-03-20
 
-### Changes
+#### Changes
 
 - Code optimization, preparation for new play notification
 
-## [2.1.5] 2020-03-15
+### [2.1.5] 2020-03-15
 
-### Changed
+#### Changed
 
 - Updated dependencies
 
 - small bug fixes in documentation
 
-## [2.1.4] 2020-03-09
+### [2.1.4] 2020-03-09
 
-### Changed
+#### Changed
 
 - Now using VSCode
 
@@ -306,142 +312,142 @@ All notable changes to this project are documented in this file.
 
 - Additional dependencies
 
-## [2.1.3] 2020-03-01
+### [2.1.3] 2020-03-01
 
-### Changed
+#### Changed
 
 - Bug fix separate_stereopair
 
-## [2.1.2] 2020-02-29
+### [2.1.2] 2020-02-29
 
-### Changed
+#### Changed
 
 - Bug fix get_groups
 
-## [2.1.1] 2020-02-29
+### [2.1.1] 2020-02-29
 
-### Changed
+#### Changed
 
 - Bug fix and naming create_stereopair, separate_stereopair
 
-## [2.1.0] 2020-02-29
+### [2.1.0] 2020-02-29
 
-### Added
+#### Added
 
 - Node "Get Status" command get_properties now has new property msg.uuid (needed for stereopair)
 - Node "Control Player" new commands create_stereopair, seperate_stereopair
 
-### Changed
+#### Changed
 
 - CAUTION: In node "Control Player" play, stop, pause, toggleplayback, next_song, previous_song will now throw error message when send to "client" in a group.
 - CAUTION: In node "Control Player" msg is not anymore changed. Before msg. payload was set to true.
 - CAUTION: In node "Get Status" msg.role - "coordinator" in stead of "master"
 - code optimization (use of Helper)
 
-## [2.0.0] 2020-02-22
+### [2.0.0] 2020-02-22
 
-### Added
+#### Added
 
 - New node "My Sonos" based on the SONOS App tab "My Sonos"
 - My Sonos node: get_items outputs all My Sonos items (except Sonos Favorites, Audible audiobooks, ... )
 - My Sonos node: stream stations from Amazon, Napster, TuneIn, Antenna, ....
 - My Sonos node: queue playlists, albums, tracks from Spotify, Amazon, Napster, ....
 
-### Changed
+#### Changed
 
 - Error handling revised
 
-## [1.4.0] 2020-02-15
+### [1.4.0] 2020-02-15
 
-### Added
+#### Added
 
 - Manage Queue: seek command
 - Get Status: get_loudness
 - Control Player: set_loudness
 
-### Changed
+#### Changed
 
 - Get Status: get_crossfademode changed to get_crossfade
 - Error handling revised (for all direct SOAP calls)
 - Several data structures moved into JSON files
 
-## [1.3.0] 2020-02-09
+### [1.3.0] 2020-02-09
 
-### Added
+#### Added
 
 - Node Control Player: Added set_sleeptimer
 - Node Get Status: Added get_sleeptimer
 
-### Changed
+#### Changed
 
 - Node Get Status: get_songmedia an get_mediainfo now outputs the TuneIn Radio Id
 - Node Manage Radio: get_mysonos now outputs station logo
 - Error handling revised
 
-## [1.2.0] 2020-02-06
+### [1.2.0] 2020-02-06
 
-### Added
+#### Added
 
 - Node Control Player: Added set_eq to set NightMode, DialogLevel, SubGain
 - Node Get Status: Added get_crossfademode (On/Off)
 - Node Control Player: Added set_crossfademode (On/Off)
 
-### Changed
+#### Changed
 
 - Node Get Status, test_connected provides now msg.info for additional infos if not reachable
 - Node Control Player, set_led now does not change msg (before payload was set to true)
 - Helper Code revised
 - Error handling revised
 
-## [1.1.0] 2020-02-01
+### [1.1.0] 2020-02-01
 
-### Added
+#### Added
 
 - Node Get Status: New get_eq to get information about NightMode, DialogLevel, GainSub, ...
 - Node Get Status: New command get_groups to provide information about the topology, groups, members in groups
 - Node Get Status: New msg.suppressWarnings for get_songmedia, get_songinfo to suppress warnings
 
-### Changed
+#### Changed
 
 - Dependencies: updated
 
-## [1.0.1] 2019-12-12
+### [1.0.1] 2019-12-12
 
-### Changed
+#### Changed
 
 - Manage Queue: remove_song got property "numberOfSongs" to specify the number of songs to be removed.
 
-## [1.0.0] 2019-11-30 Caution: last published release was 0.5.1
+### [1.0.0] 2019-11-30 Caution: last published release was 0.5.1
 
-### Changed
+#### Changed
 
 - Manage Queue: Removed output property queue_length, available_playlists (not necessary)
 
-### added
+#### Added
 
 - Manage Queue: Support for Spotify: tracks, album, playlists from My Sonos or direct insertion
 - Get Status: Added test_connected command to check whether player is reachable.
 - Control Player: Now with output to be able to chain commands
 - Manage Radio: play_httpradio for using simple http stream address
 
-## [0.8.0] 2019-11-11  (not published)
+### [0.8.0] 2019-11-11  (not published)
 
-### Changed
+#### Changed
 
 - revised Manage Radio node
 - moved command get_mysonosall to node Get Status as get_mysonos
 - revised all modules - consistent coding, html, ...
 
-## [0.7.0] 2019-11-08 (not published)
+### [0.7.0] 2019-11-08 (not published)
 
-### Changed
+#### Changed
 
 - revised Configuration Node and Helper.
 - coding clean up in all modules, especially in SonosHelper
 
-## [0.6.0] 2019-11-05 (not published)
+### [0.6.0] 2019-11-05 (not published)
 
-### Changed
+#### Changed
 
 - rework node Get Status Node !! changes some commands and properties
 - Get Status node: get_state replacing get_stateonly
@@ -452,17 +458,17 @@ All notable changes to this project are documented in this file.
 - Get Status Node: msg.volumeNormalized instead of msg.normalized_volume
 - Get Status Node: msg.queueActivated instead of msg.queue_active
 
-### added
+#### Added
 
 - Get Status Node: get_led provides the state of the LED
 
-## [0.5.1] 2019-11-03
+### [0.5.1] 2019-11-03
 
-### Changed
+#### Changed
 
 - bug fix in manage radio node: play_mysonos does not output msg
 
-## [0.5.0] 2019-11-02
+### [0.5.0] 2019-11-02
 
 ### Addded
 
@@ -470,7 +476,7 @@ All notable changes to this project are documented in this file.
 - added msg.size for insert_sonos_playlist, get_sonos_playlists
 - added insert_amazonprime_playlist to search in My Sonos
 
-### Changed in managed queue node
+#### Changed in managed queue node
 
 - play_song now automatically activates queue.
 - replacing get_prime_playlists by get_amazonprime_playlists
@@ -482,81 +488,81 @@ All notable changes to this project are documented in this file.
 
 - in control player node: removed lab_play_notification -> use play_notification
 
-## [0.4.8] 2019-10-26
+### [0.4.8] 2019-10-26
 
-### Changed
+#### Changed
 
 - added msg.size for insert_musiclibrary_playlist, get_musiclibrary_playlists
 - code: Added a warning, if there might be more playlists in Music Library then having been fetched
 - code: more validation and error handling
 
-## [0.4.7] 2019-10-21
+### [0.4.7] 2019-10-21
 
-### Changed
+#### Changed
 
 - code: get_mysonos, play_mysonos with more validation, debugging and ignoring items with missing uri
 
-## [0.4.6] 2019-10-20
+### [0.4.6] 2019-10-20
 
-### Changed
+#### Changed
 
 - code: get_mysonos with more validation and debugging
 
-## [0.4.5] 2019-10-18
+### [0.4.5] 2019-10-18
 
-### Added
+#### Added
 
 - play, activate_avtransport, activate_queue, play_mysonos, play_tunein with optional msg.volume
 - option to "catch" node to handle errors
 
-### Changed
+#### Changed
 
 - code: changed validation of input (avoiding NaN) and error, warning message
 - code: bug fixing
 
-## [0.4.4] 2019-10-01
+### [0.4.4] 2019-10-01
 
-### Added
+#### Added
 
 - play_notification with option to set notification volume
 
-### Changed
+#### Changed
 
 - code: more input verification (error handling)
 
-## [0.4.3] 2019-09-18
+### [0.4.3] 2019-09-18
 
-### Added
+#### Added
 
 - get_queuemode and set_queuemode: SHUFFLE, NORMAL, ....
 - More Wiki examples
 
-### Changed
+#### Changed
 
 - code more readable (.then, .catch), more error handling, coding standard
 - Wiki reviesed, added URI information
 
-## [0.4.2] 2019-09-12
+### [0.4.2] 2019-09-12
 
-### Changed
+#### Changed
 
 - if title, artist could not be identified now only warning and no output (instead of error)
 
-### Added
+#### Added
 
 - more examples in Wiki
 - Manage queue node: insert_musiclibrary_playlist, insert_sonos_playlist, insert_prime_playlist, get_musicLibrary_playlists
 
-## [0.4.0] - 2019-09-06
+### [0.4.0] - 2019-09-06
 
-### Changed
+#### Changed
 
 - code subdirectory to src
 - play_song now verifies position but still does not check queue activated
 - activate queue now checks whether queue is empty
 - node documentation update, readme update, changelog update
 
-### Added
+#### Added
 
 - Control player node: activate_avtransport - to activate a specific stream (such as line in)
 - Get status node: get_properties: list all player properties (ip, mac, deviceType, ...)
@@ -564,85 +570,85 @@ All notable changes to this project are documented in this file.
 - Manage queue node: remove_song: removes a song from the queue
 - Control player Lab function play notification
 
-## [0.3.7] - 2019-09-03
+### [0.3.7] - 2019-09-03
 
-### Added
+#### Added
 
 - manage queue node: get_prime_playlists
 - get status node: get_songinfo, get_mediainfo, get_positioninfo
 - manage radio node: get_mysonosall (may be changed in the future)
 
-### Changed
+#### Changed
 
 - Update to Node-Sonos 1.12.3
 
-## [0.3.6] - 2019-08-28
+### [0.3.6] - 2019-08-28
 
 ### Fixed
 
 - reviesed node documentation
 - fixed some documentation errors (get_songmedia)
 
-### Changed
+#### Changed
 
 - Wiki documentation now cover the full scope and has more complex examples
 
-## [0.3.5] - 2019-08-27T1623
+### [0.3.5] - 2019-08-27T1623
 
-### Fixed
+#### Fixed
 
 - error in documentation for node "get status"
 
-### Added
+#### Added
 
 - Link to Wiki - new Examples
 
-### Changed
+#### Changed
 
 - Some messages
 
-## [0.3.4] - 2019-08-26T1615
+### [0.3.4] - 2019-08-26T1615
 
-### Added
+#### Added
 
 - manage queue node: new command "get_sonos_playlists"
 - example to insert a playlist into the SONOS queue
 
-### Changed
+#### Changed
 
 - get queue node: now all commands will send message as output (if no error)
 - Color of nodes
 
-### Fixed
+#### Fixed
 
 - get_queue now provides output message even if albumArtURL could not be found
 
-## [0.3.3] - 2019-08-24T2200
+### [0.3.3] - 2019-08-24T2200
 
-### Added
+#### Added
 
 - CHANGELOG.md
 - Wiki first page
 
-### Changed
+#### Changed
 
 - Status and error messages have been standardized in all nodes
 - Now debug messages instead of info messages (keep log clean)
 - README: moved some stuff to Wiki
 
-### Removed
+#### Removed
 
 - nothing
 
-### Fixed
+#### Fixed
 
 - error handling when IP address points to non SONOS device
 - bug in get queue. It works now for empty queue.
 
-## [0.3.2] - 2019-08-21
+### [0.3.2] - 2019-08-21
 
-### Added
+#### Added
 
 - ip address syntax check in configNode
 
-## [0.3.1] - 2019-08-21
+### [0.3.1] - 2019-08-21
