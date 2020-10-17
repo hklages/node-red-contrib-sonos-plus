@@ -254,7 +254,6 @@ module.exports = function (RED) {
     if (validatedSearchString !== '') {
       validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
     }
-    console.log('search >>' + JSON.stringify(validatedSearchString))
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
     const newArgs = { ObjectID: 'A:ALBUM' + validatedSearchString, 'RequestedCount': requestedCount }
     const browseDidlLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
