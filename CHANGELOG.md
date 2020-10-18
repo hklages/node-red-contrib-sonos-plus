@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.3.3] 2020-10-18
+
+#### Changed
+
+- Universal node: player.get.treble/bass/volume now output string values (not numbers)
+
+- Universal / My Sonos node: for commands instead of help text now the command is displayed
+
+- Helper: REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID improved
+
 ### [4.3.2] 2020-10-17
 
 #### Changed

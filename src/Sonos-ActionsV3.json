@@ -279,5 +279,31 @@
       "MemberID": ""
     },
     "info": "NOT USED- DONT USE! Does not work and is confusing the grouping system- use BecomeCoordinatorOfStandaloneGroup instead"
+  }, 
+  
+  "GetVolume": {
+    "endpoint": "/MediaRenderer/RenderingControl/Control",
+    "args": {
+      "InstanceID": 0, 
+      "Channel": "Master"
+    },
+    "returnValueName": "CurrentVolume",
+  "info": "USED- returns the current player volume "
+  }, 
+  "SetPlayMode": {
+    "endpoint": "/MediaRenderer/AVTransport/Control",
+    "args": {
+      "InstanceID": 0,
+      "NewPlayMode": "NORMAL"
+    },
+    "info": "USED- set the playmode"
+  },
+  "GetTransportSettings": {
+    "endpoint": "/MediaRenderer/AVTransport/Control",
+    "args": {
+      "InstanceID": 0
+    },
+    "returnValueName": "PlayMode",
+    "info": "USED- get the queue playmode"
   }
 }

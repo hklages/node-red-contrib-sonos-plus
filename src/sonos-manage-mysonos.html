@@ -36,7 +36,7 @@
     oneditprepare: function() {             
       // set up list for command 
       for (var i = 0; i < mySonosCmdList.length; i++) {
-       $('#node-input-command').append($('<option></option>').attr('value', mySonosCmdList[i].cmd).text(mySonosCmdList[i].text));
+       $('#node-input-command').append($('<option></option>').attr('value', mySonosCmdList[i].cmd).text(mySonosCmdList[i].cmd));
       }
       // select command
       $('#node-input-command').val(this.command);

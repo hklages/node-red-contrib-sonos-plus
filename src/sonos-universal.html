@@ -36,7 +36,7 @@
     oneditprepare: function() {             
       // set up list for command 
       for (var i = 0; i < universalCmdList.length; i++) {
-       $('#node-input-command').append($('<option></option>').attr('value', universalCmdList[i].cmd).text(universalCmdList[i].text));
+        $('#node-input-command').append($('<option></option>').attr('value', universalCmdList[i].cmd).text(universalCmdList[i].cmd));
       } 
       // selected command
       $('#node-input-command').val(this.command);

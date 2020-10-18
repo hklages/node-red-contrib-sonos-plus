@@ -563,11 +563,8 @@ module.exports = function (RED) {
     const queueActivated = uri.startsWith('x-rincon-queue')
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
-    // queue mode
-    const queueMode = await sonosCoordinator.getPlayMode()
-    if (!isTruthyAndNotEmptyString(queueMode)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} could not get queue mode from player`)
-    }
+    // queue mode is in paramater PlayMode
+    const queueMode = await executeAction(sonosCoordinator.baseUrl, 'GetTransportSettings', {})
 
     return {
       payload: {
@@ -1331,7 +1328,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs = { Target: validTime, Unit: 'TIME_DELTA', }
-    await executeAction(groupData.members[0].baseUrl, 'Seek', modifiedArgs ) // 0 stands for coordinator
+    await executeAction(groupData.members[0].baseUrl, 'Seek', modifiedArgs) // 0 stands for coordinator
     return {}
   }
 
@@ -1356,7 +1353,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs = { CrossfadeMode: newState }
-    await executeAction(groupData.members[0].baseUrl, 'SetCrossfadeMode', modifiedArgs ) // 0 stands for coordinator
+    await executeAction(groupData.members[0].baseUrl, 'SetCrossfadeMode', modifiedArgs) // 0 stands for coordinator
     return {}
   }
 
@@ -1388,7 +1385,7 @@ module.exports = function (RED) {
   /**  Set group queuemode - queue must being activated and must not be empty.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] queue modes.
+   * @param  {string}  msg.[payloadPath[0]] queue modes - may be mixed case
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {array}   payloadPath default: payload - in compatibility mode: topic
    * @param  {array}   cmdPath not used
@@ -1422,7 +1419,9 @@ module.exports = function (RED) {
     if (!uri.startsWith('x-rincon-queue')) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is not activated`)
     }
-    await sonosCoordinator.setPlayMode(newState)
+    // SONOS only accepts uppercase!
+    const modifiedArgs = { NewPlayMode: newState.toUpperCase() }
+    await executeAction(groupData.members[0].baseUrl, 'SetPlayMode', modifiedArgs) // 0 stands for coordinator
     return {}
   }
 
@@ -1645,7 +1644,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} player name right was not found`)
     }
     const modifiedArgs = { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` }
-    await executeAction(playerLeftBaseUrl, 'CreateStereoPair', modifiedArgs )
+    await executeAction(playerLeftBaseUrl, 'CreateStereoPair', modifiedArgs)
     return {}
   }
 
@@ -1994,7 +1993,7 @@ module.exports = function (RED) {
    * @param  {array}   cmdPath not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: bas} type number, integer -10 .. 10
+   * @return {promise} {payload: bas} type string -10 .. 10
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2002,7 +2001,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const bass = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetBass', {})
-    return { payload: parseInt(bass) }
+    return { payload: bass }
   }
 
   /**  Get player EQ data.
@@ -2208,7 +2207,7 @@ module.exports = function (RED) {
    * @param  {array}   cmdPath not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: treble} type number, integer -10 .. 10
+   * @return {promise} {payload: treble} string -10 .. 10
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2216,7 +2215,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const treble = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetTreble', {})
-    return { payload: parseInt(treble) }
+    return { payload: treble }
   }
 
   /**  Get volume of given player.
@@ -2234,9 +2233,7 @@ module.exports = function (RED) {
   async function playerGetVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    // baseUrl not needed
-    const volume = await sonosSinglePlayer.getVolume()
+    const volume = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetVolume', {})
     return { payload: volume }
   }
 
@@ -2460,7 +2457,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs = { DesiredLoudness: newState }
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'SetLoudness', modifiedArgs )
+    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'SetLoudness', modifiedArgs)
     return {}
   }
 
@@ -2560,7 +2557,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs = msg.payload
-    const result = await executeAction(groupData.members[groupData.playerIndex].baseUrl, msg.action, modifiedArgs )
+    const result = await executeAction(groupData.members[groupData.playerIndex].baseUrl, msg.action, modifiedArgs)
     return { payload: result }
   }
   // ========================================================================

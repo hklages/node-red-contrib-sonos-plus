@@ -21,7 +21,7 @@
 00:00:01x
 00:00:00:00
 
-// Time delte
+// Time delta
 00:00:00
 12:00:00
 11:10:01
@@ -37,8 +37,6 @@
 --- Failure
 0:01:00
 -0:01:00
--00:00:00
--01:00:00
 20:00:00
 10
 10:20
@@ -63,6 +61,22 @@
 1.1.1.1.
 1.1.1
 
+// Radio id
+s1
+s232
+s1343134
+
+
+--- Failure
+s
+d1234
+a12343
+a
+s1234-
+ s1234
+ 
+
+
 // Queuemodes
 NORMAL
 REPEAT_ONE
@@ -71,6 +85,7 @@ SHUFFLE
 SHUFFLE_NOREPEAT
 normal
 nOrMaL
+shuffle
 
 --- Failure
  NORMAL
@@ -80,6 +95,33 @@ nOrMaL
 -norma
 norm-al
 normalx
+irgendwas
+normalx
+xnormal
+
+3DIGITS
+123
+1
+12
+0
+01
+
+
+----Failure
+ 123
+1234
+123  
+-12
+0 1
+0.3
+.3
+33.
+aaa
+...
+   
+   xxx
+
+
 
 // CSV Samples 
 Küche,Wohnzimmer
