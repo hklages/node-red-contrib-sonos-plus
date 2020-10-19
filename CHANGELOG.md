@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.3.4] 2020-10-19
+
+#### Changed
+
+- Universal node: regex for player names changed "A E.r_k-er:1" is now a valid name :-)
+
 ### [4.3.3] 2020-10-18
 
 #### Changed

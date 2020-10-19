@@ -1,4 +1,4 @@
-// Time
+//----- REGEX_TIME
 00:00:00
 12:00:00
 11:10:01
@@ -21,7 +21,7 @@
 00:00:01x
 00:00:00:00
 
-// Time delta
+//----- REGEX_TIME_DELTA
 00:00:00
 12:00:00
 11:10:01
@@ -47,7 +47,7 @@
 00:00:01x
 00:00:00:00
 
-// IP
+//----- REGEX_IP
 
 192.168.178.2
 192.168.178.35
@@ -61,11 +61,11 @@
 1.1.1.1.
 1.1.1
 
-// Radio id
+//----- REGEX_RADIO_ID
 s1
+s12
 s232
 s1343134
-
 
 --- Failure
 s
@@ -76,8 +76,48 @@ s1234-
  s1234
  
 
+//----- REGEX_3DIGITSSIGN
+0
+1
+10
+11
+100
+110
+123
+01
+-1
+-12
+-123
 
-// Queuemodes
+----Failure
+ 123
+1234
+123  
+
+0 1
+0.3
+.3
+33.
+aaa
+...
+   
+   xxx
+
+//----- REGEX_ANYCHAR --------------------------------
+a
+A
+1
+Ö
+
+--- Failure
+.
+asdf
+!
+- ---
+      
+
+
+//----- REGEX_QUEUEMODES --------------------------------
 NORMAL
 REPEAT_ONE
 REPEAT_ALL
@@ -99,45 +139,38 @@ irgendwas
 normalx
 xnormal
 
-3DIGITS
-123
-1
-12
-0
-01
-
-
-----Failure
- 123
-1234
-123  
--12
-0 1
-0.3
-.3
-33.
-aaa
-...
-   
-   xxx
-
-
-
-// CSV Samples 
+//----- REGEX_CSV Playernames --------------------
 Küche,Wohnzimmer
 W1,K1
 Bü,Wo,Sz,Bad
 B-1,W 2,M 3
 1Küche
+Break Room,Conference,Foyer,Office
+Living Room Speakers,X1,Y1
+X1,Living Room Speakers,X1,Y1
+x
+x,y
+1,2
+B:1
+B.1
+x,B-b-b-b
+A E.r_k-er:1
 
 --- Failure
 Küche,
+,Küche
+ ,Köö
 Ba  d
 Ba--d
-B:1
-B.1
+B::1
+B,Ba--D
 -Bad
  Bad
+ ,,,
+ ,,
+ a, 
+ a,,
+ ...
 
 
 

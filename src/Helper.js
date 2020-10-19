@@ -18,7 +18,7 @@ module.exports = {
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
   REGEX_ANYCHAR: /.+/,  // any character but at least 1
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,  // mixed case allowed
-  REGEX_CSV: /^([a-zA-Z0-9äöüÄÖÜ]+)([ -]){0,1}([a-zA-Z0-9äöüÄÖÜ]+)(,([a-zA-ZäöüÄÖÜ0-9]+)([ -]){0,1}([a-zA-Z0-9äöüÄÖÜ]+))*$/,
+  REGEX_CSV: /^[a-zA-Z0-9äöüÄÖÜ]+([: -._]{0,1}[a-zA-Z0-9äöüÄÖÜ]+)*(,[a-zA-ZäöüÄÖÜ0-9]+([: -._]{0,1}[a-zA-Z0-9äöüÄÖÜ])*)*$/,
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
