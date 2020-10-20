@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.3.x] 2020-10-xx
+
+#### Changed
+
+- Universal node: internally: SetCrossfade, SetMute, SetLoudness with true instead of 1
+
 ### [4.3.4] 2020-10-19
 
 #### Changed

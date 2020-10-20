@@ -111,9 +111,9 @@
     "endpoint": "/MediaRenderer/AVTransport/Control",
     "args": {
       "InstanceID": 0,
-      "CrossfadeMode": 1
+      "CrossfadeMode": true
     },
-    "info": "USED- Set CrossfadeMode 0 or 1 - type is number"
+    "info": "USED- Set CrossfadeMode true/false"
   },
   "GetCrossfadeMode": {
     "endpoint": "/MediaRenderer/AVTransport/Control",
@@ -128,9 +128,9 @@
     "args": {
       "InstanceID": 0,
       "Channel": "Master",
-      "DesiredLoudness": "1"
+      "DesiredLoudness": true
     },
-    "info": "USED- Set Loudness 0 or 1, type number"
+    "info": "USED- Set Loudness to true or false"
   },
   "GetLoudness": {
     "endpoint": "/MediaRenderer/RenderingControl/Control",
@@ -212,9 +212,9 @@
     "endpoint": "/MediaRenderer/GroupRenderingControl/Control",
     "args": {
       "InstanceID": 0,
-      "DesiredMute": "1"
+      "DesiredMute": true
     },
-    "info": "NOT USED- set group mute to on (1) or off (0)"
+    "info": "NOT USED- set group mute to true/false"
   },
   "GetGroupMute": {
     "endpoint": "/MediaRenderer/GroupRenderingControl/Control",

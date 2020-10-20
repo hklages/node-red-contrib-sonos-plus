@@ -228,13 +228,13 @@ module.exports = {
     return module.exports.isTruthyAndNotEmptyString(property)
   },
 
-  /** Validates whether property exists and is string on/off (Not case sentive)
+  /** Validates property and returns true|false if equal to on|off (NOT case sensitive). Throws error if not exist.
    * @param  {object} message Node-RED message
    * @param  {string} property property name
    * @param  {string} propertyMeaning additional information
    * @param  {string} packageName package name
    *
-   * @return {boolean} true (on), false (off)
+   * @return {boolean} true|false if property exists and is string "on|off" (not case sensitive)
    *
    * @throws if is missing/invalid, not string, not on/off NOT case sensitive
    *

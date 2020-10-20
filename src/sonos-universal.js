@@ -1348,7 +1348,6 @@ module.exports = function (RED) {
   async function groupSetCrossfade (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // payload crossfade sate is required.
     let newState = isOnOff(msg, payloadPath[0], 'crosssfade state', NRCSP_ERRORPREFIX)
-    newState = (newState ? 1 : 0)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1377,7 +1376,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
-    const modifiedArgs = { DesiredMute: (newState ? '1' : '0') }
+    const modifiedArgs = { DesiredMute: newState }
     await executeAction(groupData.members[0].baseUrl, 'SetGroupMute', modifiedArgs)
     return {}
   }
@@ -2452,7 +2451,6 @@ module.exports = function (RED) {
   async function playerSetLoudness (node, msg, payloadPath, cmdPath, sonosPlayer) {
     // msg.state is required
     let newState = isOnOff(msg, payloadPath[0], 'loudness state', NRCSP_ERRORPREFIX)
-    newState = (newState ? 1 : 0)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
