@@ -9,7 +9,7 @@ const {
 
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
-  createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, getAllSonosPlaylists, sortedGroupArray,
+  createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, parseSonosPlaylistsResult, sortedGroupArray,
   getPlayerQueue, getRadioId, executeAction, 
 } = require('./Sonos-Commands.js')
 
@@ -97,7 +97,7 @@ module.exports = function (RED) {
     'player.execute.action': playerExecuteAction
   }
 
-  /** Create Universal node, get valid ipaddress, store nodeDialog and subscribe to messages.
+  /** Create Universal node, get valid ip address, store nodeDialog and subscribe to messages.
    * @param  {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
@@ -105,23 +105,23 @@ module.exports = function (RED) {
     const nrcspFunction = 'create and subscribe'
     const node = this
 
-    // ipaddress overruling serialnum - at least one must be valid
+    // ip address overruling serialnum - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
     if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
       // ip address is being used - default case
     } else {
       if (isValidProperty(configNode, ['serialnum']) && typeof configNode.serialnum === 'string' && REGEX_SERIAL.test(configNode.serialnum)) {
-        discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
+        discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpAddress) => {
           if (err) {
             failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not figure out ip address (discovery)`), nrcspFunction)
             return
           }
-          if (newIpaddress === null) {
+          if (newIpAddress === null) {
             failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not find any player by serial`), nrcspFunction)
           } else {
-            // setting of nodestatus is done in following call handelIpuntMessage
-            node.debug(`OK sonos player ${newIpaddress} was found`)
-            configNode.ipaddress = newIpaddress
+            // setting of node status is done in following call handelInputMessage
+            node.debug(`OK sonos player ${newIpAddress} was found`)
+            configNode.ipaddress = newIpAddress
           }
         })
       } else {
@@ -138,7 +138,7 @@ module.exports = function (RED) {
       node.debug('node - msg received')
       processInputMsg(node, config, msg, configNode.ipaddress)
         .then((msgUpdate) => {
-          Object.assign(msg, msgUpdate) // defines the ouput message
+          Object.assign(msg, msgUpdate) // defines the output message
           success(node, msg, msg.nrcspCmd)
         })
         .catch((error) => {
@@ -163,8 +163,8 @@ module.exports = function (RED) {
    * Creates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command)
    *
    * @return {promise} All commands have to return a promise - object
-   * example: returning {} means message is not modified
-   * example: returning { payload: true} means the orignal msg.payload will be modified and set to true
+   * example: returning {} means msg is not modified
+   * example: returning msg[stateName]= true means the original msg.[stateName] will be modified and set to true
    */
   async function processInputMsg (node, config, msg, ipaddress) {
     const sonosPlayer = new Sonos(ipaddress)
@@ -176,14 +176,15 @@ module.exports = function (RED) {
       isValidPropertyNotEmptyString(sonosPlayer, ['port']))) {
       throw new Error(`${NRCSP_ERRORPREFIX} ip address or port is missing`)
     }
-    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // usefull for my extensions
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
 
     // handle compatibility to older nrcsp version - depreciated 2020-05-25
-    let cmdPath = ['topic']
-    let payloadPath = ['payload']
+    // Path have to be arrays showing the path to property. 
+    let cmdName = 'topic'
+    let stateName = 'payload'
     if (config.compatibilityMode) {
-      cmdPath = ['payload']
-      payloadPath = ['topic']
+      cmdName = 'payload'
+      stateName = 'topic'
     }
 
     // command, required: node dialog overrules msg, store lowercase version in command
@@ -191,20 +192,22 @@ module.exports = function (RED) {
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
     } else {
-      if (!isValidPropertyNotEmptyString(msg, cmdPath)) {
+      let cPath = []
+      cPath.push(cmdName)
+      if (!isValidPropertyNotEmptyString(msg, cPath)) {
         throw new Error(`${NRCSP_ERRORPREFIX} command is undefined/invalid`)
       }
-      command = String(msg[cmdPath[0]])
+      command = String(msg[cmdName])
       command = command.toLowerCase()
 
-      // you may omitt group. prefix - so we add it here
+      // you may omit group. prefix - so we add it here
       const REGEX_PREFIX = /^(household|group|player|joiner)/
       if (!REGEX_PREFIX.test(command)) {
         command = `group.${command}`
       }
     }
-    msg.nrcspCmd = command // store command as get commands will overreid msg.payload
-    msg[cmdPath[0]] = command // sets topic - is also used in playerSetEQ
+    msg.nrcspCmd = command // store command as get commands will overrides msg.payload
+    msg[cmdName] = command // sets topic - is only used in playerSetEQ, playerGetEQ
 
     // state: node dialog overrules msg.
     let state
@@ -212,21 +215,21 @@ module.exports = function (RED) {
       state = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
       if (typeof state === 'string') {
         if (state !== '') {
-          msg[payloadPath[0]] = state
+          msg[stateName] = state
         }
       } else if (typeof state === 'number') {
         if (state !== '') {
-          msg[payloadPath[0]] = state
+          msg[stateName] = state
         }
       } else if (typeof state === 'boolean') {
-        msg[payloadPath[0]] = state
+        msg[stateName] = state
       }
     }
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_UNIVERSAL, command)) {
       throw new Error(`${NRCSP_ERRORPREFIX} command is invalid >>${command} `)
     }
-    return COMMAND_TABLE_UNIVERSAL[command](node, msg, payloadPath, cmdPath, sonosPlayer)
+    return COMMAND_TABLE_UNIVERSAL[command](node, msg, stateName, cmdName, sonosPlayer)
   }
 
   // ========================================================================
@@ -238,19 +241,19 @@ module.exports = function (RED) {
   /**  Coordinator delegate coordination of group. New player must be in same group!
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]]  name of new coordinator - must be in same group as player and different!
+   * @param  {string}  msg[stateName]  name of new coordinator - must be in same group as player and different!
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer - must be coordinator
-   * @param  {array}   payloadPath payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function coordinatorDelegateCoordination (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function coordinatorDelegateCoordination (node, msg, stateName, cmdName, sonosPlayer) {
     // payload new player name is required.
-    const validatedPlayerName= stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX)
+    const validatedPlayerName= stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -267,7 +270,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find player name in current group`)
     }
     if (indexNewCoordinator === 0) {
-      throw new Error(`${NRCSP_ERRORPREFIX} New coordinator must be differerent from current coordinator`)
+      throw new Error(`${NRCSP_ERRORPREFIX} New coordinator must be different from current coordinator`)
     }
 
     const modifiedArgs = { 'NewCoordinator': groupData.members[indexNewCoordinator].uuid } // will not leave group as default
@@ -279,19 +282,19 @@ module.exports = function (RED) {
   /**  Adjust group volume.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPaht[0]] -100 to + 100, integer
+   * @param  {string}  msg[stateName] -100 to + 100, integer
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string   stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupAdjustVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
-    // payload adusted volume is required
-    const adjustVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
+  async function groupAdjustVolume (node, msg, stateName, cmdName, sonosPlayer) {
+    // payload adjusted volume is required
+    const adjustVolume = string2ValidInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -304,15 +307,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupClearQueue (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupClearQueue (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -327,8 +330,8 @@ module.exports = function (RED) {
    * @param  {boolean} [msg.snapVolumes = false] will capture the players volumes
    * @param  {boolean} [msg.snapMutestates = false] will capture the players mutestates
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
    * @return {promise}  {payload: snap} snap see createGroupSnapshot
@@ -336,7 +339,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupCreateSnapshot (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupCreateSnapshot (node, msg, stateName, cmdName, sonosPlayer) {
     // validate msg properties
     const options = { snapVolumes: false, snapMutestates: false } // default
     if (isValidProperty(msg, ['snapVolumes'])) {
@@ -370,17 +373,16 @@ module.exports = function (RED) {
   /**  Group create volume snap shot (used for adjust group volume)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] not used
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupCreateVolumeSnapshot (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupCreateVolumeSnapshot (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     await executeAction(groupData.members[0].baseUrl, 'SnapshotGroupVolume', {}) // 0 stands for coordinator
@@ -391,15 +393,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupCancelSleeptimer (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupCancelSleeptimer (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs =  { NewSleepTimerDuration: '' }
@@ -411,15 +413,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: transportActions}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetTransportActions (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetTransportActions (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const actions = await executeAction(groupData.members[0].baseUrl, 'GetCurrentTransportActions', {}) // 0 stands for coordinator
@@ -430,15 +432,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: crossfade mode} on/off
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetCrossfadeMode (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetCrossfadeMode (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const state = await executeAction(groupData.members[0].baseUrl, 'GetCrossfadeMode', {}) // 0 stands for coordinator
@@ -449,15 +451,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: muteState} on/off
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetMute (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetMute (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const state = await executeAction(groupData.members[0].baseUrl, 'GetGroupMute', {}) // 0 stands for coordinator
@@ -468,8 +470,8 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} { payload: state }
@@ -478,7 +480,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetPlaybackstate (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetPlaybackstate (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -491,15 +493,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload = array of queue items as object
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetQueue (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetQueue (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -512,15 +514,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: crossfade mode} hh:mm:ss
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetSleeptimer (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetSleeptimer (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sleeptimer = await executeAction(groupData.members[0].baseUrl, 'GetRemainingSleepTimerDuration', {}) // 0 stands for coordinator
@@ -531,8 +533,8 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} { see return }
@@ -542,7 +544,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetState (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetState (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -563,7 +565,7 @@ module.exports = function (RED) {
     const queueActivated = uri.startsWith('x-rincon-queue')
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
-    // queue mode is in paramater PlayMode
+    // queue mode is in parameter PlayMode
     const queueMode = await executeAction(sonosCoordinator.baseUrl, 'GetTransportSettings', {})
 
     return {
@@ -587,15 +589,15 @@ module.exports = function (RED) {
    * @param  {object}  node - used for debug and warning
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: media: {object}, trackInfo: {object}, positionInfo: {object}, queueActivated: true/false
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetTrackPlus (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetTrackPlus (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -683,15 +685,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @output {promise}  { payload: groupVolume}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupGetVolume (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const volume = await executeAction(groupData.members[0].baseUrl, 'GetGroupVolume', {}) // 0 for coordinator
@@ -702,15 +704,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupNextTrack (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupNextTrack (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -723,15 +725,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPause (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPause (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -740,21 +742,21 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Starts plazing content. Content must have been set before.
+  /**  Starts playing content. Content must have been set before.
    * @param  {object}         node not used
    * @param  {object}         msg incoming message
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {number}         [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}         [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}          payloadPath not used
-   * @param  {array}          cmdPath not used
+   * @param  {string}         stateName not used
+   * @param  {string}          cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlay (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlay (node, msg, stateName, cmdName, sonosPlayer) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -782,29 +784,29 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Play data being exported form My Sonos (uri/metadata) on a gvien group of players
+  /**  Play data being exported form My Sonos (uri/metadata) on a given group of players
    * @param  {object}   node not used
    * @param  {object}   msg incoming message
-   * @param  {string}   msg[payloadPath[0]] content to be played
-   * @param  {string}   msg[payloadPath[0]].uri uri to be played/queued
-   * @param  {boolean}  msg[payloadPath[0]].queue indicator: has to be queued
-   * @param  {string}   [msg[payloadPath[0]].metadata] metadata in case of queue = true
+   * @param  {string}   msg[stateName] content to be played
+   * @param  {string}   msg[stateName].uri uri to be played/queued
+   * @param  {boolean}  msg[stateName].queue indicator: has to be queued
+   * @param  {string}   [msg[stateName].metadata] metadata in case of queue = true
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean}  [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {boolean}  [msg.clearQueue] if true and export.queue = true the queue is cleared. Default is true.
    * @param  {string}   [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}    payloadPath: payload - in compatibility mode: topic
-   * @param  {array}    cmdPath not used
+   * @param  {string}   stateName: payload - in compatibility mode: topic
+   * @param  {string}    cmdName not used
    * @param  {object}   sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws  any functions throws error and explicit throws
    */
-  async function groupPlayExport (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlayExport (node, msg, stateName, cmdName, sonosPlayer) {
     // simple validation of export and activation
 
-    const exportData = msg[payloadPath[0]]
+    const exportData = msg[stateName]
     if (!isValidPropertyNotEmptyString(exportData, ['uri'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} uri is missing`)
     }
@@ -851,13 +853,13 @@ module.exports = function (RED) {
   /**  Play notification on a given group of players. Group topology will not being touched.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]] notification uri.
+   * @param  {string}  msg[stateName] notification uri.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean} [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {string}  [msg.duration] duration of notification hh:mm:ss - default is calculation, if that fails then 00:00:05
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
    * @return {promise} {}
@@ -868,9 +870,9 @@ module.exports = function (RED) {
    *  While playing a notification (start .. to end + 2 seconds)
    *     there should not be send another request to this group.
    */
-  async function groupPlayNotification (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlayNotification (node, msg, stateName, cmdName, sonosPlayer) {
     // payload uri is required.
-    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
+    const validatedUri = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -913,15 +915,15 @@ module.exports = function (RED) {
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {number}         [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}         [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}          payloadPath not used
-   * @param  {array}          cmdPath not used
+   * @param  {string}         stateName not used
+   * @param  {string}         cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlayQueue (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlayQueue (node, msg, stateName, cmdName, sonosPlayer) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -957,10 +959,10 @@ module.exports = function (RED) {
   /**  Play a given snapshot on the given group of players.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {object}  msg[payloadPath[0]] snapshot - output form groupCreateSnapshot
+   * @param  {object}  msg[stateName] snapshot - output form groupCreateSnapshot
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
    * @return {promise} {}
@@ -969,13 +971,15 @@ module.exports = function (RED) {
    *
    * Assumption: payload is valid - not checked.
    */
-  async function groupPlaySnapshot (node, msg, payloadPath, cmdPath, sonosPlayer) {
-    if (isValidProperty(msg, payloadPath)) {
-      if (typeof msg[payloadPath[0]] !== 'object') {
-        throw new Error(`${NRCSP_ERRORPREFIX}: snapshot (msg.${payloadPath[0]}) is not object`)
+  async function groupPlaySnapshot (node, msg, stateName, cmdName, sonosPlayer) {
+    const pPath = []
+    pPath.push(stateName)
+    if (isValidProperty(msg, pPath)) {
+      if (typeof msg[stateName] !== 'object') {
+        throw new Error(`${NRCSP_ERRORPREFIX}: snapshot (msg.${stateName}) is not object`)
       }
     } else {
-      throw new Error(`${NRCSP_ERRORPREFIX}: snapshot (msg.${payloadPath[0]}) is missing`)
+      throw new Error(`${NRCSP_ERRORPREFIX}: snapshot (msg.${stateName}) is missing`)
     }
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -988,7 +992,7 @@ module.exports = function (RED) {
       sonosSinglePlayer.baseUrl = groupData.members[index].baseUrl
       membersPlayerPlus.push(sonosSinglePlayer)
     }
-    const snap = msg[payloadPath[0]]
+    const snap = msg[stateName]
     await restoreGroupSnapshot(node, membersPlayerPlus, snap)
     if (snap.wasPlaying) {
       await membersPlayerPlus[0].play() // 0 stands for coordinator
@@ -999,21 +1003,21 @@ module.exports = function (RED) {
   /**  Play stream from http. Optional set volume, use playerName.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]] http uri.
+   * @param  {string}  msg[stateName] http uri.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean} [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlayStreamHttp (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlayStreamHttp (node, msg, stateName, cmdName, sonosPlayer) {
     // payload uri is required.
-    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
+    const validatedUri = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -1045,19 +1049,19 @@ module.exports = function (RED) {
   /**  Play a specific track in queue. Queue must not be empty.
    * @param  {object}         node not used
    * @param  {object}         msg incoming message
-   * @param  {string/number}  msg[payloadPath[0]] position of track in queue. 1 ... queueLenght.
+   * @param  {string/number}  msg[stateName] position of track in queue. 1 ... queue length.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean}        [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}         [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}          payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}          cmdPath not used
+   * @param  {string}         stateName default: payload - in compatibility mode: topic
+   * @param  {string}         cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlayTrack (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlayTrack (node, msg, stateName, cmdName, sonosPlayer) {
     // get the playerName
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1069,7 +1073,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
     // payload position is required
-    const validatedPosition = string2ValidInteger(msg, payloadPath[0], 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
+    const validatedPosition = string2ValidInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
     await sonosCoordinator.selectQueue()
     await sonosCoordinator.selectTrack(validatedPosition)
 
@@ -1093,12 +1097,12 @@ module.exports = function (RED) {
   /**  Play tuneIn station. Optional set volume, use playerName.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]] TuneIn id
+   * @param  {string}  msg[stateName] TuneIn id
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {boolean} [msg.sameVolume] shall all players play at same volume level. If missing all group members play at same volume level
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
@@ -1107,9 +1111,9 @@ module.exports = function (RED) {
    *          all from getGroupMemberDataV2
    *          if msg.sameVolume === false and player == standalone because non sense.
    */
-  async function groupPlayTuneIn (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPlayTuneIn (node, msg, stateName, cmdName, sonosPlayer) {
     // payload radio id is required
-    const validatedRadioid = stringValidRegex(msg, payloadPath[0], REGEX_RADIO_ID, 'radio id', NRCSP_ERRORPREFIX)
+    const validatedRadioId = stringValidRegex(msg, stateName, REGEX_RADIO_ID, 'radio id', NRCSP_ERRORPREFIX)
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1118,7 +1122,7 @@ module.exports = function (RED) {
     }
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
     // baseUrl not needed
-    await sonosCoordinator.playTuneinRadio(validatedRadioid)
+    await sonosCoordinator.playTuneinRadio(validatedRadioId)
 
     if (validated.volume !== -1) {
       let sonosSinglePlayer
@@ -1141,15 +1145,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPreviousTrack (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupPreviousTrack (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -1161,18 +1165,19 @@ module.exports = function (RED) {
   /**  Queue uri.
    * @param  {object}       node not used
    * @param  {object}       msg incoming message
+   * @param  {string/number}msg.[stateName] valid uri
    * @param  {string}       [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {string/number} msg.[payloadPath[0]] valid uri
-   * @param  {array}        cmdPath not used
+   * @param  {string}       stateName default: payload - in compatibility mode: topic
+   * @param  {string}       cmdName not used
    * @param  {object}       sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupQueueUri (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupQueueUri (node, msg, stateName, cmdName, sonosPlayer) {
     // payload uri is required.
-    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
+    const validatedUri = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1185,9 +1190,10 @@ module.exports = function (RED) {
   /**  Queue spotify uri on given group queue.
    * @param  {object}       node not used
    * @param  {object}       msg incoming message
+   * @param  {string/number} msg.[stateName] valid uri from spotify
    * @param  {string}       [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {string/number} msg.[payloadPath[0]] valid uri from spotify
-   * @param  {array}        cmdPath not used
+   * @param  {string}       stateName default: payload - in compatibility mode: topic
+   * @param  {string}       cmdName not used
    * @param  {object}       sonosPlayer Sonos player - as default and anchor player
    *
    * Valid examples
@@ -1202,9 +1208,9 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupQueueUriFromSpotify (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupQueueUriFromSpotify (node, msg, stateName, cmdName, sonosPlayer) {
     // payload uri is required.
-    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'spotify uri', NRCSP_ERRORPREFIX)
+    const validatedUri = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'spotify uri', NRCSP_ERRORPREFIX)
     if (!(validatedUri.startsWith('spotify:track:') ||
         validatedUri.startsWith('spotify:album:') ||
         validatedUri.startsWith('spotify:artistTopTracks:') ||
@@ -1224,18 +1230,18 @@ module.exports = function (RED) {
   /**  Remove a number of tracks in queue.
    * @param  {object}         node not used
    * @param  {object}         msg incoming message
-   * @param  {string/number}  msg.[payloadPath[0]] number of track in queue. 1 ... queueLenght.
-   * @param  {number/string}  msg.numberOfTracks number of track 1 ... queuelenght. If missing 1.
+   * @param  {string/number}  msg.[stateName] number of track in queue. 1 ... queue length.
+   * @param  {number/string}  msg.numberOfTracks number of track 1 ... queue length. If missing 1.
    * @param  {string}         [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}          payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}          cmdPath not used
+   * @param  {string}         stateName default: payload - in compatibility mode: topic
+   * @param  {string}         cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupRemoveTracks (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupRemoveTracks (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
@@ -1249,28 +1255,28 @@ module.exports = function (RED) {
     }
 
     // payload track position is required.
-    const validatedPosition = string2ValidInteger(msg, payloadPath[0], 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
-    const validatedNumberofTracks = string2ValidInteger(msg, 'numberOfTracks', 1, lastTrackInQueue, 'number of tracks', NRCSP_ERRORPREFIX, 1)
-    await sonosCoordinator.removeTracksFromQueue(validatedPosition, validatedNumberofTracks)
+    const validatedPosition = string2ValidInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
+    const validatedNumberOfTracks = string2ValidInteger(msg, 'numberOfTracks', 1, lastTrackInQueue, 'number of tracks', NRCSP_ERRORPREFIX, 1)
+    await sonosCoordinator.removeTracksFromQueue(validatedPosition, validatedNumberOfTracks)
     return {}
   }
 
   /**  Save SONOS queue to Sonos playlist.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] title of Sonos playlist.
+   * @param  {string}  msg.[stateName] title of Sonos playlist.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSaveQueueToSonosPlaylist (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSaveQueueToSonosPlaylist (node, msg, stateName, cmdName, sonosPlayer) {
     // payload title search string is required.
-    const validatedTitle = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'title', NRCSP_ERRORPREFIX)
+    const validatedTitle = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'title', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1281,7 +1287,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }    
     const modifiedArgs = { Title: validatedTitle }
-    await executeAction(groupData.members[0].baseUrl, 'SaveQueue', modifiedArgs) // 0 stands for coordinaton
+    await executeAction(groupData.members[0].baseUrl, 'SaveQueue', modifiedArgs) // 0 stands for coordinator
 
     return {}
   }
@@ -1289,19 +1295,19 @@ module.exports = function (RED) {
   /**  Group seek to specific time.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] hh:mm:ss time in song.
+   * @param  {string}  msg.[stateName] hh:mm:ss time in song.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSeek (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSeek (node, msg, stateName, cmdName, sonosPlayer) {
     // payload seek time is required.
-    const validTime = stringValidRegex(msg, payloadPath[0], REGEX_TIME, 'seek time', NRCSP_ERRORPREFIX)
+    const validTime = stringValidRegex(msg, stateName, REGEX_TIME, 'seek time', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs =  { Target: validTime, Unit: 'REL_TIME', }
@@ -1312,19 +1318,19 @@ module.exports = function (RED) {
   /**  Group seek with delta time to specific time.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] +/- hh:mm:ss time in song.
+   * @param  {string}  msg.[stateName] +/- hh:mm:ss time in song.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSeekDelta (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSeekDelta (node, msg, stateName, cmdName, sonosPlayer) {
     // payload seek time is required.
-    const validTime = stringValidRegex(msg, payloadPath[0], REGEX_TIME_DELTA, 'relative seek time', NRCSP_ERRORPREFIX)
+    const validTime = stringValidRegex(msg, stateName, REGEX_TIME_DELTA, 'relative seek time', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs = { Target: validTime, Unit: 'TIME_DELTA', }
@@ -1335,19 +1341,19 @@ module.exports = function (RED) {
   /**  Set group crossfade on/off.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] on/off.
+   * @param  {string}  msg.[stateName] on/off.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetCrossfade (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSetCrossfade (node, msg, stateName, cmdName, sonosPlayer) {
     // payload crossfade sate is required.
-    let newState = isOnOff(msg, payloadPath[0], 'crosssfade state', NRCSP_ERRORPREFIX)
+    let newState = isOnOff(msg, stateName, 'crosssfade state', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1359,19 +1365,19 @@ module.exports = function (RED) {
   /**  Set group mute state.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] on/off.
+   * @param  {string}  msg.[stateName] on/off.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetMute (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSetMute (node, msg, stateName, cmdName, sonosPlayer) {
     // payload mute state is required.
-    const newState = isOnOff(msg, payloadPath[0], 'mute state', NRCSP_ERRORPREFIX)
+    const newState = isOnOff(msg, stateName, 'mute state', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1384,19 +1390,19 @@ module.exports = function (RED) {
   /**  Set group queuemode - queue must being activated and must not be empty.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] queue modes - may be mixed case
+   * @param  {string}  msg.[stateName] queue modes - may be mixed case
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetQueuemode (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSetQueuemode (node, msg, stateName, cmdName, sonosPlayer) {
     // payload queuemode is required.
-    const newState = stringValidRegex(msg, payloadPath[0], REGEX_QUEUEMODES, 'queue mode', NRCSP_ERRORPREFIX)
+    const newState = stringValidRegex(msg, stateName, REGEX_QUEUEMODES, 'queue mode', NRCSP_ERRORPREFIX)
 
     // check queue is not empty and activated
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -1427,19 +1433,19 @@ module.exports = function (RED) {
   /**  Set group sleep timer.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] hh:mm:ss time in song.
+   * @param  {string}  msg.[stateName] hh:mm:ss time in song.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetSleeptimer (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupSetSleeptimer (node, msg, stateName, cmdName, sonosPlayer) {
     // payload sleep time is required.
-    const validTime = stringValidRegex(msg, payloadPath[0], REGEX_TIME, 'timer duration', NRCSP_ERRORPREFIX)
+    const validTime = stringValidRegex(msg, stateName, REGEX_TIME, 'timer duration', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1451,18 +1457,18 @@ module.exports = function (RED) {
   /**  Group set volume (all player same volume)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string/number}  msg.[payloadPath[0]] new volume
+   * @param  {string/number}  msg.[stateName] new volume
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetVolume(node, msg, payloadPath, cmdPath, sonosPlayer) {
-    const newVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'new volume', NRCSP_ERRORPREFIX)
+  async function groupSetVolume(node, msg, stateName, cmdName, sonosPlayer) {
+    const newVolume = string2ValidInteger(msg, stateName, -100, +100, 'new volume', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs =  { DesiredVolume: newVolume }
@@ -1474,15 +1480,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupStop (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupStop (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -1495,15 +1501,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupTogglePlayback (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function groupTogglePlayback (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -1515,18 +1521,18 @@ module.exports = function (RED) {
   /**  Create a new group in household. 
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] comma separated list of playerNames, first will become coordinator
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  msg.[stateName] comma separated list of playerNames, first will become coordinator
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} array of all group array of members :-)
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdCreateGroup (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdCreateGroup (node, msg, stateName, cmdName, sonosPlayer) {
     
-    const validatedPlayerList = stringValidRegex(msg, payloadPath[0], REGEX_CSV, 'player list', NRCSP_ERRORPREFIX)
+    const validatedPlayerList = stringValidRegex(msg, stateName, REGEX_CSV, 'player list', NRCSP_ERRORPREFIX)
     const newGroupPlayerArray = validatedPlayerList.split(',')
 
     // verify all are unique
@@ -1535,7 +1541,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} List includes a player multiple times`)
     }
     
-    // get groups with members and convert multi dimensioal array to simple array where objects have new property groupIndex, memberIndex
+    // get groups with members and convert multi dimensional array to simple array where objects have new property groupIndex, memberIndex
     const householdPlayerList = await getAllPlayerList(sonosPlayer)
 
 
@@ -1591,10 +1597,10 @@ module.exports = function (RED) {
   /**  Create a stereo pair of players. Right one will be hidden! Is only support for some type of SONOS player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] - left player, will be visible
+   * @param  {string}  msg.[stateName] - left player, will be visible
    * @param  {string}  msg.playerNameRight - right player, will become invisible
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
@@ -1604,9 +1610,9 @@ module.exports = function (RED) {
    * Caution: In executeAction it should be left: playerLeftBaseUrl
    *
    */
-  async function householdCreateStereoPair (node, msg, payloadPath, cmdPath, sonosPlayer) {
-    // both player are requried
-    const playerLeft = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'player name left', NRCSP_ERRORPREFIX)
+  async function householdCreateStereoPair (node, msg, stateName, cmdName, sonosPlayer) {
+    // both player are required
+    const playerLeft = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'player name left', NRCSP_ERRORPREFIX)
     const playerRight = stringValidRegex(msg, 'playerNameRight', REGEX_ANYCHAR, 'player name right', NRCSP_ERRORPREFIX)
 
     // verify that playerNames are valid and get the uuid
@@ -1620,7 +1626,7 @@ module.exports = function (RED) {
     if (!Array.isArray(allGroupsData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} all groups data is not array`)
     }
-    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
+    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinator (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let name
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
@@ -1650,15 +1656,15 @@ module.exports = function (RED) {
   /**  Get household groups. Ignore hidden player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} array of all group array of members :-)
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdGetGroups (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdGetGroups (node, msg, stateName, cmdName, sonosPlayer) {
     const allGroupsData = await sonosPlayer.getAllGroups()
     const allGroupsArray = []
     let group
@@ -1673,17 +1679,26 @@ module.exports = function (RED) {
   /**  Get SONOS playlists.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} array of all group array of members :-)
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdGetSonosPlaylists (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdGetSonosPlaylists (node, msg, stateName, cmdName, sonosPlayer) {
     
-    const playLists = await getAllSonosPlaylists(sonosPlayer.baseUrl)
+    const modifiedArgs = { ObjectID: 'SQ:' }  // SONOS Playlists
+    const response = await executeAction(sonosPlayer.baseUrl, 'Browse', modifiedArgs)
+    if (!isTruthyAndNotEmptyString(response)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
+    }
+    const playLists = await parseSonosPlaylistsResult(response)
+    if (!isTruthyAndNotEmptyString(playLists)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(playLists)}`)
+    }
+
     playLists.forEach(playlist => {
       delete playlist.sid
       delete playlist.metadata
@@ -1695,19 +1710,19 @@ module.exports = function (RED) {
   /**  Remove Sonos playlist with given title. (impact on My Sonos and also Sonos playlist list)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] title of Sonos playlist.
+   * @param  {string}  msg.[stateName] title of Sonos playlist.
    * @param  {boolean} [msg.ignoreNotExists] if missing assume true
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdRemoveSonosPlaylist (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdRemoveSonosPlaylist (node, msg, stateName, cmdName, sonosPlayer) {
     // payload title search string is required.
-    const validatedTitle = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'title', NRCSP_ERRORPREFIX)
+    const validatedTitle = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'title', NRCSP_ERRORPREFIX)
 
     let ignoreNotExists = true
     if (isValidProperty(msg, ['ignoreNotExists'])) {
@@ -1718,11 +1733,16 @@ module.exports = function (RED) {
     }
 
     // using the default player of this node as all
-    const playLists = await getAllSonosPlaylists(sonosPlayer.baseUrl)
-
-    if (!isTruthy(playLists)) {
-      throw new Error(`${NRCSP_ERRORPREFIX}: Sonos playlist list is invalid`)
+    const modifiedArgs = { ObjectID: 'SQ:' }  // SONOS Playlists
+    const response = await executeAction(sonosPlayer.baseUrl, 'Browse', modifiedArgs)
+    if (!isTruthyAndNotEmptyString(response)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
     }
+    const playLists = await parseSonosPlaylistsResult(response)
+    if (!isTruthyAndNotEmptyString(playLists)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(playLists)}`)
+    }
+
     // find title in playlist - exact - return id
     let id = ''
     for (var i = 0; i < playLists.length; i++) {
@@ -1740,19 +1760,19 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Seperate group in household.
+  /**  Separate group in household.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdSeparateGroup (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdSeparateGroup (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     for (let i = 1; i < groupData.members.length; i++) {  // start with 1 - coordinator is last
@@ -1762,12 +1782,12 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Seperate a stereo pair of players. Right player will become visible again.
+  /**  Separate a stereo pair of players. Right player will become visible again.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] - left player, will be visible
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  msg.[stateName] - left player, will be visible
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
@@ -1775,9 +1795,9 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    *
    */
-  async function householdSeparateStereoPair (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdSeparateStereoPair (node, msg, stateName, cmdName, sonosPlayer) {
     // player left is required
-    const playerLeft = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'player name left', NRCSP_ERRORPREFIX)
+    const playerLeft = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'player name left', NRCSP_ERRORPREFIX)
 
     // verify that playerNames are valid and get the uuid
     const allGroupsData = await sonosPlayer.getAllGroups()
@@ -1790,7 +1810,7 @@ module.exports = function (RED) {
     if (!Array.isArray(allGroupsData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} all groups data is not array`)
     }
-    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
+    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinator (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let name
     let playerUuid
@@ -1829,10 +1849,10 @@ module.exports = function (RED) {
   /**  Household test player connection
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] SONOS player name, required!!!!
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
-   * @param  {object}  sonosPlayer Sonos playerault as anchor player
+   * @param  {string}  msg.[stateName] SONOS player name, required!!!!
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
+   * @param  {object}  sonosPlayer Sonos player as anchor player
    *
    * @return {promise} true | false
    *
@@ -1841,14 +1861,17 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdTestPlayerOnline (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function householdTestPlayerOnline (node, msg, stateName, cmdName, sonosPlayer) {
     // player name is required
-    if (!isValidProperty(msg, payloadPath)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} player name (msg.${payloadPath[0]}) is missing/invalid`)
+
+    const pPath = []
+    pPath.push(stateName)
+    if (!isValidProperty(msg, pPath)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} player name (msg.${stateName}) is missing/invalid`)
     }
-    const playerToBeTested = msg[payloadPath[0]]
+    const playerToBeTested = msg[stateName]
     if (typeof playerToBeTested !== 'string' || playerToBeTested === '') {
-      throw new Error(`${NRCSP_ERRORPREFIX} player name (msg.${payloadPath[0]}) is not string or empty`)
+      throw new Error(`${NRCSP_ERRORPREFIX} player name (msg.${stateName}) is not string or empty`)
     }
     const allGroupsData = await sonosPlayer.getAllGroups()
     if (!isTruthyAndNotEmptyString(allGroupsData)) {
@@ -1859,7 +1882,7 @@ module.exports = function (RED) {
     }
 
     // find our player in groups output
-    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinater (uuid)
+    // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinator (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let name
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
@@ -1876,12 +1899,12 @@ module.exports = function (RED) {
   /**  Play notification on a joiner (in group) specified by sonosPlayer (default) or by playerName.
    * @param  {object}  node only used for debug and warning
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]] notification uri.
+   * @param  {string}  msg[stateName] notification uri.
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {string}  [msg.duration] duration of notification hh:mm:ss - default is calculation, if that fails then 00:00:05
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
    * @return {promise} {}
@@ -1892,9 +1915,9 @@ module.exports = function (RED) {
    *  While playing a notification (start .. to end + 2 seconds)
    *     there should not be send another request to this player and the group shound be modified
    */
-  async function joinerPlayNotification (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function joinerPlayNotification (node, msg, stateName, cmdName, sonosPlayer) {
     // payload notification uri is required.
-    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
+    const validatedUri = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
 
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -1908,7 +1931,7 @@ module.exports = function (RED) {
     // msg.sameVolume is not used (only one player!)
     const options = { // set defaults
       uri: validatedUri,
-      volume: validated.volume, // means dont touch
+      volume: validated.volume, // means don't touch
       automaticDuration: true,
       duration: '00:00:05' // in case automaticDuration does not work - 5 seconds
     }
@@ -1938,19 +1961,19 @@ module.exports = function (RED) {
   /**  Adjust player volume.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string/number}  msg[payloadPath[0]] -100 to +100 integer.
+   * @param  {string/number}  msg[stateName] -100 to +100 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerAdjustVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerAdjustVolume (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const adjustVolume = string2ValidInteger(msg, payloadPath[0], -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
+    const adjustVolume = string2ValidInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1964,15 +1987,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerBecomeStandalone (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerBecomeStandalone (node, msg, stateName, cmdName, sonosPlayer) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1988,15 +2011,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: bas} type string -10 .. 10
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetBass (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetBass (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const bass = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetBass', {})
@@ -2007,8 +2030,8 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath is used!
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName is used!
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload the Loudness state LED state on/off
@@ -2017,7 +2040,7 @@ module.exports = function (RED) {
    *
    * EQ data are only available for specific players.
    */
-  async function playerGetEq (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetEq (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2032,13 +2055,16 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} Selected player does not support TV`)
     }
 
-    let modifiedArgs
-    if (msg[cmdPath] === 'player.get.nightmode') {
+    let modifiedArgs 
+    // no check exist needed as command has already been checked
+    if (msg[cmdName] === 'player.get.nightmode') {
       modifiedArgs = { EQType: 'NightMode' }
-    } else if (msg[cmdPath] === 'player.get.subgain') {
+    } else if (msg[cmdName] === 'player.get.subgain') {
       modifiedArgs = { EQType: 'SubGain' }
-    } else {
+    } else if (msg[cmdName] === 'player.get.dialoglevel') {
       modifiedArgs = { EQType: 'DialogLevel' }
+    } else {
+      // can not happen
     }
     
     let eqData = await executeAction(sonosPlayer.baseUrl, 'GetEQ', modifiedArgs)
@@ -2056,15 +2082,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update payload the LED state on/off
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetLed (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetLed (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2080,15 +2106,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload the Loudness state LED state on/off
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetLoudness (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetLoudness (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
@@ -2103,15 +2129,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: muteState} on/off
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetMute (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetMute (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2124,15 +2150,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload the properties object
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetProperties (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetProperties (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2153,15 +2179,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload = array of queue items as object
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetQueue (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetQueue (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2174,15 +2200,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} object to update msg. msg.payload to role of player as string.
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetRole (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetRole (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     let role
@@ -2202,15 +2228,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {payload: treble} string -10 .. 10
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetTreble (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetTreble (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const treble = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetTreble', {})
@@ -2221,15 +2247,15 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @output {payload: volume } range 0 .. 100
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerGetVolume (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const volume = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetVolume', {})
@@ -2239,10 +2265,10 @@ module.exports = function (RED) {
   /**  Join a group.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] SONOS name of any player in the group
+   * @param  {string}  msg.[stateName] SONOS name of any player in the group
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
@@ -2253,9 +2279,9 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerJoinGroup (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerJoinGroup (node, msg, stateName, cmdName, sonosPlayer) {
     // payload a playername in group is required
-    const validatedGroupPlayerName = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'group player name', NRCSP_ERRORPREFIX)
+    const validatedGroupPlayerName = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'group player name', NRCSP_ERRORPREFIX)
 
     // get coordinator uri/rincon of the target group
     const groupDataToJoin = await getGroupMemberDataV2(sonosPlayer, validatedGroupPlayerName)
@@ -2278,8 +2304,8 @@ module.exports = function (RED) {
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath not used
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
@@ -2289,7 +2315,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerLeaveGroup (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerLeaveGroup (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2301,11 +2327,11 @@ module.exports = function (RED) {
   /**  Player play AVTransport uri: LineIn, TV
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[payloadPath[0]] extended uri x-***:
+   * @param  {string}  msg[stateName] extended uri x-***:
    * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
    * @return {promise} {}
@@ -2313,9 +2339,9 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    *
    */
-  async function playerPlayAvtransport (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerPlayAvtransport (node, msg, stateName, cmdName, sonosPlayer) {
     // payload uri is required: eg x-rincon-stream:RINCON_5CAAFD00223601400 for line in
-    const validatedUri = stringValidRegex(msg, payloadPath[0], REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
+    const validatedUri = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_ERRORPREFIX)
 
     // validate msg.playerName, msg.volume
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -2333,19 +2359,19 @@ module.exports = function (RED) {
   /**  Set bass.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string/number}  msg[payloadPath[0]] -10 to +10 integer.
+   * @param  {string/number}  msg[stateName] -10 to +10 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetBass (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetBass (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const newBass = string2ValidInteger(msg, payloadPath[0], -10, +10, 'set bass', NRCSP_ERRORPREFIX)
+    const newBass = string2ValidInteger(msg, stateName, -10, +10, 'set bass', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2361,18 +2387,18 @@ module.exports = function (RED) {
   /**  Set player EQ type
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg[cmdPath[0]] the lowercase, player.set.nightmode/subgain/dialoglevel
-   * @param  {string}  msg[payloadPath[0]] value on,off or -15 .. 15 in case of subgain
+   * @param  {string}  msg[cmdName] the lowercase, player.set.nightmode/subgain/dialoglevel
+   * @param  {string}  msg[stateName] value on,off or -15 .. 15 in case of subgain
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath default: cmd - in compatibility mode: payload
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName default: cmd - in compatibility mode: payload
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetEQ (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetEQ (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2389,18 +2415,20 @@ module.exports = function (RED) {
 
     let eqType
     let eqValue
-
-    if (msg[cmdPath[0]] === 'player.set.nightmode') {
+    // no check exist needed as command has already been checked
+    if (msg[cmdName] === 'player.set.nightmode') {
       eqType = 'NightMode'
-      eqValue = isOnOff(msg, payloadPath[0], 'nightmode', NRCSP_ERRORPREFIX) // required
+      eqValue = isOnOff(msg, stateName, 'nightmode', NRCSP_ERRORPREFIX) // required
       eqValue = (eqValue ? 1 : 0)
-    } else if (msg[cmdPath[0]] === 'player.set.subgain') {
+    } else if (msg[cmdName] === 'player.set.subgain') {
       eqType = 'SubGain'
-      eqValue = string2ValidInteger(msg, payloadPath[0], -15, 15, 'subgain', NRCSP_ERRORPREFIX) // required
-    } else {
+      eqValue = string2ValidInteger(msg, stateName, -15, 15, 'subgain', NRCSP_ERRORPREFIX) // required
+    } else if (msg[cmdName] === 'player.set.dialoglevel') {
       eqType = 'DialogLevel'
-      eqValue = isOnOff(msg, payloadPath[0], 'dialoglevel', NRCSP_ERRORPREFIX) // required
+      eqValue = isOnOff(msg, stateName, 'dialoglevel', NRCSP_ERRORPREFIX) // required
       eqValue = (eqValue ? 1 : 0)
+    } else {
+      // can not happen
     }
 
     const modifiedArgs = { EQType: eqType, DesiredValue: eqValue }
@@ -2411,19 +2439,19 @@ module.exports = function (RED) {
   /**  Set player led on/off.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] on/off
+   * @param  {string}  msg.[stateName] on/off
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetLed (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetLed (node, msg, stateName, cmdName, sonosPlayer) {
     // msg.state is required
-    let newState = isOnOff(msg, payloadPath[0], 'led state', NRCSP_ERRORPREFIX)
+    let newState = isOnOff(msg, stateName, 'led state', NRCSP_ERRORPREFIX)
     newState = newState ? 'On' : 'Off'
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
@@ -2438,19 +2466,19 @@ module.exports = function (RED) {
   /**  Set player loudness on/off.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] on/off
+   * @param  {string}  msg.[stateName] on/off
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetLoudness (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetLoudness (node, msg, stateName, cmdName, sonosPlayer) {
     // msg.state is required
-    let newState = isOnOff(msg, payloadPath[0], 'loudness state', NRCSP_ERRORPREFIX)
+    let newState = isOnOff(msg, stateName, 'loudness state', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2462,19 +2490,19 @@ module.exports = function (RED) {
   /**  Set mute for given player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] on/off.
+   * @param  {string}  msg.[stateName] on/off.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetMute (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetMute (node, msg, stateName, cmdName, sonosPlayer) {
     // payload mute state is required.
-    const newState = isOnOff(msg, payloadPath[0], 'mute state', NRCSP_ERRORPREFIX)
+    const newState = isOnOff(msg, stateName, 'mute state', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2487,19 +2515,19 @@ module.exports = function (RED) {
   /**  Set treble.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string/number}  msg[payloadPath[0]] -10 to +10 integer.
+   * @param  {string/number}  msg[stateName] -10 to +10 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetTreble (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetTreble (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const newTreble = string2ValidInteger(msg, payloadPath[0], -10, +10, 'set treble', NRCSP_ERRORPREFIX)
+    const newTreble = string2ValidInteger(msg, stateName, -10, +10, 'set treble', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2515,19 +2543,19 @@ module.exports = function (RED) {
   /**  Set volume for given player.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {number/string} msg[payloadPath[0]] volume, integer 0 .. 100 integer.
+   * @param  {number/string} msg[stateName] volume, integer 0 .. 100 integer.
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetVolume (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerSetVolume (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const validatedVolume = string2ValidInteger(msg, payloadPath[0], 0, 100, 'volume', NRCSP_ERRORPREFIX)
+    const validatedVolume = string2ValidInteger(msg, stateName, 0, 100, 'volume', NRCSP_ERRORPREFIX)
     const validatedPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
     const groupData = await getGroupMemberDataV2(sonosPlayer, validatedPlayerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
@@ -2539,18 +2567,18 @@ module.exports = function (RED) {
   /**  Test action
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[payloadPath[0]] modified arguments
+   * @param  {string}  msg.[stateName] modified arguments
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
    * @param  {string}  msg.action action name
-   * @param  {array}   payloadPath default: payload - in compatibility mode: topic
-   * @param  {array}   cmdPath not used
+   * @param  {string}  stateName default: payload - in compatibility mode: topic
+   * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
    * @return {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerExecuteAction (node, msg, payloadPath, cmdPath, sonosPlayer) {
+  async function playerExecuteAction (node, msg, stateName, cmdName, sonosPlayer) {
     
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2567,7 +2595,7 @@ module.exports = function (RED) {
   /**  Validates group properties msg.playerName, msg.volume, msg.sameVolume, msg.clearQueue
    * @param  {object}        msg incoming message
    * @param  {string}        [msg.playerName = ''] playerName
-   * @param  {string/number} [msg.volume = -1] volume. if not set dont touch orignal volume.
+   * @param  {string/number} [msg.volume = -1] volume. if not set don't touch original volume.
    * @param  {boolean}       [msg.sameVolume = true] sameVolume
    * @param  {boolean}       [msg.clearQueue = true] indicator for clear queue
    * @param  {string}        pkgPrefix package identifier

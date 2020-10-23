@@ -34,11 +34,11 @@ module.exports = {
    * @param  {object}  node current node - for debugging
    * @param  {array}   membersAsPlayersPlus array of node-sonos player object with baseUrl,
    *                   coordinator has index 0
-   *                   length = 1 is allowed if independend.
+   *                   length = 1 is allowed if independent
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
    * @param  {string}  [options.metadata]  metadata - will be generated if missing
-   * @param  {string}  options.volume volumen during notification - if -1 dont use, range 1 .. 99
+   * @param  {string}  options.volume volume during notification - if -1 don't use, range 1 .. 99
    * @param  {boolean} options.sameVolume all player in group play at same volume level
    * @param  {boolean} options.automaticDuration duration will be received from player
    * @param  {string}  options.duration format hh:mm:ss
@@ -80,7 +80,7 @@ module.exports = {
     }
     node.debug('Snapshot created - now start playing notification')
 
-    // set AVTranspoart
+    // set AVTransport
     const modifiedArgs = { CurrentURI: encodeXml(options.uri) }
     if (metadata !== '') {
       modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
@@ -114,7 +114,7 @@ module.exports = {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         node.debug('Did retrieve duration from SONOS player')
       } else {
-        node.debug('Could NOT retrieve duration from SONOS player - using default/specified lenght')
+        node.debug('Could NOT retrieve duration from SONOS player - using default/specified length')
       }
     }
     node.debug('duration >>' + JSON.stringify(waitInMilliseconds))
@@ -134,7 +134,7 @@ module.exports = {
       await membersAsPlayerPlus[coordinatorIndex].setAVTransportURI({
         uri: snapshot.mediaInfo.CurrentURI,
         metadata: snapshot.mediaInfo.CurrentURIMetaData,
-        onlySetUri: true // means dont play
+        onlySetUri: true // means don't play
       })
     }
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1 && snapshot.mediaInfo.NrTracks > 1) {
@@ -157,14 +157,14 @@ module.exports = {
     }
   },
 
-  /**  Play notification on a single joiner - a player in a group not beeing coordinator.
+  /**  Play notification on a single joiner - a player in a group not being coordinator.
    * @param  {object}  node current node - for debugging
    * @param  {object}  coordinatorPlus coordinator in group as node-sonos player object with baseUrl
    * @param  {object}  joinerPlus jointer in group
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
    * @param  {string}  [options.metadata]  metadata - will be generated if missing
-   * @param  {string}  options.volume volumen during notification. - 1 means dont touch. integer 1 .. 99
+   * @param  {string}  options.volume volume during notification. - 1 means don't touch. integer 1 .. 99
    * @param  {boolean} options.automaticDuration
    * @param  {string}  options.duration format hh:mm:ss
    * @return {promise} true
@@ -224,7 +224,7 @@ module.exports = {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         node.debug('Did retrieve duration from SONOS player')
       } else {
-        node.debug('Could NOT retrieve duration from SONOS player - using default/specified lenght')
+        node.debug('Could NOT retrieve duration from SONOS player - using default/specified length')
       }
     }
     node.debug('duration >>' + JSON.stringify(waitInMilliseconds))
@@ -238,7 +238,7 @@ module.exports = {
     await joinerPlus.setAVTransportURI({
       uri: snapshot.mediaInfo.CurrentURI,
       metadata: snapshot.mediaInfo.CurrentURIMetaData,
-      onlySetUri: true // means dont play
+      onlySetUri: true // means don't play
     })
     if (snapshot.wasPlaying) {
       await joinerPlus.play()
@@ -526,7 +526,7 @@ module.exports = {
     // receive data from player - uses default action for Favorites defined in Sonos-Actions, also only 100 entries!
     // TODO Notion limit 100
     // get all My Sonos items - but not Sonos playlists (ObjectID FV:2)
-    const modifiedArgs = { ObjectID: 'FV:2' } // My Sonos but not SONOS Playlists
+    let modifiedArgs = { ObjectID: 'FV:2' } // My Sonos but not SONOS Playlists
     const response = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} Browse FV-2 response is invalid. Response >>${JSON.stringify(response)}`)
@@ -550,33 +550,18 @@ module.exports = {
       }
     })
 
-    const listSonosPlaylists = await module.exports.getAllSonosPlaylists(sonosPlayerBaseUrl)
-    return listMySonos.concat(listSonosPlaylists)
+    modifiedArgs = { ObjectID: 'SQ:' }  // SONOS Playlists
+    const responseBrowse = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
+    if (!isTruthyAndNotEmptyString(responseBrowse)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(responseBrowse)}`)
+    }
+    const playLists = await module.exports.parseSonosPlaylistsResult(responseBrowse)
+    if (!isTruthyAndNotEmptyString(playLists)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(playLists)}`)
+    }
+    return listMySonos.concat(playLists)
   },
 
-  /**  Get array of all SONOS playlists (objects). Caution: Upper limit 100. Emtpy array if no SONOS playlists.
-   * @param  {string} sonosPlayerBaseUrl SONOS Player baseUrl (eg http://192.168.178.37:1400)
-   *
-   * @return {promise} array of Sonos playlists - could be emtpy
-   *                   {title, albumArt(array), sid (empty string), uri, metadata(empty string), upnpClass, processingType}
-   *
-   * @throws if invalid SONOS player response
-   *          if parsing went wrong
-   *
-   */
-  getAllSonosPlaylists: async function (sonosPlayerBaseUrl) {
-    const modifiedArgs = { ObjectID: 'SQ:'}  // SONOS Playlists
-    const response = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgs)
-    if (!isTruthyAndNotEmptyString(response)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
-    }
-    const listSonosPlaylists = await module.exports.parseSonosPlaylistsResult(response)
-    if (!isTruthyAndNotEmptyString(listSonosPlaylists)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(listSonosPlaylists)}`)
-    }
-
-    return listSonosPlaylists
-  },
 
   // ========================================================================
   //
@@ -698,7 +683,7 @@ module.exports = {
     const tag = 'uriIdentifier'
     const result = await parseSoapBodyV1(cleanXml, tag)
     if (!isTruthyAndNotEmptyString(result)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBodyV1 is invalid. Response >>${JSON.stringify(result)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parseSoapBodyV1 is invalid. Response >>${JSON.stringify(result)}`)
     }
     const list = []
     let sid, upnpClass, processingType, albumArtUriData, albumArtUri
@@ -769,7 +754,7 @@ module.exports = {
     const tag = 'uriIdentifier'
     const result = await parseSoapBodyV1(cleanXml, tag)
     if (!isTruthyAndNotEmptyString(result)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} reponse form parseSoapBody is invalid. Response >>${JSON.stringify(result)}`)
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parseSoapBody is invalid. Response >>${JSON.stringify(result)}`)
     }
     const list = [] // no sonos playlists
     if (isValidProperty(result, ['DIDL-Lite', 'container'])) {
@@ -855,7 +840,7 @@ module.exports = {
     }
 
     // transform properties 
-    let itemList = containerArray.map( element => {
+    let itemList = containerArray.map(element => {
       let item = {}
       if (isValidProperty(element, ['id'])) {
         item.id = element['id']
@@ -920,7 +905,7 @@ module.exports = {
           invisible: invisible
         })
       } else {
-        // update coordinator on positon 0 with name
+        // update coordinator on position 0 with name
         members[0].sonosName = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
         members[0].uuid = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID
         members[0].invisible = invisible
@@ -933,7 +918,7 @@ module.exports = {
    * @param  {string} xuri uri such as x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&flags=8300&sn=14
    * @return {string} service id or if not found empty
    *
-   * prereq: uri is string where the sid is in between ?sid= and &flags=
+   * prerequisites: uri is string where the sid is in between ?sid= and &flags=
    */
 
   getSid: xuri => {
