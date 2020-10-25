@@ -47,7 +47,7 @@
   "author": "hklages",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.0",
     "fs-extra": "^9.0.1",
     "path": "^0.12.7",
     "sonos": "^1.14.0",
