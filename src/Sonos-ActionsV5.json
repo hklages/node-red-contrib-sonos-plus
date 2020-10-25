@@ -1,0 +1,18 @@
+{
+  "SetAVTransportURI": {
+  "endpoint":"/MediaRenderer/AVTransport/Control",
+  "inArgs":[
+     "InstanceID",
+     "CurrentURI",
+     "CurrentURIMetaData"
+  ]
+  },
+    "SetVolume": {
+    "endpoint":"/MediaRenderer/RenderingControl/Control",
+    "inArgs":[
+       "InstanceID",
+       "Channel",
+       "DesiredVolume"
+    ]
+ }
+}

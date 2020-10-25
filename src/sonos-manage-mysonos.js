@@ -7,7 +7,7 @@ const {
   failure, success
 } = require('./Helper.js')
 
-const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeAction, extractContainers } = require('./Sonos-Commands.js')
+const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeAction, didlXmlToArray: didlXmlToArray } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -188,7 +188,7 @@ module.exports = function (RED) {
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
     const newArgs = { ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString) }
     const browseDIDLLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
-    const albumList = await extractContainers(browseDIDLLite)
+    const albumList = await didlXmlToArray(browseDIDLLite, 'container')
     let firstAlbum
     if (albumList.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find any title matching search string`)
@@ -196,7 +196,7 @@ module.exports = function (RED) {
       firstAlbum = albumList[0]
     }
     const outputChanged = {}
-    outputChanged[stateName] = { uri: firstAlbum.uri, metadata: '', queue: true, artist: firstAlbum.artist, title: firstAlbum.title }
+    outputChanged[stateName] = firstAlbum
     return outputChanged
   }
   
@@ -259,17 +259,22 @@ module.exports = function (RED) {
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
     const newArgs = { ObjectID: 'A:ALBUM' + validatedSearchString, 'RequestedCount': requestedCount }
     const browseDidlLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
-    const albumList = await extractContainers(browseDidlLite)
-    let outputArray = []
+    const albumList = await didlXmlToArray(browseDidlLite, 'container')
+    
     if (albumList.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find any album`)
-    } else {
-      outputArray = albumList.map(item => {
-        return { uri: item.uri, metadata: '', queue: true, artist: item.artist, title: item.title }
-      })
     }
+    
+    // add ip address to albumUri
+    albumList.map(element => {
+      if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
+        element.albumArtUri = sonosPlayer.baseUrl + element.albumArtUri
+        element.albumArt = element.albumArtUri // compatibility
+      }  
+      return element
+    })
     const outputChanged = {}
-    outputChanged[stateName] = outputArray.slice()  // copy array and assign to payload
+    outputChanged[stateName] = albumList.slice()  // copy array and assign to payload
     return outputChanged
   }
 

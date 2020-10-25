@@ -2,11 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
-### [4.3.x] 2020-10-xx
+### [4.3.5] 2020-10-26
 
 #### Changed
 
 - Universal node: internally: SetCrossfade, SetMute, SetLoudness with true instead of 1
+
+- Universal/My Sonos node: Code refactoring and consolidation in Sonos-Commands (mainly related to My-Sonos, Music-Library)
+
+#### Added
+
+- Universal node. player.play.tv let you activate the TV line in at supported players. 
 
 ### [4.3.4] 2020-10-19
 

@@ -133,33 +133,5 @@ module.exports = {
       case '"':  return '&quot;'
       }
     })
-  },
-
-  /** Transforms body in SOAP response to JSON format.
-   *  Why this function: 
-   * @param  {object} body response from SONOS player on a SOAP request
-   * @param  {string} [tag] tag string, not used if empty
-   *
-   * @return {promise} JSON format
-   */
-
-  // Caution: as explicitArray is set to false: its good, if response usually is not an array
-  // but in case of an array, it is only an element if "array length = 1"
-  // TODO Notion SOPA / parseSoapBodyV1
-  
-  // documentation: https://www.npmjs.com/package/xml2js#options
-  // explicitArray (default: true):
-  //    Always put child nodes in an array if true; otherwise an array is created only if there is more than one.
-  // mergeAttrs (default: false): Merge attributes and child elements as properties of the parent,
-  //    instead of keying attributes off a child attribute object.This option is ignored if ignoreAttrs is true
-  // charkey (default: _):
-  //    Prefix that is used to access the character content.Version 0.1 default was #.
-
-  parseSoapBodyV1: async (body, tag)=> {
-    const arg = { mergeAttrs: true, explicitArray: false }
-    if (tag !== '') {
-      arg.charkey = tag
-    }
-    return xml2js.parseStringPromise(body, arg)
-  },
+  }
 }

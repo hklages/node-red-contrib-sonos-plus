@@ -2,15 +2,15 @@ const {
   REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
   NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_CSV, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial,
-  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, isTruthy,
+  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, 
   isOnOff, string2ValidInteger, stringValidRegex,
   failure, success
 } = require('./Helper.js')
 
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
-  createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, parseSonosPlaylistsResult, sortedGroupArray,
-  getPlayerQueue, getRadioId, executeAction, 
+  createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, didlXmlToArray, sortedGroupArray,
+  getPlayerQueue, getRadioId, executeAction, executeActionV5
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -85,6 +85,7 @@ module.exports = function (RED) {
     'player.join.group': playerJoinGroup,
     'player.leave.group': playerLeaveGroup,
     'player.play.avtransport': playerPlayAvtransport,
+    'player.play.tv': playerPlayTv,
     'player.set.bass': playerSetBass,
     'player.set.dialoglevel': playerSetEQ,
     'player.set.led': playerSetLed,
@@ -1694,17 +1695,23 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
     }
-    const playLists = await parseSonosPlaylistsResult(response)
-    if (!isTruthyAndNotEmptyString(playLists)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(playLists)}`)
+    const sonosPlayLists = await didlXmlToArray(response, 'container')
+    if (!isTruthyAndNotEmptyString(sonosPlayLists)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlayLists)}`)
     }
 
-    playLists.forEach(playlist => {
-      delete playlist.sid
-      delete playlist.metadata
+    // add ip address to albumUri, delete sid, metadata
+    sonosPlayLists.map(element => {
+      if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
+        element.albumArtUri = sonosPlayer.baseUrl + element.albumArtUri
+        element.albumArt = element.albumArtUri // compatibility
+      }  
+      delete element.sid
+      delete element.metadata
+      return element
     })
 
-    return { payload: playLists }
+    return { payload: sonosPlayLists }
   }
 
   /**  Remove Sonos playlist with given title. (impact on My Sonos and also Sonos playlist list)
@@ -1738,7 +1745,7 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(response)) {
       throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
     }
-    const playLists = await parseSonosPlaylistsResult(response)
+    const playLists = await didlXmlToArray(response, 'container')
     if (!isTruthyAndNotEmptyString(playLists)) {
       throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(playLists)}`)
     }
@@ -2353,6 +2360,51 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       await sonosSinglePlayer.setVolume(validated.volume)
     }
+    return {}
+  }
+
+  /**  Player play TV
+   * @param  {object}  node not used
+   * @param  {object}  msg incoming message
+   * @param  {number/string}  [msg.volume] volume - if missing do not touch volume
+   * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
+   * @param  {string}  stateName not used
+   * @param  {string}  cmdName not used
+   * @param  {object}  sonosPlayer Sonos player
+   *
+   * @return {promise} {}
+   *
+   * @throws any functions throws error and explicit throws
+   *
+   */
+  async function playerPlayTv (node, msg, stateName, cmdName, sonosPlayer) {
+
+    // validate msg.playerName, msg.volume
+    const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
+    const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
+    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    
+    // get the device props, checke wheter TV is supported and extract URI target
+    const deviceProps = await sonosSinglePlayer.deviceDescription()
+    // extract services and search for controlURL = "/HTControl/Control" - means tv enabled
+    const serviceList = deviceProps.serviceList.service
+    const found = serviceList.findIndex(service => {
+      if (service.controlURL === '/HTControl/Control') return true
+    })
+    let inArgs
+    if (found >= 0) {
+      // extract RINCON
+      const rincon = (deviceProps.UDN).substring('uuid: '.length-1)
+      inArgs = { 'InstanceID': 0, 'CurrentURI': `x-sonos-htastream:${rincon}:spdif`, 'CurrentURIMetaData': '' }
+      await executeActionV5(groupData.members[groupData.playerIndex].baseUrl, 'SetAVTransportURI', inArgs)
+      if (validated.volume !== -1) {
+        inArgs = { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': validated.volume }
+        await executeActionV5(groupData.members[groupData.playerIndex].baseUrl, 'SetVolume', inArgs)
+      }  
+    } else {
+      throw new Error(`${NRCSP_ERRORPREFIX} Sonos player is not TV enabled`)
+    }
+    
     return {}
   }
 
