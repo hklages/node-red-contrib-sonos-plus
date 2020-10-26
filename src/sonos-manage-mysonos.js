@@ -195,6 +195,7 @@ module.exports = function (RED) {
     } else {
       firstAlbum = albumList[0]
     }
+    firstAlbum.queue = (firstAlbum.processingType === 'queue')
     const outputChanged = {}
     outputChanged[stateName] = firstAlbum
     return outputChanged
