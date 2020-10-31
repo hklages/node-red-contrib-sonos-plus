@@ -95,7 +95,7 @@ module.exports = function (RED) {
     'player.set.subgain': playerSetEQ,
     'player.set.treble': playerSetTreble,
     'player.set.volume': playerSetVolume,
-    'player.execute.action': playerExecuteAction
+    'player.execute.action': playerExecuteActionV5
   }
 
   /** Create Universal node, get valid ip address, store nodeDialog and subscribe to messages.
@@ -2384,7 +2384,7 @@ module.exports = function (RED) {
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     
-    // get the device props, checke wheter TV is supported and extract URI target
+    // get the device props, check whether TV is supported and extract URI target
     const deviceProps = await sonosSinglePlayer.deviceDescription()
     // extract services and search for controlURL = "/HTControl/Control" - means tv enabled
     const serviceList = deviceProps.serviceList.service
@@ -2616,7 +2616,7 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Test action
+  /**  Test action V5
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  msg.[stateName] modified arguments
@@ -2630,14 +2630,15 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerExecuteAction (node, msg, stateName, cmdName, sonosPlayer) {
+  async function playerExecuteActionV5 (node, msg, stateName, cmdName, sonosPlayer) {
     
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const modifiedArgs = msg.payload
-    const result = await executeAction(groupData.members[groupData.playerIndex].baseUrl, msg.action, modifiedArgs)
+    const result = await executeActionV5(groupData.members[groupData.playerIndex].baseUrl, msg.action, modifiedArgs)
     return { payload: result }
   }
+
   // ========================================================================
   //
   //             HELPER

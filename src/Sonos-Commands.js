@@ -654,26 +654,29 @@ module.exports = {
     return result
   },
 
-  /**  Execute action Version 4 - handles get and set. Version 4 needs Sonos-ActionsV4.json, no default input args!!
+  /**  Execute action Version 5 - handles get and set. Version 5 needs Sonos-ActionsV5.json, no default input args!!
    * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
    * @param  {string} actionName the action name such as Seek
    * @param  {object} actionArgs all arguments - throws error if one argument is missing!
    *
-   * @return {promise} set action: true/false | get action: value from action
+   * @return {promise} set action: true | get action: object with all outArgs
+   * 
+   * uses ACTIONS_TEMPLATESV5 with property: {string} endpoint, {array} inArgs, {array} outArgs
    *
    * Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
    */
-  executeActionV5: async function (baseUrl, actionIdentifier, newArgs) {
+  executeActionV5: async function (baseUrl, actionName, newArgs) {
     // get action in, out properties and endpoint from json file
-    const actionParameter = module.exports.ACTIONS_TEMPLATESV5[actionIdentifier] 
-    const { endpoint, inArgs } = actionParameter
+    const actionParameter = module.exports.ACTIONS_TEMPLATESV5[actionName] 
+    const { endpoint, inArgs, outArgs } = actionParameter
     
-    // check that newArgs has all properties from inArgs.
+    // check that newArgs has all properties 
+    let path = []
     inArgs.forEach(property => {
-      let path = []
+      path = []
       path.push(property)
       if (!isValidProperty(newArgs, path)) {
-        throw new Error(`${NRCSP_ERRORPREFIX} property ${property} is not provided}`)
+        throw new Error(`${NRCSP_ERRORPREFIX} property ${property} is missing}`)
       }
     })
     
@@ -682,44 +685,66 @@ module.exports = {
     const tmp = endpoint.split('/')  
     const serviceName = tmp[tmp.length - 2]
   
-    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionIdentifier, newArgs)
+    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionName, newArgs)
 
     // check response statusCode:
     // Everything OK if statusCode === 200 and body includes expected response value or requested value
     if (!isValidProperty(response, ['statusCode'])) {
-      // This should never happen. Avoiding unhandled exception.
+      // This should never happen. Just to avoid unhandled exception.
       throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
     }
     if (response.statusCode !== 200) {
-      // This should not happen as long as axios is being used. Avoiding unhandled exception.
+      // This should not happen as long as axios is being used. Just to avoid unhandled exception.
       throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
     }
     if (!isValidProperty(response, ['body'])) {
-      // This should not happen. Avoiding unhandled exception.
+      // This should not happen. Just to avoid unhandled exception.
       throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
 
+    // Convert XML to JSON
     const parseXMLArgs = { mergeAttrs: true, explicitArray: false, charkey: '' } 
-    // documentation: https://www.npmjs.com/package/xml2js#options  -- dont change option!
+    // documentation: https://www.npmjs.com/package/xml2js#options  -- don't change option!
     const bodyXml = await xml2js.parseStringPromise(response.body, parseXMLArgs)
 
-    // check body response  - generate key (as string array) to access the relevant response
-    // Check the expected value 
-    const key = ['s:Envelope', 's:Body'] // for response
-    key.push(`u:${actionIdentifier}Response`)
-    let expectedResponseValue // only needed in case of not isGetAction
-    key.push('xmlns:u')    
-    expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`
-  
+    // RESPONSE
+    // The key to the core data is ['s:Envelope','s:Body',`u:${actionName}Response`]
+    // There are 2 cases: 
+    //   1.   no output argument thats typically in a "set" action: expected response is just an envelope with
+    //            .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1`  
+    //   2.   one or more values typically in a "get" action: in addition the values outArgs are included.
+    //            .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1` 
+    //            and in addition the properties from outArgs
+    //   
+    const key = ['s:Envelope', 's:Body']
+    key.push(`u:${actionName}Response`)
+
+    // check body response
     if (!isValidProperty(bodyXml, key)) {
       throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     let result = getNestedProperty(bodyXml, key)
-    if (result !== expectedResponseValue) {
-      throw new Error(`${NRCSP_ERRORPREFIX} response from player not expected >>${JSON.stringify(result)}`)
+    if (!isValidProperty(result, ['xmlns:u'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} xmlns:u property is missing`)
     }
-    result = true
+    const expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`  
+    if (result['xmlns:u'] !== expectedResponseValue) {
+      throw new Error(`${NRCSP_ERRORPREFIX} unexpected response from player: urn:schemas ... is missint `)
+    }
     
+    if (outArgs.length === 0) { // case 1 
+      result = true
+    } else {
+      // check whether all outArgs exist and return them as object!
+      outArgs.forEach(property => { 
+        path = []
+        path.push(property)
+        if (!isValidProperty(result, path)) {
+          throw new Error(`${NRCSP_ERRORPREFIX} response property ${property} is missing}`)
+        }
+      })
+      delete result['xmlns:u'] // thats not needed
+    }    
     return result
   },
 
