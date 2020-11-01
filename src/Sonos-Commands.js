@@ -9,8 +9,7 @@ module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
   MIME_TYPES: ['.mp3', '.mp4', '.flac', '.m4a', '.ogg', '.wma'],
-  ACTIONS_TEMPLATESV2: require('./Sonos-ActionsV3.json'),
-  ACTIONS_TEMPLATESV5: require('./Sonos-ActionsV5.json'),
+  ACTIONS_TEMPLATESV6: require('./Sonos-ActionsV6.json'),
   SERVICES: require('./Sonos-Services.json'),
 
   UNPN_CLASSES_UNSUPPORTED: [
@@ -83,14 +82,15 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set AVTransport
-    const modifiedArgs = { CurrentURI: encodeXml(options.uri) }
+    let args = {  InstanceID: 0, CurrentURI: encodeXml(options.uri),  CurrentURIMetaData: '' }
     if (metadata !== '') {
-      modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
+      args.CurrentURIMetaData = encodeXml(metadata)
     }
-    let response = await module.exports.executeAction(membersAsPlayerPlus[coordinatorIndex].baseUrl, 'SetAVTransportURI', modifiedArgs)
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is invalid`)
-    }
+    // no check - always returns true
+    await module.exports.executeActionV6(membersAsPlayerPlus[coordinatorIndex].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+      args)
+
 
     if (options.volume !== -1) {
       await membersAsPlayerPlus[coordinatorIndex].setVolume(options.volume)
@@ -101,11 +101,11 @@ module.exports = {
         }
       }
     }
-    response = await module.exports.executeAction(membersAsPlayerPlus[coordinatorIndex].baseUrl, 'Play', {})
+    // no check - always returns true
+    await module.exports.executeActionV6(membersAsPlayerPlus[coordinatorIndex].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'Play',
+      { InstanceID: 0, Speed: 1 })
    
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
-    }
     node.debug('Playing notification started - now figuring out the end')
 
     // waiting either based on SONOS estimation, per default or user specified
@@ -201,18 +201,19 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    const modifiedArgs = { CurrentURI: encodeXml(options.uri) }
+    let args = {  InstanceID: 0, CurrentURI: encodeXml(options.uri),  CurrentURIMetaData: '' }
     if (metadata !== '') {
-      modifiedArgs.CurrentURIMetaData = encodeXml(metadata)
+      args.CurrentURIMetaData = encodeXml(metadata)
     }
-    let response = await module.exports.executeAction(joinerPlus.baseUrl, 'SetAVTransportURI', modifiedArgs)
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} setAVTransportURI response is invalid`)
-    }
-    response = await module.exports.executeAction(joinerPlus.baseUrl, 'Play', {})
-    if (!response) {
-      throw new Error(`${NRCSP_ERRORPREFIX} play response is false`)
-    }
+    await module.exports.executeActionV6(joinerPlus.baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+      args)
+
+    // no check - always returns true
+    await module.exports.executeActionV6(joinerPlus.baseUrl.baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'Play',
+      { InstanceID: 0, Speed: 1 })
+
     if (options.volume !== -1) {
       await joinerPlus.setVolume(options.volume)
     }
@@ -527,11 +528,16 @@ module.exports = {
   getAllMySonosItemsV2: async function (sonosPlayerBaseUrl) {
     // receive data from player - uses default action for Favorites defined in Sonos-Actions, also only 100 entries!
     // get all My Sonos items (ObjectID FV:2) - but not Sonos playlists
-    const modifiedArgsFv = { ObjectID: 'FV:2', RequestedCount: 200 } // My Sonos but not SONOS Playlists
-    const responseBrowsFV = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgsFv)
-    if (!isTruthyAndNotEmptyString(responseBrowsFV)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} Browse FV-2 response is invalid. Response >>${JSON.stringify(responseBrowsFV)}`)
+    
+    const browseFv = await module.exports.executeActionV6(sonosPlayerBaseUrl,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 200, SortCriteria: '' })
+    
+    if (browseFv.NumberReturned === 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} Could not find any My Sonos item (please add at least one)`)
     }
+    const responseBrowsFV = browseFv.Result
+    
     const listMySonos = await module.exports.didlXmlToArray(responseBrowsFV, 'item')
     if (!isTruthyAndNotEmptyString(listMySonos)) {
       throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse FV-2 is invalid. Response >>${JSON.stringify(listMySonos)}`)
@@ -562,12 +568,11 @@ module.exports = {
       }
     })
     // get all Sonos playlists
-    const modifiedArgsSq = { ObjectID: 'SQ:', RequestedCount: 999 }
-    const responseBrowseSq = await module.exports.executeAction(sonosPlayerBaseUrl, 'Browse', modifiedArgsSq)
-    if (!isTruthyAndNotEmptyString(responseBrowseSq)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} browse playlist response is invalid. Response >>${JSON.stringify(responseBrowseSq)}`)
-    }
-    const listPlaylists = await module.exports.didlXmlToArray(responseBrowseSq, 'container')
+    const responseBrowseSq = await module.exports.executeActionV6(sonosPlayerBaseUrl,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 999, SortCriteria: '' })
+   
+    const listPlaylists = await module.exports.didlXmlToArray(responseBrowseSq.Result, 'container')
     if (!isTruthyAndNotEmptyString(listPlaylists)) {
       throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(listPlaylists)}`)
     }
@@ -581,101 +586,34 @@ module.exports = {
   //
   // ========================================================================
 
-  /**  Execute action - handles get and set. Version 2 needs Sonos-ActionsV3.JSON
+  /**  Execute action version 6 - handles get and set. 
+   * Version 6 needs Sonos-ActionsV6.json, no default input args and endpoint as first key
+   * 
    * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
+   * @param  {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
    * @param  {string} actionName the action name such as Seek
-   * @param  {object} modifiedArgs only those properties being modified - defaults see SonosActionsV2.JSON
-   *
-   * @return {promise} set action: true/false | get action: value from action
-   *
-   * Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
-   */
-  executeAction: async function (baseUrl, actionIdentifier, newArgs) {
-    // get action defaults from definition file and update with new arguments
-    const actionParameter = module.exports.ACTIONS_TEMPLATESV2[actionIdentifier] 
-    const { endpoint, args } = actionParameter
-    Object.assign(args, newArgs) 
-
-    // generate serviceName from endpoint - its always the second last
-    // SONOS endpoint is either /<device>/<serviceName>/Control or /<serviceName>/Control
-    const tmp = endpoint.split('/')  
-    const serviceName = tmp[tmp.length - 2]
-  
-    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionIdentifier, args)
-
-    // check response statusCode:
-    // Everything OK if statusCode === 200 and body includes expected response value or requested value
-    if (!isValidProperty(response, ['statusCode'])) {
-      // This should never happen. Avoiding unhandled exception.
-      throw new Error(`${NRCSP_ERRORPREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
-    }
-    if (response.statusCode !== 200) {
-      // This should not happen as long as axios is being used. Avoiding unhandled exception.
-      throw new Error(`${NRCSP_ERRORPREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
-    }
-    if (!isValidProperty(response, ['body'])) {
-      // This should not happen. Avoiding unhandled exception.
-      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-
-    const parseXMLArgs = { mergeAttrs: true, explicitArray: false, charkey: '' } 
-    // documentation: https://www.npmjs.com/package/xml2js#options  -- dont change option!
-    const bodyXml = await xml2js.parseStringPromise(response.body, parseXMLArgs)
-
-    // check body response  - generate key (as string array) to access the relevant response
-    // in case of set: also the expectedResponseValue 
-    const key = ['s:Envelope', 's:Body'] // for response
-    key.push(`u:${actionIdentifier}Response`)
-    // eslint-disable-next-line no-prototype-builtins
-    const isGetAction = actionParameter.hasOwnProperty('returnValueName')  
-    let expectedResponseValue // only needed in case of not isGetAction
-    if (isGetAction) {
-      key.push(actionParameter.returnValueName)
-      // no expected response value
-    } else {
-      key.push('xmlns:u')    
-      expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`
-    }
-    if (!isValidProperty(bodyXml, key)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-    let result = getNestedProperty(bodyXml, key)
-    if (isGetAction) {
-      if (typeof result !== 'string') {
-        // Caution: this check does only work for primitive values (not objects)
-        throw new Error(`${NRCSP_ERRORPREFIX} could not get string value from player`)
-      }
-    } else {
-      if (result !== expectedResponseValue) {
-        throw new Error(`${NRCSP_ERRORPREFIX} response from player not expected >>${JSON.stringify(result)}`)
-      }
-      result = true
-    }
-    return result
-  },
-
-  /**  Execute action Version 5 - handles get and set. Version 5 needs Sonos-ActionsV5.json, no default input args!!
-   * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
-   * @param  {string} actionName the action name such as Seek
-   * @param  {object} actionArgs all arguments - throws error if one argument is missing!
+   * @param  {object} actionInArgs all arguments - throws error if one argument is missing!
    *
    * @return {promise} set action: true | get action: object with all outArgs
-   * 
-   * uses ACTIONS_TEMPLATESV5 with property: {string} endpoint, {array} inArgs, {array} outArgs
    *
    * Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
+   *  
+   * @throws not all actionArgs, http return invalid status or not 200, missing body, unexpected response
+   * 
+   * @access ACTIONS_TEMPLATESV6 key endpoint, key action property {array} inArgs, {array} outArgs
+   *
    */
-  executeActionV5: async function (baseUrl, actionName, newArgs) {
-    // get action in, out properties and endpoint from json file
-    const actionParameter = module.exports.ACTIONS_TEMPLATESV5[actionName] 
-    const { endpoint, inArgs, outArgs } = actionParameter
+  executeActionV6: async function (baseUrl, endpoint, actionName, actionInArgs) {
+    // get action in, out properties from json file
+    const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
+    const { inArgs, outArgs } = endpointActions[actionName]
     
-    // check that newArgs has all properties 
+    // actionInArgs must have all properties
     let path = []
     inArgs.forEach(property => {
       path = []
       path.push(property)
-      if (!isValidProperty(newArgs, path)) {
+      if (!isValidProperty(actionInArgs, path)) {
         throw new Error(`${NRCSP_ERRORPREFIX} property ${property} is missing}`)
       }
     })
@@ -685,9 +623,8 @@ module.exports = {
     const tmp = endpoint.split('/')  
     const serviceName = tmp[tmp.length - 2]
   
-    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionName, newArgs)
+    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionName, actionInArgs)
 
-    // check response statusCode:
     // Everything OK if statusCode === 200 and body includes expected response value or requested value
     if (!isValidProperty(response, ['statusCode'])) {
       // This should never happen. Just to avoid unhandled exception.
@@ -744,7 +681,10 @@ module.exports = {
         }
       })
       delete result['xmlns:u'] // thats not needed
-    }    
+    }
+    if (outArgs.length === 1) {
+      result = result[outArgs[0]]
+    }
     return result
   },
 
