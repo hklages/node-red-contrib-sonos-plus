@@ -2,11 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
-### [4.x.x] 2020-11-xx
+### [4.4.0] 2020-11-02
 
 #### Changed
 
-- new action file and executeAction function - all v5
+- new action file and executeAction function - all v6: preparing new functions
 
 ### [4.3.5] 2020-10-26
 
