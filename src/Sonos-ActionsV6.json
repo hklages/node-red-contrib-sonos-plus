@@ -1,0 +1,301 @@
+{
+  "/DeviceProperties/Control": {
+    "CreateStereoPair": {
+      "inArgs": [
+        "ChannelMapSet"
+      ],
+      "outArgs": []
+    },
+    "SeparateStereoPair": {
+      "inArgs": [
+        "ChannelMapSet"
+      ],
+      "outArgs": []
+    }
+  },
+  "/MediaRenderer/AVTransport/Control": {
+    "BecomeCoordinatorOfStandaloneGroup": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "DelegatedGroupCoordinatorID",
+        "NewGroupID"
+      ]
+    },
+    "ConfigureSleepTimer": {
+      "inArgs": [
+        "InstanceID",
+        "NewSleepTimerDuration"
+      ],
+      "outArgs": []
+    },
+    "DelegateGroupCoordinationTo": {
+      "endpoint": "/MediaRenderer/AVTransport/Control",
+      "inArgs": [
+        "InstanceID",
+        "NewCoordinator",
+        "RejoinGroup"
+      ],
+      "outArgs": []
+    },
+    "GetCrossfadeMode": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CrossfadeMode"
+      ]
+    },
+    "GetCurrentTransportActions": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "Actions"
+      ]
+    },
+    "GetRemainingSleepTimerDuration": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentSleepTimerGeneration",
+        "RemainingSleepTimerDuration"
+      ]
+    },
+    "GetTransportInfo": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentSpeed",
+        "CurrentTransportState",
+        "CurrentTransportStatus"
+      ]
+    },
+    "GetTransportSettings": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "PlayMode",
+        "RecQualityMode"
+      ]
+    },
+    "Play": {
+      "inArgs": [
+          "InstanceID",
+          "Speed"
+        ],
+      "outArgs": []
+    },
+    "SaveQueue": {
+      "inArgs": [
+        "InstanceID",
+        "ObjectID",
+        "Title"
+      ],
+      "outArgs": [
+        "AssignedObjectID"
+      ]
+    },
+    "Seek": {
+      "inArgs": [
+        "InstanceID",
+        "Target",
+        "Unit"
+      ],
+      "outArgs": []
+    },
+    "SetCrossfadeMode": {
+      "endpoint": "/MediaRenderer/AVTransport/Control",
+      "inArgs": [
+        "InstanceID",
+        "CrossfadeMode"
+      ],
+      "outArgs": []
+    },
+    "SetAVTransportURI": {
+      "inArgs": [
+        "CurrentURI",
+        "CurrentURIMetaData",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetPlayMode": {
+      "inArgs": [
+        "InstanceID",
+        "NewPlayMode"
+      ],
+      "outArgs": []
+    }
+  },
+  "/MediaRenderer/GroupRenderingControl/Control": {
+    "GetGroupMute": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentMute"
+      ]
+    },
+    "GetGroupVolume": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentVolume"
+      ]
+    },
+    "SetGroupMute": {
+      "inArgs": [
+        "DesiredMute",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetGroupVolume": {
+      "inArgs": [
+        "DesiredVolume",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetRelativeGroupVolume": {
+      "inArgs": [
+        "Adjustment",
+        "InstanceID"
+      ],
+      "outArgs": [
+        "NewVolume"
+      ]
+    },
+    "SnapshotGroupVolume": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": []
+    }
+  },
+  "/MediaRenderer/RenderingControl/Control": {
+    "GetBass": {
+      "endpoint": "/MediaRenderer/RenderingControl/Control",
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentBass"
+      ]
+    },
+    "GetEQ": {
+      "inArgs": [
+        "EQType",
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentValue"
+      ]
+    },
+    "GetLoudness": {
+      "inArgs": [
+        "Channel",
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentLoudness"
+      ]
+    },
+    "GetMute": {
+      "inArgs": [
+        "Channel",
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentMute"
+      ]
+    },
+    "GetTreble": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentTreble"
+      ]
+    },
+    "GetVolume": {
+      "inArgs": [
+        "Channel",
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentVolume"
+      ]
+    },
+    "SetBass": {
+      "inArgs": [
+        "DesiredBass",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetEQ": {
+      "inArgs": [
+        "DesiredValue",
+        "EQType",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetLoudness": {
+      "inArgs": [
+        "Channel",
+        "DesiredLoudness",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetMute": {
+      "inArgs": [
+        "Channel",
+        "DesiredMute",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetTreble": {
+      "inArgs": [
+        "DesiredTreble",
+        "InstanceID"
+      ],
+      "outArgs": []
+    },
+    "SetVolume": {
+      "inArgs": [
+        "Channel",
+        "DesiredVolume",
+        "InstanceID"
+      ],
+      "outArgs": []
+    }
+  },
+  "/MediaServer/ContentDirectory/Control": {
+    "Browse": {
+      "inArgs": [
+        "BrowseFlag",
+        "Filter",
+        "ObjectID",
+        "RequestedCount",
+        "SortCriteria",
+        "StartingIndex"
+      ],
+      "outArgs": [
+        "NumberReturned",
+        "Result",
+        "TotalMatches",
+        "UpdateID"
+      ]
+    }
+  }
+}

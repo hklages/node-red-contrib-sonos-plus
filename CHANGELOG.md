@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.x.x] 2020-11-xx
+
+#### Changed
+
+- new action file and executeAction function - all v5
+
 ### [4.3.5] 2020-10-26
 
 #### Changed
@@ -12,7 +18,7 @@ All notable changes to this project are documented in this file.
 
 #### Added
 
-- Universal node. player.play.tv let you activate the TV line in at supported players. 
+- Universal node. player.play.tv let you activate the TV line in at supported players.
 
 ### [4.3.4] 2020-10-19
 

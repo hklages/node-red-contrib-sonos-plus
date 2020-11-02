@@ -10,7 +10,7 @@ const {
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
   createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, didlXmlToArray, sortedGroupArray,
-  getPlayerQueue, getRadioId, executeAction, executeActionV5
+  getPlayerQueue, getRadioId, executeActionV6
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -95,7 +95,7 @@ module.exports = function (RED) {
     'player.set.subgain': playerSetEQ,
     'player.set.treble': playerSetTreble,
     'player.set.volume': playerSetVolume,
-    'player.execute.action': playerExecuteAction
+    'player.execute.action': playerExecuteActionV6
   }
 
   /** Create Universal node, get valid ip address, store nodeDialog and subscribe to messages.
@@ -274,8 +274,10 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} New coordinator must be different from current coordinator`)
     }
 
-    const modifiedArgs = { 'NewCoordinator': groupData.members[indexNewCoordinator].uuid } // will not leave group as default
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'DelegateGroupCoordinationTo', modifiedArgs)
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'DelegateGroupCoordinationTo',
+      { InstanceID: 0, 'NewCoordinator': groupData.members[indexNewCoordinator].uuid, RejoinGroup: true })
 
     return {}
   }
@@ -299,8 +301,12 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs = { Adjustment: adjustVolume }
-    await executeAction(groupData.members[0].baseUrl,'SetRelativeGroupVolume', modifiedArgs) // 0 stands for coordinator
+
+    // no check - returns the new value, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'SetRelativeGroupVolume',
+      { InstanceID: 0, Adjustment: adjustVolume })
+    
     return {}
   }
 
@@ -386,7 +392,12 @@ module.exports = function (RED) {
   async function groupCreateVolumeSnapshot (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    await executeAction(groupData.members[0].baseUrl, 'SnapshotGroupVolume', {}) // 0 stands for coordinator
+
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'SnapshotGroupVolume',
+      { InstanceID: 0 }) // 0 stands for coordinator
+    
     return {}
   }
 
@@ -405,8 +416,11 @@ module.exports = function (RED) {
   async function groupCancelSleeptimer (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs =  { NewSleepTimerDuration: '' }
-    await executeAction(groupData.members[0].baseUrl, 'ConfigureSleepTimer', modifiedArgs) // 0 stands for coordinator
+
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'ConfigureSleepTimer',
+      { InstanceID: 0, NewSleepTimerDuration: '' }) 
     return {}
   }
 
@@ -425,7 +439,12 @@ module.exports = function (RED) {
   async function groupGetTransportActions (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const actions = await executeAction(groupData.members[0].baseUrl, 'GetCurrentTransportActions', {}) // 0 stands for coordinator
+
+    // 0 stands for coordinator
+    const actions = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetCurrentTransportActions',
+      { InstanceID: 0 })
+    
     return { payload: actions }
   }
 
@@ -444,7 +463,12 @@ module.exports = function (RED) {
   async function groupGetCrossfadeMode (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const state = await executeAction(groupData.members[0].baseUrl, 'GetCrossfadeMode', {}) // 0 stands for coordinator
+    
+    // 0 stands for coordinator
+    const state = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetCrossfadeMode',
+      { InstanceID: 0 }) 
+    
     return { payload: (state === '1' ? 'on' : 'off') }
   }
 
@@ -463,7 +487,12 @@ module.exports = function (RED) {
   async function groupGetMute (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const state = await executeAction(groupData.members[0].baseUrl, 'GetGroupMute', {}) // 0 stands for coordinator
+
+    // 0 stands for coordinator
+    const state = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupMute',
+      { InstanceID: 0 }) 
+    
     return { payload: (state === '1' ? 'on' : 'off') }
   }
 
@@ -526,8 +555,13 @@ module.exports = function (RED) {
   async function groupGetSleeptimer (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sleeptimer = await executeAction(groupData.members[0].baseUrl, 'GetRemainingSleepTimerDuration', {}) // 0 stands for coordinator
-    return { payload: (sleeptimer === '' ? 'no time set' : sleeptimer) }
+
+    // 0 stands for coordinator, returns and object!
+    const sleeptimer = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetRemainingSleepTimerDuration',
+      { InstanceID: 0 }) 
+    
+    return { payload: (sleeptimer.RemainingSleepTimerDuration === '' ? 'no time set' : sleeptimer.RemainingSleepTimerDuration) }
   }
 
   /**  Get state (see return) of that group, the specified player belongs to.
@@ -551,8 +585,15 @@ module.exports = function (RED) {
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
     sonosCoordinator.baseUrl = groupData.members[0].baseUrl
     const playbackstate = await sonosCoordinator.getCurrentState()
-    const muteState = (await executeAction(sonosCoordinator.baseUrl, 'GetGroupMute', {}) === '1'? 'on': 'off')
-    const volume = await executeAction(sonosCoordinator.baseUrl, 'GetGroupVolume', {})
+    
+    const state = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupMute',
+      { InstanceID: 0 }) 
+    const muteState = (state === '1' ? 'on' : 'off')
+
+    const volume = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupVolume',
+      { InstanceID: 0 }) 
 
     // get current media data and extract queueActivated
     const mediaData = await sonosCoordinator.avTransportService().GetMediaInfo()
@@ -567,7 +608,10 @@ module.exports = function (RED) {
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
     // queue mode is in parameter PlayMode
-    const queueMode = await executeAction(sonosCoordinator.baseUrl, 'GetTransportSettings', {})
+    const transportSettings = await executeActionV6(sonosCoordinator.baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetTransportSettings',
+      { InstanceID: 0 })
+    const queueMode = transportSettings.PlayMode
 
     return {
       payload: {
@@ -697,7 +741,12 @@ module.exports = function (RED) {
   async function groupGetVolume (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const volume = await executeAction(groupData.members[0].baseUrl, 'GetGroupVolume', {}) // 0 for coordinator
+
+    // 0 stands for coordinator
+    const volume = await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupVolume',
+      { InstanceID: 0 }) 
+    
     return { payload: volume }
   }
 
@@ -1287,8 +1336,9 @@ module.exports = function (RED) {
     if (queueItems.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }    
-    const modifiedArgs = { Title: validatedTitle }
-    await executeAction(groupData.members[0].baseUrl, 'SaveQueue', modifiedArgs) // 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'SaveQueue',
+      { InstanceID: 0, Title: validatedTitle, ObjectID: '' }) // 0 stands for coordinator
 
     return {}
   }
@@ -1311,8 +1361,11 @@ module.exports = function (RED) {
     const validTime = stringValidRegex(msg, stateName, REGEX_TIME, 'seek time', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs =  { Target: validTime, Unit: 'REL_TIME', }
-    await executeAction(groupData.members[0].baseUrl, 'Seek', modifiedArgs) // 0 stands for coordinator
+
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'Seek',
+      { InstanceID: 0, Target: validTime, Unit: 'REL_TIME' })
     return {}
   }
 
@@ -1334,8 +1387,12 @@ module.exports = function (RED) {
     const validTime = stringValidRegex(msg, stateName, REGEX_TIME_DELTA, 'relative seek time', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs = { Target: validTime, Unit: 'TIME_DELTA', }
-    await executeAction(groupData.members[0].baseUrl, 'Seek', modifiedArgs) // 0 stands for coordinator
+
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'Seek',
+      { InstanceID: 0, Target: validTime, Unit: 'TIME_DELTA' })
+    
     return {}
   }
 
@@ -1358,8 +1415,12 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs = { CrossfadeMode: newState }
-    await executeAction(groupData.members[0].baseUrl, 'SetCrossfadeMode', modifiedArgs) // 0 stands for coordinator
+
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'SetCrossfadeMode',
+      { InstanceID: 0, CrossfadeMode: newState }) 
+
     return {}
   }
 
@@ -1383,8 +1444,10 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
-    const modifiedArgs = { DesiredMute: newState }
-    await executeAction(groupData.members[0].baseUrl, 'SetGroupMute', modifiedArgs)
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'SetGroupMute',
+      { InstanceID: 0, DesiredMute: newState })
+    
     return {}
   }
 
@@ -1426,8 +1489,11 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is not activated`)
     }
     // SONOS only accepts uppercase!
-    const modifiedArgs = { NewPlayMode: newState.toUpperCase() }
-    await executeAction(groupData.members[0].baseUrl, 'SetPlayMode', modifiedArgs) // 0 stands for coordinator
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'SetPlayMode',
+      { NewPlayMode: newState.toUpperCase() }) 
+    
     return {}
   }
 
@@ -1450,8 +1516,12 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs =  { NewSleepTimerDuration: validTime }
-    await executeAction(groupData.members[0].baseUrl, 'ConfigureSleepTimer', modifiedArgs) // 0 stands for coordinator
+
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'ConfigureSleepTimer',
+      { InstanceID: 0, NewSleepTimerDuration: validTime }) 
+    
     return {}
   }
 
@@ -1472,8 +1542,12 @@ module.exports = function (RED) {
     const newVolume = string2ValidInteger(msg, stateName, -100, +100, 'new volume', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs =  { DesiredVolume: newVolume }
-    await executeAction(groupData.members[0].baseUrl, 'SetGroupVolume', modifiedArgs) // 0 stands for coordinator
+    
+    // no check - always returns true, 0 stands for coordinator
+    await executeActionV6(groupData.members[0].baseUrl,
+      '/MediaRenderer/GroupRenderingControl/Control', 'SetGroupVolume',
+      { InstanceID: 0, DesiredVolume: newVolume }) 
+
     return {}
   }
 
@@ -1559,37 +1633,45 @@ module.exports = function (RED) {
         indexNewCoordinator = indexInList
       }
     }
+    let coordinatorRincon = `x-rincon:${householdPlayerList[indexNewCoordinator].uuid}` 
+
     // Is new coordinator already the coordinator in its group? Then use this group and adjust
     if (householdPlayerList[indexNewCoordinator].isCoordinator) { // means is a coordinator
       // modify this group (remove those not needed and add some)
       let found
-      let sonosPl  // node sonos player object
       for (let i = 0; i < householdPlayerList.length; i++) {
         // should this player be in group?
         found = newGroupPlayerArray.indexOf(householdPlayerList[i].sonosName)
         if (found === -1) {
           // remove if in new coordinator group
           if (householdPlayerList[i].groupIndex === householdPlayerList[indexNewCoordinator].groupIndex) {
-            // leave group
-            await executeAction(householdPlayerList[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', {})
+            // leave group, no check - always returns true
+            await executeActionV6(householdPlayerList[i].baseUrl,
+              '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+              { InstanceID: 0 })
           }
         } else {
           if (householdPlayerList[i].groupIndex !== householdPlayerList[indexNewCoordinator].groupIndex) {
-            // join group
-            sonosPl = new Sonos(householdPlayerList[i].urlHostname)
-            await sonosPl.joinGroup(householdPlayerList[indexNewCoordinator].sonosName)
+            // no check - always returns true. Using SetAVTransportURI as AddMember does not work
+            await executeActionV6(householdPlayerList[i].baseUrl,
+              '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+              { InstanceID: 0, CurrentURI: coordinatorRincon, CurrentURIMetaData: '' })
           }
         }
       }
     } else {
-      await executeAction(householdPlayerList[indexNewCoordinator].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', {})
+      await executeActionV6(householdPlayerList[indexNewCoordinator].baseUrl,
+        '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup', { InstanceID: 0 })
+      
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) // because it takes time to BecomeCoordinator
       let indexPlayer
-      let sonosPl // node sonos player object
+      
       for (let i = 1; i < newGroupPlayerArray.length; i++) { // start with 1
         indexPlayer = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i])
-        sonosPl = new Sonos(householdPlayerList[indexPlayer].urlHostname)
-        await sonosPl.joinGroup(householdPlayerList[indexNewCoordinator].sonosName)
+        // no check - always returns true. Using SetAVTransportURI as AddMember does not work
+        await executeActionV6(householdPlayerList[indexPlayer].baseUrl,
+          '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+          { InstanceID: 0, CurrentURI: coordinatorRincon, CurrentURIMetaData: '' })
       }
     }
     return {}
@@ -1649,8 +1731,12 @@ module.exports = function (RED) {
     if (playerRightUuid === '') {
       throw new Error(`${NRCSP_ERRORPREFIX} player name right was not found`)
     }
-    const modifiedArgs = { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` }
-    await executeAction(playerLeftBaseUrl, 'CreateStereoPair', modifiedArgs)
+    
+    // no check - always returns true
+    await executeActionV6(playerLeftBaseUrl,
+      '/DeviceProperties/Control', 'CreateStereoPair',
+      { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
+    
     return {}
   }
 
@@ -1677,41 +1763,46 @@ module.exports = function (RED) {
     return { payload: allGroupsArray }
   }
 
-  /**  Get SONOS playlists.
+  /**  Get SONOS playlists (limited 100, ObjectID SQ)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  stateName not used
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} array of all group array of members :-)
-   *
+   * @return {promise} All sonos playlists as array of objects
+   * 
    * @throws any functions throws error and explicit throws
    */
   async function householdGetSonosPlaylists (node, msg, stateName, cmdName, sonosPlayer) {
     
-    const modifiedArgs = { ObjectID: 'SQ:' }  // SONOS Playlists
-    const response = await executeAction(sonosPlayer.baseUrl, 'Browse', modifiedArgs)
-    if (!isTruthyAndNotEmptyString(response)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
-    }
-    const sonosPlayLists = await didlXmlToArray(response, 'container')
-    if (!isTruthyAndNotEmptyString(sonosPlayLists)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlayLists)}`)
-    }
-
-    // add ip address to albumUri, delete sid, metadata
-    sonosPlayLists.map(element => {
-      if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
-        element.albumArtUri = sonosPlayer.baseUrl + element.albumArtUri
-        element.albumArt = element.albumArtUri // compatibility
-      }  
-      delete element.sid
-      delete element.metadata
-      return element
-    })
-
-    return { payload: sonosPlayLists }
+    const response = await executeActionV6(sonosPlayer.baseUrl,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
+    
+    let sonosPlaylists = [] 
+    if (response.NumberReturned !== '0') {
+      if (!isTruthyAndNotEmptyString(response.Result)) {
+        throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response.Result)}`)
+      }
+      sonosPlaylists = await didlXmlToArray(response.Result, 'container')
+      if (!isTruthyAndNotEmptyString(sonosPlaylists)) {
+        throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlaylists)}`)
+      }
+  
+      // add ip address to albumUri, delete sid, metadata
+      sonosPlaylists.map(element => {
+        if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
+          element.albumArtUri = sonosPlayer.baseUrl + element.albumArtUri
+          element.albumArt = element.albumArtUri // compatibility
+        }  
+        delete element.sid
+        delete element.metadata
+        return element
+      })
+    } 
+    
+    return { payload: sonosPlaylists }
   }
 
   /**  Remove Sonos playlist with given title. (impact on My Sonos and also Sonos playlist list)
@@ -1739,31 +1830,37 @@ module.exports = function (RED) {
       ignoreNotExists = msg.ignoreNotExist
     }
 
-    // using the default player of this node as all
-    const modifiedArgs = { ObjectID: 'SQ:' }  // SONOS Playlists
-    const response = await executeAction(sonosPlayer.baseUrl, 'Browse', modifiedArgs)
-    if (!isTruthyAndNotEmptyString(response)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response)}`)
-    }
-    const playLists = await didlXmlToArray(response, 'container')
-    if (!isTruthyAndNotEmptyString(playLists)) {
-      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(playLists)}`)
-    }
-
-    // find title in playlist - exact - return id
-    let id = ''
-    for (var i = 0; i < playLists.length; i++) {
-      if (playLists[i].title === validatedTitle) {
-        id = playLists[i].id.replace('SQ:', '')
+    // using the default player of this node
+    const response = await executeActionV6(sonosPlayer.baseUrl,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
+    
+    let sonosPlaylists = [] 
+    if (response.NumberReturned !== '0') {
+      if (!isTruthyAndNotEmptyString(response.Result)) {
+        throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response.Result)}`)
+      }
+      sonosPlaylists = await didlXmlToArray(response.Result, 'container')
+      if (!isTruthyAndNotEmptyString(sonosPlaylists)) {
+        throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlaylists)}`)
+      }
+  
+      // find title in playlist - exact - return id
+      let id = ''
+      for (var i = 0; i < sonosPlaylists.length; i++) {
+        if (sonosPlaylists[i].title === validatedTitle) {
+          id = sonosPlaylists[i].id.replace('SQ:', '')
+        }
+      }
+      if (id === '') { // not found
+        if (!ignoreNotExists) {
+          throw new Error(`${NRCSP_ERRORPREFIX} No Sonos playlist title matching search string.`)
+        }
+      } else {
+        await sonosPlayer.deletePlaylist(id)
       }
     }
-    if (id === '') { // not found
-      if (!ignoreNotExists) {
-        throw new Error(`${NRCSP_ERRORPREFIX} No Sonos playlist title matching search string.`)
-      }
-    } else {
-      await sonosPlayer.deletePlaylist(id)
-    }
+    
     return {}
   }
 
@@ -1784,7 +1881,11 @@ module.exports = function (RED) {
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     for (let i = 1; i < groupData.members.length; i++) {  // start with 1 - coordinator is last
       groupData.members[i]
-      await executeAction(groupData.members[i].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', {})
+
+      // no check - always returns true
+      await executeActionV6(groupData.members[i].baseUrl,
+        '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+        { InstanceID: 0 })
     }
     return {}
   }
@@ -1848,8 +1949,12 @@ module.exports = function (RED) {
     if (playerRightUuid === '') {
       throw new Error(`${NRCSP_ERRORPREFIX} player name right was not found`)
     }
-    const modifiedArgs = { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` }
-    await executeAction(playerLeftBaseUrl, 'SeparateStereoPair', modifiedArgs)
+
+    // no check - always returns true
+    await executeActionV6(playerLeftBaseUrl,
+      '/DeviceProperties/Control', 'SeparateStereoPair',
+      { ChannelMapSet: `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
+
     return {}
   }
 
@@ -2009,7 +2114,10 @@ module.exports = function (RED) {
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'BecomeCoordinatorOfStandaloneGroup', {})
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+      { InstanceID: 0 })
 
     return {}
   }
@@ -2029,7 +2137,11 @@ module.exports = function (RED) {
   async function playerGetBass (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const bass = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetBass', {})
+    
+    const bass = await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetBass',
+      { InstanceID: 0 })
+    
     return { payload: bass }
   }
 
@@ -2062,23 +2174,25 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} Selected player does not support TV`)
     }
 
-    let modifiedArgs 
+    let args 
     // no check exist needed as command has already been checked
     if (msg[cmdName] === 'player.get.nightmode') {
-      modifiedArgs = { EQType: 'NightMode' }
+      args = { InstanceID: 0, EQType: 'NightMode' }
     } else if (msg[cmdName] === 'player.get.subgain') {
-      modifiedArgs = { EQType: 'SubGain' }
+      args = { InstanceID: 0, EQType: 'SubGain' }
     } else if (msg[cmdName] === 'player.get.dialoglevel') {
-      modifiedArgs = { EQType: 'DialogLevel' }
+      args = { InstanceID: 0, EQType: 'DialogLevel' }
     } else {
       // can not happen
     }
     
-    let eqData = await executeAction(sonosPlayer.baseUrl, 'GetEQ', modifiedArgs)
+    let eqData = await executeActionV6(sonosPlayer.baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetEQ', args)
+    
     if (!isTruthyAndNotEmptyString(eqData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} player response is undefined`)
     }
-    if (modifiedArgs.EQType !== 'SubGain') {
+    if (args.EQType !== 'SubGain') {
       eqData = (eqData === '1' ? 'on' : 'off')
     }
 
@@ -2125,7 +2239,10 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
-    const loudness = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetLoudness', {})
+    const loudness = await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetLoudness',
+      { InstanceID: 0, Channel: 'Master' })
+    
     if (!isTruthyAndNotEmptyString(loudness)) {
       throw new Error(`${NRCSP_ERRORPREFIX} player response is undefined`)
     }
@@ -2147,10 +2264,12 @@ module.exports = function (RED) {
   async function playerGetMute (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    // baseUrl not needed
-    const state = await sonosSinglePlayer.getMuted()
-    return { payload: (state ? 'on' : 'off') }
+    
+    const state = await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetMute',
+      { InstanceID: 0, Channel: 'Master' })
+
+    return { payload: (state === '1'? 'on' : 'off') }
   }
 
   /**  Get player properties.
@@ -2246,7 +2365,11 @@ module.exports = function (RED) {
   async function playerGetTreble (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const treble = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetTreble', {})
+    
+    const treble = await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetTreble',
+      { InstanceID: 0 })
+    
     return { payload: treble }
   }
 
@@ -2265,11 +2388,15 @@ module.exports = function (RED) {
   async function playerGetVolume (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const volume = await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'GetVolume', {})
+
+    const volume = await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetVolume',
+      { InstanceID: 0, Channel: 'Master' })
+    
     return { payload: volume }
   }
 
-  /**  Join a group.
+  /**  Join a group. The group is being identified in payload (or config node)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  msg.[stateName] SONOS name of any player in the group
@@ -2294,14 +2421,15 @@ module.exports = function (RED) {
     const groupDataToJoin = await getGroupMemberDataV2(sonosPlayer, validatedGroupPlayerName)
     const coordinatorRincon = `x-rincon:${groupDataToJoin.members[0].uuid}`
 
-    // get the ip address of joiner
+    // get sonosName and baseUrl of joiner (playerName or config node)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupDataJoiner = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
     if (groupDataJoiner.members[groupDataJoiner.playerIndex].sonosName !== groupDataToJoin.members[0].sonosName) {
-      const sonosSinglePlayer = new Sonos(groupDataJoiner.members[groupDataJoiner.playerIndex].urlHostname)
-      // baseUrl not needed
-      await sonosSinglePlayer.setAVTransportURI({ uri: coordinatorRincon, onlySetUri: true })
+      // no check - always returns true. We use SetAVTransport as build in AddMember does not work
+      await executeActionV6(groupDataJoiner.members[groupDataJoiner.playerIndex].baseUrl,
+        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+        { InstanceID: 0, CurrentURI: coordinatorRincon, CurrentURIMetaData: '' })
     } // else: do nothing - either playerName is already coordinator
 
     return {}
@@ -2325,9 +2453,12 @@ module.exports = function (RED) {
   async function playerLeaveGroup (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    // baseUrl not needed
-    await sonosSinglePlayer.leaveGroup()
+
+    // no check - return values are ignored
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+      { InstanceID: 0 })
+    
     return {}
   }
   ///
@@ -2384,22 +2515,27 @@ module.exports = function (RED) {
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     
-    // get the device props, checke wheter TV is supported and extract URI target
+    // get the device props, check whether TV is supported and extract URI target
     const deviceProps = await sonosSinglePlayer.deviceDescription()
     // extract services and search for controlURL = "/HTControl/Control" - means tv enabled
     const serviceList = deviceProps.serviceList.service
     const found = serviceList.findIndex(service => {
       if (service.controlURL === '/HTControl/Control') return true
     })
-    let inArgs
+
     if (found >= 0) {
       // extract RINCON
       const rincon = (deviceProps.UDN).substring('uuid: '.length-1)
-      inArgs = { 'InstanceID': 0, 'CurrentURI': `x-sonos-htastream:${rincon}:spdif`, 'CurrentURIMetaData': '' }
-      await executeActionV5(groupData.members[groupData.playerIndex].baseUrl, 'SetAVTransportURI', inArgs)
+      
+      // no check - always returns true
+      await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+        { InstanceID: 0, CurrentURI: `x-sonos-htastream:${rincon}:spdif`, CurrentURIMetaData: '' })
+      
       if (validated.volume !== -1) {
-        inArgs = { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': validated.volume }
-        await executeActionV5(groupData.members[groupData.playerIndex].baseUrl, 'SetVolume', inArgs)
+        await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+          '/MediaRenderer/RenderingControl/Control', 'SetVolume',
+          { InstanceID: 0, Channel: 'Master', DesiredVolume: validated.volume })
       }  
     } else {
       throw new Error(`${NRCSP_ERRORPREFIX} Sonos player is not TV enabled`)
@@ -2430,8 +2566,10 @@ module.exports = function (RED) {
     const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
     sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
-    const modifiedArgs = { DesiredBass: newBass }
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'SetBass', modifiedArgs)
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetBass',
+      { InstanceID: 0, DesiredBass: newBass })
 
     return {}
   }
@@ -2483,8 +2621,11 @@ module.exports = function (RED) {
       // can not happen
     }
 
-    const modifiedArgs = { EQType: eqType, DesiredValue: eqValue }
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'SetEQ', modifiedArgs)
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetEQ',
+      { InstanceID: 0, EQType: eqType, DesiredValue: eqValue })
+    
     return {}
   }
 
@@ -2534,8 +2675,12 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs = { DesiredLoudness: newState }
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'SetLoudness', modifiedArgs)
+    
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetLoudness',
+      { InstanceID: 0, Channel: 'Master', DesiredLoudness: newState })
+    
     return {}
   }
 
@@ -2558,13 +2703,16 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    // baseUrl not needed
-    await sonosSinglePlayer.setMuted(newState)
+
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetMute',
+      { InstanceID: 0, Channel: 'Master', DesiredMute: newState })
+
     return {}
   }
 
-  /**  Set treble.
+  /**  Player set treble.
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string/number}  msg[stateName] -10 to +10 integer.
@@ -2583,11 +2731,11 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
-
-    const modifiedArgs = { DesiredTreble: newTreble }
-    await executeAction(groupData.members[groupData.playerIndex].baseUrl, 'SetTreble', modifiedArgs)
+    
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetTreble',
+      { InstanceID: 0, DesiredTreble: newTreble })
 
     return {}
   }
@@ -2610,18 +2758,20 @@ module.exports = function (RED) {
     const validatedVolume = string2ValidInteger(msg, stateName, 0, 100, 'volume', NRCSP_ERRORPREFIX)
     const validatedPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
     const groupData = await getGroupMemberDataV2(sonosPlayer, validatedPlayerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    // baseUrl not needed
-    await sonosSinglePlayer.setVolume(validatedVolume)
+    
+    // no check - always returns true
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetVolume',
+      { InstanceID: 0, Channel: 'Master', DesiredVolume: validatedVolume })
+
     return {}
   }
 
-  /**  Test action
+  /**  Test action V5
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
-   * @param  {string}  msg.[stateName] modified arguments
+   * @param  {string}  msg.[stateName] modified arguments, endpoint, action
    * @param  {string}  [msg.playerName] SONOS player name - if missing uses sonosPlayer
-   * @param  {string}  msg.action action name
    * @param  {string}  stateName default: payload - in compatibility mode: topic
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
@@ -2630,14 +2780,15 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerExecuteAction (node, msg, stateName, cmdName, sonosPlayer) {
+  async function playerExecuteActionV6 (node, msg, stateName, cmdName, sonosPlayer) {
     
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const modifiedArgs = msg.payload
-    const result = await executeAction(groupData.members[groupData.playerIndex].baseUrl, msg.action, modifiedArgs)
+    const { endpoint, action, inArgs } = msg.payload
+    const result = await executeActionV6(groupData.members[groupData.playerIndex].baseUrl, endpoint, action, inArgs)
     return { payload: result }
   }
+
   // ========================================================================
   //
   //             HELPER

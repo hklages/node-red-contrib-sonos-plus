@@ -12,7 +12,7 @@ module.exports = function (RED) {
   }
 
   // Build API to auto detect IP Addresses
-  RED.httpAdmin.get('/sonosSearch', function (req, response) {
+  RED.httpNode.get('/sonosSearch', function (req, response) {
     discoverSonosPlayer(function (playerList) {
       response.json(playerList)
     })

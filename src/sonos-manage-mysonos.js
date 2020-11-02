@@ -7,7 +7,7 @@ const {
   failure, success
 } = require('./Helper.js')
 
-const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeAction, didlXmlToArray: didlXmlToArray } = require('./Sonos-Commands.js')
+const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeActionV6, didlXmlToArray: didlXmlToArray } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -169,32 +169,36 @@ module.exports = function (RED) {
   //
   // ========================================================================
 
-  /**  Exports first Music Library album matching search string (is encoded)
-   * @param  {object} node used for debug message
+  /**  Exports first Music Library album matching search string (is encoded) - maximum 100
+   *    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
    * @param  {string} stateName default: payload - in compatibility mode: topic
    * @param  {string} cmdName not used
-   * @param  {object} sonosPlayer Sonos Player
+   * @param  {object} sonosPlayer Sonos Player with baseUrl
    *
    * @return {promise} {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
    *
    * @throws all functions
    * TODO Notion libraryExportAlbum
+   * TODO Notion libraryExportAlbum searchstring is blanks
    */
   async function libraryExportAlbum (node, msg, stateName, cmdName, sonosPlayer) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
-    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
-    const newArgs = { ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString) }
-    const browseDIDLLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
-    const albumList = await didlXmlToArray(browseDIDLLite, 'container')
-    let firstAlbum
-    if (albumList.length === 0) {
+    
+    // for safety if not defined
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
+    
+    const browse = await executeActionV6(sonosPlayer.baseUrl,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString), BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
+    
+    if (browse.NumberReturned === '0') {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find any title matching search string`)
-    } else {
-      firstAlbum = albumList[0]
     }
+    const albumList = await didlXmlToArray(browse.Result, 'container')
+    const firstAlbum = albumList[0]
     firstAlbum.queue = (firstAlbum.processingType === 'queue')
     const outputChanged = {}
     outputChanged[stateName] = firstAlbum
@@ -241,9 +245,9 @@ module.exports = function (RED) {
    * @param  {string} msg.searchTitle search string, optional
    * @param  {string} stateName default: payload - in compatibility mode: topic
    * @param  {string} cmdName not used
-   * @param  {object} sonosPlayer Sonos Player
+   * @param  {object} sonosPlayer Sonos Player plus baseUrl
    *
-   * @return {promise} {stateName: array of objects: uri metadata queue title artist}  CAUTION: stateName!! not payload
+   * @return {promise} {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
    *
    * @throws all functions
    * TODO Notion libraryExportAlbum
@@ -257,14 +261,14 @@ module.exports = function (RED) {
     if (validatedSearchString !== '') {
       validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
     }
-    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}` // useful for my extensions
-    const newArgs = { ObjectID: 'A:ALBUM' + validatedSearchString, 'RequestedCount': requestedCount }
-    const browseDidlLite = await executeAction(sonosPlayer.baseUrl, 'Browse', newArgs)
-    const albumList = await didlXmlToArray(browseDidlLite, 'container')
+    // baseUrl should be included but for safety
+    sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
+
+    const browse = await executeActionV6(sonosPlayer.baseUrl,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { ObjectID: 'A:ALBUM' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: '' })
     
-    if (albumList.length === 0) {
-      throw new Error(`${NRCSP_ERRORPREFIX} Could not find any album`)
-    }
+    const albumList = await didlXmlToArray(browse.Result, 'container')
     
     // add ip address to albumUri
     albumList.map(element => {
