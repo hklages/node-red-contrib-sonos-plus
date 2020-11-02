@@ -31,14 +31,13 @@
       "outArgs": []
     },
     "DelegateGroupCoordinationTo": {
+      "endpoint": "/MediaRenderer/AVTransport/Control",
       "inArgs": [
         "InstanceID",
         "NewCoordinator",
         "RejoinGroup"
       ],
-      "outArgs": [
-        "CurrentVolume"
-      ]
+      "outArgs": []
     },
     "GetCrossfadeMode": {
       "inArgs": [
@@ -106,6 +105,14 @@
         "InstanceID",
         "Target",
         "Unit"
+      ],
+      "outArgs": []
+    },
+    "SetCrossfadeMode": {
+      "endpoint": "/MediaRenderer/AVTransport/Control",
+      "inArgs": [
+        "InstanceID",
+        "CrossfadeMode"
       ],
       "outArgs": []
     },

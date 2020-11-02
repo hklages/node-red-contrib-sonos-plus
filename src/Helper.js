@@ -335,7 +335,7 @@ module.exports = {
       throw new Error(`${packageName} ${propertyMeaning} (${property}) is not type string`)
     }
     if (!regex.test(value)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) has wrong syntax/regex >>${regex}`)
+      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) has wrong syntax - Regular expression- see documentation`)
     }
     return value
   },
@@ -388,7 +388,7 @@ module.exports = {
   },
 
   /**  Get error code. If not found provide empty string.
-   * @param  {string} data  upnp error resonse as envelope with <errorCode>xxx</errorCode>
+   * @param  {string} data  upnp error response as envelope with <errorCode>xxx</errorCode>
    *
    * @return {string} error code
    */

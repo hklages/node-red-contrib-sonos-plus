@@ -533,7 +533,7 @@ module.exports = {
       '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 200, SortCriteria: '' })
     
-    if (browseFv.NumberReturned === 0) {
+    if (browseFv.NumberReturned === '0') {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find any My Sonos item (please add at least one)`)
     }
     const responseBrowsFV = browseFv.Result

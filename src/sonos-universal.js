@@ -1633,11 +1633,12 @@ module.exports = function (RED) {
         indexNewCoordinator = indexInList
       }
     }
+    let coordinatorRincon = `x-rincon:${householdPlayerList[indexNewCoordinator].uuid}` 
+
     // Is new coordinator already the coordinator in its group? Then use this group and adjust
     if (householdPlayerList[indexNewCoordinator].isCoordinator) { // means is a coordinator
       // modify this group (remove those not needed and add some)
       let found
-      let sonosPl  // node sonos player object
       for (let i = 0; i < householdPlayerList.length; i++) {
         // should this player be in group?
         found = newGroupPlayerArray.indexOf(householdPlayerList[i].sonosName)
@@ -1651,9 +1652,10 @@ module.exports = function (RED) {
           }
         } else {
           if (householdPlayerList[i].groupIndex !== householdPlayerList[indexNewCoordinator].groupIndex) {
-            // join group
-            sonosPl = new Sonos(householdPlayerList[i].urlHostname)
-            await sonosPl.joinGroup(householdPlayerList[indexNewCoordinator].sonosName)
+            // no check - always returns true. Using SetAVTransportURI as AddMember does not work
+            await executeActionV6(householdPlayerList[i].baseUrl,
+              '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+              { InstanceID: 0, CurrentURI: coordinatorRincon, CurrentURIMetaData: '' })
           }
         }
       }
@@ -1663,11 +1665,13 @@ module.exports = function (RED) {
       
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) // because it takes time to BecomeCoordinator
       let indexPlayer
-      let sonosPl // node sonos player object
+      
       for (let i = 1; i < newGroupPlayerArray.length; i++) { // start with 1
         indexPlayer = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i])
-        sonosPl = new Sonos(householdPlayerList[indexPlayer].urlHostname)
-        await sonosPl.joinGroup(householdPlayerList[indexNewCoordinator].sonosName)
+        // no check - always returns true. Using SetAVTransportURI as AddMember does not work
+        await executeActionV6(householdPlayerList[indexPlayer].baseUrl,
+          '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+          { InstanceID: 0, CurrentURI: coordinatorRincon, CurrentURIMetaData: '' })
       }
     }
     return {}
@@ -1777,7 +1781,7 @@ module.exports = function (RED) {
       { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
     
     let sonosPlaylists = [] 
-    if (response.NumberReturned !== 0) {
+    if (response.NumberReturned !== '0') {
       if (!isTruthyAndNotEmptyString(response.Result)) {
         throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response.Result)}`)
       }
@@ -1826,17 +1830,17 @@ module.exports = function (RED) {
       ignoreNotExists = msg.ignoreNotExist
     }
 
-    // using the default player of this node as all
+    // using the default player of this node
     const response = await executeActionV6(sonosPlayer.baseUrl,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
     
     let sonosPlaylists = [] 
-    if (response.NumberReturned !== 0) {
+    if (response.NumberReturned !== '0') {
       if (!isTruthyAndNotEmptyString(response.Result)) {
         throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response.Result)}`)
       }
-      sonosPlaylists = await didlXmlToArray(response, 'container')
+      sonosPlaylists = await didlXmlToArray(response.Result, 'container')
       if (!isTruthyAndNotEmptyString(sonosPlaylists)) {
         throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlaylists)}`)
       }
@@ -2392,7 +2396,7 @@ module.exports = function (RED) {
     return { payload: volume }
   }
 
-  /**  Join a group.
+  /**  Join a group. The group is being identified in payload (or config node)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  msg.[stateName] SONOS name of any player in the group
@@ -2417,14 +2421,15 @@ module.exports = function (RED) {
     const groupDataToJoin = await getGroupMemberDataV2(sonosPlayer, validatedGroupPlayerName)
     const coordinatorRincon = `x-rincon:${groupDataToJoin.members[0].uuid}`
 
-    // get the ip address of joiner
+    // get sonosName and baseUrl of joiner (playerName or config node)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupDataJoiner = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
     if (groupDataJoiner.members[groupDataJoiner.playerIndex].sonosName !== groupDataToJoin.members[0].sonosName) {
-      const sonosSinglePlayer = new Sonos(groupDataJoiner.members[groupDataJoiner.playerIndex].urlHostname)
-      // baseUrl not needed
-      await sonosSinglePlayer.setAVTransportURI({ uri: coordinatorRincon, onlySetUri: true })
+      // no check - always returns true. We use SetAVTransport as build in AddMember does not work
+      await executeActionV6(groupDataJoiner.members[groupDataJoiner.playerIndex].baseUrl,
+        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+        { InstanceID: 0, CurrentURI: coordinatorRincon, CurrentURIMetaData: '' })
     } // else: do nothing - either playerName is already coordinator
 
     return {}
@@ -2448,9 +2453,12 @@ module.exports = function (RED) {
   async function playerLeaveGroup (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    // baseUrl not needed
-    await sonosSinglePlayer.leaveGroup()
+
+    // no check - return values are ignored
+    await executeActionV6(groupData.members[groupData.playerIndex].baseUrl,
+      '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+      { InstanceID: 0 })
+    
     return {}
   }
   ///
