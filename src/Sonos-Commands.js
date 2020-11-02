@@ -210,7 +210,7 @@ module.exports = {
       args)
 
     // no check - always returns true
-    await module.exports.executeActionV6(joinerPlus.baseUrl.baseUrl,
+    await module.exports.executeActionV6(joinerPlus.baseUrl,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { InstanceID: 0, Speed: 1 })
 
