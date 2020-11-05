@@ -3,7 +3,7 @@
 module.exports = {
   // data to be used in other modules
 
-  ERROR_CODES: require('./Soap-Error-Codes.json'),
+  ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase', 'Sonos Arc'],
 

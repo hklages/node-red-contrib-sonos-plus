@@ -1,12 +1,11 @@
 'use strict'
 const request = require('axios')
-const xml2js = require('xml2js')
 
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1, NRCSP_ERRORPREFIX } = require('./Helper.js')
 
 module.exports = {
 
-  ERROR_CODES: require('./Soap-Error-Codes.json'),
+  ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
 
   // ========================================================================
   //
@@ -18,8 +17,8 @@ module.exports = {
    * @param  {string} baseUrl http address including http prefix and port such as 'http://192.168.178.30:1400'
    * @param  {string} endpoint SOAP endpoint such as '/MediaRenderer/RenderingControl/Control'
    * @param  {string} serviceName such as 'RenderingControl'
-   * @param  {string} actionIdentifier such as 'SetEQ'
-   * @param  {object} args such as { InstanceID: 0, EQType: '' },
+   * @param  {string} actionIdentifier such as 'GetEQ'
+   * @param  {object} args such as { InstanceID: 0, EQType: "NightMode" },
    *
    * @return {promise} response header/body/error code from player
    */

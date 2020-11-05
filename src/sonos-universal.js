@@ -10,7 +10,7 @@ const {
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
   createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, didlXmlToArray, sortedGroupArray,
-  getPlayerQueue, getRadioId, executeActionV6
+  getPlayerQueue, getRadioId, getSid, getServiceName, executeActionV6
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -262,8 +262,6 @@ module.exports = function (RED) {
     if (groupData.playerIndex != 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} Player must be coordinator`)
     }
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
 
     // check PlayerName is in group and not same as old coordinator 
     const indexNewCoordinator = groupData.members.findIndex(p => p.sonosName === validatedPlayerName)
@@ -700,6 +698,8 @@ module.exports = function (RED) {
     const queueActivated = uri.startsWith('x-rincon-queue')
     const radioId = getRadioId(uri)
     
+    let sid = getSid(uri)
+    
     // get station uri for all "x-sonosapi-stream"
     let stationArtUri = ''
     if (uri.startsWith('x-sonosapi-stream')) {
@@ -711,6 +711,15 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(positionData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} current position data is invalid`)
     }
+
+    if (isValidPropertyNotEmptyString(positionData, ['TrackURI'])) {
+      const trackUri = positionData.TrackURI
+      if (sid === '') {
+        sid = getSid(trackUri)
+      }
+    }
+    const serviceName = getServiceName(sid)
+
     return {
       payload: {
         trackData: trackData,
@@ -720,6 +729,8 @@ module.exports = function (RED) {
         mediaData: mediaData,
         queueActivated: queueActivated,
         radioId: radioId,
+        serviceId: sid,
+        serviceName: serviceName,
         stationArtUri: stationArtUri,
         positionData: positionData
       }

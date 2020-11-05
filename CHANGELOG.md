@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.4.x] 2020-11-xx
+
+#### Changed
+
+- dependencies fs-extra, path removed, eslint update
+
+- all json files are now named Db-xxx.json
+
+#### Added
+
+- trackplus now provides the music service name (if available)
+
+- added list of music services
+
+- added list of all actions (currently not used)
+
 ### [4.4.0] 2020-11-02
 
 #### Changed

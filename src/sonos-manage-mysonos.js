@@ -7,7 +7,7 @@ const {
   failure, success
 } = require('./Helper.js')
 
-const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeActionV6, didlXmlToArray: didlXmlToArray } = require('./Sonos-Commands.js')
+const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 

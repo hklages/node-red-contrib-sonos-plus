@@ -9,8 +9,8 @@ module.exports = {
   // SONOS related data
   MEDIA_TYPES: ['all', 'Playlist', 'Album', 'Track'],
   MIME_TYPES: ['.mp3', '.mp4', '.flac', '.m4a', '.ogg', '.wma'],
-  ACTIONS_TEMPLATESV6: require('./Sonos-ActionsV6.json'),
-  SERVICES: require('./Sonos-Services.json'),
+  ACTIONS_TEMPLATESV6: require('./Db-ActionsV6.json'),
+  MUSIC_SERVICES: require('./Db-MusicServices.json'),
 
   UNPN_CLASSES_UNSUPPORTED: [
     'object.container.podcast.#podcastContainer',
@@ -893,11 +893,34 @@ module.exports = {
     return sid
   },
 
+  /**  Get service name for given service id
+   * @param  {string} sid service id or blank
+   * @return {string} service name or if not found empty string
+   *
+   * @uses database of services (map sid to name)
+   */
+
+  getServiceName: sid => {
+    let serviceName = '' // default even if sid is blank
+    if (sid !== '') {
+      const list = module.exports.MUSIC_SERVICES
+      const index = list.findIndex((service) => {
+        if (service.sid=== sid) {
+          return true
+        }
+      })
+      if (index > 0) {
+        serviceName = list[index].name
+      }  
+    } 
+    return serviceName
+  },
+
   /**  Get radioId from uri.
    * @param  {string} xuri uri such as x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
    * @return {string} service id or if not found empty
    *
-   * prereq: uri is string where the sid is in between ?sid= and &flags=
+   * prereq: uri is string where the radio id  is in between x-sonosapi-stream: and ?sid=254
    */
 
   getRadioId: xuri => {

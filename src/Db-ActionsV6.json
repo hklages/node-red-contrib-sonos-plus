@@ -1,4 +1,22 @@
 {
+  "/AlarmClock/Control": {
+    "ListAlarms": {
+      "inArgs": [],
+      "outArgs": [
+        "CurrentAlarmList",
+        "CurrentAlarmListVersion"
+      ]
+    }
+  },
+  "/AudioIn/Control": {
+    "SetLineInLevel": {
+      "inArgs": [
+        "DesiredLeftLineInLevel",
+        "DesiredRightLineInLevel"
+      ],
+      "outArgs": []
+    }
+  },
   "/DeviceProperties/Control": {
     "CreateStereoPair": {
       "inArgs": [
@@ -11,6 +29,35 @@
         "ChannelMapSet"
       ],
       "outArgs": []
+    }
+  },
+  "/GroupManagement/Control": {
+    "AddMember": {
+      "inArgs": [
+        "MemberID",
+        "BootSeq"
+      ],
+      "outArgs": [
+        "CurrentTransportSettings",
+        "CurrentURI",
+        "GroupUUIDJoined",
+        "ResetVolumeAfter",
+        "VolumeAVTransportURI"
+      ]
+    }, 
+    "RemoveMember": {
+      "inArgs": [
+        "MemberID"
+      ],
+      "outArgs": []
+    }
+  },
+  "/HTControl/Control": {
+    "IsRemoteConfigured": {
+      "inArgs": [],
+      "outArgs": [
+        "RemoteConfigured"
+      ]
     }
   },
   "/MediaRenderer/AVTransport/Control": {
@@ -179,6 +226,27 @@
       "outArgs": []
     }
   },
+  "/MediaRenderer/Queue/Control": {
+    "RemoveAllTracks": {
+      "inArgs": [
+        "QueueID",
+        "UpdateID"
+      ],
+      "outArgs": [
+        "NewUpdateID"
+      ]
+    },
+    "SaveAsSonosPlaylist": {
+      "inArgs": [
+        "QueueID",
+        "Title",
+        "ObjectID"
+      ],
+      "outArgs": [
+        "AssignedObjectID"
+      ]
+    }
+  },
   "/MediaRenderer/RenderingControl/Control": {
     "GetBass": {
       "endpoint": "/MediaRenderer/RenderingControl/Control",
@@ -280,21 +348,102 @@
       "outArgs": []
     }
   },
+  "/MediaRenderer/ConnectionManager/Control": {
+  },
+  "/MediaRenderer/VirtualLineIn/Control": {
+    "Play": {
+      "inArgs": [
+        "InstanceID",
+        "Speed"
+      ],
+      "outArgs": []
+    }
+  },
   "/MediaServer/ContentDirectory/Control": {
     "Browse": {
       "inArgs": [
+        "ObjectID",
         "BrowseFlag",
         "Filter",
-        "ObjectID",
+        "StartingIndex",
         "RequestedCount",
-        "SortCriteria",
-        "StartingIndex"
+        "SortCriteria"
       ],
       "outArgs": [
-        "NumberReturned",
         "Result",
+        "NumberReturned",
         "TotalMatches",
         "UpdateID"
+      ]
+    },
+    "GetSearchCapabilities": {
+      "inArgs": [],
+      "outArgs": [
+        "SearchCaps"
+      ]
+    }
+  },
+  "/MediaServer/ConnectionManager/Control": {
+    "GetCurrentConnectionInfo": {
+      "inArgs": [
+        "ConnectionID"
+      ],
+      "outArgs": [
+        "RcsID",
+        "AVTransportID",
+        "ProtocolInfo",
+        "PeerConnectionManager",
+        "PeerConnectionID",
+        "Direction",
+        "Status"
+      ]
+    }
+  },
+  "/MusicServices/Control": {
+    "ListAvailableServices": {
+      "inArgs": [],
+      "outArgs": [
+        "AvailableServiceDescriptorList",
+        "AvailableServiceTypeList",
+        "AvailableServiceListVersion"
+      ]
+    }
+  },
+  "/QPlay/Control": {
+    "QPlayAuth": {
+      "inArgs": [
+        "Seed"
+      ],
+      "outArgs": [
+        "Code",
+        "MID",
+        "DID"
+      ]
+    }
+  },
+  "/SystemProperties/Control": {
+    "RemoveAccount": {
+      "inArgs": [
+        "AccountType",
+        "AccountID"
+      ],
+      "outArgs": []
+    }
+  },
+  "/ZoneGroupTopology/Control": {
+    "GetZoneGroupState": {
+      "inArgs": [],
+      "outArgs": [
+        "ZoneGroupState"
+      ]
+    },
+    "GetZoneGroupAttributes": {
+      "inArgs": [],
+      "outArgs": [
+        "CurrentZoneGroupName",
+        "CurrentZoneGroupID",
+        "CurrentZonePlayerUUIDsInGroup",
+        "CurrentMuseHouseholdId"
       ]
     }
   }

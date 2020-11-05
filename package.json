@@ -48,12 +48,10 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.0",
-    "fs-extra": "^9.0.1",
-    "path": "0.12.7",
     "sonos": "^1.14.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "eslint": "^7.11.0"
+    "eslint": "^7.12.1"
   }
 }
