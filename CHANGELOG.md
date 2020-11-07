@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
-- artUri now instead of AlbumArtUri
+- artUri now instead of AlbumArtUri - may break some flows!
 
 - bugfix: sometimes http:// prefix 2 times
 
@@ -16,9 +16,9 @@ All notable changes to this project are documented in this file.
 
 - internal: getQueueV2 replaces getPlayerQueue, getMySonosV3 replaces getAllMySonosV2, code refactoring to getSonosPlaylistsV2
 
-#### Added
+- changed some default values (number of items returned)
 
-- trackplus now provides the music service name (if available)
+#### Added
 
 - added music service name to group.get.trackplus and mysonos.get.items
 

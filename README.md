@@ -27,9 +27,7 @@ Read the Quickstart and explore the full scope in the [Wiki.](https://github.com
 
 - In "Universal" node: new command player.play.tv
 
-- In Universal node: new commands household.separate.group, player.become.standalone, coordinator.delegate
-
-- In My Sonos node: new command library.export.album and library.get.albums
+- artUri now instead of AlbumArtUri, added serviceName to group.get.trackplus and some others.
 
 ### Installation
 
