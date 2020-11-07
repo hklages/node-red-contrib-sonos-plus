@@ -2,21 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
-### [4.4.x] 2020-11-xx
+### [4.5.0] 2020-11-07
 
 #### Changed
 
-- dependencies fs-extra, path removed, eslint update
+- artUri now instead of AlbumArtUri
 
-- all json files are now named Db-xxx.json
+- bugfix: sometimes http:// prefix 2 times
+
+- internal: dependencies fs-extra, path removed, eslint update
+
+- internal: all json files are now named Db-xxx.json
+
+- internal: getQueueV2 replaces getPlayerQueue, getMySonosV3 replaces getAllMySonosV2, code refactoring to getSonosPlaylistsV2
 
 #### Added
 
 - trackplus now provides the music service name (if available)
 
-- added list of music services
+- added music service name to group.get.trackplus and mysonos.get.items
 
-- added list of all actions (currently not used)
+- internal: added list of all actions (currently not used)
 
 ### [4.4.0] 2020-11-02
 
@@ -667,6 +673,7 @@ All notable changes to this project are documented in this file.
 #### Changed
 
 - get queue node: now all commands will send message as output (if no error)
+
 - Color of nodes
 
 #### Fixed

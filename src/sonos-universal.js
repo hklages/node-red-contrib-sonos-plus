@@ -9,8 +9,8 @@ const {
 
 const {
   getGroupMemberDataV2, playGroupNotification, playJoinerNotification,
-  createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, didlXmlToArray, sortedGroupArray,
-  getPlayerQueue, getRadioId, getSid, getServiceName, executeActionV6
+  createGroupSnapshot, restoreGroupSnapshot, getAllPlayerList, sortedGroupArray,
+  getQueueV2, getRadioId, getMusicServiceId, getMusicServiceName, executeActionV6, getSonosPlaylistsV2
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -532,9 +532,8 @@ module.exports = function (RED) {
   async function groupGetQueue (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    sonosCoordinator.baseUrl = groupData.members[0].baseUrl 
-    const queueItems = await getPlayerQueue(sonosCoordinator)
+    const coordinatorIndex = 0
+    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].baseUrl)
     return { payload: queueItems }
   }
 
@@ -650,15 +649,17 @@ module.exports = function (RED) {
     const trackData = await sonosCoordinator.currentTrack()
     let artist = 'unknown' // as default
     let title = 'unknown' // as default
-    let albumArtURL = ''
+    let albumArtUri = ''
     if (!isTruthyAndNotEmptyString(trackData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} current track data is invalid`)
     }
-    if (!isValidPropertyNotEmptyString(trackData, ['albumArtURI'])) {
-      // TuneIn does not provide AlbumArtURL -so we continue
-    } else {
+    if (isValidPropertyNotEmptyString(trackData, ['albumArtURI'])) {
       node.debug('got valid albumArtURI')
-      albumArtURL = sonosPlayer.baseUrl + trackData.albumArtURI
+      albumArtUri = trackData.albumArtURI
+      if (typeof albumArtUri === 'string' && albumArtUri.startsWith('/getaa')) {
+        albumArtUri = sonosPlayer.baseUrl + albumArtUri
+        delete trackData.albumArtURI
+      } 
     }
     // extract artist and title if available
     if (!isValidPropertyNotEmptyString(trackData, ['artist'])) {
@@ -698,7 +699,7 @@ module.exports = function (RED) {
     const queueActivated = uri.startsWith('x-rincon-queue')
     const radioId = getRadioId(uri)
     
-    let sid = getSid(uri)
+    let sid = getMusicServiceId(uri)
     
     // get station uri for all "x-sonosapi-stream"
     let stationArtUri = ''
@@ -715,17 +716,17 @@ module.exports = function (RED) {
     if (isValidPropertyNotEmptyString(positionData, ['TrackURI'])) {
       const trackUri = positionData.TrackURI
       if (sid === '') {
-        sid = getSid(trackUri)
+        sid = getMusicServiceId(trackUri)
       }
     }
-    const serviceName = getServiceName(sid)
+    const serviceName = getMusicServiceName(sid)
 
     return {
       payload: {
         trackData: trackData,
         artist: artist,
         title: title,
-        albumArtURL: albumArtURL,
+        artUri: albumArtUri,
         mediaData: mediaData,
         queueActivated: queueActivated,
         radioId: radioId,
@@ -991,13 +992,16 @@ module.exports = function (RED) {
     if (validated.sameVolume === false && groupData.members.length === 1) {
       throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is nonsense: player is standalone`)
     }
-    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    sonosCoordinator.baseUrl = groupData.members[0].baseUrl
-    const queueData = await getPlayerQueue(sonosCoordinator)
+    
+    const coordinatorIndex = 0
+    const queueData = await getQueueV2(groupData.members[coordinatorIndex].baseUrl)
     if (queueData.length === 0) {
       // queue is empty
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
+
+    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
+    // baseUrl not needed
     await sonosCoordinator.selectQueue()
 
     if (validated.volume !== -1) {
@@ -1126,14 +1130,16 @@ module.exports = function (RED) {
     // get the playerName
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    sonosCoordinator.baseUrl = groupData.members[0].baseUrl
-    const queueItems = await getPlayerQueue(sonosCoordinator)
+
+    const coordinatorIndex = 0
+    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].baseUrl)
     const lastTrackInQueue = queueItems.length
     if (lastTrackInQueue === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
     // payload position is required
+    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
+    // baseUrl not needed
     const validatedPosition = string2ValidInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
     await sonosCoordinator.selectQueue()
     await sonosCoordinator.selectTrack(validatedPosition)
@@ -1307,15 +1313,15 @@ module.exports = function (RED) {
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
     // get the number of tracks in queue - should be > 0
-    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    sonosCoordinator.baseUrl = groupData.members[0].baseUrl
-    const queueItems = await getPlayerQueue(sonosCoordinator)
+    const coordinatorIndex = 0
+    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].baseUrl)
     const lastTrackInQueue = queueItems.length
     if (lastTrackInQueue === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
 
     // payload track position is required.
+    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
     const validatedPosition = string2ValidInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
     const validatedNumberOfTracks = string2ValidInteger(msg, 'numberOfTracks', 1, lastTrackInQueue, 'number of tracks', NRCSP_ERRORPREFIX, 1)
     await sonosCoordinator.removeTracksFromQueue(validatedPosition, validatedNumberOfTracks)
@@ -1341,9 +1347,9 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    sonosCoordinator.baseUrl = groupData.members[0].baseUrl
-    const queueItems = await getPlayerQueue(sonosCoordinator)
+
+    const coordinatorIndex = 0
+    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].baseUrl)
     if (queueItems.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }    
@@ -1482,12 +1488,14 @@ module.exports = function (RED) {
     // check queue is not empty and activated
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosCoordinator = new Sonos((groupData.members[0].urlHostname))
-    sonosCoordinator.baseUrl = groupData.members[0].urlHostname
-    const queueItems = await getPlayerQueue(sonosCoordinator)
+
+    const coordinatorIndex = 0
+    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].urlHostname)
     if (queueItems.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
+    const sonosCoordinator = new Sonos((groupData.members[0].urlHostname))
+    sonosCoordinator.baseUrl = groupData.members[0].urlHostname
     const mediaData = await sonosCoordinator.avTransportService().GetMediaInfo()
     if (!isTruthyAndNotEmptyString(mediaData)) {
       throw new Error(`${NRCSP_ERRORPREFIX} current media data is invalid`)
@@ -1774,7 +1782,7 @@ module.exports = function (RED) {
     return { payload: allGroupsArray }
   }
 
-  /**  Get SONOS playlists (limited 100, ObjectID SQ)
+  /**  Get SONOS playlists (limited 200, ObjectID SQ)
    * @param  {object}  node not used
    * @param  {object}  msg incoming message
    * @param  {string}  stateName not used
@@ -1787,32 +1795,7 @@ module.exports = function (RED) {
    */
   async function householdGetSonosPlaylists (node, msg, stateName, cmdName, sonosPlayer) {
     
-    const response = await executeActionV6(sonosPlayer.baseUrl,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
-    
-    let sonosPlaylists = [] 
-    if (response.NumberReturned !== '0') {
-      if (!isTruthyAndNotEmptyString(response.Result)) {
-        throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response.Result)}`)
-      }
-      sonosPlaylists = await didlXmlToArray(response.Result, 'container')
-      if (!isTruthyAndNotEmptyString(sonosPlaylists)) {
-        throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlaylists)}`)
-      }
-  
-      // add ip address to albumUri, delete sid, metadata
-      sonosPlaylists.map(element => {
-        if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
-          element.albumArtUri = sonosPlayer.baseUrl + element.albumArtUri
-          element.albumArt = element.albumArtUri // compatibility
-        }  
-        delete element.sid
-        delete element.metadata
-        return element
-      })
-    } 
-    
+    const sonosPlaylists = await getSonosPlaylistsV2(sonosPlayer.baseUrl)
     return { payload: sonosPlaylists }
   }
 
@@ -1842,34 +1825,21 @@ module.exports = function (RED) {
     }
 
     // using the default player of this node
-    const response = await executeActionV6(sonosPlayer.baseUrl,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
-    
-    let sonosPlaylists = [] 
-    if (response.NumberReturned !== '0') {
-      if (!isTruthyAndNotEmptyString(response.Result)) {
-        throw new Error(`${NRCSP_ERRORPREFIX} browse SQ response is invalid. Response >>${JSON.stringify(response.Result)}`)
-      }
-      sonosPlaylists = await didlXmlToArray(response.Result, 'container')
-      if (!isTruthyAndNotEmptyString(sonosPlaylists)) {
-        throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid. Response >>${JSON.stringify(sonosPlaylists)}`)
-      }
+    const sonosPlaylists = await getSonosPlaylistsV2(sonosPlayer.baseUrl)
   
-      // find title in playlist - exact - return id
-      let id = ''
-      for (var i = 0; i < sonosPlaylists.length; i++) {
-        if (sonosPlaylists[i].title === validatedTitle) {
-          id = sonosPlaylists[i].id.replace('SQ:', '')
-        }
+    // find title in playlist - exact - return id
+    let id = ''
+    for (var i = 0; i < sonosPlaylists.length; i++) {
+      if (sonosPlaylists[i].title === validatedTitle) {
+        id = sonosPlaylists[i].id.replace('SQ:', '')
       }
-      if (id === '') { // not found
-        if (!ignoreNotExists) {
-          throw new Error(`${NRCSP_ERRORPREFIX} No Sonos playlist title matching search string.`)
-        }
-      } else {
-        await sonosPlayer.deletePlaylist(id)
+    }
+    if (id === '') { // not found
+      if (!ignoreNotExists) {
+        throw new Error(`${NRCSP_ERRORPREFIX} No Sonos playlist title matching search string.`)
       }
+    } else {
+      await sonosPlayer.deletePlaylist(id)
     }
     
     return {}
@@ -2327,9 +2297,9 @@ module.exports = function (RED) {
   async function playerGetQueue (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
-    sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
-    const queueItems = await getPlayerQueue(sonosSinglePlayer)
+    //const sonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].urlHostname)
+    //sonosSinglePlayer.baseUrl = groupData.members[groupData.playerIndex].baseUrl
+    const queueItems = await getQueueV2(groupData.members[groupData.playerIndex].baseUrl)
     return { payload: queueItems }
   }
 

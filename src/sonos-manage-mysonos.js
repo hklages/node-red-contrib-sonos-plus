@@ -7,7 +7,7 @@ const {
   failure, success
 } = require('./Helper.js')
 
-const { getAllMySonosItemsV2, findStringInMySonosTitleV1, executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
+const { getMySonosV3, findStringInMySonosTitleV1, executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -169,8 +169,8 @@ module.exports = function (RED) {
   //
   // ========================================================================
 
-  /**  Exports first Music Library album matching search string (is encoded) - maximum 100
-   *    * @param  {object} node used for debug message
+  /**  Exports first Music-Library album matching search string (is encoded) - maximum 100
+   * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
    * @param  {string} stateName default: payload - in compatibility mode: topic
@@ -190,22 +190,29 @@ module.exports = function (RED) {
     // for safety if not defined
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
     
-    const browse = await executeActionV6(sonosPlayer.baseUrl,
+    const browseMlAlbum = await executeActionV6(sonosPlayer.baseUrl,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString), BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 100, SortCriteria: '' })
-    
-    if (browse.NumberReturned === '0') {
+    if (!isValidPropertyNotEmptyString(browseMlAlbum, ['NumberReturned'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse Album command - missing NumberReturned value`)
+    }
+    if (browseMlAlbum.NumberReturned === '0') {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find any title matching search string`)
     }
-    const albumList = await didlXmlToArray(browse.Result, 'container')
-    const firstAlbum = albumList[0]
+
+    const listAlbum = await didlXmlToArray(browseMlAlbum.Result, 'container')
+    if (!isTruthyAndNotEmptyString(listAlbum)) {
+      throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse Album is invalid.`)
+    }
+    
+    const firstAlbum = listAlbum[0]
     firstAlbum.queue = (firstAlbum.processingType === 'queue')
     const outputChanged = {}
     outputChanged[stateName] = firstAlbum
     return outputChanged
   }
   
-  /**  Exports first Music Library playlist matching search string.
+  /**  Exports first Music-Library playlist matching search string.
    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
@@ -223,8 +230,8 @@ module.exports = function (RED) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
     // msg.size is handled in libraryGetPlaylists 
-    const result = await libraryGetPlaylists(node, msg, stateName, cmdName, sonosPlayer)
-    const libraryPlaylists = result.payload
+    const browseMlPlaylist = await libraryGetPlaylists(node, msg, stateName, cmdName, sonosPlayer)
+    const libraryPlaylists = browseMlPlaylist.payload
     if (libraryPlaylists.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} Could not find any Music library playlist`)
     }
@@ -237,7 +244,7 @@ module.exports = function (RED) {
     return outputChanged
   }
 
-  /**  Get Music Library albums.
+  /**  Outputs array Music-Library albums - search string is optional
    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
@@ -264,26 +271,37 @@ module.exports = function (RED) {
     // baseUrl should be included but for safety
     sonosPlayer.baseUrl = `http://${sonosPlayer.host}:${sonosPlayer.port}`
 
-    const browse = await executeActionV6(sonosPlayer.baseUrl,
+    const browseAlbum = await executeActionV6(sonosPlayer.baseUrl,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'A:ALBUM' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: '' })
     
-    const albumList = await didlXmlToArray(browse.Result, 'container')
-    
-    // add ip address to albumUri
-    albumList.map(element => {
-      if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
-        element.albumArtUri = sonosPlayer.baseUrl + element.albumArtUri
-        element.albumArt = element.albumArtUri // compatibility
-      }  
-      return element
-    })
+    if (!isValidPropertyNotEmptyString(browseAlbum, ['NumberReturned'])) {
+      throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse Album command - missing NumberReturned value`)
+    }
+
+    let albumList = []
+    if (browseAlbum.NumberReturned !== '0') {
+      const listAlbum = await didlXmlToArray(browseAlbum.Result, 'container')
+      if (!isTruthyAndNotEmptyString(listAlbum)) {
+        throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse Album is invalid.`)
+      }
+
+      // add ip address to albumUri
+      albumList = listAlbum.map(element => {
+        if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
+          element.artUri = sonosPlayer.baseUrl + element.albumArtUri
+          delete element.albumArtUri
+        }  
+        return element
+      })
+    }
+
     const outputChanged = {}
     outputChanged[stateName] = albumList.slice()  // copy array and assign to payload
     return outputChanged
   }
 
-  /**  Outputs array of Music library playlists as object.
+  /**  Outputs array of Music-Library playlists as object.
    * @param  {object} node current node
    * @param  {object} msg incoming message
    * @param  {number} [msg.size = 200] maximum number of playlists to be retrieved, integer 1 .. 1000
@@ -317,7 +335,7 @@ module.exports = function (RED) {
     return { payload: libraryPlaylists.items }
   }
 
-  /**  Queues (aka add) first Music Library playlist matching search string.
+  /**  Queues (aka add) first Music-Library playlist matching search string.
    * @param  {object} node used for debug message
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
@@ -348,7 +366,7 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**  Export first My Sonos item matching search string.
+  /**  Export first My-Sonos item matching search string.
    * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
@@ -359,7 +377,7 @@ module.exports = function (RED) {
    * @return {promise} see return   CAUTION: stateName!! not payload
    *
    * @throws all functions
-   *        if getAllMySonosItemsV2 does not provide values
+   *        if getMySonosV3 does not provide values
    *
    * Info:  content validation of mediaType, serviceName in findStringInMySonosTitleV1
    */
@@ -367,7 +385,7 @@ module.exports = function (RED) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
 
-    const mySonosItems = await getAllMySonosItemsV2(sonosPlayer.baseUrl)
+    const mySonosItems = await getMySonosV3(sonosPlayer.baseUrl)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
@@ -377,7 +395,7 @@ module.exports = function (RED) {
     return outputChanged
   }
 
-  /**  Outputs array of My Sonos items as object.
+  /**  Outputs array of My-Sonos items as object.
    * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} stateName not used
@@ -390,14 +408,14 @@ module.exports = function (RED) {
    * @throws all functions
    */
   async function mysonosGetItems (node, msg, stateName, cmdName, sonosPlayer) {
-    const mySonosItems = await getAllMySonosItemsV2(sonosPlayer.baseUrl)
+    const mySonosItems = await getMySonosV3(sonosPlayer.baseUrl)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
     return { payload: mySonosItems }
   }
 
-  /**  Queues (aka add) first My Sonos item matching search string.
+  /**  Queues (aka add) first My-Sonos item matching search string.
    * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
@@ -439,7 +457,7 @@ module.exports = function (RED) {
       filter.mediaType = 'all'
     }
 
-    const mySonosItems = await getAllMySonosItemsV2(sonosPlayer.baseUrl)
+    const mySonosItems = await getMySonosV3(sonosPlayer.baseUrl)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
@@ -448,7 +466,7 @@ module.exports = function (RED) {
     return {}
   }
 
-  /** Stream (aka play) first My Sonos item matching search string.
+  /** Stream (aka play) first My-Sonos item matching search string.
    * @param  {object} node not used
    * @param  {object} msg incoming message
    * @param  {string} msg[stateName] search string
@@ -472,7 +490,7 @@ module.exports = function (RED) {
       serviceName: 'all'
     } // only streams
 
-    const mySonosItems = await getAllMySonosItemsV2(sonosPlayer.baseUrl)
+    const mySonosItems = await getMySonosV3(sonosPlayer.baseUrl)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
