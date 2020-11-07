@@ -205,8 +205,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse Album is invalid.`)
     }
     
-    const firstAlbum = listAlbum[0]
-    firstAlbum.queue = (firstAlbum.processingType === 'queue')
+    const firstAlbum = { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true }
     const outputChanged = {}
     outputChanged[stateName] = firstAlbum
     return outputChanged
@@ -288,10 +287,10 @@ module.exports = function (RED) {
 
       // add ip address to albumUri
       albumList = listAlbum.map(element => {
-        if (typeof element.albumArtUri === 'string' && element.albumArtUri.startsWith('/getaa')) {
-          element.artUri = sonosPlayer.baseUrl + element.albumArtUri
-          delete element.albumArtUri
+        if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
+          element.artUri = sonosPlayer.baseUrl + element.artUri
         }  
+        element.processingType = 'queue'
         return element
       })
     }
