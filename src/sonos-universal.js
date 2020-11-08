@@ -1490,7 +1490,7 @@ module.exports = function (RED) {
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
 
     const coordinatorIndex = 0
-    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].urlHostname)
+    const queueItems = await getQueueV2(groupData.members[coordinatorIndex].baseUrl)
     if (queueItems.length === 0) {
       throw new Error(`${NRCSP_ERRORPREFIX} queue is empty`)
     }
@@ -1511,7 +1511,7 @@ module.exports = function (RED) {
     // no check - always returns true, 0 stands for coordinator
     await executeActionV6(groupData.members[0].baseUrl,
       '/MediaRenderer/AVTransport/Control', 'SetPlayMode',
-      { NewPlayMode: newState.toUpperCase() }) 
+      { InstanceID: 0, NewPlayMode: newState.toUpperCase() }) 
     
     return {}
   }
