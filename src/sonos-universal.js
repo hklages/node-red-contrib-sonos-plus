@@ -15,6 +15,16 @@ const {
 
 const { Sonos } = require('sonos')
 
+/**
+ * All functions provided by Universal node. Universal modes server all but commands related to groups and player.
+ *
+ * @module Universal
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-08
+*/
+
 module.exports = function (RED) {
   'use strict'
 

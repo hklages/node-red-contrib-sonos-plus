@@ -1,5 +1,16 @@
 'use strict'
 
+/**
+ * Collection of complex SONOS commands such as playGroupNotification, group handling, My Sonos handling 
+ * but also the basic executeActions and helpers.
+ *
+ * @module Sonos-Commands
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-08
+*/
+
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec, NRCSP_ERRORPREFIX } = require('./Helper.js')
 const { encodeXml, sendToPlayerV1 } = require('./Soap.js')
 const xml2js = require('xml2js')

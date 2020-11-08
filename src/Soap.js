@@ -1,4 +1,16 @@
 'use strict'
+
+/**
+ * Collection of SOAP protocol related functions doing the basic SOAP stuff such as creating envelopes, sending data to player 
+ * via POST and handles the response.
+ *
+ * @module Soap
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-08
+*/
+
 const request = require('axios')
 
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1, NRCSP_ERRORPREFIX } = require('./Helper.js')

@@ -1,5 +1,15 @@
 'use strict'
 
+/**
+ * Collection of general purpose functions not being related to SOAP or SONOS.
+ *
+ * @module Helpers
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-08
+*/
+
 module.exports = {
   // data to be used in other modules
 
@@ -96,7 +106,7 @@ module.exports = {
   /** Show any error occuring during processing of messages in the node status and create node error.
    * @param  {object} node current node
    * @param  {object} msg current msg
-   * @param  {Error object} error  standard node.js or created with new Error ('')
+   * @param  {object} error  standard node.js or created with new Error ('')
    * @param  {string} [functionName] name of calling function
    *
    * Method:

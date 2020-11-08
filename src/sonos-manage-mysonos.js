@@ -11,6 +11,16 @@ const { getMySonosV3, findStringInMySonosTitleV1, executeActionV6, didlXmlToArra
 
 const { Sonos } = require('sonos')
 
+/**
+ * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
+ *
+ * @module MySonos
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-08
+*/
+
 module.exports = function (RED) {
   'use strict'
 
@@ -401,10 +411,10 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @output {object} payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}
+   * @returns {object} payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}
    * uri, metadata, sid, upnpclass: empty string are allowed
    *
-   * @throws all functions
+   * @throws nrcsp error - all functions
    */
   async function mysonosGetItems (node, msg, stateName, cmdName, sonosPlayer) {
     const mySonosItems = await getMySonosV3(sonosPlayer.baseUrl)
@@ -425,7 +435,7 @@ module.exports = function (RED) {
    *
    * @return {promise} {}
    *
-   * @throws all functions
+   * @throws nrcsp-error all functions
    *
    * Info:  msg.filter currently undocumented feature.
    */
