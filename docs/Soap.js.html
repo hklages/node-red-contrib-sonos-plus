@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Soap.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Soap.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict'
+
+/**
+ * Collection of SOAP protocol related functions doing the basic SOAP stuff such as creating envelopes, sending data to player 
+ * via POST and handles the response.
+ *
+ * @module Soap
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-08
+*/
+
+const request = require('axios')
+
+const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1, NRCSP_ERRORPREFIX } = require('./Helper.js')
+
+module.exports = {
+
+  ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
+
+  // ========================================================================
+  //
+  //                        SOAP related functions for SONOS player
+  //
+  // ========================================================================
+
+  /** Send http request in SOAP format to specified player.
+   * @param  {string} baseUrl http address including http prefix and port such as 'http://192.168.178.30:1400'
+   * @param  {string} endpoint SOAP endpoint such as '/MediaRenderer/RenderingControl/Control'
+   * @param  {string} serviceName such as 'RenderingControl'
+   * @param  {string} actionIdentifier such as 'GetEQ'
+   * @param  {object} args such as { InstanceID: 0, EQType: "NightMode" },
+   *
+   * @return {promise} response header/body/error code from player
+   */
+  sendToPlayerV1: async function (baseUrl, endpoint, serviceName, actionIdentifier, args) {
+    // create action used in header - notice the " inside `
+    const soapAction = `"urn:schemas-upnp-org:service:${serviceName}:1#${actionIdentifier}"`
+
+    // create body
+    let httpBody = `&lt;u:${actionIdentifier} xmlns:u="urn:schemas-upnp-org:service:${serviceName}:1">`
+    if (args) {
+      Object.keys(args).forEach(key => {
+        httpBody += `&lt;${key}>${args[key]}&lt;/${key}>`
+      })
+    }
+    httpBody += `&lt;/u:${actionIdentifier}>`
+
+    // body wrapped in envelope
+    httpBody = [
+      // '&lt;?xml version="1.0" encoding="utf-8"?>',
+      '&lt;s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
+      '&lt;s:Body>' + httpBody + '&lt;/s:Body>',
+      '&lt;/s:Envelope>'
+    ].join('')
+
+    const response = await request({
+      method: 'post',
+      baseURL: baseUrl,
+      url: endpoint,
+      headers: {
+        SOAPAction: soapAction,
+        'Content-type': 'text/xml; charset=utf8'
+      },
+      data: httpBody
+    })
+      .catch((error) => {
+        // In case of an SOAP error error.reponse helds the details.
+        // That goes usually together with status code 500 - triggering catch
+        // Experience: When using reject(error) the error.reponse get lost.
+        // Thats why error.response is checked and handled here!
+        if (isValidProperty(error, ['response'])) {
+        // Indicator for SOAP Error
+          if (isValidProperty(error, ['message'])) {
+            if (error.message.startsWith('Request failed with status code 500')) {
+              const errorCode = getErrorCodeFromEnvelope(error.response.data)
+              let serviceErrorList = ''
+              if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [serviceName.toUpperCase()])) {
+                // look up in the service specific error codes 7xx
+                serviceErrorList = module.exports.ERROR_CODES[serviceName.toUpperCase()]
+              }
+              const errorMessage = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
+              throw new Error(`${NRCSP_ERRORPREFIX} statusCode 500 &amp; upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
+            } else {
+              throw new Error('error.message is not code 500' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
+            }
+          } else {
+            throw new Error('error.message is missing. error >>' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
+          }
+        } else {
+          // usually ECON.. or timed out. Is being handled in failure procedure
+          throw error
+        }
+      })
+    return {
+      headers: response.headers,
+      body: response.data,
+      statusCode: response.status
+    }
+  },
+
+  /**  Get error message from error code. If not found provide empty string.
+   * @param  {string} errorCode
+   * @param  {string} [actionName] '' is
+   *
+   * @return {string} error text (from mapping code -  text)
+   */
+
+  getUpnpErrorMessage: (errorCode, actionName) => {
+    const errorText = 'unknown error' // default
+    if (isTruthyAndNotEmptyString(errorCode)) {
+      if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [actionName.toUpperCase()])) {
+        // look up in the service specific error codes 7xx
+        const actionErrorList = module.exports.ERROR_CODES[actionName.toUpperCase()]
+        for (let i = 0; i &lt; actionErrorList.length; i++) {
+          if (actionErrorList[i].code === errorCode) {
+            return actionErrorList[i].message
+          }
+        }
+      }
+      const npnpErrorList = module.exports.ERROR_CODES.UPNP
+      for (let i = 0; i &lt; npnpErrorList.length; i++) {
+        if (npnpErrorList[i].code === errorCode) {
+          return npnpErrorList[i].message
+        }
+      }
+    }
+    return errorText
+  },
+
+  /** Encodes special XML characters such as &lt; to &amp;lt;.
+   * @param  {string} xmlData orignal XML data
+   * @return {string} data without any &lt;, >, &amp;, ', "
+   */
+
+  encodeXml: xmlData => {
+    return xmlData.replace(/[&lt;>&amp;'"]/g, singleChar => {
+      switch (singleChar) {
+      case '&lt;': return '&amp;lt;'
+      case '>': return '&amp;gt;'
+      case '&amp;': return '&amp;amp;'
+      case '\'': return '&amp;apos;'
+      case '"':  return '&amp;quot;'
+      }
+    })
+  }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Nov 11 2020 20:08:35 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -172,6 +172,20 @@ B,Ba--D
  a,,
  ...
 
+//----- REGEX_HTTP  --------------------
+http://www.fritz.de/live.m3u
+https://www.fritz.de/live.m3u
+http://192.168.178.25:80/addons/red/notifications/notification_caution.mp3
+
+--- Failure
+ http://  
+ https://  
+www.google.com
+htt://xxxxx
+http://
+https://
+xxxxxx
+x.y.z
 
 
 
