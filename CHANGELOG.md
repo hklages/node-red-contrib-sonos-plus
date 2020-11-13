@@ -2,17 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
-### [4.x.x] 2020-11-xx
+### [4.5.1] 2020-11-13
 
 #### Changed
 
-- Universal node: group.play.httpstream bug fixed and REGEX http check
+- Universal node: group.play.httpstream bug fixed and now with REGEX http check
 
 - Universal node: group.set.queuemode bug fixed
 
 - Universal node: group.adjust.volume now outputs msg.newVolume
 
-- internal: documentation for groupPlayStreamHttpV2, didlXmlToArray
+- internal: documentation for groupPlayStreamHttpV2, didlXmlToArray, validateConvertToInteger
+
+- internal: Sonos-command revised, code optimization
 
 #### Added
 

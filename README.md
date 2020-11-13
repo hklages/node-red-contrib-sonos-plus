@@ -17,21 +17,23 @@ Read the Quickstart and explore the full scope in the [Wiki.](https://github.com
 
 > See required action here: [issue 67](https://github.com/hklages/node-red-contrib-sonos-plus/issues/67)
 
+### SUPPORT
+
+Either open a github issue (preferred method) or send an email to nrcsplus@gmail.com
+
 ### NEWS
 
-- In "Universal", "My Sonos" node: You can now select the command and provide the state inside the node. Please use it!
+- !!! artUri now instead of AlbumArtUri, added serviceName to group.get.trackplus and some others.
 
-- In "Universal", "My Sonos" node: For all commands I removed the displayed text is now the command (I learned that the help text is only confusing)
+- In Universal node: household.create.group - use a comma separated list with coordinator at first position to create a group
 
-- In Universal node: !!!! household.create.group - use a comma separated list with coordinator at first position to create a group
+- In Universal node: new command group.get.members
 
-- In "Universal" node: new command player.play.tv
-
-- artUri now instead of AlbumArtUri, added serviceName to group.get.trackplus and some others.
+- In Universal node: new command player.play.tv
 
 ### Installation
 
-Install directly from your Node-RED's setting pallete.
+Install directly from your Node-RED's setting palette.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
