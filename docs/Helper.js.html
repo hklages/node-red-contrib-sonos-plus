@@ -1,4 +1,32 @@
-'use strict'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Helper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Helper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict'
 
 /**
  * Collection of general purpose functions not being related to SOAP or SONOS.
@@ -33,7 +61,7 @@ module.exports = {
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
-  NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
+  NODE_SONOS_UPNP500: 'upnp: statusCode 500 &amp; upnpErrorCode ', // only those with 500 (subset)
 
   // functions to be used in other modules
 
@@ -119,7 +147,7 @@ module.exports = {
    *
    * 2. Is the error thrown in node-sonos - service _request? Indicator: .message starts with NODE_SONOS_ERRORPREFIX
    * see https://github.com/bencevans/node-sonos/blob/master/lib/services/Service.js   Service.prototype._request
-   * The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' and the error.response.data
+   * The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 &amp; upnpErrorCode ' and the error.response.data
    * or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
    *
    * 3. Is the error from this package? Indicator: .message starts with NRCSP_ERRORPREFIX
@@ -154,7 +182,7 @@ module.exports = {
           // 2. node sonos upnp errors from service _request
           if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
             const upnpErrorCode = module.exports.getErrorCodeFromEnvelope(error.message.substring(module.exports.NODE_SONOS_UPNP500.length))
-            msgShort = `statusCode 500 & upnpError ${upnpErrorCode}`
+            msgShort = `statusCode 500 &amp; upnpError ${upnpErrorCode}`
             // TODO Notion Helper-Service
             msgDetails = module.exports.getErrorMessageV1(upnpErrorCode, module.exports.ERROR_CODES.UPNP, '') // only UPNP errors
           } else {
@@ -221,7 +249,7 @@ module.exports = {
    */
   isValidProperty: (nestedObj, pathArray) => {
     const property = pathArray.reduce(
-      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      (obj, key) => (obj &amp;&amp; obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
     return module.exports.isTruthy(property)
@@ -233,7 +261,7 @@ module.exports = {
    */
   isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
     const property = pathArray.reduce(
-      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      (obj, key) => (obj &amp;&amp; obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
     return module.exports.isTruthyAndNotEmptyString(property)
@@ -279,12 +307,12 @@ module.exports = {
    * @param  {string} packageName package name, included in error message
    * @param  {number} [defaultValue] integer, specifies the default value. 
    *
-   * @return {Promise<number>} integer in range [min,max] or defaultValue
+   * @return {Promise&lt;number>} integer in range [min,max] or defaultValue
    *
    * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
    * @throws {error} msg does not have property named propertyName
    * @throws {error} msg[propertyName] is not of type string, number
-   * @throws {error} min,max,defaultValue not of type number, max <= min
+   * @throws {error} min,max,defaultValue not of type number, max &lt;= min
    *
    */
   validateConvertToInteger: (msg, propertyName, min, max, propertyMeaning, packageName, defaultValue) => {
@@ -320,7 +348,7 @@ module.exports = {
     }
     let value = msg[propertyName]
 
-    if (typeof value !== 'number' && typeof value !== 'string') {
+    if (typeof value !== 'number' &amp;&amp; typeof value !== 'string') {
       throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName}) is not type string/number`)
     }
     if (typeof value === 'number') {
@@ -334,7 +362,7 @@ module.exports = {
       }
       value = parseInt(value)
     }
-    if (!(value >= min && value <= max)) {
+    if (!(value >= min &amp;&amp; value &lt;= max)) {
       throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName} >>${value}) is out of range`)
     }
     return value
@@ -392,26 +420,26 @@ module.exports = {
    *
    *  All the following are false - same for constants.
    *  let input; let input = null; let input = undefined; let input = NaN; let input = 1.0 / 0; let input = -1.0 / 0
-   *  (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+   *  (typeof input === 'number' &amp;&amp; !Number.isFinite(input)) avoids NaN, positive, negative Infinite
    *  but these are true: let input = []; let input = {};
    */
   isTruthy: input => {
     return !(typeof input === 'undefined' || input === null ||
-      (typeof input === 'number' && !Number.isFinite(input)))
+      (typeof input === 'number' &amp;&amp; !Number.isFinite(input)))
   },
 
   /** Validates whether an constant/variable is "valid" - empty string NOT allowed allowed
    * @param  {object} input const, variable, object
    * @outputs {boolean} valid
    *
-   *  (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
+   *  (typeof input === 'number' &amp;&amp; !Number.isFinite(input)) avoids NaN, positive, negative Infinite
    *  all the following are false - same for constants.
    *  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
    *  but these are true: let input = []; let input = {};
    */
   isTruthyAndNotEmptyString: input => {
     return !(typeof input === 'undefined' || input === null ||
-      (typeof input === 'number' && !Number.isFinite(input)) || input === '')
+      (typeof input === 'number' &amp;&amp; !Number.isFinite(input)) || input === '')
   },
 
   /** Converts hh:mm:ss time to milliseconds
@@ -424,7 +452,7 @@ module.exports = {
   },
 
   /**  Get error code. If not found provide empty string.
-   * @param  {string} data  upnp error response as envelope with <errorCode>xxx</errorCode>
+   * @param  {string} data  upnp error response as envelope with &lt;errorCode>xxx&lt;/errorCode>
    *
    * @return {string} error code
    */
@@ -432,9 +460,9 @@ module.exports = {
   getErrorCodeFromEnvelope: data => {
     let errorCode = '' // default
     if (module.exports.isTruthyAndNotEmptyString(data)) {
-      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
-      const positionEnd = data.indexOf('</errorCode>')
-      if (positionStart > 1 && positionEnd > positionStart) {
+      const positionStart = data.indexOf('&lt;errorCode>') + '&lt;errorCode>'.length
+      const positionEnd = data.indexOf('&lt;/errorCode>')
+      if (positionStart > 1 &amp;&amp; positionEnd > positionStart) {
         errorCode = data.substring(positionStart, positionEnd)
       }
     }
@@ -453,13 +481,13 @@ module.exports = {
     const errorText = 'unknown error' // default
     if (module.exports.isTruthyAndNotEmptyString(errorCode)) {
       if (serviceErrorList !== '') {
-        for (let i = 0; i < serviceErrorList.length; i++) {
+        for (let i = 0; i &lt; serviceErrorList.length; i++) {
           if (serviceErrorList[i].code === errorCode) {
             return serviceErrorList[i].message
           }
         }
       }
-      for (let i = 0; i < upnpErrorList.length; i++) {
+      for (let i = 0; i &lt; upnpErrorList.length; i++) {
         if (upnpErrorList[i].code === errorCode) {
           return upnpErrorList[i].message
         }
@@ -468,3 +496,26 @@ module.exports = {
     return errorText
   }
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

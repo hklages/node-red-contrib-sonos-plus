@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.x.x] 2020-11-xx
+
+#### Changed
+
+- Universal node: group.play.httpstream bug fixed and REGEX http check
+
+- Universal node: group.set.queuemode bug fixed
+
+- Universal node: group.adjust.volume now outputs msg.newVolume
+
+- internal: documentation for groupPlayStreamHttpV2, didlXmlToArray
+
+#### Added
+
+- Universal node: group.get.members
+
+- internal: documentation in .docs - first draft
+
 ### [4.5.0] 2020-11-07
 
 #### Changed

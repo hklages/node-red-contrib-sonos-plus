@@ -1,4 +1,32 @@
-const {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: sonos-universal.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: sonos-universal.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const {
   REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
   NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial,
@@ -119,10 +147,10 @@ module.exports = function (RED) {
 
     // ip address overruling serialnum - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
-    if (isValidProperty(configNode, ['ipaddress']) && typeof configNode.ipaddress === 'string' && REGEX_IP.test(configNode.ipaddress)) {
+    if (isValidProperty(configNode, ['ipaddress']) &amp;&amp; typeof configNode.ipaddress === 'string' &amp;&amp; REGEX_IP.test(configNode.ipaddress)) {
       // ip address is being used - default case
     } else {
-      if (isValidProperty(configNode, ['serialnum']) && typeof configNode.serialnum === 'string' && REGEX_SERIAL.test(configNode.serialnum)) {
+      if (isValidProperty(configNode, ['serialnum']) &amp;&amp; typeof configNode.serialnum === 'string' &amp;&amp; REGEX_SERIAL.test(configNode.serialnum)) {
         discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpAddress) => {
           if (err) {
             failure(node, null, new Error(`${NRCSP_ERRORPREFIX} could not figure out ip address (discovery)`), nrcspFunction)
@@ -155,7 +183,7 @@ module.exports = function (RED) {
         })
         .catch((error) => {
           let functionName = 'processing input msg'
-          if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
+          if (msg.nrcspCmd &amp;&amp; typeof msg.nrcspCmd === 'string') {
             functionName = msg.nrcspCmd
           }
           failure(node, msg, error, functionName)
@@ -184,7 +212,7 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(sonosPlayer)) {
       throw new Error(`${NRCSP_ERRORPREFIX} sonos player is undefined`)
     }
-    if (!(isValidPropertyNotEmptyString(sonosPlayer, ['host']) &&
+    if (!(isValidPropertyNotEmptyString(sonosPlayer, ['host']) &amp;&amp;
       isValidPropertyNotEmptyString(sonosPlayer, ['port']))) {
       throw new Error(`${NRCSP_ERRORPREFIX} ip address or port is missing`)
     }
@@ -301,7 +329,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName=topic in compatibility mode: payload, not used
    * @param  {object}  sonosPlayer Sonos player from config node
    *
-   * @return {Promise<String>} Returns the new group volume after adjustment as property newVolume.
+   * @return {Promise&lt;String>} Returns the new group volume after adjustment as property newVolume.
    *
    * @throws any functions throws error and explicit throws
    */
@@ -378,7 +406,7 @@ module.exports = function (RED) {
 
     const sonosPlayermembers = []
     let sonosSinglePlayer = {}
-    for (let index = 0; index < groupData.members.length; index++) {
+    for (let index = 0; index &lt; groupData.members.length; index++) {
       sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
       sonosSinglePlayer.baseUrl = groupData.members[index].baseUrl
       sonosPlayermembers.push(sonosSinglePlayer)
@@ -503,7 +531,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName=topic in compatibility mode: payload, not used
    * @param  {object}  sonosPlayer Sonos player from config node
    *
-   * @return {Promise<GroupMember[]>}  with key payload!
+   * @return {Promise&lt;GroupMember[]>}  with key payload!
    *
    * @throws {error} from methods validatedGroupProperties, getGroupMemberDataV2
    */
@@ -700,7 +728,7 @@ module.exports = function (RED) {
     if (isValidPropertyNotEmptyString(trackData, ['albumArtURI'])) {
       node.debug('got valid albumArtURI')
       albumArtUri = trackData.albumArtURI
-      if (typeof albumArtUri === 'string' && albumArtUri.startsWith('/getaa')) {
+      if (typeof albumArtUri === 'string' &amp;&amp; albumArtUri.startsWith('/getaa')) {
         albumArtUri = sonosPlayer.baseUrl + albumArtUri
         delete trackData.albumArtURI
       } 
@@ -748,7 +776,7 @@ module.exports = function (RED) {
     // get station uri for all "x-sonosapi-stream"
     let stationArtUri = ''
     if (uri.startsWith('x-sonosapi-stream')) {
-      stationArtUri = sonosCoordinator.baseUrl + '/getaa?s=1&u=' + uri
+      stationArtUri = sonosCoordinator.baseUrl + '/getaa?s=1&amp;u=' + uri
     }
 
     // get current position data
@@ -866,7 +894,7 @@ module.exports = function (RED) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    if (validated.sameVolume === false && groupData.members.length === 1) {
+    if (validated.sameVolume === false &amp;&amp; groupData.members.length === 1) {
       throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is nonsense: player is standalone`)
     }
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -876,7 +904,7 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       let sonosSinglePlayer
       if (validated.sameVolume) {
-        for (let index = 0; index < groupData.members.length; index++) {
+        for (let index = 0; index &lt; groupData.members.length; index++) {
           sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
           // baseUrl not needed
           await sonosSinglePlayer.setVolume(validated.volume)
@@ -923,7 +951,7 @@ module.exports = function (RED) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    if (validated.sameVolume === false && groupData.members.length === 1) {
+    if (validated.sameVolume === false &amp;&amp; groupData.members.length === 1) {
       throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is nonsense: player is standalone`)
     }
 
@@ -942,7 +970,7 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       let sonosSinglePlayer
       if (validated.sameVolume) {
-        for (let index = 0; index < groupData.members.length; index++) {
+        for (let index = 0; index &lt; groupData.members.length; index++) {
           sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
           // baseUrl not needed
           await sonosSinglePlayer.setVolume(validated.volume)
@@ -1006,7 +1034,7 @@ module.exports = function (RED) {
 
     const membersPlayerPlus = []
     let sonosSinglePlayer = {}
-    for (let index = 0; index < groupData.members.length; index++) {
+    for (let index = 0; index &lt; groupData.members.length; index++) {
       sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
       sonosSinglePlayer.baseUrl = groupData.members[index].baseUrl
       membersPlayerPlus.push(sonosSinglePlayer)
@@ -1033,7 +1061,7 @@ module.exports = function (RED) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    if (validated.sameVolume === false && groupData.members.length === 1) {
+    if (validated.sameVolume === false &amp;&amp; groupData.members.length === 1) {
       throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is nonsense: player is standalone`)
     }
     
@@ -1051,7 +1079,7 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       let sonosSinglePlayer
       if (validated.sameVolume) {
-        for (let index = 0; index < groupData.members.length; index++) {
+        for (let index = 0; index &lt; groupData.members.length; index++) {
           sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
           // baseUrl not needed
           await sonosSinglePlayer.setVolume(validated.volume)
@@ -1096,7 +1124,7 @@ module.exports = function (RED) {
 
     const membersPlayerPlus = []
     let sonosSinglePlayer = {}
-    for (let index = 0; index < groupData.members.length; index++) {
+    for (let index = 0; index &lt; groupData.members.length; index++) {
       sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
       sonosSinglePlayer.baseUrl = groupData.members[index].baseUrl
       membersPlayerPlus.push(sonosSinglePlayer)
@@ -1121,7 +1149,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName=topic in compatibility mode: payload
    * @param  {object}  sonosPlayer Sonos player from config node
    *
-   * @return {Promise<boolean>} always true
+   * @return {Promise&lt;boolean>} always true
    * @throws {error} if msg.sameValue true and standalone player
    * @throws {error} NRCSP error from methods validatedGroupProperties, getGroupMemberDataV2, stringValidRegex
    * @throws {error} from node-sonos setAVTransportURI and setVolume
@@ -1133,7 +1161,7 @@ module.exports = function (RED) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    if (validated.sameVolume === false && groupData.members.length === 1) {
+    if (validated.sameVolume === false &amp;&amp; groupData.members.length === 1) {
       throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is nonsense: player is standalone`)
     }
 
@@ -1147,7 +1175,7 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       let sonosSinglePlayer
       if (validated.sameVolume) {
-        for (let index = 0; index < groupData.members.length; index++) {
+        for (let index = 0; index &lt; groupData.members.length; index++) {
           sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
           // baseUrl not needed
           await sonosSinglePlayer.setVolume(validated.volume)
@@ -1197,7 +1225,7 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       let sonosSinglePlayer
       if (validated.sameVolume) {
-        for (let index = 0; index < groupData.members.length; index++) {
+        for (let index = 0; index &lt; groupData.members.length; index++) {
           sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
           // baseUrl not needed
           await sonosSinglePlayer.setVolume(validated.volume)
@@ -1234,7 +1262,7 @@ module.exports = function (RED) {
     // validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    if (validated.sameVolume === false && groupData.members.length === 1) {
+    if (validated.sameVolume === false &amp;&amp; groupData.members.length === 1) {
       throw new Error(`${NRCSP_ERRORPREFIX} msg.sameVolume is nonsense: player is standalone`)
     }
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
@@ -1244,7 +1272,7 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       let sonosSinglePlayer
       if (validated.sameVolume) {
-        for (let index = 0; index < groupData.members.length; index++) {
+        for (let index = 0; index &lt; groupData.members.length; index++) {
           sonosSinglePlayer = new Sonos(groupData.members[index].urlHostname)
           // baseUrl not needed
           await sonosSinglePlayer.setVolume(validated.volume)
@@ -1681,7 +1709,7 @@ module.exports = function (RED) {
 
     // verify all are unique
     const uniqueArray = newGroupPlayerArray.filter((x, i, a) => a.indexOf(x) == i)
-    if (uniqueArray.length < newGroupPlayerArray.length) {
+    if (uniqueArray.length &lt; newGroupPlayerArray.length) {
       throw new Error(`${NRCSP_ERRORPREFIX} List includes a player multiple times`)
     }
     
@@ -1692,7 +1720,7 @@ module.exports = function (RED) {
     // validate all player names in newGroupPlayerArray and get index of new coordinator
     let indexInList
     let indexNewCoordinator
-    for (let i = 0; i < newGroupPlayerArray.length; i++) {
+    for (let i = 0; i &lt; newGroupPlayerArray.length; i++) {
       indexInList = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i]) 
  
       if (indexInList === -1) {
@@ -1708,7 +1736,7 @@ module.exports = function (RED) {
     if (householdPlayerList[indexNewCoordinator].isCoordinator) { // means is a coordinator
       // modify this group (remove those not needed and add some)
       let found
-      for (let i = 0; i < householdPlayerList.length; i++) {
+      for (let i = 0; i &lt; householdPlayerList.length; i++) {
         // should this player be in group?
         found = newGroupPlayerArray.indexOf(householdPlayerList[i].sonosName)
         if (found === -1) {
@@ -1735,7 +1763,7 @@ module.exports = function (RED) {
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) // because it takes time to BecomeCoordinator
       let indexPlayer
       
-      for (let i = 1; i < newGroupPlayerArray.length; i++) { // start with 1
+      for (let i = 1; i &lt; newGroupPlayerArray.length; i++) { // start with 1
         indexPlayer = householdPlayerList.findIndex(p => p.sonosName === newGroupPlayerArray[i])
         // no check - always returns true. Using SetAVTransportURI as AddMember does not work
         await executeActionV6(householdPlayerList[indexPlayer].baseUrl,
@@ -1781,8 +1809,8 @@ module.exports = function (RED) {
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinator (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let name
-    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
-      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+    for (let groupIndex = 0; groupIndex &lt; allGroupsData.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex &lt; allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
         if (name === playerRight) {
           playerRightUuid = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].UUID
@@ -1824,7 +1852,7 @@ module.exports = function (RED) {
     const allGroupsData = await sonosPlayer.getAllGroups()
     const allGroupsArray = []
     let group
-    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
+    for (let groupIndex = 0; groupIndex &lt; allGroupsData.length; groupIndex++) {
       group = await sortedGroupArray(allGroupsData, groupIndex)
       group = group.filter(member => member.invisible === false)
       allGroupsArray.push(group)
@@ -1879,7 +1907,7 @@ module.exports = function (RED) {
   
     // find title in playlist - exact - return id
     let id = ''
-    for (var i = 0; i < sonosPlaylists.length; i++) {
+    for (var i = 0; i &lt; sonosPlaylists.length; i++) {
       if (sonosPlaylists[i].title === validatedTitle) {
         id = sonosPlaylists[i].id.replace('SQ:', '')
       }
@@ -1910,7 +1938,7 @@ module.exports = function (RED) {
   async function householdSeparateGroup (node, msg, stateName, cmdName, sonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
-    for (let i = 1; i < groupData.members.length; i++) {  // start with 1 - coordinator is last
+    for (let i = 1; i &lt; groupData.members.length; i++) {  // start with 1 - coordinator is last
       groupData.members[i]
 
       // no check - always returns true
@@ -1954,8 +1982,8 @@ module.exports = function (RED) {
     let name
     let playerUuid
     let playerChannelMap
-    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
-      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+    for (let groupIndex = 0; groupIndex &lt; allGroupsData.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex &lt; allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
         if (name === playerLeft) {
           // Both player have same name. Get the left one
@@ -2028,8 +2056,8 @@ module.exports = function (RED) {
     // allGroupsData is an array of groups. Each group has properties ZoneGroupMembers, host (IP Address), port, baseUrl, coordinator (uuid)
     // ZoneGroupMembers is an array of all members with properties ip address and more
     let name
-    for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
-      for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
+    for (let groupIndex = 0; groupIndex &lt; allGroupsData.length; groupIndex++) {
+      for (let memberIndex = 0; memberIndex &lt; allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         name = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].ZoneName
         if (name === playerToBeTested) {
           return { payload: true }
@@ -2855,7 +2883,7 @@ module.exports = function (RED) {
       if (typeof msg.sameVolume !== 'boolean') {
         throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is not boolean`)
       }
-      if (newVolume === -1 && msg.sameVolume === true) {
+      if (newVolume === -1 &amp;&amp; msg.sameVolume === true) {
         throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is true but msg.volume is not specified`)
       }
       newSameVolume = msg.sameVolume
@@ -2875,3 +2903,26 @@ module.exports = function (RED) {
 
   RED.nodes.registerType('sonos-universal', SonosUniversalNode)
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
