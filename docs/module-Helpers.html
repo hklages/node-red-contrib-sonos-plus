@@ -697,7 +697,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line407">line 407</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line432">line 432</a>
     </li></ul></dd>
     
 
@@ -930,7 +930,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line427">line 427</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line452">line 452</a>
     </li></ul></dd>
     
 
@@ -1089,7 +1089,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line396">line 396</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line421">line 421</a>
     </li></ul></dd>
     
 
@@ -1466,7 +1466,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line373">line 373</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line398">line 398</a>
     </li></ul></dd>
     
 
@@ -1603,7 +1603,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line387">line 387</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line412">line 412</a>
     </li></ul></dd>
     
 
@@ -1959,375 +1959,6 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
 
     
-    <h4 class="name" id=".string2ValidInteger"><span class="type-signature">(static) </span>string2ValidInteger<span class="signature">(message, property, min, max, propertyMeaning, packageName, defaultValue<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Validates value and returns integer if string/number and in range.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>message</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">Node-RED message</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>property</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">property name (string maximum 3 digits)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>min</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">minimum</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>max</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">maximum</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>propertyMeaning</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">additional information</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>packageName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">package name</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>defaultValue</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">specifies the default value. If missing property is required == throw error</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line283">line 283</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        if is missing/invalid, not number/string, not integer, not in range
-    
-    </div>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    type number but integer in range [min,max]
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
     <h4 class="name" id=".stringValidRegex"><span class="type-signature">(static) </span>stringValidRegex<span class="signature">(message, property, regex, propertyMeaning, packageName, defaultValue<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
@@ -2596,7 +2227,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line331">line 331</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line356">line 356</a>
     </li></ul></dd>
     
 
@@ -2849,6 +2480,527 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
 
     
+    <h4 class="name" id=".validateConvertToInteger"><span class="type-signature">(static) </span>validateConvertToInteger<span class="signature">(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise.&lt;number>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Validates and converts msg[propertyName] to number (integer). If defaultValue is undefined, 
+msg[propertyName] is required. If defaultValue is defined it will be used in case of an 
+undefined or invalid msg[propertyName]. defaultValue might be out of range min to max to
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Node-RED message
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>propertyName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">item, to be validated</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>propertyName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">property name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>min</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">minimum</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>max</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">maximum, max > min</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>propertyMeaning</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">additional information, including in error message</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>packageName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">package name, included in error message</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>defaultValue</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">integer, specifies the default value.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line290">line 290</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        if msg[propertyName] is missing and defaultValue is undefined
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        msg does not have property named propertyName
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        msg[propertyName] is not of type string, number
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        min,max,defaultValue not of type number, max <= min
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    integer in range [min,max] or defaultValue
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;number></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id=".warning"><span class="type-signature">(static) </span>warning<span class="signature">(node, functionName, messageShort, messageDetail)</span><span class="type-signature"></span></h4>
     
 
@@ -3071,7 +3223,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Nov 11 2020 20:08:35 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

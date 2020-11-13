@@ -41,7 +41,9 @@
             <div class="description">Collection of 
 
 - complex SONOS commands such as playGroupNotification, group handling, My Sonos handling 
+
 - the basic executeAction command
+
 - helpers such as getRadioId
 
 handling the communication above SOAP level. SOAP Level communication is done in module Soap.</div>
@@ -423,7 +425,7 @@ handling the communication above SOAP level. SOAP Level communication is done in
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line298">line 298</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line314">line 314</a>
     </li></ul></dd>
     
 
@@ -618,7 +620,7 @@ memberData is array of all members (coordinator is index 0) as object: {urlHostn
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line886">line 886</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line855">line 855</a>
     </li></ul></dd>
     
 
@@ -738,7 +740,7 @@ to define tag = uriIdentifier.
     
 
     
-    <h4 class="name" id=".executeActionV6"><span class="type-signature">(static) </span>executeActionV6<span class="signature">(baseUrl, endpoint, actionName, actionInArgs)</span><span class="type-signature"> &rarr; {Promise.&lt;(object|boolean)>}</span></h4>
+    <h4 class="name" id=".executeActionV6"><span class="type-signature">(static) </span>executeActionV6<span class="signature">(playerUrlOrigin, endpoint, actionName, actionInArgs)</span><span class="type-signature"> &rarr; {Promise.&lt;(object|boolean)>}</span></h4>
     
 
     
@@ -746,7 +748,7 @@ to define tag = uriIdentifier.
 
 
 <div class="description">
-    Sends action with actionInArgs to endpoint at baseUrl and returns result.
+    Sends action with actionInArgs to endpoint at playerUrlOrigin and returns result.
 </div>
 
 
@@ -782,7 +784,7 @@ to define tag = uriIdentifier.
 
         <tr>
             
-                <td class="name"><code>baseUrl</code></td>
+                <td class="name"><code>playerUrlOrigin</code></td>
             
 
             <td class="type">
@@ -798,7 +800,7 @@ to define tag = uriIdentifier.
 
             
 
-            <td class="description last">the player base url such as http://192.168.178.37:1400</td>
+            <td class="description last">the player url such as http://192.168.178.37:1400</td>
         </tr>
 
     
@@ -908,7 +910,7 @@ to define tag = uriIdentifier.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line690">line 690</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line697">line 697</a>
     </li></ul></dd>
     
 
@@ -1007,200 +1009,6 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     <dd>
         
 <span class="param-type">Promise.&lt;(object|boolean)></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".findStringInMySonosTitleV1"><span class="type-signature">(static) </span>findStringInMySonosTitleV1<span class="signature">(items, searchString)</span><span class="type-signature"> &rarr; {promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Find searchString in My Sonos items, property title - without filter.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>items</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">array of objects {title: , uri: , metadata}</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>searchString</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">search string for title property</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line790">line 790</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        error if string not found
-    
-    </div>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    object {title, uri, metadata}
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
 
 
     </dd>
@@ -1319,7 +1127,7 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line465">line 465</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line481">line 481</a>
     </li></ul></dd>
     
 
@@ -1535,7 +1343,7 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line399">line 399</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line415">line 415</a>
     </li></ul></dd>
     
 
@@ -1710,7 +1518,7 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line982">line 982</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line951">line 951</a>
     </li></ul></dd>
     
 
@@ -1871,7 +1679,7 @@ prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1002">line 1002</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line971">line 971</a>
     </li></ul></dd>
     
 
@@ -1929,7 +1737,7 @@ prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
     
 
     
-    <h4 class="name" id=".getMySonosV3"><span class="type-signature">(static) </span>getMySonosV3<span class="signature">(sonosPlayerBaseUrl)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".getMySonosV3"><span class="type-signature">(static) </span>getMySonosV3<span class="signature">(playerUrlOrigin)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
     
 
     
@@ -1973,184 +1781,7 @@ prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
 
         <tr>
             
-                <td class="name"><code>sonosPlayerBaseUrl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">SONOS Player baseUrl (eg http://192.168.178.37:1400)</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line520">line 520</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        if invalid SONOS player response, error during parsing 
-
-Restriction: Maximum number of My Sonos items: 200, maximum number of SONOS-Playlists 999.
-Restrictions: MusicLibrary/ Sonos playlists without service id.
-Restrictions: Audible Audiobooks are missing.
-Restrictions: Pocket Casts Podcasts without uri, only metadata
-    
-    </div>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    array of My Sonos items - could be empty
-                  {title, artUri, uri, metadata, sid, serviceName, radioId, upnpClass, processingType}
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getQueueV2"><span class="type-signature">(static) </span>getQueueV2<span class="signature">(urlOrigin)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get array of all SONOS-Queue items - maximum 200. Adds processingType and baseUrl to artUri.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>urlOrigin</code></td>
+                <td class="name"><code>playerUrlOrigin</code></td>
             
 
             <td class="type">
@@ -2207,7 +1838,7 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line632">line 632</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line536">line 536</a>
     </li></ul></dd>
     
 
@@ -2234,11 +1865,33 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
 
         
 
-    <div class="param-desc">
-    
-        invalid return from Browse, invalid didlXmlToArray
-    
-    </div>
+<dl>
+    <dt>
+        <div class="param-desc">
+        nrcsp: invalid return from Browse, didlXmlToArray error
+
+Restriction: Maximum number of My-Sonos items: 200, maximum number of SONOS-Playlists 999.
+Restrictions: MusicLibrary/ Sonos playlists without service id.
+Restrictions: Audible Audio books are missing.
+Restrictions: Pocket Casts Podcasts without uri, only metadata
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
@@ -2247,7 +1900,211 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
 <h5>Returns:</h5>
 
         
+<div class="param-desc">
+    all My-Sonos Items and SONOS-Playlists as array, could be empty
+</div>
 
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".getQueueV2"><span class="type-signature">(static) </span>getQueueV2<span class="signature">(playerUrlOrigin)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get array of all SONOS-Queue items - maximum 200. Adds processingType and playerUrlOrigin to artUri.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>playerUrlOrigin</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">valid SONOS player URL.origin http://192.168.178.35:1400</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line640">line 640</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        nrcsp: invalid return from Browse, didlXmlToArray error
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    all SONOS-queue items, could be empty
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
+
+
+    </dd>
+</dl>
 
     
 
@@ -2362,7 +2219,7 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1024">line 1024</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line993">line 993</a>
     </li></ul></dd>
     
 
@@ -2422,7 +2279,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     
 
     
-    <h4 class="name" id=".getSonosPlaylistsV2"><span class="type-signature">(static) </span>getSonosPlaylistsV2<span class="signature">(sonosPlayerBaseUrl)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".getSonosPlaylistsV2"><span class="type-signature">(static) </span>getSonosPlaylistsV2<span class="signature">(playerUrlOrigin)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
     
 
     
@@ -2430,7 +2287,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
 
 
 <div class="description">
-    Get array of all SONOS-Playlists - maximum 999. Adds baseUrl to artUri if starts with /getaa
+    Get array of all SONOS-Playlists - maximum 999. Adds playerUrlOrigin to artUri and processingType
 </div>
 
 
@@ -2466,7 +2323,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
 
         <tr>
             
-                <td class="name"><code>sonosPlayerBaseUrl</code></td>
+                <td class="name"><code>playerUrlOrigin</code></td>
             
 
             <td class="type">
@@ -2482,7 +2339,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
 
             
 
-            <td class="description last">valid SONOS player base url such as http://192.168.178.35:1400</td>
+            <td class="description last">valid SONOS player URL.origin http://192.168.178.35:1400</td>
         </tr>
 
     
@@ -2523,7 +2380,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line586">line 586</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line597">line 597</a>
     </li></ul></dd>
     
 
@@ -2550,11 +2407,28 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
 
         
 
-    <div class="param-desc">
-    
-        invalid return from Browse, invalid didlXmlToArray
-    
-    </div>
+<dl>
+    <dt>
+        <div class="param-desc">
+        nrcsp: invalid return from Browse, didlXmlToArray error
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
@@ -2564,8 +2438,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
 
         
 <div class="param-desc">
-    array of playlists as object - could be empty
-{ title:, artist:, uri:, artUri:, id:, metadata:, sid:, upnpClass:, processingType: }
+    all SONOS-Playlists as array, could be empty
 </div>
 
 
@@ -2576,7 +2449,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
 
 
     </dd>
@@ -2695,7 +2568,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1042">line 1042</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1011">line 1011</a>
     </li></ul></dd>
     
 
@@ -3120,7 +2993,7 @@ prerequisites: metadata containing xml tag <upnp:class>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line84">line 84</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line100">line 100</a>
     </li></ul></dd>
     
 
@@ -3545,7 +3418,7 @@ prerequisites: metadata containing xml tag <upnp:class>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line212">line 212</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line228">line 228</a>
     </li></ul></dd>
     
 
@@ -3765,7 +3638,7 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line349">line 349</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line365">line 365</a>
     </li></ul></dd>
     
 
@@ -3959,7 +3832,7 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line815">line 815</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line798">line 798</a>
     </li></ul></dd>
     
 
@@ -4047,7 +3920,7 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Nov 11 2020 20:08:35 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -78,7 +78,7 @@ module.exports = {
     let ipAddress = null
 
     // define discovery, find matching player and return ip
-    const searchTime = 4000 // in miliseconds
+    const searchTime = 4000 // in milliseconds
     node.debug('Start searching for players')
     let discovery = sonos.DeviceDiscovery({ timeout: searchTime })
 
@@ -294,51 +294,76 @@ module.exports = {
     return (value.toLowerCase() === 'on')
   },
 
-  /** Validates value and returns integer if string/number and in range.
-   * @param  {object} message Node-RED message
-   * @param  {string} property property name (string maximum 3 digits)
+  /** Validates and converts msg[propertyName] to number (integer). If defaultValue is undefined, 
+   * msg[propertyName] is required. If defaultValue is defined it will be used in case of an 
+   * undefined or invalid msg[propertyName]. defaultValue might be out of range min to max to 
+   * 
+   * @param  {object} msg Node-RED message
+   * @param  {(string|number)} msg.propertyName item, to be validated
+   * @param  {string} propertyName property name
    * @param  {number} min minimum
-   * @param  {number} max maximum
-   * @param  {string} propertyMeaning additional information
-   * @param  {string} packageName package name
-   * @param  {number} [defaultValue] specifies the default value. If missing property is required == throw error
+   * @param  {number} max maximum, max > min
+   * @param  {string} propertyMeaning additional information, including in error message
+   * @param  {string} packageName package name, included in error message
+   * @param  {number} [defaultValue] integer, specifies the default value. 
    *
-   * @return {promise} type number but integer in range [min,max]
+   * @return {Promise&lt;number>} integer in range [min,max] or defaultValue
    *
-   * @throws if is missing/invalid, not number/string, not integer, not in range
+   * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
+   * @throws {error} msg does not have property named propertyName
+   * @throws {error} msg[propertyName] is not of type string, number
+   * @throws {error} min,max,defaultValue not of type number, max &lt;= min
    *
    */
-  string2ValidInteger: (message, property, min, max, propertyMeaning, packageName, defaultValue) => {
-    // if defaultValue is missing and error will be throw in case property is not defined or missing
+  validateConvertToInteger: (msg, propertyName, min, max, propertyMeaning, packageName, defaultValue) => {
+    // validate min max
+    if (typeof min !== 'number') {
+      throw new Error(`${packageName} ${propertyMeaning} min is not type number`)
+    } 
+    if (typeof max !== 'number') {
+      throw new Error(`${packageName} ${propertyMeaning} max is not type number`)
+    } 
+    if (min >= max) {
+      throw new Error(`${packageName} ${propertyMeaning} max must be greater then min`)
+    }
+    
+    // if defaultValue is missing an error will be throw in case property is not defined or missing
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []
-    path.push(property)
-    if (!module.exports.isValidProperty(message, path)) {
+    path.push(propertyName)
+    if (!module.exports.isValidProperty(msg, path)) {
       if (requiredProperty) {
-        throw new Error(`${packageName} ${propertyMeaning} (${property}) is missing/invalid`)
+        throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
-        // set default
+        // use defaultValue if valid
+        if (typeof defaultValue !== 'number') {
+          throw new Error(`${packageName} ${propertyMeaning} defaultValue is not type number`)
+        } 
+        if (!Number.isInteger(defaultValue)) {
+          throw new Error(`${packageName} ${propertyMeaning} defaultValue is not integer`)
+        }
+        // no check in range to allow such as -1 to indicate no value given
         return defaultValue
       }
     }
-    let value = message[property]
+    let value = msg[propertyName]
 
     if (typeof value !== 'number' &amp;&amp; typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (msg.${property}) is not type string/number`)
+      throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName}) is not type string/number`)
     }
     if (typeof value === 'number') {
       if (!Number.isInteger(value)) {
-        throw new Error(`${packageName} ${propertyMeaning} (msg.${property}) is not integer`)
+        throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName}) is not integer`)
       }
     } else {
       // it is a string - allow signed/unsigned
       if (!module.exports.REGEX_3DIGITSSIGN.test(value)) {
-        throw new Error(`${packageName} ${propertyMeaning} (msg.${property} >>${value}) is not 3 signed digits only`)
+        throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName} >>${value}) is not 3 signed digits only`)
       }
       value = parseInt(value)
     }
     if (!(value >= min &amp;&amp; value &lt;= max)) {
-      throw new Error(`${packageName} ${propertyMeaning} (msg.${property} >>${value}) is out of range`)
+      throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName} >>${value}) is out of range`)
     }
     return value
   },
@@ -487,7 +512,7 @@ module.exports = {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Nov 11 2020 20:08:35 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

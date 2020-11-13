@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 
 - Universal node: group.play.httpstream bug fixed and REGEX http check
 
+- Universal node: group.set.queuemode bug fixed
+
 - Universal node: group.adjust.volume now outputs msg.newVolume
 
 - internal: documentation for groupPlayStreamHttpV2, didlXmlToArray

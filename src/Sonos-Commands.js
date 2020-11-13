@@ -4,7 +4,9 @@
  * Collection of 
  * 
  * - complex SONOS commands such as playGroupNotification, group handling, My Sonos handling 
+ * 
  * - the basic executeAction command
+ * 
  * - helpers such as getRadioId
  * 
  * handling the communication above SOAP level. SOAP Level communication is done in module Soap.
@@ -24,16 +26,32 @@ const xml2js = require('xml2js')
 const { GenerateMetadata } = require('sonos').Helpers
 
 /**
- * @typedef {object} URL URL components. Especially urlOrigin is used for all AXIO calls.
+ * @typedef {object} URL URL components. Especially playerUrlOrigin is used for all sendToPlayer calls.
  * 
  * @see <a href="https://javascript.info/url">URL</a>
  * @global
- * @property {string} baseUrl same as urlOrigin
- * @property {string} urlHostname such as 192.168.178.35
- * @property {string} urlPort such as 1400
- * @property {string} urlHost such as "192.168.178.35:1400"
- * @property {string} urlOrigin such as "http://192.168.178.35:1400"
+ * @property {string} playerUrlHostname such as 192.168.178.35
+ * @property {string} playerUrlPort such as 1400
+ * @property {string} playerUrlHost such as "192.168.178.35:1400"
+ * @property {string} playerUrlOrigin such as "http://192.168.178.35:1400"
+ * @property {string} baseUrl alias for playerUrlOrigin, will be replaced step by step
  */
+
+/**
+  * Transformed data of Browse action response. 
+  * @global
+  * @typedef {Object} DidlBrowseItem
+  * @property {string} id object id, can be used for Browse command 
+  * @property {string} title title 
+  * @property {string} artist='' artist
+  * @property {string} uri='' AVTransportation URI
+  * @property {string} artUri='' URI of cover, if available
+  * @property {string} metadata='' metadata usually in DIDL Lite format
+  * @property {string} sid='' music service id (derived from uri)
+  * @property {string} serviceName='' music service name such as Amazon Music (derived from uri)
+  * @property {string} upnpClass='' UPnP Class (derived from uri or upnp class)
+  * @property {string} processingType='' can be 'queue', 'stream', 'unsupported' or empty (calculated)
+  */
 
 module.exports = {
   // SONOS related data
@@ -660,9 +678,9 @@ module.exports = {
   //
   // ========================================================================
 
-  /**  Sends action with actionInArgs to endpoint at baseUrl and returns result.
+  /**  Sends action with actionInArgs to endpoint at playerUrlOrigin and returns result.
    * 
-   * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
+   * @param  {string} playerUrlOrigin the player url such as http://192.168.178.37:1400
    * @param  {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
    * @param  {string} actionName the action name such as Seek
    * @param  {object} actionInArgs all arguments - throws error if one argument is missing!
@@ -676,7 +694,7 @@ module.exports = {
    * 
    * Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
    */
-  executeActionV6: async function (baseUrl, endpoint, actionName, actionInArgs) {
+  executeActionV6: async function (playerUrlOrigin, endpoint, actionName, actionInArgs) {
     // get action in, out properties from json file
     const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
     const { inArgs, outArgs } = endpointActions[actionName]
@@ -696,7 +714,7 @@ module.exports = {
     const tmp = endpoint.split('/')  
     const serviceName = tmp[tmp.length - 2]
   
-    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionName, actionInArgs)
+    const response = await sendToPlayerV1(playerUrlOrigin, endpoint, serviceName, actionName, actionInArgs)
 
     // Everything OK if statusCode === 200 and body includes expected response value or requested value
     if (!isValidProperty(response, ['statusCode'])) {
@@ -767,30 +785,6 @@ module.exports = {
   //
   // ========================================================================
 
-  /** Find searchString in My Sonos items, property title - without filter.
-   * @param  {Array} items array of objects {title: , uri: , metadata}
-   * @param  {string} searchString search string for title property
-   * @return {promise} object {title, uri, metadata}
-   *
-   * @throws error if string not found
-   */
-
-  // TODO Notion use build in
-  findStringInMySonosTitleV1: async function (items, searchString) {
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].title.includes(searchString)) {
-        return {
-          title: items[i].title,
-          uri: items[i].uri,
-          metadata: items[i].metadata,
-          queue: (items[i].processingType === 'queue')
-        }
-      }
-    }
-    // not found
-    throw new Error(`${NRCSP_ERRORPREFIX} No title matching search string >>${searchString}`)
-  },
-
   /**  Returns a sorted array with all group members. Coordinator is in first place.
   * @param {array} allGroupsData output form sonos getAllGroups()
   * @param {number} groupIndex pointing to the specific group 0 ... allGroupsData.length-1
@@ -840,22 +834,6 @@ module.exports = {
     }
     return members
   },
-
-  /**
-   * Transformed data of Browse action response. 
-   * @global
-   * @typedef {Object} DidlBrowseItem
-   * @property {string} id object id, can be used for Browse command 
-   * @property {string} title title 
-   * @property {string} artist='' artist
-   * @property {string} uri='' AVTransportation URI
-   * @property {string} artUri='' URI of cover, if available
-   * @property {string} metadata='' metadata usually in DIDL Lite format
-   * @property {string} sid='' music service id (derived from uri)
-   * @property {string} serviceName='' music service name such as Amazon Music (derived from uri)
-   * @property {string} upnpClass='' UPnP Class (derived from uri or upnp class)
-   * @property {string} processingType='' can be 'queue', 'stream', 'unsupported' or empty (calculated)
-   */
 
   /** 
    * Returns an array of items (DidlBrowseItem) extracted from action "Browse" output (didlXml).

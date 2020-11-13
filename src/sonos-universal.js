@@ -3,7 +3,7 @@ const {
   NRCSP_ERRORPREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, 
-  isOnOff, string2ValidInteger, stringValidRegex,
+  isOnOff, validateConvertToInteger, stringValidRegex,
   failure, success
 } = require('./Helper.js')
 
@@ -307,7 +307,7 @@ module.exports = function (RED) {
    */
   async function groupAdjustVolume (node, msg, stateName, cmdName, sonosPlayer) {
     // payload adjusted volume is required
-    const adjustVolume = string2ValidInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
+    const adjustVolume = validateConvertToInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -1190,7 +1190,7 @@ module.exports = function (RED) {
     // payload position is required
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
     // baseUrl not needed
-    const validatedPosition = string2ValidInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
+    const validatedPosition = validateConvertToInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
     await sonosCoordinator.selectQueue()
     await sonosCoordinator.selectTrack(validatedPosition)
 
@@ -1372,8 +1372,8 @@ module.exports = function (RED) {
 
     // payload track position is required.
     const sonosCoordinator = new Sonos(groupData.members[0].urlHostname)
-    const validatedPosition = string2ValidInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
-    const validatedNumberOfTracks = string2ValidInteger(msg, 'numberOfTracks', 1, lastTrackInQueue, 'number of tracks', NRCSP_ERRORPREFIX, 1)
+    const validatedPosition = validateConvertToInteger(msg, stateName, 1, lastTrackInQueue, 'position in queue', NRCSP_ERRORPREFIX)
+    const validatedNumberOfTracks = validateConvertToInteger(msg, 'numberOfTracks', 1, lastTrackInQueue, 'number of tracks', NRCSP_ERRORPREFIX, 1)
     await sonosCoordinator.removeTracksFromQueue(validatedPosition, validatedNumberOfTracks)
     return {}
   }
@@ -1608,7 +1608,7 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    */
   async function groupSetVolume(node, msg, stateName, cmdName, sonosPlayer) {
-    const newVolume = string2ValidInteger(msg, stateName, -100, +100, 'new volume', NRCSP_ERRORPREFIX)
+    const newVolume = validateConvertToInteger(msg, stateName, -100, +100, 'new volume', NRCSP_ERRORPREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
     
@@ -2116,7 +2116,7 @@ module.exports = function (RED) {
    */
   async function playerAdjustVolume (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const adjustVolume = string2ValidInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
+    const adjustVolume = validateConvertToInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2590,7 +2590,7 @@ module.exports = function (RED) {
    */
   async function playerSetBass (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const newBass = string2ValidInteger(msg, stateName, -10, +10, 'set bass', NRCSP_ERRORPREFIX)
+    const newBass = validateConvertToInteger(msg, stateName, -10, +10, 'set bass', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2643,7 +2643,7 @@ module.exports = function (RED) {
       eqValue = (eqValue ? 1 : 0)
     } else if (msg[cmdName] === 'player.set.subgain') {
       eqType = 'SubGain'
-      eqValue = string2ValidInteger(msg, stateName, -15, 15, 'subgain', NRCSP_ERRORPREFIX) // required
+      eqValue = validateConvertToInteger(msg, stateName, -15, 15, 'subgain', NRCSP_ERRORPREFIX) // required
     } else if (msg[cmdName] === 'player.set.dialoglevel') {
       eqType = 'DialogLevel'
       eqValue = isOnOff(msg, stateName, 'dialoglevel', NRCSP_ERRORPREFIX) // required
@@ -2758,7 +2758,7 @@ module.exports = function (RED) {
    */
   async function playerSetTreble (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const newTreble = string2ValidInteger(msg, stateName, -10, +10, 'set treble', NRCSP_ERRORPREFIX)
+    const newTreble = validateConvertToInteger(msg, stateName, -10, +10, 'set treble', NRCSP_ERRORPREFIX)
 
     const validated = await validatedGroupProperties(msg, NRCSP_ERRORPREFIX)
     const groupData = await getGroupMemberDataV2(sonosPlayer, validated.playerName)
@@ -2786,7 +2786,7 @@ module.exports = function (RED) {
    */
   async function playerSetVolume (node, msg, stateName, cmdName, sonosPlayer) {
     // payload volume is required.
-    const validatedVolume = string2ValidInteger(msg, stateName, 0, 100, 'volume', NRCSP_ERRORPREFIX)
+    const validatedVolume = validateConvertToInteger(msg, stateName, 0, 100, 'volume', NRCSP_ERRORPREFIX)
     const validatedPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
     const groupData = await getGroupMemberDataV2(sonosPlayer, validatedPlayerName)
     
@@ -2847,7 +2847,7 @@ module.exports = function (RED) {
     const newPlayerName = stringValidRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', NRCSP_ERRORPREFIX, '')
 
     // if missing set to -1.
-    const newVolume = string2ValidInteger(msg, 'volume', 0, 100, 'volume', NRCSP_ERRORPREFIX, -1)
+    const newVolume = validateConvertToInteger(msg, 'volume', 0, 100, 'volume', NRCSP_ERRORPREFIX, -1)
 
     // if missing set to true - throws errors if invalid
     let newSameVolume = true

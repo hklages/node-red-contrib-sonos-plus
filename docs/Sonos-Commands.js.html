@@ -32,7 +32,9 @@
  * Collection of 
  * 
  * - complex SONOS commands such as playGroupNotification, group handling, My Sonos handling 
+ * 
  * - the basic executeAction command
+ * 
  * - helpers such as getRadioId
  * 
  * handling the communication above SOAP level. SOAP Level communication is done in module Soap.
@@ -52,18 +54,32 @@ const xml2js = require('xml2js')
 const { GenerateMetadata } = require('sonos').Helpers
 
 /**
- * @typedef {object} URL Defines the different components of URL.
+ * @typedef {object} URL URL components. Especially playerUrlOrigin is used for all sendToPlayer calls.
  * 
  * @see &lt;a href="https://javascript.info/url">URL&lt;/a>
  * @global
- * @property {string} baseUrl same as urlOrigin
- * @property {string} urlHostname such as 192.168.178.35
- * @property {string} urlPort such as 1400
- * @property {string} urlHost such as "192.168.178.35:1400"
- * @property {string} urlOrigin such as "http://192.168.178.35:1400"
- 
- * 
+ * @property {string} playerUrlHostname such as 192.168.178.35
+ * @property {string} playerUrlPort such as 1400
+ * @property {string} playerUrlHost such as "192.168.178.35:1400"
+ * @property {string} playerUrlOrigin such as "http://192.168.178.35:1400"
+ * @property {string} baseUrl alias for playerUrlOrigin, will be replaced step by step
  */
+
+/**
+  * Transformed data of Browse action response. 
+  * @global
+  * @typedef {Object} DidlBrowseItem
+  * @property {string} id object id, can be used for Browse command 
+  * @property {string} title title 
+  * @property {string} artist='' artist
+  * @property {string} uri='' AVTransportation URI
+  * @property {string} artUri='' URI of cover, if available
+  * @property {string} metadata='' metadata usually in DIDL Lite format
+  * @property {string} sid='' music service id (derived from uri)
+  * @property {string} serviceName='' music service name such as Amazon Music (derived from uri)
+  * @property {string} upnpClass='' UPnP Class (derived from uri or upnp class)
+  * @property {string} processingType='' can be 'queue', 'stream', 'unsupported' or empty (calculated)
+  */
 
 module.exports = {
   // SONOS related data
@@ -533,22 +549,21 @@ module.exports = {
   },
 
   /**  Get array of all My Sonos items - maximum 200. Includes SONOS-Playlists (maximum 999)
-   * @param   {string} sonosPlayerBaseUrl SONOS Player baseUrl (eg http://192.168.178.37:1400)
+   * 
+   * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
    *
-   * @return {promise} array of My Sonos items - could be empty
-   *                   {title, artUri, uri, metadata, sid, serviceName, radioId, upnpClass, processingType}
+   * @return {Promise&lt;DidlBrowseItem[]>} all My-Sonos Items and SONOS-Playlists as array, could be empty
    *
-   * @throws if invalid SONOS player response, error during parsing 
+   * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    *
-   * Restriction: Maximum number of My Sonos items: 200, maximum number of SONOS-Playlists 999.
+   * Restriction: Maximum number of My-Sonos items: 200, maximum number of SONOS-Playlists 999.
    * Restrictions: MusicLibrary/ Sonos playlists without service id.
-   * Restrictions: Audible Audiobooks are missing.
+   * Restrictions: Audible Audio books are missing.
    * Restrictions: Pocket Casts Podcasts without uri, only metadata
    */
-  getMySonosV3: async function (sonosPlayerBaseUrl) {
-    // get all My Sonos items (ObjectID FV:2) - maximum 200, but not Sonos playlists
-    const browseFv = await module.exports.executeActionV6(sonosPlayerBaseUrl,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
+  getMySonosV3: async function (playerUrlOrigin) {
+    // get all My-Sonos items (ObjectID FV:2) - maximum 200, but not SONOS-Playlists
+    const browseFv = await module.exports.executeActionV6(playerUrlOrigin, '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 200, SortCriteria: '' })
     if (!isValidPropertyNotEmptyString(browseFv, ['NumberReturned'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse FV:2 command - missing NumberReturned value`)
@@ -562,22 +577,19 @@ module.exports = {
       throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse FV-2 is invalid.`)
     }
     let mySonosPlusPl = []
-    // TuneIn radio stations: Radio id, baseUrl to albumArtUri
+    // TuneIn radio stations: Radio id, playerUrlOrigin to albumArtUri
     mySonosPlusPl = listMySonos.map(item => {
       let  artUri = ''  
       if (isValidPropertyNotEmptyString(item, ['artUri'])) {
         artUri = item['artUri']
         if (typeof artUri === 'string' &amp;&amp; artUri.startsWith('/getaa')) {
-          artUri = sonosPlayerBaseUrl + artUri
+          artUri = playerUrlOrigin + artUri
         } 
       }
       item.artUri = artUri
       
       if (isValidProperty(item, ['uri'])) {
         item.radioId = module.exports.getRadioId(item.uri)
-      }
-      if (isValidProperty(item, ['sid'])) {
-        item.serviceName = module.exports.getMusicServiceName(item.sid)
       }
 
       // My Sonos items have own upnp class object.itemobject.item.sonos-favorite"
@@ -597,28 +609,26 @@ module.exports = {
     })
 
     // get all SONOS-Playlists
-    const newListPlaylists = await module.exports.getSonosPlaylistsV2(sonosPlayerBaseUrl)
+    const newListPlaylists = await module.exports.getSonosPlaylistsV2(playerUrlOrigin)
 
     return mySonosPlusPl.concat(newListPlaylists)
   },
 
-  /** Get array of all SONOS-Playlists - maximum 999. Adds baseUrl to artUri if starts with /getaa
-   * @param  {string} sonosPlayerBaseUrl valid SONOS player base url such as http://192.168.178.35:1400
+  /** Get array of all SONOS-Playlists - maximum 999. Adds playerUrlOrigin to artUri and processingType
+   * 
+   * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
    *
-   * @return {promise} array of playlists as object - could be empty
-   * { title:, artist:, uri:, artUri:, id:, metadata:, sid:, upnpClass:, processingType: }
+   * @return {Promise&lt;DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
    *
-   * @throws invalid return from Browse, invalid didlXmlToArray
-   *
+   * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
-  getSonosPlaylistsV2: async function (sonosPlayerBaseUrl) {
-    const browsePlaylist = await module.exports.executeActionV6(sonosPlayerBaseUrl,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
+  getSonosPlaylistsV2: async function (playerUrlOrigin) {
+    const browsePlaylist = await module.exports.executeActionV6(playerUrlOrigin, '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 999, SortCriteria: '' })
     if (!isValidPropertyNotEmptyString(browsePlaylist, ['NumberReturned'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse SQ: command - missing NumberReturned value`)
     }
-    let  newPlaylistsArray = []
+    let  modifiedPlaylistsArray = []
     if (browsePlaylist.NumberReturned !== '0') {
       if (!isValidPropertyNotEmptyString(browsePlaylist, ['Result'])) {
         throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse SQ: command - missing Result value`)
@@ -630,13 +640,13 @@ module.exports = {
         throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse SQ is invalid.`)
       }
       
-      // add baseUrl to artUri
-      newPlaylistsArray = playlistArray.map(item => {
+      // add playerUrlOrigin to artUri
+      modifiedPlaylistsArray = playlistArray.map(item => {
         let  artUri = ''  
         if (isValidPropertyNotEmptyString(item, ['artUri'])) {
           artUri = item['artUri']
           if (typeof artUri === 'string' &amp;&amp; artUri.startsWith('/getaa')) {
-            artUri = sonosPlayerBaseUrl + artUri
+            artUri = playerUrlOrigin + artUri
           } 
         }
         item.artUri = artUri
@@ -644,28 +654,25 @@ module.exports = {
         return item
       })
     }
-
-    return newPlaylistsArray
+    return modifiedPlaylistsArray
   },
   
-  /** Get array of all SONOS-Queue items - maximum 200. Adds processingType and baseUrl to artUri.
+  /** Get array of all SONOS-Queue items - maximum 200. Adds processingType and playerUrlOrigin to artUri.
    * 
-   * @param  {string} urlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
+   * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
    *
-   * @return {Promise&lt;BrowseDidl} array of items as object - could be empty
-   * { title:, artist:, uri:, artUri:, id:, metadata:, sid:, upnpClass:, processingType: }
+   * @return {Promise&lt;DidlBrowseItem[]>} all SONOS-queue items, could be empty
    *
-   * @throws invalid return from Browse, invalid didlXmlToArray
+   * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
-  getQueueV2: async function (urlOrigin) {
-    const browseQueue = await module.exports.executeActionV6(urlOrigin,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
+  getQueueV2: async function (playerUrlOrigin) {
+    const browseQueue = await module.exports.executeActionV6(playerUrlOrigin, '/MediaServer/ContentDirectory/Control', 'Browse',
       { ObjectID: 'Q:0', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0, RequestedCount: 200, SortCriteria: '' })
     if (!isValidPropertyNotEmptyString(browseQueue, ['NumberReturned'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse Q:0 command - missing NumberReturned value`)
     }
     
-    let newQueueArray = []
+    let modifiedQueueArray = []
     if (browseQueue.NumberReturned !== '0') {
       if (!isValidPropertyNotEmptyString(browseQueue, ['Result'])) {
         throw new Error(`${NRCSP_ERRORPREFIX} invalid response from Browse Q:0 command - missing Result value`)
@@ -676,13 +683,13 @@ module.exports = {
         throw new Error(`${NRCSP_ERRORPREFIX} response form parsing Browse Q:0 is invalid.`)
       }
 
-      // add baseUrl to artUri
-      newQueueArray = queueArray.map((item) => {
+      // update artUri with playerUrlOrigin and add proccesingType 'queue'
+      modifiedQueueArray = queueArray.map((item) => {
         let  artUri = ''  
         if (isValidPropertyNotEmptyString(item, ['artUri'])) {
           artUri = item['artUri']
           if (typeof artUri === 'string' &amp;&amp; artUri.startsWith('/getaa')) {
-            artUri = urlOrigin + artUri
+            artUri = playerUrlOrigin + artUri
           } 
         }
         item.artUri = artUri
@@ -690,7 +697,7 @@ module.exports = {
         return item
       })
     }
-    return newQueueArray
+    return modifiedQueueArray
   },
 
   // ========================================================================
@@ -699,9 +706,9 @@ module.exports = {
   //
   // ========================================================================
 
-  /**  Sends action with actionInArgs to endpoint at baseUrl and returns result.
+  /**  Sends action with actionInArgs to endpoint at playerUrlOrigin and returns result.
    * 
-   * @param  {string} baseUrl the player base url such as http://192.168.178.37:1400
+   * @param  {string} playerUrlOrigin the player url such as http://192.168.178.37:1400
    * @param  {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
    * @param  {string} actionName the action name such as Seek
    * @param  {object} actionInArgs all arguments - throws error if one argument is missing!
@@ -715,7 +722,7 @@ module.exports = {
    * 
    * Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
    */
-  executeActionV6: async function (baseUrl, endpoint, actionName, actionInArgs) {
+  executeActionV6: async function (playerUrlOrigin, endpoint, actionName, actionInArgs) {
     // get action in, out properties from json file
     const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
     const { inArgs, outArgs } = endpointActions[actionName]
@@ -735,7 +742,7 @@ module.exports = {
     const tmp = endpoint.split('/')  
     const serviceName = tmp[tmp.length - 2]
   
-    const response = await sendToPlayerV1(baseUrl, endpoint, serviceName, actionName, actionInArgs)
+    const response = await sendToPlayerV1(playerUrlOrigin, endpoint, serviceName, actionName, actionInArgs)
 
     // Everything OK if statusCode === 200 and body includes expected response value or requested value
     if (!isValidProperty(response, ['statusCode'])) {
@@ -806,30 +813,6 @@ module.exports = {
   //
   // ========================================================================
 
-  /** Find searchString in My Sonos items, property title - without filter.
-   * @param  {Array} items array of objects {title: , uri: , metadata}
-   * @param  {string} searchString search string for title property
-   * @return {promise} object {title, uri, metadata}
-   *
-   * @throws error if string not found
-   */
-
-  // TODO Notion use build in
-  findStringInMySonosTitleV1: async function (items, searchString) {
-    for (var i = 0; i &lt; items.length; i++) {
-      if (items[i].title.includes(searchString)) {
-        return {
-          title: items[i].title,
-          uri: items[i].uri,
-          metadata: items[i].metadata,
-          queue: (items[i].processingType === 'queue')
-        }
-      }
-    }
-    // not found
-    throw new Error(`${NRCSP_ERRORPREFIX} No title matching search string >>${searchString}`)
-  },
-
   /**  Returns a sorted array with all group members. Coordinator is in first place.
   * @param {array} allGroupsData output form sonos getAllGroups()
   * @param {number} groupIndex pointing to the specific group 0 ... allGroupsData.length-1
@@ -879,20 +862,6 @@ module.exports = {
     }
     return members
   },
-
-  /**
-   * Transformed data of Browse action response. 
-   * @global
-   * @typedef {Object} DidlBrowseItem
-   * @property {string} id object id, can be used for Browse command 
-   * @property {string} title title 
-   * @property {string} artist='' artist
-   * @property {string} uri='' AVTransportation URI
-   * @property {string} artUri='' URI of cover, if available
-   * @property {string} metadata='' metadata usually in DIDL Lite format
-   * @property {string} sid='' music service id
-   * @property {string} upnpClass='' UPnP Class
-   */
 
   /** 
    * Returns an array of items (DidlBrowseItem) extracted from action "Browse" output (didlXml).
@@ -951,7 +920,9 @@ module.exports = {
         artUri: '',
         metadata: '',
         sid: '',
-        upnpClass: ''
+        serviceName: '',
+        upnpClass: '',
+        processingType: '' // for later usage
       }
       if (isValidProperty(item, ['id'])) {
         didlBrowseItem.id = item['id']
@@ -969,12 +940,11 @@ module.exports = {
       if (isValidProperty(item, ['res',tag])) {
         didlBrowseItem.uri = item['res'][tag]
         didlBrowseItem.sid = module.exports.getMusicServiceId(item.res[tag])
+        didlBrowseItem.serviceName = module.exports.getMusicServiceName(didlBrowseItem.sid)
       }
-      
       if (isValidProperty(item, ['upnp:class'])) {
         didlBrowseItem.upnpClass = item['upnp:class']
       }
-
       // artURI (cover) maybe an array (one for each track) then choose first
       let artUri = ''
       if (isValidProperty(item, ['upnp:albumArtURI'])) {
@@ -995,7 +965,6 @@ module.exports = {
       }
       return didlBrowseItem
     })
-
     return transformedItems  // properties see transformedItems definition
   },
 
@@ -1095,7 +1064,7 @@ module.exports = {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Nov 11 2020 20:08:35 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

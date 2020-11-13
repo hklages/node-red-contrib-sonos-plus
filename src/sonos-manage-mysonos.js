@@ -3,11 +3,11 @@ const {
   NRCSP_ERRORPREFIX,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
-  stringValidRegex, string2ValidInteger,
+  stringValidRegex, validateConvertToInteger,
   failure, success
 } = require('./Helper.js')
 
-const { getMySonosV3, findStringInMySonosTitleV1, executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
+const { getMySonosV3, executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
 
@@ -270,7 +270,7 @@ module.exports = function (RED) {
    */
   async function libraryGetAlbums (node, msg, stateName, cmdName, sonosPlayer) {
     // msg.requestedCount is optional - if missing default is 100
-    const requestedCount = string2ValidInteger(msg, 'requestedCount', 1, 999, 'requested count', NRCSP_ERRORPREFIX, 100)
+    const requestedCount = validateConvertToInteger(msg, 'requestedCount', 1, 999, 'requested count', NRCSP_ERRORPREFIX, 100)
 
     // msg albumName search string is optional - default is empty string
     let validatedSearchString = stringValidRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_ERRORPREFIX, '')
@@ -313,7 +313,7 @@ module.exports = function (RED) {
   /**  Outputs array of Music-Library playlists as object.
    * @param  {object} node current node
    * @param  {object} msg incoming message
-   * @param  {number} [msg.size = 200] maximum number of playlists to be retrieved, integer 1 .. 1000
+   * @param  {number} [msg.size = 200] maximum number of playlists to be retrieved, integer 1 .. 999
    * @param  {string} stateName not used
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player
@@ -325,7 +325,7 @@ module.exports = function (RED) {
    */
   async function libraryGetPlaylists (node, msg, stateName, cmdName, sonosPlayer) {
     // msg.size is optional - if missing default is 200
-    const listDimension = string2ValidInteger(msg, 'size', 1, 1000, 'size', NRCSP_ERRORPREFIX, 200)
+    const listDimension = validateConvertToInteger(msg, 'size', 1, 999, 'size', NRCSP_ERRORPREFIX, 200)
     const libraryPlaylists = await sonosPlayer.getMusicLibrary('playlists', { start: 0, total: listDimension })
     if (!isValidPropertyNotEmptyString(libraryPlaylists, ['total'])) {
       throw new Error(`${NRCSP_ERRORPREFIX} response from sonos does not provide >total`)
@@ -388,7 +388,7 @@ module.exports = function (RED) {
    * @throws all functions
    *        if getMySonosV3 does not provide values
    *
-   * Info:  content validation of mediaType, serviceName in findStringInMySonosTitleV1
+   * Info:  content validation of mediaType, serviceName
    */
   async function mysonosExportItem (node, msg, stateName, cmdName, sonosPlayer) {
     // payload title search string is required.
@@ -398,9 +398,22 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
-    const foundItem = await findStringInMySonosTitleV1(mySonosItems, validatedSearchString)
+    
+    // find in string
+    let foundIndex = -1
+    foundIndex = mySonosItems.findIndex((item) => {
+      return (item.title.includes(validatedSearchString))
+    })
+    if (foundIndex < 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} No title matching search string >>${validatedSearchString}`)
+    }
+
     const outputChanged = {}
-    outputChanged[stateName] = { uri: foundItem.uri, metadata: foundItem.metadata, queue: foundItem.queue }
+    outputChanged[stateName] = {
+      uri: mySonosItems[foundIndex].uri,
+      metadata: mySonosItems[foundIndex].metadata,
+      queue: (mySonosItems[foundIndex].processingType === 'queue')
+    }
     return outputChanged
   }
 
@@ -470,8 +483,19 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
-    const foundItem = await findStringInMySonosTitleV1(mySonosItems, validatedSearchString, filter)
-    await sonosPlayer.queue({ uri: foundItem.uri, metadata: foundItem.metadata })
+    // find in title
+    let foundIndex = -1
+    foundIndex = mySonosItems.findIndex((item) => {
+      return (item.title.includes(validatedSearchString))
+    })
+    if (foundIndex < 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} No title matching search string >>${validatedSearchString}`)
+    }
+    
+    await sonosPlayer.queue({
+      uri: mySonosItems[foundIndex].uri,
+      metadata: mySonosItems[foundIndex].metadata
+    })
     return {}
   }
 
@@ -486,30 +510,31 @@ module.exports = function (RED) {
    * @return {promise} {}
    *
    * @throws all functions
-   *
    */
-  
   async function mysonosStreamItem (node, msg, stateName, cmdName, sonosPlayer) {
     // payload title search string is required.
     const validatedSearchString = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_ERRORPREFIX)
-    // TODO Notion implement filter
-    const filter = {
-      processingType: 'stream',
-      mediaType: 'all',
-      serviceName: 'all'
-    } // only streams
-
+    
     const mySonosItems = await getMySonosV3(sonosPlayer.baseUrl)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_ERRORPREFIX} could not find any My Sonos items`)
     }
-    const foundItem = await findStringInMySonosTitleV1(mySonosItems, validatedSearchString, filter)
+
+    // find in title
+    let foundIndex = -1
+    foundIndex = mySonosItems.findIndex((item) => {
+      return (item.title.includes(validatedSearchString))
+    })
+    if (foundIndex < 0) {
+      throw new Error(`${NRCSP_ERRORPREFIX} No title matching search string >>${validatedSearchString}`)
+    }
+
     // TODO Notion replace node-sonos
     // this does setting the uri AND plays it!
-    await sonosPlayer.setAVTransportURI(foundItem.uri)
+    await sonosPlayer.setAVTransportURI(mySonosItems[foundIndex].uri)
 
     // change volume if is provided
-    const newVolume = string2ValidInteger(msg, 'volume', 0, 100, 'volume', NRCSP_ERRORPREFIX, -1)
+    const newVolume = validateConvertToInteger(msg, 'volume', 0, 100, 'volume', NRCSP_ERRORPREFIX, -1)
     if (newVolume !== -1) {
       await sonosPlayer.setVolume(msg.volume)
     }
