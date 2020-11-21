@@ -169,7 +169,7 @@ handling the communication above SOAP level. SOAP Level communication is done in
     
 
     
-    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, membersAsPlayersPlus, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, membersAsPlayersPlus, options)</span><span class="type-signature"></span></h4>
     
 
     
@@ -462,29 +462,6 @@ handling the communication above SOAP level. SOAP Level communication is done in
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    group snapshot object: { memberData: object, isPlaying: boolean, }
-memberData is array of all members (coordinator is index 0) as object: {urlHostname, port, sonosName, volume, mutestate }
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -496,7 +473,7 @@ memberData is array of all members (coordinator is index 0) as object: {urlHostn
     
 
     
-    <h4 class="name" id=".didlXmlToArray"><span class="type-signature">(static) </span>didlXmlToArray<span class="signature">(didlXml, itemName)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    <h4 class="name" id=".didlXmlToArray"><span class="type-signature">(static) </span>didlXmlToArray<span class="signature">(didlXml, itemName)</span><span class="type-signature"></span></h4>
     
 
     
@@ -707,28 +684,6 @@ to define tag = uriIdentifier.
     </ul>
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Promise, array of Sonos-Commands#DidlBrowseItem, maybe empty array.
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -740,7 +695,7 @@ to define tag = uriIdentifier.
     
 
     
-    <h4 class="name" id=".executeActionV6"><span class="type-signature">(static) </span>executeActionV6<span class="signature">(playerUrlOrigin, endpoint, actionName, actionInArgs)</span><span class="type-signature"> &rarr; {Promise.&lt;(object|boolean)>}</span></h4>
+    <h4 class="name" id=".executeActionV6"><span class="type-signature">(static) </span>executeActionV6<span class="signature">(playerUrlOrigin, endpoint, actionName, actionInArgs)</span><span class="type-signature"></span></h4>
     
 
     
@@ -993,28 +948,6 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     </ul>
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    true or outArgs of that action
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;(object|boolean)></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1026,7 +959,7 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
 
     
-    <h4 class="name" id=".getAllPlayerList"><span class="type-signature">(static) </span>getAllPlayerList<span class="signature">(sonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".getAllPlayerList"><span class="type-signature">(static) </span>getAllPlayerList<span class="signature">(sonosPlayer)</span><span class="type-signature"></span></h4>
     
 
     
@@ -1165,29 +1098,6 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    returns array of all groups. Every group is array of members. First member is coordinator
-         members[]: urlHostname, urlPort, baseUrl, uuid, sonosName, isCoordinator, groupIndex
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1199,7 +1109,7 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
 
     
-    <h4 class="name" id=".getGroupMemberDataV2"><span class="type-signature">(static) </span>getGroupMemberDataV2<span class="signature">(sonosPlayer, playerName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".getGroupMemberDataV2"><span class="type-signature">(static) </span>getGroupMemberDataV2<span class="signature">(sonosPlayer, playerName<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
     
 
     
@@ -1381,31 +1291,6 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    returns object
-         object.playerIndex
-         object.members[]
-         members[]: urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1417,7 +1302,7 @@ Everything OK if statusCode === 200 and body includes expected response value (s
     
 
     
-    <h4 class="name" id=".getMusicServiceId"><span class="type-signature">(static) </span>getMusicServiceId<span class="signature">(xuri)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".getMusicServiceId"><span class="type-signature">(static) </span>getMusicServiceId<span class="signature">(xuri)</span><span class="type-signature"></span></h4>
     
 
     
@@ -1543,30 +1428,6 @@ Everything OK if statusCode === 200 and body includes expected response value (s
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    service id or if not found empty string
-
-prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1578,7 +1439,7 @@ prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
     
 
     
-    <h4 class="name" id=".getMusicServiceName"><span class="type-signature">(static) </span>getMusicServiceName<span class="signature">(sid)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".getMusicServiceName"><span class="type-signature">(static) </span>getMusicServiceName<span class="signature">(sid)</span><span class="type-signature"></span></h4>
     
 
     
@@ -1704,28 +1565,6 @@ prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    service name such as "Amazon Music" or empty string
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1737,7 +1576,7 @@ prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
     
 
     
-    <h4 class="name" id=".getMySonosV3"><span class="type-signature">(static) </span>getMySonosV3<span class="signature">(playerUrlOrigin)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    <h4 class="name" id=".getMySonosV3"><span class="type-signature">(static) </span>getMySonosV3<span class="signature">(playerUrlOrigin)</span><span class="type-signature"></span></h4>
     
 
     
@@ -1897,28 +1736,6 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    all My-Sonos Items and SONOS-Playlists as array, could be empty
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -1930,7 +1747,7 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
     
 
     
-    <h4 class="name" id=".getQueueV2"><span class="type-signature">(static) </span>getQueueV2<span class="signature">(playerUrlOrigin)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    <h4 class="name" id=".getQueueV2"><span class="type-signature">(static) </span>getQueueV2<span class="signature">(playerUrlOrigin)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2085,28 +1902,6 @@ Restrictions: Pocket Casts Podcasts without uri, only metadata
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    all SONOS-queue items, could be empty
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -2279,7 +2074,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     
 
     
-    <h4 class="name" id=".getSonosPlaylistsV2"><span class="type-signature">(static) </span>getSonosPlaylistsV2<span class="signature">(playerUrlOrigin)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    <h4 class="name" id=".getSonosPlaylistsV2"><span class="type-signature">(static) </span>getSonosPlaylistsV2<span class="signature">(playerUrlOrigin)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2434,28 +2229,6 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    all SONOS-Playlists as array, could be empty
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -2467,7 +2240,7 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
     
 
     
-    <h4 class="name" id=".getUpnpClass"><span class="type-signature">(static) </span>getUpnpClass<span class="signature">(metadata)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".getUpnpClass"><span class="type-signature">(static) </span>getUpnpClass<span class="signature">(metadata)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2593,30 +2366,6 @@ prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=25
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Upnp class such as "object.container.album.musicAlbum"
-
-prerequisites: metadata containing xml tag <upnp:class>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -2628,7 +2377,7 @@ prerequisites: metadata containing xml tag <upnp:class>
     
 
     
-    <h4 class="name" id=".playGroupNotification"><span class="type-signature">(static) </span>playGroupNotification<span class="signature">(node, membersAsPlayersPlus, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".playGroupNotification"><span class="type-signature">(static) </span>playGroupNotification<span class="signature">(node, membersAsPlayersPlus, options)</span><span class="type-signature"></span></h4>
     
 
     
@@ -3030,28 +2779,6 @@ prerequisites: metadata containing xml tag <upnp:class>
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    true
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -3063,7 +2790,7 @@ prerequisites: metadata containing xml tag <upnp:class>
     
 
     
-    <h4 class="name" id=".playJoinerNotification"><span class="type-signature">(static) </span>playJoinerNotification<span class="signature">(node, coordinatorPlus, joinerPlus, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".playJoinerNotification"><span class="type-signature">(static) </span>playJoinerNotification<span class="signature">(node, coordinatorPlus, joinerPlus, options)</span><span class="type-signature"></span></h4>
     
 
     
@@ -3457,28 +3184,6 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    true
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -3490,7 +3195,7 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
 
     
-    <h4 class="name" id=".restoreGroupSnapshot"><span class="type-signature">(static) </span>restoreGroupSnapshot<span class="signature">(node, snapshot, membersAsPlayersPlus)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".restoreGroupSnapshot"><span class="type-signature">(static) </span>restoreGroupSnapshot<span class="signature">(node, snapshot, membersAsPlayersPlus)</span><span class="type-signature"></span></h4>
     
 
     
@@ -3675,28 +3380,6 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    true
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -3708,7 +3391,7 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
 
     
-    <h4 class="name" id=".sortedGroupArray"><span class="type-signature">(static) </span>sortedGroupArray<span class="signature">(allGroupsData, groupIndex)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".sortedGroupArray"><span class="type-signature">(static) </span>sortedGroupArray<span class="signature">(allGroupsData, groupIndex)</span><span class="type-signature"></span></h4>
     
 
     
@@ -3869,30 +3552,6 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
     
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    array of objects (player) in that group
-     player: { urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400", invisible: boolean
-        sonosName: "Küche", uuid: RINCON_xxxxxxx }
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
@@ -3920,7 +3579,7 @@ Hint: joiner will leave group, play notification and rejoin the group. State wil
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:31:05 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

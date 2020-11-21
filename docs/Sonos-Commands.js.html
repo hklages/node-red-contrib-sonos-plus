@@ -119,7 +119,7 @@ module.exports = {
    * @param  {boolean} options.sameVolume all player in group play at same volume level
    * @param  {boolean} options.automaticDuration duration will be received from player
    * @param  {string}  options.duration format hh:mm:ss
-   * @return {promise} true
+   * @returns{promise} true
    *
    * @throws if invalid response from setAVTransportURI, play,
    */
@@ -245,7 +245,7 @@ module.exports = {
    * @param  {string}  options.volume volume during notification. - 1 means don't touch. integer 1 .. 99
    * @param  {boolean} options.automaticDuration
    * @param  {string}  options.duration format hh:mm:ss
-   * @return {promise} true
+   * @returns{promise} true
    *
    * @throws all from setAVTransportURI(), avTransportService()*, play, setVolume
    *
@@ -332,7 +332,7 @@ module.exports = {
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
    * @param  {boolean} [options.snapMutestates = false] capture all players mute state
    *
-   * @return {promise} group snapshot object: { memberData: object, isPlaying: boolean, }
+   * @returns{promise} group snapshot object: { memberData: object, isPlaying: boolean, }
    * memberData is array of all members (coordinator is index 0) as object: {urlHostname, port, sonosName, volume, mutestate }
    * @throws if invalid response from SONOS player
    *
@@ -381,7 +381,7 @@ module.exports = {
    * @param  {array}   membersAsPlayersPlus array of node-sonos player objects, coordinator/selected player has index 0
    *                   members.length = 1 in case independent
    *
-   * @return {promise} true
+   * @returns{promise} true
    *
    * @throws if invalid response from SONOS player
    *
@@ -432,7 +432,7 @@ module.exports = {
   /** Get array of all SONOS player data in same group as player. Coordinator is first in array. hidden player are ignored!
    * @param  {object} sonosPlayer valid player object
    * @param  {string} [playerName] valid player name. If missing search is based on sonosPlayer ip address!
-   * @return {promise} returns object
+   * @returns{promise} returns object
    *          object.playerIndex
    *          object.members[]
    *          members[]: urlHostname, urlPort, baseUrl, uuid, sonosName. First member is coordinator
@@ -500,7 +500,7 @@ module.exports = {
 
   /** Get array of all players in household. 
    * @param  {object} sonosPlayer valid player object
-   * @return {promise} returns array of all groups. Every group is array of members. First member is coordinator
+   * @returns{promise} returns array of all groups. Every group is array of members. First member is coordinator
    *          members[]: urlHostname, urlPort, baseUrl, uuid, sonosName, isCoordinator, groupIndex
    *
    * @throws if getAllGroups returns invalid value
@@ -552,7 +552,7 @@ module.exports = {
    * 
    * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
    *
-   * @return {Promise&lt;DidlBrowseItem[]>} all My-Sonos Items and SONOS-Playlists as array, could be empty
+   * @returns{Promise&lt;DidlBrowseItem[]>} all My-Sonos Items and SONOS-Playlists as array, could be empty
    *
    * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    *
@@ -618,7 +618,7 @@ module.exports = {
    * 
    * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
    *
-   * @return {Promise&lt;DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
+   * @returns{Promise&lt;DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
    *
    * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
@@ -661,7 +661,7 @@ module.exports = {
    * 
    * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
    *
-   * @return {Promise&lt;DidlBrowseItem[]>} all SONOS-queue items, could be empty
+   * @returns{Promise&lt;DidlBrowseItem[]>} all SONOS-queue items, could be empty
    *
    * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
@@ -715,7 +715,7 @@ module.exports = {
    *
    * @uses ACTIONS_TEMPLATESV6 to get required inArgs and outArgs. 
    * 
-   * @return {Promise&lt;(object|boolean)>} true or outArgs of that action
+   * @returns{Promise&lt;(object|boolean)>} true or outArgs of that action
    *  
    * @throws {error} nrcsp: any inArgs property missing, http return invalid status or not 200, missing body, unexpected response
    * @throws {error} xml2js.parseStringPromise 
@@ -816,7 +816,7 @@ module.exports = {
   /**  Returns a sorted array with all group members. Coordinator is in first place.
   * @param {array} allGroupsData output form sonos getAllGroups()
   * @param {number} groupIndex pointing to the specific group 0 ... allGroupsData.length-1
-  * @return {promise} array of objects (player) in that group
+  * @returns{promise} array of objects (player) in that group
   *      player: { urlHostname: "192.168.178.37", urlPort: 1400, baseUrl: "http://192.168.178.37:1400", invisible: boolean
   *         sonosName: "Küche", uuid: RINCON_xxxxxxx }
   *
@@ -869,7 +869,7 @@ module.exports = {
    * @param  {string}  didlXml Browse response property Result (DIDL-Light string in xml format)
    * @param  {string}  itemName property in DIDL lite holding the data such as "item" or "container"
    *
-   * @return {Promise&lt;DidlBrowseItem[]>} Promise, array of {@link Sonos-Commands#DidlBrowseItem}, maybe empty array.
+   * @returns{Promise&lt;DidlBrowseItem[]>} Promise, array of {@link Sonos-Commands#DidlBrowseItem}, maybe empty array.
    *                   
    * @throws {error} if any parameter is missing
    * @throws {error} from method xml2js and invalid response (missing id, title)
@@ -972,7 +972,7 @@ module.exports = {
    * 
    * @param  {string} xuri such as "x-rincon-cpcontainer:1004206ccatalog%2falbums%2fB07NW3FSWR%2f%23album_desc?sid=201&amp;flags=8300&amp;sn=14"
    *
-   * @return {string} service id or if not found empty string
+   * @returns{string} service id or if not found empty string
    *
    * prerequisites: uri is string where the sid is in between "?sid=" and "&amp;flags="
    */
@@ -992,7 +992,7 @@ module.exports = {
    * 
    * @param  {string} sid service id (integer) such as "201" or blank 
    * 
-   * @return {string} service name such as "Amazon Music" or empty string
+   * @returns{string} service name such as "Amazon Music" or empty string
    *
    * @uses database of services (map music service id  to musics service name)
    */
@@ -1014,7 +1014,7 @@ module.exports = {
    * 
    * @param  {string} xuri uri such as x-sonosapi-stream:s24903?sid=254&amp;flags=8224&amp;sn=0
    * 
-   * @return {string} TuneIn radio id or if not found empty
+   * @returns {string} TuneIn radio id or if not found empty
    *
    * prerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=254"
    */
@@ -1032,7 +1032,7 @@ module.exports = {
    * 
    * @param  {string} metadata DIDL-Lite metadata 
    * 
-   * @return {string} Upnp class such as "object.container.album.musicAlbum"
+   * @returns{string} Upnp class such as "object.container.album.musicAlbum"
    *
    * prerequisites: metadata containing xml tag &lt;upnp:class>
    */
@@ -1064,7 +1064,7 @@ module.exports = {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Nov 12 2020 10:05:48 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:31:05 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
