@@ -127,7 +127,7 @@ module.exports = {
    * 4. All other error throw inside all modules (node-sonos, axio, ...)
    */
 
-  failure: void function(node, msg, error, functionName) {
+  failure: (node, msg, error, functionName) => {
     node.debug(`Entering error handling from ${functionName}.`)
     let msgShort = 'unknown' // default text used for status message
     let msgDetails = 'unknown' // default text for error message in addition to msgShort
@@ -192,7 +192,7 @@ module.exports = {
    * @param  {object} msg current msg (maybe null)
    * @param  {string} functionName name of calling function
    */
-  success: void function(node, msg, functionName) {
+  success: (node, msg, functionName) => {
     node.send(msg)
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
     node.debug(`OK: ${functionName}`)
