@@ -1,13 +1,13 @@
 'use strict'
 
 /**
- * Collection of general purpose functions not being related to SOAP or SONOS.
+ * Collection of general purpose REGEX strings and methods not being related to SOAP or SONOS.
  *
  * @module Helpers
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-08
+ * @since 2020-11-21
 */
 
 module.exports = {
@@ -109,25 +109,26 @@ module.exports = {
    * @param  {object} msg current msg
    * @param  {object} error  standard node.js or created with new Error ('')
    * @param  {string} [functionName] name of calling function
-   *
-   * Method:
-   * 1. Is the error a standard nodejs error? Indicator: .code exists
-   * nodejs provides an error object with properties: .code, .message .name .stack
-   * See https://nodejs.org/api/errors.html for more about the error object.
-   * .code provides the best information.
-   * See https://nodejs.org/api/errors.html#errors_common_system_errors
-   *
-   * 2. Is the error thrown in node-sonos - service _request? Indicator: .message starts with NODE_SONOS_ERRORPREFIX
-   * see https://github.com/bencevans/node-sonos/blob/master/lib/services/Service.js   Service.prototype._request
-   * The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' and the error.response.data
-   * or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
-   *
-   * 3. Is the error from this package? Indicator: .message starts with NRCSP_ERRORPREFIX
-   *
-   * 4. All other error throw inside all modules (node-sonos, axio, ...)
+   * 
+   * @throws nothing
+   * 
+   * @returns nothing
    */
-
   failure: (node, msg, error, functionName) => {
+  // 1. Is the error a standard nodejs error? Indicator: .code exists
+  // nodejs provides an error object with properties: .code, .message .name .stack
+  // See https://nodejs.org/api/errors.html for more about the error object.
+  // .code provides the best information.
+  // See https://nodejs.org/api/errors.html#errors_common_system_errors
+  // 
+  // 2. Is the error thrown in node-sonos - service _request? Indicator: .message starts with NODE_SONOS_ERRORPREFIX
+  // see https://github.com/bencevans/node-sonos/blob/master/lib/services/Service.js   Service.prototype._request
+  // The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' and the error.response.data
+  // or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
+  // 
+  // 3. Is the error from this package? Indicator: .message starts with NRCSP_ERRORPREFIX
+  // 
+  // 4. All other error throw inside all modules (node-sonos, axio, ...)
     node.debug(`Entering error handling from ${functionName}.`)
     let msgShort = 'unknown' // default text used for status message
     let msgDetails = 'unknown' // default text for error message in addition to msgShort
@@ -206,7 +207,7 @@ module.exports = {
    * @param  {string} propertyMeaning additional information, including in error message
    * @param  {string} packageName package name, included in error message
    *
-   * @returns{boolean} true/false if msg.property is "on/off" ! not case sensitive
+   * @returns {boolean} true/false if msg.property is "on/off" ! not case sensitive
    *
    * @throws {error} if msg[propertyName] is missing, not string, not on|off (NOT case sensitive)
    */
@@ -354,6 +355,8 @@ module.exports = {
    * @param  {array<string>} path property chain- must not be empty
    * 
    * @returns {boolean} property is accessible
+   * 
+   * @throws nothing
    */
   isValidProperty: (nestedObj, pathArray) => {
     const property = pathArray.reduce(
@@ -368,6 +371,10 @@ module.exports = {
    * 
    * @param  {object} nestedObj object
    * @param  {array<string>} path path property chain- must not be empty
+   * 
+   * @returns {boolean} property is accessible and not empty string
+   * 
+   * @throws nothing
    */
   isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
     const property = pathArray.reduce(
@@ -454,7 +461,6 @@ module.exports = {
    * 
    * @throws nothing
    */
-
   getErrorCodeFromEnvelope: data => {
     let errorCode = '' // default
     if (module.exports.isTruthyAndNotEmptyString(data)) {

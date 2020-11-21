@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Collection of general purpose functions not being related to SOAP or SONOS.</div>
+            <div class="description">Collection of general purpose REGEX strings and methods not being related to SOAP or SONOS.</div>
         
 
         
@@ -503,23 +503,7 @@ provides ipAddress or null (not found) and calls callback handling that.</td>
 
             
 
-            <td class="description last">name of calling function
-
-Method:
-1. Is the error a standard nodejs error? Indicator: .code exists
-nodejs provides an error object with properties: .code, .message .name .stack
-See https://nodejs.org/api/errors.html for more about the error object.
-.code provides the best information.
-See https://nodejs.org/api/errors.html#errors_common_system_errors
-
-2. Is the error thrown in node-sonos - service _request? Indicator: .message starts with NODE_SONOS_ERRORPREFIX
-see https://github.com/bencevans/node-sonos/blob/master/lib/services/Service.js   Service.prototype._request
-The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' and the error.response.data
-or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
-
-3. Is the error from this package? Indicator: .message starts with NRCSP_ERRORPREFIX
-
-4. All other error throw inside all modules (node-sonos, axio, ...)</td>
+            <td class="description last">name of calling function</td>
         </tr>
 
     
@@ -560,7 +544,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line130">line 130</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line117">line 117</a>
     </li></ul></dd>
     
 
@@ -583,8 +567,30 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
 
 
 
+<h5>Throws:</h5>
+
+        
+
+    <div class="param-desc">
+    
+        nothing
+    
+    </div>
 
 
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    nothing
+</div>
+
+
+
+    
 
 
 
@@ -697,7 +703,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line458">line 458</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line464">line 464</a>
     </li></ul></dd>
     
 
@@ -920,7 +926,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line480">line 480</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line486">line 486</a>
     </li></ul></dd>
     
 
@@ -1092,7 +1098,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line432">line 432</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line439">line 439</a>
     </li></ul></dd>
     
 
@@ -1263,7 +1269,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line444">line 444</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line451">line 451</a>
     </li></ul></dd>
     
 
@@ -1333,7 +1339,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
 
     
-    <h4 class="name" id=".isOnOff"><span class="type-signature">(static) </span>isOnOff<span class="signature">(msg, propertyName, propertyMeaning, packageName)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".isOnOff"><span class="type-signature">(static) </span>isOnOff<span class="signature">(msg, propertyName, propertyMeaning, packageName)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -1552,7 +1558,7 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line213">line 213</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line214">line 214</a>
     </li></ul></dd>
     
 
@@ -1606,6 +1612,28 @@ or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    true/false if msg.property is "on/off" ! not case sensitive
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -1731,7 +1759,7 @@ Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line392">line 392</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line399">line 399</a>
     </li></ul></dd>
     
 
@@ -1917,7 +1945,7 @@ Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line411">line 411</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line418">line 418</a>
     </li></ul></dd>
     
 
@@ -2115,7 +2143,7 @@ truthy means not undefined, null, NaN, infinite - see method isTruthy.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line358">line 358</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line361">line 361</a>
     </li></ul></dd>
     
 
@@ -2138,6 +2166,18 @@ truthy means not undefined, null, NaN, infinite - see method isTruthy.
 
 
 
+<h5>Throws:</h5>
+
+        
+
+    <div class="param-desc">
+    
+        nothing
+    
+    </div>
+
+
+    
 
 
 <h5>Returns:</h5>
@@ -2173,7 +2213,7 @@ truthy means not undefined, null, NaN, infinite - see method isTruthy.
     
 
     
-    <h4 class="name" id=".isValidPropertyNotEmptyString"><span class="type-signature">(static) </span>isValidPropertyNotEmptyString<span class="signature">(nestedObj, path)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".isValidPropertyNotEmptyString"><span class="type-signature">(static) </span>isValidPropertyNotEmptyString<span class="signature">(nestedObj, path)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -2298,7 +2338,7 @@ truthy means not undefined, null, NaN, infinite - see method isTruthy.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line372">line 372</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line379">line 379</a>
     </li></ul></dd>
     
 
@@ -2321,8 +2361,42 @@ truthy means not undefined, null, NaN, infinite - see method isTruthy.
 
 
 
+<h5>Throws:</h5>
+
+        
+
+    <div class="param-desc">
+    
+        nothing
+    
+    </div>
 
 
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    property is accessible and not empty string
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2657,7 +2731,7 @@ defaultValue should be in range min max (not checked).
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line327">line 327</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line328">line 328</a>
     </li></ul></dd>
     
 
@@ -2923,7 +2997,7 @@ defaultValue should be in range min max (not checked).
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line195">line 195</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line196">line 196</a>
     </li></ul></dd>
     
 
@@ -3316,7 +3390,7 @@ defaultValue should be in range min max (not checked).
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line252">line 252</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line253">line 253</a>
     </li></ul></dd>
     
 
@@ -3451,7 +3525,7 @@ defaultValue should be in range min max (not checked).
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:31:05 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:55:50 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

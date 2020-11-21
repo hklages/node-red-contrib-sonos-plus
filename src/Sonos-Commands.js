@@ -17,7 +17,7 @@
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-11
+ * @since 2020-11-21
 */
 
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString, getNestedProperty, hhmmss2msec, NRCSP_ERRORPREFIX } = require('./Helper.js')
