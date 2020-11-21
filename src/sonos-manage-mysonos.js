@@ -104,7 +104,7 @@ module.exports = function (RED) {
    *
    * Creates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command)
    *
-   * @return {promise} All commands have to return a promise - object
+   * @returns{promise} All commands have to return a promise - object
    * example: returning {} means message is not modified
    * example: returning { payload: true} means the original msg.payload will be modified and set to true
    */
@@ -187,7 +187,7 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player with baseUrl
    *
-   * @return {promise} {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
+   * @returns{promise} {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
    *
    * @throws all functions
    * TODO Notion libraryExportAlbum
@@ -230,7 +230,7 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used but signature libraryGetPlaylist
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @return {promise} {stateName: uri metadata queue}  CAUTION: stateName!! not payload
+   * @returns{promise} {stateName: uri metadata queue}  CAUTION: stateName!! not payload
    *
    * @throws all functions
    * TODO Notion libraryExportAlbum: msg.size is obsolete
@@ -263,7 +263,7 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player plus baseUrl
    *
-   * @return {promise} {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
+   * @returns{promise} {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
    *
    * @throws all functions
    * TODO Notion libraryExportAlbum
@@ -353,7 +353,7 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    * 
    * TODO Notion libraryExportAlbum: msg.size
    *
@@ -383,7 +383,7 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @return {promise} see return   CAUTION: stateName!! not payload
+   * @returns{promise} see return   CAUTION: stateName!! not payload
    *
    * @throws all functions
    *        if getMySonosV3 does not provide values
@@ -446,7 +446,7 @@ module.exports = function (RED) {
    * @param  {object} msg.filter optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws nrcsp-error all functions
    *
@@ -507,7 +507,7 @@ module.exports = function (RED) {
    * @param  {string} cmdName not used
    * @param  {object} sonosPlayer Sonos Player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws all functions
    */

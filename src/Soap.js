@@ -32,7 +32,7 @@ module.exports = {
    * @param  {string} actionIdentifier such as 'GetEQ'
    * @param  {object} args such as { InstanceID: 0, EQType: "NightMode" },
    *
-   * @return {promise} response header/body/error code from player
+   * @returns{promise} response header/body/error code from player
    */
   sendToPlayerV1: async function (baseUrl, endpoint, serviceName, actionIdentifier, args) {
     // create action used in header - notice the " inside `
@@ -104,7 +104,7 @@ module.exports = {
    * @param  {string} errorCode
    * @param  {string} [actionName] '' is
    *
-   * @return {string} error text (from mapping code -  text)
+   * @returns{string} error text (from mapping code -  text)
    */
 
   getUpnpErrorMessage: (errorCode, actionName) => {
@@ -131,7 +131,7 @@ module.exports = {
 
   /** Encodes special XML characters such as < to &lt;.
    * @param  {string} xmlData orignal XML data
-   * @return {string} data without any <, >, &, ', "
+   * @returns{string} data without any <, >, &, ', "
    */
 
   encodeXml: xmlData => {

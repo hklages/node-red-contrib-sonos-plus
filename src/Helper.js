@@ -11,7 +11,6 @@
 */
 
 module.exports = {
-  // data to be used in other modules
 
   ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
 
@@ -29,7 +28,7 @@ module.exports = {
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
   REGEX_ANYCHAR: /.+/,  // any character but at least 1
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,  // mixed case allowed
-  REGEX_CSV: /^[a-zA-Z0-9äöüÄÖÜ]+([: -._]{0,1}[a-zA-Z0-9äöüÄÖÜ]+)*(,[a-zA-ZäöüÄÖÜ0-9]+([: -._]{0,1}[a-zA-Z0-9äöüÄÖÜ])*)*$/,
+  REGEX_CSV: /^[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9]+)*(,[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9])*)*$/u,
 
   NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
@@ -88,7 +87,7 @@ module.exports = {
         })
         .catch(error => {
           callback(error, null)
-          node.debug('Cleanup disovery - error')
+          node.debug('Cleanup discovery - error')
           if (module.exports.isTruthyAndNotEmptyString(discovery)) {
             discovery.destroy()
             discovery = null
@@ -98,13 +97,14 @@ module.exports = {
 
     // listener 'timeout' only once
     discovery.once('timeout', () => {
-      node.debug('Received time out without finding any matching (serialnumber) SONOS player')
+      node.debug('Received time out without finding any matching (serial number) SONOS player')
       // error messages in calling function
       callback(null, null)
     })
   },
 
-  /** Show any error occuring during processing of messages in the node status and create node error.
+  /** Show any error occurring during processing of messages in the node status and create node error.
+   * 
    * @param  {object} node current node
    * @param  {object} msg current msg
    * @param  {object} error  standard node.js or created with new Error ('')
@@ -127,7 +127,7 @@ module.exports = {
    * 4. All other error throw inside all modules (node-sonos, axio, ...)
    */
 
-  failure: (node, msg, error, functionName) => {
+  failure: void function(node, msg, error, functionName) {
     node.debug(`Entering error handling from ${functionName}.`)
     let msgShort = 'unknown' // default text used for status message
     let msgDetails = 'unknown' // default text for error message in addition to msgShort
@@ -143,12 +143,12 @@ module.exports = {
         msgShort = 'Request timed out'
         msgDetails = 'Validate players IP address / power on'
       } else {
-        // Caution: getOwn is neccessary for some error messages eg playmode!
+        // Caution: getOwn is necessary for some error messages eg play mode!
         msgShort = 'nodejs error - contact developer'
         msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
       }
     } else {
-      // Caution: getOwn is neccessary for some error messages eg playmode!
+      // Caution: getOwn is necessary for some error messages eg play mode!
       if (module.exports.isValidPropertyNotEmptyString(error, ['message'])) {
         if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
           // 2. node sonos upnp errors from service _request
@@ -167,7 +167,7 @@ module.exports = {
           msgDetails = 'none'
           msgShort = error.message.replace(module.exports.NRCSP_ERRORPREFIX, '')
         } else {
-          // Caution: getOwn is neccessary for some error messages eg playmode!
+          // Caution: getOwn is necessary for some error messages eg play mode!
           msgShort = error.message
           msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
         }
@@ -186,92 +186,56 @@ module.exports = {
     })
   },
 
-  /** show warning status and warn message
-   * @param  {object} node current node
-   * @param  {string} functionName name of calling function
-   * @param  {string} messageShort  short message for status
-   * @param  {string} messageDetail  details
-   */
-  warning: (node, functionName, messageShort, messageDetail) => {
-    node.debug(`Entering warning handling from ${functionName}`)
-    node.warn(`Just a warning: ${functionName} - ${messageShort} :: Details: ` + messageDetail)
-    node.status({
-      fill: 'blue',
-      shape: 'dot',
-      text: `warning: ${functionName} - ${messageShort}`
-    })
-  },
-
-  /** processing of msg was successful
+  /** Set node status and send message.
+   * 
    * @param  {object} node current node
    * @param  {object} msg current msg (maybe null)
    * @param  {string} functionName name of calling function
    */
-
-  success: (node, msg, functionName) => {
+  success: void function(node, msg, functionName) {
     node.send(msg)
     node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
     node.debug(`OK: ${functionName}`)
   },
 
-  /** Validates whether property is safely accessable - empty string allowed
-   * @param  {object} nestdObj object
-   * @param  {array} path array with the property chain- should be non empty
-   * @outputs {boolean} property exists
-   */
-  isValidProperty: (nestedObj, pathArray) => {
-    const property = pathArray.reduce(
-      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
-      nestedObj
-    )
-    return module.exports.isTruthy(property)
-  },
-
-  /** Validates whether property is safely accessable - empty string NOT allowed
-   * @param  {object} nestdObj object
-   * @param  {array} path array with the property chain- should be non empty
-   */
-  isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
-    const property = pathArray.reduce(
-      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
-      nestedObj
-    )
-    return module.exports.isTruthyAndNotEmptyString(property)
-  },
-
-  /** Validates property and returns true|false if equal to on|off (NOT case sensitive). Throws error if not exist.
-   * @param  {object} message Node-RED message
-   * @param  {string} property property name
-   * @param  {string} propertyMeaning additional information
-   * @param  {string} packageName package name
+  /** Validates property and returns true|false if on|off (NOT case sensitive). 
+   * 
+   * @param  {object} msg Node-RED message
+   * @param  {string} msg.propertyName item, to be validated
+   * @param  {string} propertyName property name
+   * @param  {string} propertyMeaning additional information, including in error message
+   * @param  {string} packageName package name, included in error message
    *
-   * @return {boolean} true|false if property exists and is string "on|off" (not case sensitive)
+   * @returns{boolean} true/false if msg.property is "on/off" ! not case sensitive
    *
-   * @throws if is missing/invalid, not string, not on/off NOT case sensitive
-   *
+   * @throws {error} if msg[propertyName] is missing, not string, not on|off (NOT case sensitive)
    */
-  isOnOff: (message, property, propertyMeaning, packageName) => {
+  isOnOff: (msg, propertyName, propertyMeaning, packageName) => {
     const path = []
-    path.push(property)
-    if (!module.exports.isValidProperty(message, path)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${property}) is missing/invalid`)
+    path.push(propertyName)
+    if (!module.exports.isValidProperty(msg, path)) {
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
     }
-    const value = message[property]
+    const value = msg[propertyName]
     if (typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not string`)
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not string`)
     }
     if (!(value.toLowerCase() === 'on' || value.toLowerCase() === 'off')) {
-      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not on/off`)
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not on/off`)
     }
     return (value.toLowerCase() === 'on')
   },
 
-  /** Validates and converts msg[propertyName] to number (integer). If defaultValue is undefined, 
-   * msg[propertyName] is required. If defaultValue is defined it will be used in case of an 
-   * undefined or invalid msg[propertyName]. defaultValue might be out of range min to max to 
+  /** Validates and converts msg[propertyName] to number (integer). 
+   * 
+   * If defaultValue is NOT given then msg[propertyName] is required! Throws error if missing.
+   * If defaultValue is given then msg[propertyName] is not required and default value is only used
+   * in case msg[propertyName] is not "isValidProperty" (undefined, null, NaN). 
+   * The defaultValue is not used in case of wrong type, not in range.
+   * defaultValue should be in range min max (not checked). 
    * 
    * @param  {object} msg Node-RED message
-   * @param  {(string|number)} msg.propertyName item, to be validated
+   * @param  {(string|number)} msg.propertyName item, to be validated, converted
    * @param  {string} propertyName property name
    * @param  {number} min minimum
    * @param  {number} max maximum, max > min
@@ -279,13 +243,11 @@ module.exports = {
    * @param  {string} packageName package name, included in error message
    * @param  {number} [defaultValue] integer, specifies the default value. 
    *
-   * @return {Promise<number>} integer in range [min,max] or defaultValue
+   * @returns{number} integer in range [min,max] or defaultValue
    *
    * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
-   * @throws {error} msg does not have property named propertyName
    * @throws {error} msg[propertyName] is not of type string, number
    * @throws {error} min,max,defaultValue not of type number, max <= min
-   *
    */
   validateConvertToInteger: (msg, propertyName, min, max, propertyMeaning, packageName, defaultValue) => {
     // validate min max
@@ -307,7 +269,7 @@ module.exports = {
       if (requiredProperty) {
         throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
-        // use defaultValue if valid
+        // use defaultValue but check if valid
         if (typeof defaultValue !== 'number') {
           throw new Error(`${packageName} ${propertyMeaning} defaultValue is not type number`)
         } 
@@ -340,42 +302,127 @@ module.exports = {
     return value
   },
 
-  /** Validates string value against regex and returns string.
-   * @param  {object} message Node-RED message
-   * @param  {string} property property name (string maximum 3 digits)
+  /** Validates msg[propertyName] against regex and returns that value or a default value.
+   * 
+   * If defaultValue is NOT given then msg[propertyName] is required! Throws error if missing.
+   * If defaultValue is given then msg[propertyName] is not required and default value is only used
+   * in case msg[propertyName] is not "isValidProperty" (undefined, null, NaN). 
+   * The defaultValue is not used in case of wrong type, not in range.
+   * defaultValue should be in range min max (not checked). 
+   * 
+   * @param  {object} msg Node-RED message
+   * @param  {string} msg.propertyName item, to be validated - maximum 3 digits
+   * @param  {string} propertyName property name
    * @param  {string} regex expression to evaluate string
-   * @param  {string} propertyMeaning additional information
-   * @param  {string} packageName package name
-   * @param  {string} [defaultValue] specifies the default value. If missing property is required == throw error
+   * @param  {string} propertyMeaning additional information, including in error message
+   * @param  {string} packageName package name, included in error message
+   * @param  {string} [defaultValue] specifies the default value. If missing property is required.
    *
-   * @return {promise} string
+   * @returns{string} if defaultValue is NOT given then msg[propertyName] is required. 
    *
-   * @throws if is missing/invalid, not number/string, not integer, not in range
-   *
+   * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
+   * @throws {error} msg[propertyName] is not of type string
+   * @throws {error} if msg[propertyName] has invalid regex
    */
-  stringValidRegex: (message, property, regex, propertyMeaning, packageName, defaultValue) => {
+  stringValidRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
     // if defaultValue is missing and error will be throw in case property is not defined or missing
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []
-    path.push(property)
-    if (!module.exports.isValidProperty(message, path)) {
+    path.push(propertyName)
+    if (!module.exports.isValidProperty(msg, path)) {
       if (requiredProperty) {
-        throw new Error(`${packageName} ${propertyMeaning} (${property}) is missing/invalid`)
+        throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
         // set default
         return defaultValue
       }
     }
-    const value = message[property]
+    const value = msg[propertyName]
     if (typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (${property}) is not type string`)
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not type string`)
     }
     if (!regex.test(value)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${property} >>${value}) has wrong syntax - Regular expression- see documentation`)
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName} >>${value}) has wrong syntax - Regular expression- see documentation`)
     }
     return value
   },
 
+  /** Validates whether property is safely accessible and "truthy". Empty string allowed.
+   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
+   * 
+   * @param  {object} nestedObj object
+   * @param  {array<string>} path property chain- must not be empty
+   * 
+   * @returns {boolean} property is accessible
+   */
+  isValidProperty: (nestedObj, pathArray) => {
+    const property = pathArray.reduce(
+      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+    return module.exports.isTruthy(property)
+  },
+
+  /** Validates whether property is safely accessible and "truthy". Empty string NOT allowed.
+   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
+   * 
+   * @param  {object} nestedObj object
+   * @param  {array<string>} path path property chain- must not be empty
+   */
+  isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
+    const property = pathArray.reduce(
+      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+    return module.exports.isTruthyAndNotEmptyString(property)
+  },
+
+  /** Validates whether an const/variable is "valid". Empty string allowed!
+   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
+   *  
+   * @param  {object|array|number|string|boolean} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0
+   * true: let input = '', let input = {}, let input = [], let input = true
+   * 
+   * @throws nothing
+   */
+  isTruthy: input => {
+    return !(typeof input === 'undefined' || input === null ||
+      //this avoids NaN, positive, negative Infinite
+      (typeof input === 'number' && !Number.isFinite(input)))
+  },
+
+  /** Validates whether an constant/variable is "valid". Empty string NOT allowed!
+   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
+   * 
+   * @param  {object|array|number|string|boolean} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input = ''
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0
+   * true: let input = {}, let input = [], let input = true
+   * 
+   * @throws nothing
+   */
+  isTruthyAndNotEmptyString: input => {
+    return !(typeof input === 'undefined' || input === null ||
+      //this avoids NaN, positive, negative Infinite, not empty string
+      (typeof input === 'number' && !Number.isFinite(input)) || input === '')
+  },
+
+  /** Gets the property value specified by path. Use isValidProperty before!
+   * 
+   * @param  {object} nestedObj object
+   * @param  {array<string>} path path property chain- must not be empty
+   * 
+   * @returns {any} value of that property
+   * 
+   * @throws nothing
+   */
   // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
   // pass in your object structure as array elements
   // const name = getNestedProperty(user, ['personalInfo', 'name']);
@@ -386,47 +433,26 @@ module.exports = {
     return pathArray.reduce((obj, key) => obj[key], nestedObj)
   },
 
-  /** Validates whether an constant/variable is "valid" - empty string allowed allowed
-   * @param  {object} input const, variable, object
-   * @outputs {boolean} valid
-   *
-   *  All the following are false - same for constants.
-   *  let input; let input = null; let input = undefined; let input = NaN; let input = 1.0 / 0; let input = -1.0 / 0
-   *  (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
-   *  but these are true: let input = []; let input = {};
-   */
-  isTruthy: input => {
-    return !(typeof input === 'undefined' || input === null ||
-      (typeof input === 'number' && !Number.isFinite(input)))
-  },
-
-  /** Validates whether an constant/variable is "valid" - empty string NOT allowed allowed
-   * @param  {object} input const, variable, object
-   * @outputs {boolean} valid
-   *
-   *  (typeof input === 'number' && !Number.isFinite(input)) avoids NaN, positive, negative Infinite
-   *  all the following are false - same for constants.
-   *  let input; let input = null; let input = undefined; let input = NaN; let input = 1 / 0; let input = -1 / 0, let input = '';
-   *  but these are true: let input = []; let input = {};
-   */
-  isTruthyAndNotEmptyString: input => {
-    return !(typeof input === 'undefined' || input === null ||
-      (typeof input === 'number' && !Number.isFinite(input)) || input === '')
-  },
-
-  /** Converts hh:mm:ss time to milliseconds
+  /** Converts hh:mm:ss time to milliseconds. Does not check input!
+   * 
    * @param  {string} hhmmss string in format hh:mm:ss
-   * @outputs {number} milliseconds as integer
+   * 
+   * @returns {number} milliseconds as integer
+   * 
+   * @throws nothing
    */
   hhmmss2msec: (hhmmss) => {
     const [hours, minutes, seconds] = (hhmmss).split(':')
     return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
   },
 
-  /**  Get error code. If not found provide empty string.
+  /**  Get error code or empty string.
+   * 
    * @param  {string} data  upnp error response as envelope with <errorCode>xxx</errorCode>
    *
-   * @return {string} error code
+   * @returns{string} error code
+   * 
+   * @throws nothing
    */
 
   getErrorCodeFromEnvelope: data => {
@@ -442,13 +468,15 @@ module.exports = {
   },
 
   /**  Get error message from error code. If not found provide 'unknown error'.
+   * 
    * @param  {string} errorCode
    * @param  {JSON} upnpErrorList - simple mapping .code .message
    * @param  {JSON} [serviceErrorList] - simple mapping .code .message
    *
-   * @return {string} error text (from mapping code -  text)
+   * @returns{string} error text (from mapping code -  text)
+   * 
+   * @throws nothing
    */
-
   getErrorMessageV1: (errorCode, upnpErrorList, serviceErrorList) => {
     const errorText = 'unknown error' // default
     if (module.exports.isTruthyAndNotEmptyString(errorCode)) {

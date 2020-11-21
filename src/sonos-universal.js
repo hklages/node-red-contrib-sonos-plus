@@ -174,7 +174,7 @@ module.exports = function (RED) {
    *
    * Creates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command)
    *
-   * @return {promise} All commands have to return a promise - object
+   * @returns{promise} All commands have to return a promise - object
    * example: returning {} means msg is not modified
    * example: returning msg[stateName]= true means the original msg.[stateName] will be modified and set to true
    */
@@ -259,7 +259,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -301,7 +301,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName=topic in compatibility mode: payload, not used
    * @param  {object}  sonosPlayer Sonos player from config node
    *
-   * @return {Promise<String>} Returns the new group volume after adjustment as property newVolume.
+   * @returns{Promise<String>} Returns the new group volume after adjustment as property newVolume.
    *
    * @throws any functions throws error and explicit throws
    */
@@ -328,7 +328,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -351,7 +351,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
-   * @return {promise}  {payload: snap} snap see createGroupSnapshot
+   * @returns{promise}  {payload: snap} snap see createGroupSnapshot
    *
    *
    * @throws any functions throws error and explicit throws
@@ -395,7 +395,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -419,7 +419,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -442,7 +442,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: transportActions}
+   * @returns{promise} {payload: transportActions}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -466,7 +466,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: crossfade mode} on/off
+   * @returns{promise} {payload: crossfade mode} on/off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -503,7 +503,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName=topic in compatibility mode: payload, not used
    * @param  {object}  sonosPlayer Sonos player from config node
    *
-   * @return {Promise<GroupMember[]>}  with key payload!
+   * @returns{Promise<GroupMember[]>}  with key payload!
    *
    * @throws {error} from methods validatedGroupProperties, getGroupMemberDataV2
    */
@@ -522,7 +522,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: muteState} on/off
+   * @returns{promise} {payload: muteState} on/off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -546,7 +546,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} { payload: state }
+   * @returns{promise} { payload: state }
    * state: { STOPPED: 'stopped', PLAYING: 'playing', PAUSED_PLAYBACK: 'paused', TRANSITIONING: 'transitioning', NO_MEDIA_PRESENT: 'no_media' }
    * First is the SONOS response, that is translated by node-sonos.
    *
@@ -569,7 +569,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update msg. msg.payload = array of queue items as object
+   * @returns{promise} object to update msg. msg.payload = array of queue items as object
    *
    * @throws any functions throws error and explicit throws
    */
@@ -589,7 +589,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: crossfade mode} hh:mm:ss
+   * @returns{promise} {payload: crossfade mode} hh:mm:ss
    *
    * @throws any functions throws error and explicit throws
    */
@@ -613,7 +613,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} { see return }
+   * @returns{promise} { see return }
    * state: { STOPPED: 'stopped', PLAYING: 'playing', PAUSED_PLAYBACK: 'paused', TRANSITIONING: 'transitioning', NO_MEDIA_PRESENT: 'no_media' }
    * queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
    * First is the SONOS response, that is translated by node-sonos.
@@ -679,7 +679,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: media: {object}, trackInfo: {object}, positionInfo: {object}, queueActivated: true/false
+   * @returns{promise} {payload: media: {object}, trackInfo: {object}, positionInfo: {object}, queueActivated: true/false
    *
    * @throws any functions throws error and explicit throws
    */
@@ -814,7 +814,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -835,7 +835,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -858,7 +858,7 @@ module.exports = function (RED) {
    * @param  {string}          cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -905,7 +905,7 @@ module.exports = function (RED) {
    * @param  {string}    cmdName not used
    * @param  {object}   sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws  any functions throws error and explicit throws
    */
@@ -968,7 +968,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -1025,7 +1025,7 @@ module.exports = function (RED) {
    * @param  {string}         cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1074,7 +1074,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -1121,7 +1121,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName=topic in compatibility mode: payload
    * @param  {object}  sonosPlayer Sonos player from config node
    *
-   * @return {Promise<boolean>} always true
+   * @returns{Promise<boolean>} always true
    * @throws {error} if msg.sameValue true and standalone player
    * @throws {error} NRCSP error from methods validatedGroupProperties, getGroupMemberDataV2, stringValidRegex
    * @throws {error} from node-sonos setAVTransportURI and setVolume
@@ -1172,7 +1172,7 @@ module.exports = function (RED) {
    * @param  {string}         cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1222,7 +1222,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws  all from validatedGroupProperties
    *          all from getGroupMemberDataV2
@@ -1266,7 +1266,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1288,7 +1288,7 @@ module.exports = function (RED) {
    * @param  {string}       cmdName not used
    * @param  {object}       sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1321,7 +1321,7 @@ module.exports = function (RED) {
    *
    * Caution: Currently only support European region '2311' (US = 3079?)
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1354,7 +1354,7 @@ module.exports = function (RED) {
    * @param  {string}         cmdName not used
    * @param  {object}         sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1387,7 +1387,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1419,7 +1419,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1445,7 +1445,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1472,7 +1472,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1500,7 +1500,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1527,7 +1527,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1575,7 +1575,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1603,7 +1603,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1628,7 +1628,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1649,7 +1649,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1670,7 +1670,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} array of all group array of members :-)
+   * @returns{promise} array of all group array of members :-)
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1755,7 +1755,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -1816,7 +1816,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} array of all group array of members :-)
+   * @returns{promise} array of all group array of members :-)
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1839,7 +1839,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} All sonos playlists as array of objects
+   * @returns{promise} All sonos playlists as array of objects
    * 
    * @throws any functions throws error and explicit throws
    */
@@ -1858,7 +1858,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1903,7 +1903,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1929,7 +1929,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -1997,7 +1997,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player as anchor player
    *
-   * @return {promise} true | false
+   * @returns{promise} true | false
    *
    * Caution: sonosPlayer can not be used here as default for input.
    * It should be a "always on always available" player.
@@ -2050,7 +2050,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -2110,7 +2110,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2134,7 +2134,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2161,7 +2161,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: bas} type string -10 .. 10
+   * @returns{promise} {payload: bas} type string -10 .. 10
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2184,7 +2184,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName is used!
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update msg. msg.payload the Loudness state LED state on/off
+   * @returns{promise} object to update msg. msg.payload the Loudness state LED state on/off
    *
    * @throws any functions throws error and explicit throws
    *
@@ -2238,7 +2238,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update payload the LED state on/off
+   * @returns{promise} object to update payload the LED state on/off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2262,7 +2262,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update msg. msg.payload the Loudness state LED state on/off
+   * @returns{promise} object to update msg. msg.payload the Loudness state LED state on/off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2288,7 +2288,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: muteState} on/off
+   * @returns{promise} {payload: muteState} on/off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2311,7 +2311,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update msg. msg.payload the properties object
+   * @returns{promise} object to update msg. msg.payload the properties object
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2340,7 +2340,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update msg. msg.payload = array of queue items as object
+   * @returns{promise} object to update msg. msg.payload = array of queue items as object
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2361,7 +2361,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} object to update msg. msg.payload to role of player as string.
+   * @returns{promise} object to update msg. msg.payload to role of player as string.
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2389,7 +2389,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {payload: treble} string -10 .. 10
+   * @returns{promise} {payload: treble} string -10 .. 10
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2436,7 +2436,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * Details: if coordinator: will leave old group and join new group.
    * If already in that group - it will just continue.
@@ -2474,7 +2474,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * Details: if coordinator => will leave group (stop playing), another will take over coordinator role
    * if standalone - no change
@@ -2503,7 +2503,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -2534,7 +2534,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    *
@@ -2584,7 +2584,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2615,7 +2615,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName default: cmd - in compatibility mode: payload
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2669,7 +2669,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2696,7 +2696,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2724,7 +2724,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2752,7 +2752,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2780,7 +2780,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2807,7 +2807,7 @@ module.exports = function (RED) {
    * @param  {string}  cmdName not used
    * @param  {object}  sonosPlayer Sonos player - as default and anchor player
    *
-   * @return {promise} {}
+   * @returns{promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2834,7 +2834,7 @@ module.exports = function (RED) {
    * @param  {boolean}       [msg.clearQueue = true] indicator for clear queue
    * @param  {string}        pkgPrefix package identifier
    *
-   * @return {promise} object {playerName, volume, sameVolume, flushQueue}
+   * @returns{promise} object {playerName, volume, sameVolume, flushQueue}
    * playerName is '' if missing.
    * volume is -1 if missing. Otherwise number, integer in range 0 ... 100
    * sameVolume is true if missing.

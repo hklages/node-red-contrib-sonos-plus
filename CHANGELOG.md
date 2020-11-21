@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.5.2] 2020-11-21
+
+#### Changed
+
+- Universal node: household.create.group now supports now alle "letter characters"
+
+- internal: JDoc - more function documented (Helpers, Sonos-Commands)
+
 ### [4.5.1] 2020-11-13
 
 #### Changed

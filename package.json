@@ -1,7 +1,7 @@
 {
   "name": "node-red-contrib-sonos-plus",
-  "version": "4.5.1",
-  "description": "A set of NodeRED nodes to control SONOS player in your local network.",
+  "version": "4.5.2",
+  "description": "A set of Node-RED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {
     "DEV-mtnc-git-version": "git --version",
