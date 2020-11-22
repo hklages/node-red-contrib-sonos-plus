@@ -499,7 +499,7 @@ module.exports = {
     for (let groupIndex = 0; groupIndex < allGroupsData.length; groupIndex++) {
       for (let memberIndex = 0; memberIndex < allGroupsData[groupIndex].ZoneGroupMember.length; memberIndex++) {
         visible = true
-        if (Object.prototype.hasOwnProperty.call(allGroupsData[groupIndex].ZoneGroupMember[memberIndex],'Invisible')) {
+        if (Object.prototype.hasOwnProperty.call(allGroupsData[groupIndex].ZoneGroupMember[memberIndex], 'Invisible')) {
           visible = allGroupsData[groupIndex].ZoneGroupMember[memberIndex].Invisible
         } 
         if (visible) {
@@ -909,7 +909,7 @@ module.exports = {
       if (isValidProperty(item, ['dc:creator'])) {
         didlBrowseItem.artist = item['dc:creator']
       }
-      if (isValidProperty(item, ['res',tag])) {
+      if (isValidProperty(item, ['res', tag])) {
         didlBrowseItem.uri = item['res'][tag]
         didlBrowseItem.sid = module.exports.getMusicServiceId(item.res[tag])
         didlBrowseItem.serviceName = module.exports.getMusicServiceName(didlBrowseItem.sid)
