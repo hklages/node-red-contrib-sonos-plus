@@ -187,7 +187,7 @@
       "message": "Server Error"
     }
   ],
-  "RENDERINGCONTROL_CODES": [
+  "RENDERINGCONTROL": [
     {
       "code": "701",
       "message": "Invalid preset name"

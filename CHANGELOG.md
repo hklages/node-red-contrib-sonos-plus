@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.5.3] 2020-11-28
+
+#### Changed
+
+- Universal node: library.get.playlists, library.export.playlist, library.queue.playlist revised
+
+- Universal node: group.get.sleeptimer now "none" if not set
+
+- Universal node: group data now url instead of host, .... and added channelMapSet
+
+- internal: JDoc - more function documented, more strict lint
+
+- internal: getQueue renamed to getSonosQueue
+
+- internal: householdGetGroups, householdTestPlayerOnline, create/separate.stereopair now based on getGroupsAll
+
 ### [4.5.2] 2020-11-21
 
 #### Changed
@@ -42,7 +58,7 @@ All notable changes to this project are documented in this file.
 
 - internal: all json files are now named Db-xxx.json
 
-- internal: getQueueV2 replaces getPlayerQueue, getMySonosV3 replaces getAllMySonosV2, code refactoring to getSonosPlaylistsV2
+- internal: getSonosQueue replaces getPlayerQueue, getMySonosV3 replaces getAllMySonosV2, code refactoring to getSonosPlaylistsV2
 
 - changed some default values (number of items returned)
 
