@@ -18,6 +18,8 @@ All notable changes to this project are documented in this file.
 
 - internal: householdGetGroups, householdTestPlayerOnline, create/separate.stereopair now based on getGroupsAll
 
+- internal: now using URL, using setPlayerVolume
+
 ### [4.5.2] 2020-11-21
 
 #### Changed
@@ -36,7 +38,7 @@ All notable changes to this project are documented in this file.
 
 - Universal node: group.adjust.volume now outputs msg.newVolume
 
-- internal: documentation for groupPlayStreamHttpV2, didlXmlToArray, validateConvertToInteger
+- internal: documentation for groupPlayStreamHttpV2, didlXmlToArray, validToInteger
 
 - internal: Sonos-command revised, code optimization
 

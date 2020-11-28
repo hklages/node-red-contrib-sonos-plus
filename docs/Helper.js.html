@@ -35,12 +35,12 @@
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-08
+ * @since 2020-11-21
 */
 
 module.exports = {
 
-  ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
+  SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase', 'Sonos Arc'],
 
@@ -55,10 +55,10 @@ module.exports = {
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
   REGEX_ANYCHAR: /.+/,  // any character but at least 1
-  REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,  // mixed case allowed
+  REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
   REGEX_CSV: /^[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9]+)*(,[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9])*)*$/u,
 
-  NRCSP_ERRORPREFIX: 'n-r-c-s-p: ',
+  NRCSP_PREFIX: 'nrcsp: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
   NODE_SONOS_UPNP500: 'upnp: statusCode 500 &amp; upnpErrorCode ', // only those with 500 (subset)
 
@@ -131,7 +131,8 @@ module.exports = {
     })
   },
 
-  /** Show any error occurring during processing of messages in the node status and create node error.
+  /** Show any error occurring during processing of messages in the node status 
+   * and create node error.
    * 
    * @param  {object} node current node
    * @param  {object} msg current msg
@@ -149,32 +150,33 @@ module.exports = {
   // .code provides the best information.
   // See https://nodejs.org/api/errors.html#errors_common_system_errors
   // 
-  // 2. Is the error thrown in node-sonos - service _request? Indicator: .message starts with NODE_SONOS_ERRORPREFIX
-  // see https://github.com/bencevans/node-sonos/blob/master/lib/services/Service.js   Service.prototype._request
-  // The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 &amp; upnpErrorCode ' and the error.response.data
-  // or NODE_SONOS_ERRORPREFIX error.message and /// and error.response.data
+  // 2. Is the error thrown in node-sonos - service _request? Indicator: 
+  // message starts with NODE_SONOS_ERRORPREFIX
+  // The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 &amp; upnpErrorCode ' 
+  // and the error.response.data or NODE_SONOS_ERRORPREFIX error.message and 
+  // error.response.data
   // 
-  // 3. Is the error from this package? Indicator: .message starts with NRCSP_ERRORPREFIX
+  // 3. Is the error from this package? Indicator: .message starts with NRCSP_PREFIX
   // 
   // 4. All other error throw inside all modules (node-sonos, axio, ...)
     node.debug(`Entering error handling from ${functionName}.`)
     let msgShort = 'unknown' // default text used for status message
-    let msgDetails = 'unknown' // default text for error message in addition to msgShort
+    let msgDet = 'unknown' // default text for error message in addition to msgShort
     if (module.exports.isValidPropertyNotEmptyString(error, ['code'])) {
       // 1. nodejs errors - convert into readable message
       if (error.code === 'ECONNREFUSED') {
         msgShort = 'Player refused to connect'
-        msgDetails = 'Validate players ip address'
+        msgDet = 'Validate players ip address'
       } else if (error.code === 'EHOSTUNREACH') {
         msgShort = 'Player is unreachable'
-        msgDetails = 'Validate players ip address / power on'
+        msgDet = 'Validate players ip address / power on'
       } else if (error.code === 'ETIMEDOUT') {
         msgShort = 'Request timed out'
-        msgDetails = 'Validate players IP address / power on'
+        msgDet = 'Validate players IP address / power on'
       } else {
         // Caution: getOwn is necessary for some error messages eg play mode!
         msgShort = 'nodejs error - contact developer'
-        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
+        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
       }
     } else {
       // Caution: getOwn is necessary for some error messages eg play mode!
@@ -182,36 +184,34 @@ module.exports = {
         if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
           // 2. node sonos upnp errors from service _request
           if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
-            const upnpErrorCode = module.exports.getErrorCodeFromEnvelope(error.message.substring(module.exports.NODE_SONOS_UPNP500.length))
-            msgShort = `statusCode 500 &amp; upnpError ${upnpErrorCode}`
+            const uppnText = error.message.substring(module.exports.NODE_SONOS_UPNP500.length)
+            const upnpEc = module.exports.getErrorCodeFromEnvelope(uppnText)
+            msgShort = `statusCode 500 &amp; upnpError ${upnpEc}`
             // TODO Notion Helper-Service
-            msgDetails = module.exports.getErrorMessageV1(upnpErrorCode, module.exports.ERROR_CODES.UPNP, '') // only UPNP errors
+            msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.SOAP_ERRORS.UPNP, '')
           } else {
             // unlikely as all UPNP errors throw 500
             msgShort = 'statusCode NOT 500'
-            msgDetails = `upnp envelope: ${error.message}`
+            msgDet = `upnp envelope: ${error.message}`
           }
-        } else if (error.message.startsWith(module.exports.NRCSP_ERRORPREFIX)) {
+        } else if (error.message.startsWith(module.exports.NRCSP_PREFIX)) {
           // 3. my thrown errors
-          msgDetails = 'none'
-          msgShort = error.message.replace(module.exports.NRCSP_ERRORPREFIX, '')
+          msgDet = 'none'
+          msgShort = error.message.replace(module.exports.NRCSP_PREFIX, '')
         } else {
           // Caution: getOwn is necessary for some error messages eg play mode!
           msgShort = error.message
-          msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
+          msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
         }
       } else {
         // 4. all the others
         msgShort = 'Unknown error/ exception -see node.error'
-        msgDetails = JSON.stringify(error, Object.getOwnPropertyNames(error))
+        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
       }
     }
 
-    node.error(`${functionName}:${msgShort} :: Details: ${msgDetails}`, msg)
-    node.status({
-      fill: 'red',
-      shape: 'dot',
-      text: `error: ${functionName} - ${msgShort}`
+    node.error(`${functionName}:${msgShort} :: Details: ${msgDet}`, msg)
+    node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}`
     })
   },
 
@@ -272,13 +272,14 @@ module.exports = {
    * @param  {string} packageName package name, included in error message
    * @param  {number} [defaultValue] integer, specifies the default value. 
    *
-   * @returns{number} integer in range [min,max] or defaultValue
+   * @returns {number} integer in range [min,max] or defaultValue
    *
    * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
    * @throws {error} msg[propertyName] is not of type string, number
    * @throws {error} min,max,defaultValue not of type number, max &lt;= min
    */
-  validateConvertToInteger: (msg, propertyName, min, max, propertyMeaning, packageName, defaultValue) => {
+  validToInteger: (msg, propertyName, min, max, propertyMeaning,
+    packageName, defaultValue) => {
     // validate min max
     if (typeof min !== 'number') {
       throw new Error(`${packageName} ${propertyMeaning} min is not type number`)
@@ -310,23 +311,24 @@ module.exports = {
       }
     }
     let value = msg[propertyName]
+    const txtPrefix = `${packageName} ${propertyMeaning} (msg.${propertyName})`
 
     if (typeof value !== 'number' &amp;&amp; typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName}) is not type string/number`)
+      throw new Error(`${txtPrefix} is not type string/number`)
     }
     if (typeof value === 'number') {
       if (!Number.isInteger(value)) {
-        throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName}) is not integer`)
+        throw new Error(`${txtPrefix} is not integer`)
       }
     } else {
       // it is a string - allow signed/unsigned
       if (!module.exports.REGEX_3DIGITSSIGN.test(value)) {
-        throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName} >>${value}) is not 3 signed digits only`)
+        throw new Error(`${txtPrefix} >>${value}) is not 3 signed digits only`)
       }
       value = parseInt(value)
     }
     if (!(value >= min &amp;&amp; value &lt;= max)) {
-      throw new Error(`${packageName} ${propertyMeaning} (msg.${propertyName} >>${value}) is out of range`)
+      throw new Error(`${txtPrefix} >>${value}) is out of range`)
     }
     return value
   },
@@ -347,13 +349,13 @@ module.exports = {
    * @param  {string} packageName package name, included in error message
    * @param  {string} [defaultValue] specifies the default value. If missing property is required.
    *
-   * @returns{string} if defaultValue is NOT given then msg[propertyName] is required. 
+   * @returns {string} if defaultValue is NOT given then msg[propertyName] is required. 
    *
    * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
    * @throws {error} msg[propertyName] is not of type string
    * @throws {error} if msg[propertyName] has invalid regex
    */
-  stringValidRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
+  validRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
     // if defaultValue is missing and error will be throw in case property is not defined or missing
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []
@@ -367,11 +369,12 @@ module.exports = {
       }
     }
     const value = msg[propertyName]
+    const txtPrefix = `${packageName} ${propertyMeaning} (${propertyName})`
     if (typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not type string`)
+      throw new Error(`${txtPrefix} is not type string`)
     }
     if (!regex.test(value)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${propertyName} >>${value}) has wrong syntax - Regular expression- see documentation`)
+      throw new Error(`${txtPrefix} >>${value} wrong syntax. Regular expr. - see documentation`)
     }
     return value
   },
@@ -425,9 +428,9 @@ module.exports = {
    * @throws nothing
    */
   isTruthy: input => {
-    return !(typeof input === 'undefined' || input === null ||
+    return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite
-      (typeof input === 'number' &amp;&amp; !Number.isFinite(input)))
+      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input)))
   },
 
   /** Validates whether an constant/variable is "valid". Empty string NOT allowed!
@@ -444,9 +447,9 @@ module.exports = {
    * @throws nothing
    */
   isTruthyAndNotEmptyString: input => {
-    return !(typeof input === 'undefined' || input === null ||
+    return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite, not empty string
-      (typeof input === 'number' &amp;&amp; !Number.isFinite(input)) || input === '')
+      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input)) || input === '')
   },
 
   /** Gets the property value specified by path. Use isValidProperty before!
@@ -485,7 +488,7 @@ module.exports = {
    * 
    * @param  {string} data  upnp error response as envelope with &lt;errorCode>xxx&lt;/errorCode>
    *
-   * @returns{string} error code
+   * @returns {string} error code
    * 
    * @throws nothing
    */
@@ -507,7 +510,7 @@ module.exports = {
    * @param  {JSON} upnpErrorList - simple mapping .code .message
    * @param  {JSON} [serviceErrorList] - simple mapping .code .message
    *
-   * @returns{string} error text (from mapping code -  text)
+   * @returns {string} error text (from mapping code -  text)
    * 
    * @throws nothing
    */
@@ -546,7 +549,7 @@ module.exports = {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:55:50 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 28 2020 19:59:07 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -12,7 +12,7 @@
 
 module.exports = {
 
-  ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
+  SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase', 'Sonos Arc'],
 
@@ -160,7 +160,7 @@ module.exports = {
             const upnpEc = module.exports.getErrorCodeFromEnvelope(uppnText)
             msgShort = `statusCode 500 & upnpError ${upnpEc}`
             // TODO Notion Helper-Service
-            msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.ERROR_CODES.UPNP, '')
+            msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.SOAP_ERRORS.UPNP, '')
           } else {
             // unlikely as all UPNP errors throw 500
             msgShort = 'statusCode NOT 500'
@@ -250,7 +250,7 @@ module.exports = {
    * @throws {error} msg[propertyName] is not of type string, number
    * @throws {error} min,max,defaultValue not of type number, max <= min
    */
-  validateConvertToInteger: (msg, propertyName, min, max, propertyMeaning,
+  validToInteger: (msg, propertyName, min, max, propertyMeaning,
     packageName, defaultValue) => {
     // validate min max
     if (typeof min !== 'number') {
@@ -327,7 +327,7 @@ module.exports = {
    * @throws {error} msg[propertyName] is not of type string
    * @throws {error} if msg[propertyName] has invalid regex
    */
-  stringValidRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
+  validRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
     // if defaultValue is missing and error will be throw in case property is not defined or missing
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []

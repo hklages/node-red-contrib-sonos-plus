@@ -64,7 +64,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2020-11-08</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>2020-11-27</li></ul></dd>
     
 
     
@@ -97,7 +97,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line14">line 14</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line15">line 15</a>
     </li></ul></dd>
     
 
@@ -154,7 +154,7 @@
     
 
     
-    <h4 class="name" id="~libraryExportAlbum"><span class="type-signature">(async, inner) </span>libraryExportAlbum<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~libraryExportAlbum"><span class="type-signature">(async, inner) </span>libraryExportAlbum<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -188,6 +188,8 @@
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -213,6 +215,10 @@
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">used for debug message</td>
         </tr>
@@ -236,15 +242,38 @@
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -261,6 +290,13 @@
             
 
             <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -282,8 +318,14 @@
             
 
             
+                <td class="default">
+                
+                    payload
+                
+                </td>
+            
 
-            <td class="description last">default: payload - in compatibility mode: topic</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -305,15 +347,21 @@
             
 
             
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -328,8 +376,12 @@
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">Sonos Player with baseUrl</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -370,7 +422,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line196">line 196</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line198">line 198</a>
     </li></ul></dd>
     
 
@@ -397,18 +449,55 @@
 
         
 
-    <div class="param-desc">
-    
+<dl>
+    <dt>
+        <div class="param-desc">
         all functions
-TODO Notion libraryExportAlbum
-TODO Notion libraryExportAlbum searchstring is blanks
-    
-    </div>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -420,7 +509,7 @@ TODO Notion libraryExportAlbum searchstring is blanks
     
 
     
-    <h4 class="name" id="~libraryExportPlaylist"><span class="type-signature">(async, inner) </span>libraryExportPlaylist<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~libraryExportPlaylistV2"><span class="type-signature">(async, inner) </span>libraryExportPlaylistV2<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -428,7 +517,7 @@ TODO Notion libraryExportAlbum searchstring is blanks
 
 
 <div class="description">
-    Exports first Music-Library playlist matching search string.
+    Exports first Music-Library playlist matching search string (is encoded) - maximum 100
 </div>
 
 
@@ -451,8 +540,6 @@ TODO Notion libraryExportAlbum searchstring is blanks
 
         <th>Type</th>
 
-        
-        <th>Attributes</th>
         
 
         
@@ -481,14 +568,6 @@ TODO Notion libraryExportAlbum searchstring is blanks
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -516,14 +595,6 @@ TODO Notion libraryExportAlbum searchstring is blanks
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -531,14 +602,33 @@ TODO Notion libraryExportAlbum searchstring is blanks
                 </td>
             
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -551,61 +641,17 @@ TODO Notion libraryExportAlbum searchstring is blanks
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">search string</td>
         </tr>
 
     
+    </tbody>
+</table>
 
-        <tr>
-            
-                <td class="name"><code>msg.size</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
             </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    200
-                
-                </td>
-            
-
-            <td class="description last">maxim number of playlists to be retrieved</td>
         </tr>
 
     
@@ -625,22 +671,16 @@ TODO Notion libraryExportAlbum searchstring is blanks
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
                 
+                    payload
+                
                 </td>
             
 
-            <td class="description last">default: payload - in compatibility mode: topic</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -660,29 +700,23 @@ TODO Notion libraryExportAlbum searchstring is blanks
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
                 
+                    topic
+                
                 </td>
             
 
-            <td class="description last">not used but signature libraryGetPlaylist</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -695,14 +729,6 @@ TODO Notion libraryExportAlbum searchstring is blanks
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -710,7 +736,7 @@ TODO Notion libraryExportAlbum searchstring is blanks
                 </td>
             
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -751,7 +777,7 @@ TODO Notion libraryExportAlbum searchstring is blanks
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line238">line 238</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line241">line 241</a>
     </li></ul></dd>
     
 
@@ -778,17 +804,55 @@ TODO Notion libraryExportAlbum searchstring is blanks
 
         
 
-    <div class="param-desc">
-    
+<dl>
+    <dt>
+        <div class="param-desc">
         all functions
-TODO Notion libraryExportAlbum: msg.size is obsolete
-    
-    </div>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -800,7 +864,7 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
     
 
     
-    <h4 class="name" id="~libraryGetAlbums"><span class="type-signature">(async, inner) </span>libraryGetAlbums<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~libraryGetAlbums"><span class="type-signature">(async, inner) </span>libraryGetAlbums<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -834,6 +898,8 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -859,6 +925,10 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">used for debug message</td>
         </tr>
@@ -882,15 +952,38 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -913,7 +1006,7 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
 
         <tr>
             
-                <td class="name"><code>msg.requestedCount</code></td>
+                <td class="name"><code>requestedCount</code></td>
             
 
             <td class="type">
@@ -929,14 +1022,14 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
 
             
 
-            <td class="description last">optional, maximum number of found albums, 0...999, default 100</td>
+            <td class="description last">optional, maximum number of found albums,                  0...999, default 100</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>msg.searchTitle</code></td>
+                <td class="name"><code>searchTitle</code></td>
             
 
             <td class="type">
@@ -956,6 +1049,13 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
         </tr>
 
     
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
 
         <tr>
             
@@ -971,322 +1071,17 @@ TODO Notion libraryExportAlbum: msg.size is obsolete
             
             </td>
 
-            
-
-            
-
-            <td class="description last">default: payload - in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">not used</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sonosPlayer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Sonos Player plus baseUrl</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line271">line 271</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        all functions
-TODO Notion libraryExportAlbum
-    
-    </div>
-
-
-    
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="~libraryGetPlaylists"><span class="type-signature">(async, inner) </span>libraryGetPlaylists<span class="signature">(node, msg, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Outputs array of Music-Library playlists as object.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">current node</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>msg</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">incoming message
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>size</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
             
 
             
                 <td class="default">
                 
-                    200
+                    payload
                 
                 </td>
             
 
-            <td class="description last">maximum number of playlists to be retrieved, integer 1 .. 999</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -1308,15 +1103,21 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -1331,8 +1132,12 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -1373,7 +1178,7 @@ TODO Notion libraryExportAlbum
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line326">line 326</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line290">line 290</a>
     </li></ul></dd>
     
 
@@ -1402,7 +1207,7 @@ TODO Notion libraryExportAlbum
 
     <div class="param-desc">
     
-        all functions. if total is missing or total is !== 0 and items are missing
+        all functionsTODO Notion libraryExportAlbum
     
     </div>
 
@@ -1410,6 +1215,28 @@ TODO Notion libraryExportAlbum
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -1421,7 +1248,7 @@ TODO Notion libraryExportAlbum
     
 
     
-    <h4 class="name" id="~libraryQueuePlaylist"><span class="type-signature">(async, inner) </span>libraryQueuePlaylist<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~libraryGetPlaylistsV2"><span class="type-signature">(async, inner) </span>libraryGetPlaylistsV2<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -1429,7 +1256,7 @@ TODO Notion libraryExportAlbum
 
 
 <div class="description">
-    Queues (aka add) first Music-Library playlist matching search string.
+    Outputs array Music-Library playlists - search string is optional
 </div>
 
 
@@ -1452,8 +1279,6 @@ TODO Notion libraryExportAlbum
 
         <th>Type</th>
 
-        
-        <th>Attributes</th>
         
 
         
@@ -1481,14 +1306,6 @@ TODO Notion libraryExportAlbum
             
             </td>
 
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
             
 
             
@@ -1517,14 +1334,6 @@ TODO Notion libraryExportAlbum
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -1532,14 +1341,33 @@ TODO Notion libraryExportAlbum
                 </td>
             
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -1552,19 +1380,7 @@ TODO Notion libraryExportAlbum
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">search string</td>
@@ -1574,39 +1390,53 @@ TODO Notion libraryExportAlbum
 
         <tr>
             
-                <td class="name"><code>msg.size</code></td>
+                <td class="name"><code>requestedCount</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">string</span>
 
 
             
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
 
-                
+            
 
+            <td class="description last">optional, maximum number of found albums,                 0...999, default 100</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>searchTitle</code></td>
+            
+
+            <td class="type">
+            
                 
-                </td>
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
             
 
             
-                <td class="default">
-                
-                    200
-                
-                </td>
-            
 
-            <td class="description last">maxim number of playlists to be retrieved</td>
+            <td class="description last">search string, optional</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -1626,22 +1456,16 @@ TODO Notion libraryExportAlbum
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
                 
+                    payload
+                
                 </td>
             
 
-            <td class="description last">default: payload - in compatibility mode: topic</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -1661,29 +1485,23 @@ TODO Notion libraryExportAlbum
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
                 
+                    topic
+                
                 </td>
             
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -1696,14 +1514,6 @@ TODO Notion libraryExportAlbum
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
                 <td class="default">
@@ -1711,7 +1521,7 @@ TODO Notion libraryExportAlbum
                 </td>
             
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -1752,7 +1562,7 @@ TODO Notion libraryExportAlbum
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line362">line 362</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line352">line 352</a>
     </li></ul></dd>
     
 
@@ -1789,6 +1599,28 @@ TODO Notion libraryExportAlbum
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -1800,7 +1632,362 @@ TODO Notion libraryExportAlbum
     
 
     
-    <h4 class="name" id="~mysonosExportItem"><span class="type-signature">(async, inner) </span>mysonosExportItem<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~libraryQueuePlaylistV2"><span class="type-signature">(async, inner) </span>libraryQueuePlaylistV2<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Queue first Music-Library playlist matching search string (is encoded) - maximum 100
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>node</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">used for debug message</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>stateName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>stateName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    payload
+                
+                </td>
+            
+
+            <td class="description last">in compatibility mode: topic</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cmdName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
+
+            <td class="description last">in compatibility mode: payload</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>nodesonosPlayer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">player with url - as default</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line410">line 410</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all functions
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~mysonosExportItem"><span class="type-signature">(async, inner) </span>mysonosExportItem<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -1834,6 +2021,8 @@ TODO Notion libraryExportAlbum
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -1859,6 +2048,10 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">not used</td>
         </tr>
@@ -1882,15 +2075,38 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -1907,6 +2123,13 @@ TODO Notion libraryExportAlbum
             
 
             <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -1928,8 +2151,14 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                    payload
+                
+                </td>
+            
 
-            <td class="description last">default: payload - in compatibility mode: topic</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -1951,15 +2180,21 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -1974,8 +2209,12 @@ TODO Notion libraryExportAlbum
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -2016,7 +2255,7 @@ TODO Notion libraryExportAlbum
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line393">line 393</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line453">line 453</a>
     </li></ul></dd>
     
 
@@ -2045,10 +2284,7 @@ TODO Notion libraryExportAlbum
 
     <div class="param-desc">
     
-        all functions
-       if getMySonosV3 does not provide values
-
-Info:  content validation of mediaType, serviceName
+        all functions       if getMySonosV3 does not provide valuesInfo:  content validation of mediaType, serviceName
     
     </div>
 
@@ -2056,6 +2292,28 @@ Info:  content validation of mediaType, serviceName
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    see return   CAUTION: stateName!! not payload
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2067,7 +2325,7 @@ Info:  content validation of mediaType, serviceName
     
 
     
-    <h4 class="name" id="~mysonosGetItems"><span class="type-signature">(async, inner) </span>mysonosGetItems<span class="signature">(node, msg, stateName, cmdName, sonosPlayer)</span><span class="type-signature"> &rarr; {object}</span></h4>
+    <h4 class="name" id="~mysonosGetItems"><span class="type-signature">(async, inner) </span>mysonosGetItems<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {object}</span></h4>
     
 
     
@@ -2101,6 +2359,8 @@ Info:  content validation of mediaType, serviceName
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -2126,6 +2386,10 @@ Info:  content validation of mediaType, serviceName
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">not used</td>
         </tr>
@@ -2148,6 +2412,10 @@ Info:  content validation of mediaType, serviceName
 
             
 
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">incoming message</td>
@@ -2172,8 +2440,14 @@ Info:  content validation of mediaType, serviceName
             
 
             
+                <td class="default">
+                
+                    payload
+                
+                </td>
+            
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -2195,15 +2469,21 @@ Info:  content validation of mediaType, serviceName
             
 
             
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -2218,8 +2498,12 @@ Info:  content validation of mediaType, serviceName
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -2260,7 +2544,7 @@ Info:  content validation of mediaType, serviceName
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line432">line 432</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line495">line 495</a>
     </li></ul></dd>
     
 
@@ -2301,8 +2585,7 @@ Info:  content validation of mediaType, serviceName
 
         
 <div class="param-desc">
-    payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}
-uri, metadata, sid, upnpclass: empty string are allowed
+    payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}uri, metadata, sid, upnpclass: empty string are allowed
 </div>
 
 
@@ -2331,7 +2614,7 @@ uri, metadata, sid, upnpclass: empty string are allowed
     
 
     
-    <h4 class="name" id="~mysonosQueueItem"><span class="type-signature">(async, inner) </span>mysonosQueueItem<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~mysonosQueueItem"><span class="type-signature">(async, inner) </span>mysonosQueueItem<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -2365,6 +2648,8 @@ uri, metadata, sid, upnpclass: empty string are allowed
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -2390,6 +2675,10 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">not used</td>
         </tr>
@@ -2413,15 +2702,38 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -2438,6 +2750,13 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -2459,8 +2778,14 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             
+                <td class="default">
+                
+                    payload
+                
+                </td>
+            
 
-            <td class="description last">default: payload - in compatibility mode: topic</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -2482,8 +2807,14 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
 
-            <td class="description last">not</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
@@ -2505,15 +2836,19 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }</td>
+            <td class="description last">optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -2528,8 +2863,12 @@ uri, metadata, sid, upnpclass: empty string are allowed
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -2570,7 +2909,7 @@ uri, metadata, sid, upnpclass: empty string are allowed
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line457">line 457</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line522">line 522</a>
     </li></ul></dd>
     
 
@@ -2599,9 +2938,7 @@ uri, metadata, sid, upnpclass: empty string are allowed
 
     <div class="param-desc">
     
-        nrcsp-error all functions
-
-Info:  msg.filter currently undocumented feature.
+        nrcsp-error all functionsInfo:  msg.filter currently undocumented feature.
     
     </div>
 
@@ -2609,6 +2946,28 @@ Info:  msg.filter currently undocumented feature.
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {}
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2620,7 +2979,7 @@ Info:  msg.filter currently undocumented feature.
     
 
     
-    <h4 class="name" id="~mysonosStreamItem"><span class="type-signature">(async, inner) </span>mysonosStreamItem<span class="signature">(node, msg, msg[stateName, stateName, cmdName, sonosPlayer)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~mysonosStreamItem"><span class="type-signature">(async, inner) </span>mysonosStreamItem<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -2654,6 +3013,8 @@ Info:  msg.filter currently undocumented feature.
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -2679,6 +3040,10 @@ Info:  msg.filter currently undocumented feature.
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
             <td class="description last">not used</td>
         </tr>
@@ -2702,15 +3067,38 @@ Info:  msg.filter currently undocumented feature.
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">incoming message</td>
-        </tr>
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
 
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>msg[stateName</code></td>
+                <td class="name"><code>stateName</code></td>
             
 
             <td class="type">
@@ -2727,6 +3115,13 @@ Info:  msg.filter currently undocumented feature.
             
 
             <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -2748,8 +3143,14 @@ Info:  msg.filter currently undocumented feature.
             
 
             
+                <td class="default">
+                
+                    payload
+                
+                </td>
+            
 
-            <td class="description last">default: payload - in compatibility mode: topic</td>
+            <td class="description last">in compatibility mode: topic</td>
         </tr>
 
     
@@ -2771,15 +3172,21 @@ Info:  msg.filter currently undocumented feature.
             
 
             
+                <td class="default">
+                
+                    topic
+                
+                </td>
+            
 
-            <td class="description last">not used</td>
+            <td class="description last">in compatibility mode: payload</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sonosPlayer</code></td>
+                <td class="name"><code>nodesonosPlayer</code></td>
             
 
             <td class="type">
@@ -2794,8 +3201,12 @@ Info:  msg.filter currently undocumented feature.
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last">Sonos Player</td>
+            <td class="description last">player with url - as default</td>
         </tr>
 
     
@@ -2836,7 +3247,7 @@ Info:  msg.filter currently undocumented feature.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line514">line 514</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line583">line 583</a>
     </li></ul></dd>
     
 
@@ -2873,6 +3284,28 @@ Info:  msg.filter currently undocumented feature.
     
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {}
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2884,7 +3317,7 @@ Info:  msg.filter currently undocumented feature.
     
 
     
-    <h4 class="name" id="~processInputMsg"><span class="type-signature">(async, inner) </span>processInputMsg<span class="signature">(node, config, msg, ipaddress)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~processInputMsg"><span class="type-signature">(async, inner) </span>processInputMsg<span class="signature">(node, config, msg, ipaddress)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -3108,9 +3541,7 @@ Info:  msg.filter currently undocumented feature.
 
             
 
-            <td class="description last">IP address of sonos player
-
-Creates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command)</td>
+            <td class="description last">IP address of sonos playerCreates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command).</td>
         </tr>
 
     
@@ -3151,7 +3582,7 @@ Creates also msg.nrcspCmd because in compatibility mode all get commands overwri
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line111">line 111</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line118">line 118</a>
     </li></ul></dd>
     
 
@@ -3176,6 +3607,28 @@ Creates also msg.nrcspCmd because in compatibility mode all get commands overwri
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    All commands have to return a promise - objectexample: returning {} means message is not modifiedexample: returning { msg[stateName]: true} means the original msg.payload will be modified and set to true.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -3288,7 +3741,7 @@ Creates also msg.nrcspCmd because in compatibility mode all get commands overwri
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line43">line 43</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line44">line 44</a>
     </li></ul></dd>
     
 
@@ -3340,7 +3793,7 @@ Creates also msg.nrcspCmd because in compatibility mode all get commands overwri
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:55:50 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 28 2020 19:59:07 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

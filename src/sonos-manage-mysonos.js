@@ -3,11 +3,11 @@ const {
   NRCSP_PREFIX,
   discoverSonosPlayerBySerial,
   isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
-  stringValidRegex, validateConvertToInteger,
+  validRegex, validToInteger,
   failure, success
 } = require('./Helper.js')
 
-const { getMySonosV3, executeActionV6, didlXmlToArray
+const { getMySonosV3, executeActionV6, didlXmlToArray, setPlayerVolume
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -71,7 +71,7 @@ module.exports = function (RED) {
         }
       })
     } else {
-      failure(node, null,
+      failure(node, null, 
         new Error(`${NRCSP_PREFIX} both ipaddress and serial number are invalid/missing`),
         nrcspFunction)
       return
@@ -183,12 +183,12 @@ module.exports = function (RED) {
   //...............................................................................................
 
   /**  Exports first Music-Library album matching search string (is encoded) - maximum 100
-   * @param  {object} node used for debug message
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-   * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node used for debug message
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {stateName: uri metadata queue title artist}  
    * CAUTION: stateName!! not payload
@@ -197,13 +197,12 @@ module.exports = function (RED) {
    */
   async function libraryExportAlbum (node, msg, stateName, cmdName, nodesonosPlayer) {
     // payload title search string is required.
-    const validatedSearchString
-      = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+    const validatedSearch = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
     
-    const browseMlAlbum = await executeActionV6(nodesonosPlayer.url.origin,
+    const browseMlAlbum = await executeActionV6(nodesonosPlayer.url,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
-        ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearchString),
+        ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearch),
         BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
         RequestedCount: 100, SortCriteria: ''
       })
@@ -222,16 +221,17 @@ module.exports = function (RED) {
     const firstAlbum = { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true }
     const outputChanged = {}
     outputChanged[stateName] = firstAlbum
+
     return outputChanged
   }
 
   /**  Exports first Music-Library playlist matching search string (is encoded) - maximum 100
-   * @param  {object} node used for debug message
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-   * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node used for debug message
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {stateName: uri metadata queue title artist}  
    * CAUTION: stateName!! not payload
@@ -241,9 +241,9 @@ module.exports = function (RED) {
   async function libraryExportPlaylistV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
     
-    const browseMlPlaylists = await executeActionV6(nodesonosPlayer.url.origin,
+    const browseMlPlaylists = await executeActionV6(nodesonosPlayer.url,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:PLAYLISTS:' + encodeURIComponent(validatedSearchString),
@@ -265,19 +265,20 @@ module.exports = function (RED) {
     const firstPlaylist = { uri: listPls[0].uri, metadata: listPls[0].metadata, queue: true }
     const outputChanged = {}
     outputChanged[stateName] = firstPlaylist
+
     return outputChanged
   }
 
   /**  Outputs array Music-Library albums - search string is optional
-   * @param  {object} node used for debug message
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} msg.requestedCount optional, maximum number of found albums, 
+   * @param {object} node used for debug message
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} msg.requestedCount optional, maximum number of found albums, 
    *                  0...999, default 100
-   * @param  {string} msg.searchTitle search string, optional
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-   * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {string} msg.searchTitle search string, optional
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {stateName: array of objects: uri metadata queue title artist} 
    * array may be empty  
@@ -288,17 +289,17 @@ module.exports = function (RED) {
    */
   async function libraryGetAlbums (node, msg, stateName, cmdName, nodesonosPlayer) {
     // msg.requestedCount is optional - if missing default is 100
-    const requestedCount = validateConvertToInteger(
+    const requestedCount = validToInteger(
       msg, 'requestedCount', 1, 999, 'requested count', NRCSP_PREFIX, 100)
 
     // msg albumName search string is optional - default is empty string
     let validatedSearchString
-      = stringValidRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_PREFIX, '')
+      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_PREFIX, '')
     if (validatedSearchString !== '') {
       validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
     }
 
-    const browseAlbum = await executeActionV6(nodesonosPlayer.url.origin,
+    const browseAlbum = await executeActionV6(nodesonosPlayer.url,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:ALBUM' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren',
@@ -332,15 +333,15 @@ module.exports = function (RED) {
   }
 
   /**  Outputs array Music-Library playlists - search string is optional
-   * @param  {object} node used for debug message
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} msg.requestedCount optional, maximum number of found albums, 
-   *                  0...999, default 100
-   * @param  {string} msg.searchTitle search string, optional
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-   * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node used for debug message
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} msg.requestedCount optional, maximum number of found albums, 
+   *                 0...999, default 100
+   * @param {string} msg.searchTitle search string, optional
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {stateName: array of objects: uri metadata queue title artist} 
    * array may be empty  
@@ -350,17 +351,17 @@ module.exports = function (RED) {
    */
   async function libraryGetPlaylistsV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
     // msg.requestedCount is optional - if missing default is 100
-    const requestedCount = validateConvertToInteger(
+    const requestedCount = validToInteger(
       msg, 'requestedCount', 1, 999, 'requested count', NRCSP_PREFIX, 100)
 
     // msg search string is optional - default is empty string
     let validatedSearchString
-      = stringValidRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_PREFIX, '')
+      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_PREFIX, '')
     if (validatedSearchString !== '') {
       validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
     }
 
-    const browsePlaylists = await executeActionV6(nodesonosPlayer.url.origin,
+    const browsePlaylists = await executeActionV6(nodesonosPlayer.url,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:PLAYLISTS' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren',
@@ -387,19 +388,19 @@ module.exports = function (RED) {
         return element
       })
     }
-
     const outputChanged = {}
     outputChanged[stateName] = playlistList.slice()  // copy array and assign to payload
+
     return outputChanged
   }
 
   /**  Queue first Music-Library playlist matching search string (is encoded) - maximum 100
-   * @param  {object} node used for debug message
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-     * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node used for debug message
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {stateName: uri metadata queue title artist}  
    * CAUTION: stateName!! not payload
@@ -409,9 +410,9 @@ module.exports = function (RED) {
   async function libraryQueuePlaylistV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
     
-    const browseMlPlaylists = await executeActionV6(nodesonosPlayer.url.origin,
+    const browseMlPlaylists = await executeActionV6(nodesonosPlayer.url,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:PLAYLISTS:' + encodeURIComponent(validatedSearchString),
@@ -429,19 +430,18 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(listPls)) {
       throw new Error(`${NRCSP_PREFIX} response form parsing Browse playlists is invalid.`)
     }
-
     await nodesonosPlayer.queue(listPls[0].uri,)
     
     return {}
   }
 
   /**  Export first My-Sonos item matching search string.
-   * @param  {object} node not used
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-   * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node not used
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} see return   CAUTION: stateName!! not payload
    *
@@ -453,9 +453,9 @@ module.exports = function (RED) {
   async function mysonosExportItem (node, msg, stateName, cmdName, nodesonosPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
 
-    const mySonosItems = await getMySonosV3(nodesonosPlayer.url.origin)
+    const mySonosItems = await getMySonosV3(nodesonosPlayer.url)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
     }
@@ -475,15 +475,16 @@ module.exports = function (RED) {
       metadata: mySonosItems[foundIndex].metadata,
       queue: (mySonosItems[foundIndex].processingType === 'queue')
     }
+
     return outputChanged
   }
 
   /**  Outputs array of My-Sonos items as object.
-   * @param  {object} node not used
-   * @param  {object} msg incoming message
-   * @param  {string} stateName not used
-   * @param  {string} cmdName not used
-    * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node not used
+   * @param {object} msg incoming message
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {object} payload  = array of my Sonos items 
    * {title, albumArt, uri, metadata, sid, upnpClass, processingType}
@@ -492,22 +493,23 @@ module.exports = function (RED) {
    * @throws nrcsp error - all functions
    */
   async function mysonosGetItems (node, msg, stateName, cmdName, nodesonosPlayer) {
-    const payload = await getMySonosV3(nodesonosPlayer.url.origin)
+    const payload = await getMySonosV3(nodesonosPlayer.url)
     if (!isTruthyAndNotEmptyString(payload)) {
       throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
     }
+
     return { payload }
   }
 
   /**  Queues (aka add) first My-Sonos item matching search string.
-   * @param  {object} node not used
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not
-   * @param  {object} msg.filter optional, example: 
+   * @param {object} node not used
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} msg.filter optional, example: 
    * { processingType: "queue", mediaType: "playlist", serviceName: "all" }
-      * @param  {object} nodesonosPlayer player with url - as default and anchor player
+      * @param  {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
    *
@@ -520,7 +522,7 @@ module.exports = function (RED) {
   async function mysonosQueueItem (node, msg, stateName, cmdName, nodesonosPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
 
     // create filter object with processingType queue
     const filter = { processingType: 'queue' } // no streams!
@@ -545,7 +547,7 @@ module.exports = function (RED) {
       filter.mediaType = 'all'
     }
 
-    const mySonosItems = await getMySonosV3(nodesonosPlayer.url.origin)
+    const mySonosItems = await getMySonosV3(nodesonosPlayer.url)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
     }
@@ -562,16 +564,17 @@ module.exports = function (RED) {
       uri: mySonosItems[foundIndex].uri,
       metadata: mySonosItems[foundIndex].metadata
     })
+
     return {}
   }
 
   /** Stream (aka play) first My-Sonos item matching search string.
-   * @param  {object} node not used
-   * @param  {object} msg incoming message
-   * @param  {string} msg[stateName] search string
-   * @param  {string} stateName default: payload - in compatibility mode: topic
-   * @param  {string} cmdName not used
-   * @param  {object} nodesonosPlayer player with url - as default and anchor player
+   * @param {object} node not used
+   * @param {object} msg incoming message
+   * @param {string} msg.stateName search string
+   * @param {string} stateName=payload in compatibility mode: topic
+   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
    *
@@ -580,9 +583,9 @@ module.exports = function (RED) {
   async function mysonosStreamItem (node, msg, stateName, cmdName, nodesonosPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = stringValidRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
     
-    const mySonosItems = await getMySonosV3(nodesonosPlayer.url.origin)
+    const mySonosItems = await getMySonosV3(nodesonosPlayer.url)
     if (!isTruthyAndNotEmptyString(mySonosItems)) {
       throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
     }
@@ -601,10 +604,11 @@ module.exports = function (RED) {
     await nodesonosPlayer.setAVTransportURI(mySonosItems[foundIndex].uri)
 
     // change volume if is provided
-    const newVolume = validateConvertToInteger(msg, 'volume', 0, 100, 'volume', NRCSP_PREFIX, -1)
+    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', NRCSP_PREFIX, -1)
     if (newVolume !== -1) {
-      await nodesonosPlayer.setVolume(msg.volume)
+      await setPlayerVolume(nodesonosPlayer, newVolume)
     }
+
     return {} // don't touch volume
   }
 

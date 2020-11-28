@@ -38,8 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Collection of SOAP protocol related functions doing the basic SOAP stuff such as creating envelopes, sending data to player 
-via POST and handles the response.</div>
+            <div class="description">Collection of SOAP protocol and axios related functions doing the basic SOAP stuff such as creating envelopes, sending data to player via POST and handles the response.</div>
         
 
         
@@ -65,7 +64,7 @@ via POST and handles the response.</div>
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2020-11-08</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>2020-11-27</li></ul></dd>
     
 
     
@@ -155,7 +154,7 @@ via POST and handles the response.</div>
     
 
     
-    <h4 class="name" id=".encodeXml"><span class="type-signature">(static) </span>encodeXml<span class="signature">(xmlData)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".encodeXml"><span class="type-signature">(static) </span>encodeXml<span class="signature">(xmlData)</span><span class="type-signature"> &rarr; {string}</span></h4>
     
 
     
@@ -256,7 +255,7 @@ via POST and handles the response.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Soap.js.html">Soap.js</a>, <a href="Soap.js.html#line137">line 137</a>
+        <a href="Soap.js.html">Soap.js</a>, <a href="Soap.js.html#line112">line 112</a>
     </li></ul></dd>
     
 
@@ -281,186 +280,28 @@ via POST and handles the response.</div>
 
 
 
-
-
-
-
+<h5>Returns:</h5>
 
         
-            
-
-    
-
-    
-    <h4 class="name" id=".getUpnpErrorMessage"><span class="type-signature">(static) </span>getUpnpErrorMessage<span class="signature">(errorCode, actionName<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get error message from error code. If not found provide empty string.
+<div class="param-desc">
+    data without any <, >, &, ', "
 </div>
 
 
 
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
         
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>errorCode</code></td>
-            
-
-            <td class="type">
-            
-                
 <span class="param-type">string</span>
 
 
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>actionName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">'' is</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Soap.js.html">Soap.js</a>, <a href="Soap.js.html#line110">line 110</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
+    </dd>
 </dl>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 
 
 
@@ -472,7 +313,7 @@ via POST and handles the response.</div>
     
 
     
-    <h4 class="name" id=".sendToPlayerV1"><span class="type-signature">(static) </span>sendToPlayerV1<span class="signature">(baseUrl, endpoint, serviceName, actionIdentifier, args)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".sendSoapToPlayer"><span class="type-signature">(static) </span>sendSoapToPlayer<span class="signature">(playerUrlOrigin, endpoint, serviceName, actionName, args)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -480,7 +321,7 @@ via POST and handles the response.</div>
 
 
 <div class="description">
-    Send http request in SOAP format to specified player.
+    Send http request in SOAP format to player.
 </div>
 
 
@@ -516,7 +357,7 @@ via POST and handles the response.</div>
 
         <tr>
             
-                <td class="name"><code>baseUrl</code></td>
+                <td class="name"><code>playerUrlOrigin</code></td>
             
 
             <td class="type">
@@ -532,7 +373,7 @@ via POST and handles the response.</div>
 
             
 
-            <td class="description last">http address including http prefix and port such as 'http://192.168.178.30:1400'</td>
+            <td class="description last">JavaScript URL origin such as http://192.168.178.37:1400</td>
         </tr>
 
     
@@ -555,7 +396,7 @@ via POST and handles the response.</div>
 
             
 
-            <td class="description last">SOAP endpoint such as '/MediaRenderer/RenderingControl/Control'</td>
+            <td class="description last">SOAP endpoint (URL path) such '/ZoneGroupTopology/Control'</td>
         </tr>
 
     
@@ -578,14 +419,14 @@ via POST and handles the response.</div>
 
             
 
-            <td class="description last">such as 'RenderingControl'</td>
+            <td class="description last">such as 'ZoneGroupTopology'</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>actionIdentifier</code></td>
+                <td class="name"><code>actionName</code></td>
             
 
             <td class="type">
@@ -601,7 +442,7 @@ via POST and handles the response.</div>
 
             
 
-            <td class="description last">such as 'GetEQ'</td>
+            <td class="description last">such as 'GetZoneGroupState'</td>
         </tr>
 
     
@@ -624,7 +465,7 @@ via POST and handles the response.</div>
 
             
 
-            <td class="description last">such as { InstanceID: 0, EQType: "NightMode" },</td>
+            <td class="description last">such as { InstanceID: 0, EQType: "NightMode" } or just {}</td>
         </tr>
 
     
@@ -665,7 +506,7 @@ via POST and handles the response.</div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Soap.js.html">Soap.js</a>, <a href="Soap.js.html#line37">line 37</a>
+        <a href="Soap.js.html">Soap.js</a>, <a href="Soap.js.html#line34">line 34</a>
     </li></ul></dd>
     
 
@@ -690,6 +531,28 @@ via POST and handles the response.</div>
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    response header/body/error code from player
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -717,7 +580,7 @@ via POST and handles the response.</div>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:55:50 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 28 2020 19:59:07 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

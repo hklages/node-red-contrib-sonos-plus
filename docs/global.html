@@ -117,7 +117,7 @@
     <ul>
         <li>
             
-<span class="param-type">Object</span>
+<span class="param-type">object</span>
 
 
         </li>
@@ -434,7 +434,7 @@
                 </td>
             
 
-            <td class="description last">can be 'queue', 'stream', 'unsupported' or empty (calculated)</td>
+            <td class="description last">can be 'queue', 'stream', 'unsupported' or empty</td>
         </tr>
 
     
@@ -473,7 +473,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line40">line 40</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line31">line 31</a>
     </li></ul></dd>
     
 
@@ -491,13 +491,13 @@
 
             
                 
-<h4 class="name" id="URL">URL</h4>
+<h4 class="name" id="groupDataRaw">groupDataRaw</h4>
 
 
 
 
 <div class="description">
-    URL components. Especially playerUrlOrigin is used for all sendToPlayer calls.
+    group data from action
 </div>
 
 
@@ -542,7 +542,7 @@
 
         <tr>
             
-                <td class="name"><code>playerUrlHostname</code></td>
+                <td class="name"><code>Coordinator</code></td>
             
 
             <td class="type">
@@ -558,14 +558,14 @@
 
             
 
-            <td class="description last">such as 192.168.178.35</td>
+            <td class="description last">such as RINCON_5CAAFD00223601400</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>playerUrlPort</code></td>
+                <td class="name"><code>ID</code></td>
             
 
             <td class="type">
@@ -581,20 +581,20 @@
 
             
 
-            <td class="description last">such as 1400</td>
+            <td class="description last">such as RINCON_5CAAFD00223601400:481</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>playerUrlHost</code></td>
+                <td class="name"><code>array</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">array.&lt;member></span>
 
 
             
@@ -604,14 +604,14 @@
 
             
 
-            <td class="description last">such as "192.168.178.35:1400"</td>
+            <td class="description last">of al members in a group</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>playerUrlOrigin</code></td>
+                <td class="name"><code>member.UUID</code></td>
             
 
             <td class="type">
@@ -627,14 +627,14 @@
 
             
 
-            <td class="description last">such as "http://192.168.178.35:1400"</td>
+            <td class="description last">UUID such as RINCON_5CAAFD00223601400</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>baseUrl</code></td>
+                <td class="name"><code>member.Location</code></td>
             
 
             <td class="type">
@@ -650,7 +650,53 @@
 
             
 
-            <td class="description last">alias for playerUrlOrigin, will be replaced step by step</td>
+            <td class="description last">such  http://192.168.178.37:1400/xml/device_description.xml</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>member.ZoneName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as Küche</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>member.invisible</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">... and more</td>
         </tr>
 
     
@@ -689,19 +735,444 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line28">line 28</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line502">line 502</a>
     </li></ul></dd>
     
 
     
 
     
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://javascript.info/url">URL</a></li>
-        </ul>
-    </dd>
+
+    
+</dl>
+
+
+
+
+
+
+            
+                
+<h4 class="name" id="playerGroupData">playerGroupData</h4>
+
+
+
+
+<div class="description">
+    group data transformed
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object.&lt;<a href="global.html#URL">URL</a>></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">includes protocol, host, port, ...</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sonosName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">SONOS player name such as "Küche"</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>uuid</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as RINCON_5CAAFD00223601400</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>groupId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as RINCON_5CAAFD00223601400:482</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>invisible</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">false in case of any bindings otherwise true</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>channelMapSet</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line515">line 515</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            
+                
+<h4 class="name" id="URL">URL</h4>
+
+
+
+
+<div class="description">
+    JavaScript build in type
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">object</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>origin</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as http://192.168.178.37:1400</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>hostname</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as 192.168.178.37</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>port</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as 144</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>member.UUID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">UUID such as RINCON_5CAAFD00223601400... and more @see https://javascript.info/url</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line527">line 527</a>
+    </li></ul></dd>
+    
+
+    
+
     
 
     
@@ -732,7 +1203,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 21 2020 12:55:50 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Nov 28 2020 19:59:07 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

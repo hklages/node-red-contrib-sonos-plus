@@ -3,7 +3,7 @@
 /**
  * Collection of 
  * 
- * - complex SONOS commands such as playGroupNotification, group handling, My Sonos handling 
+ * - special SONOS commands such as playGroupNotification, group handling, My Sonos handling 
  * 
  * - the basic executeAction command
  * 
@@ -31,7 +31,7 @@ const { GenerateMetadata } = require('sonos').Helpers
 /**
   * Transformed data of Browse action response. 
   * @global
-  * @typedef {Object} DidlBrowseItem
+  * @typedef {object} DidlBrowseItem
   * @property {string} id object id, can be used for Browse command 
   * @property {string} title title 
   * @property {string} artist='' artist
@@ -101,17 +101,17 @@ module.exports = {
 
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
-    const iCoordinator = 0
+    const iCoord = 0
     const snapshot = {}
-    const state = await nodesonosPlayerArray[iCoordinator].getCurrentState()
+    const state = await nodesonosPlayerArray[iCoord].getCurrentState()
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     node.debug('wasPlaying >>' + snapshot.wasPlaying)
     snapshot.mediaInfo
-      = await nodesonosPlayerArray[iCoordinator].avTransportService().GetMediaInfo()
+      = await nodesonosPlayerArray[iCoord].avTransportService().GetMediaInfo()
     snapshot.positionInfo = await nodesonosPlayerArray[0].avTransportService().GetPositionInfo()
     snapshot.memberVolumes = []
     if (options.volume !== -1) {
-      snapshot.memberVolumes[0] = await nodesonosPlayerArray[iCoordinator].getVolume()
+      snapshot.memberVolumes[0] = await nodesonosPlayerArray[iCoord].getVolume()
     }
     if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < nodesonosPlayerArray.length; index++) {
@@ -126,21 +126,21 @@ module.exports = {
       args.CurrentURIMetaData = encodeXml(metadata)
     }
     // no check - always returns true
-    await module.exports.executeActionV6(nodesonosPlayerArray[iCoordinator].url.origin,
+    await module.exports.executeActionV6(nodesonosPlayerArray[iCoord].url,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
       args)
 
     if (options.volume !== -1) {
-      await nodesonosPlayerArray[iCoordinator].setVolume(options.volume)
+      await module.exports.setPlayerVolume(nodesonosPlayerArray[iCoord].url, options.volume)
       node.debug('same Volume' + options.sameVolume)
       if (options.sameVolume) { // all other members, starting at 1
         for (let index = 1; index < nodesonosPlayerArray.length; index++) {
-          await nodesonosPlayerArray[index].setVolume(options.volume)
+          await module.exports.setPlayerVolume(nodesonosPlayerArray[index].url, options.volume)
         }
       }
     }
     // no check - always returns true
-    await module.exports.executeActionV6(nodesonosPlayerArray[iCoordinator].url.origin,
+    await module.exports.executeActionV6(nodesonosPlayerArray[iCoord].url,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { InstanceID: 0, Speed: 1 })
    
@@ -150,7 +150,7 @@ module.exports = {
     let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
       const positionInfo
-        = await nodesonosPlayerArray[iCoordinator].avTransportService().GetPositionInfo()
+        = await nodesonosPlayerArray[iCoord].avTransportService().GetPositionInfo()
       if (isValidProperty(positionInfo, ['TrackDuration'])) {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         node.debug('Did retrieve duration from SONOS player')
@@ -164,16 +164,18 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await nodesonosPlayerArray[iCoordinator].setVolume(snapshot.memberVolumes[iCoordinator])
+      await module.exports.setPlayerVolume(nodesonosPlayerArray[iCoord].url,
+        snapshot.memberVolumes[iCoord])
     }
     if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < nodesonosPlayerArray.length; index++) {
-        await nodesonosPlayerArray[index].setVolume(snapshot.memberVolumes[index])
+        await module.exports.setPlayerVolume(nodesonosPlayerArray[index].url,
+          snapshot.memberVolumes[index])
       }
     }
     if (!options.uri.includes('x-sonos-vli')) {
       // that means initiated by Spotify or Amazon Alexa - can not recover)
-      await nodesonosPlayerArray[iCoordinator].setAVTransportURI({
+      await nodesonosPlayerArray[iCoord].setAVTransportURI({
         uri: snapshot.mediaInfo.CurrentURI,
         metadata: snapshot.mediaInfo.CurrentURIMetaData,
         onlySetUri: true // means don't play
@@ -181,14 +183,14 @@ module.exports = {
     }
     if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1
       && snapshot.mediaInfo.NrTracks > 1) {
-      await nodesonosPlayerArray[iCoordinator].selectTrack(snapshot.positionInfo.Track)
+      await nodesonosPlayerArray[iCoord].selectTrack(snapshot.positionInfo.Track)
         .catch(() => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
       node.debug('Setting back time to >>' + JSON.stringify(snapshot.positionInfo.RelTime))
-      await nodesonosPlayerArray[iCoordinator].avTransportService().Seek({
+      await nodesonosPlayerArray[iCoord].avTransportService().Seek({
         InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.positionInfo.RelTime
       })
         .catch(() => {
@@ -197,7 +199,7 @@ module.exports = {
     }
     if (snapshot.wasPlaying) {
       if (!options.uri.includes('x-sonos-vli')) {
-        await nodesonosPlayerArray[iCoordinator].play()
+        await nodesonosPlayerArray[iCoord].play()
       }
     }
   },
@@ -215,7 +217,7 @@ module.exports = {
    * @param  {string}  options.duration format hh:mm:ss
    * @returns {promise} true
    *
-   * @throws all from setAVTransportURI(), avTransportService()*, play, setVolume
+   * @throws all from setAVTransportURI(), avTransportService()*, play, setPlayerVolume
    *
    * Hint: joiner will leave group, play notification and rejoin the group. 
    * State will be imported from group.
@@ -250,17 +252,17 @@ module.exports = {
     if (metadata !== '') {
       args.CurrentURIMetaData = encodeXml(metadata)
     }
-    await module.exports.executeActionV6(nodesonosJoiner.url.origin,
+    await module.exports.executeActionV6(nodesonosJoiner.url,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
       args)
 
     // no check - always returns true
-    await module.exports.executeActionV6(nodesonosJoiner.url.origin,
+    await module.exports.executeActionV6(nodesonosJoiner.url,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { InstanceID: 0, Speed: 1 })
 
     if (options.volume !== -1) {
-      await nodesonosJoiner.setVolume(options.volume)
+      await this.setPlayerVolume(nodesonosJoiner.url, options.volume)
     }
     node.debug('Playing notification started - now figuring out the end')
 
@@ -281,7 +283,7 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await nodesonosJoiner.setVolume(snapshot.joinerVolume)
+      await this.setPlayerVolume(nodesonosJoiner.url, snapshot.joinerVolume)
     }
     await nodesonosJoiner.setAVTransportURI({
       uri: snapshot.mediaInfo.CurrentURI,
@@ -295,7 +297,7 @@ module.exports = {
 
   /**  Creates snapshot of group.
    * @param  {object}  node current node - for debugging
-   * @param  {array<nodesonosPlayer[]>}  nodesonosPlayerArray array of node-sonos player with url,
+   * @param  {nodesonosPlayer[]}  nodesonosPlayerArray array of node-sonos player with url,
    *                   coordinator/selected player has index 0, 
    *                   members.length = 1 in case independent
    * @param  {object}  options
@@ -405,7 +407,7 @@ module.exports = {
     for (let index = 0; index < nodesonosPlayerArray.length; index++) {
       volume = snapshot.memberData[index].volume
       if (volume !== -1) {
-        await nodesonosPlayerArray[index].setVolume(volume)
+        module.exports.setPlayerVolume(nodesonosPlayerArray[index].url, volume)
       }
       mutestate = snapshot.memberData[index].mutestate
       if (mutestate != null) {
@@ -413,6 +415,22 @@ module.exports = {
         await nodesonosPlayerArray[index].setMuted(digit)
       }
     }
+    return true
+  },
+
+  /** Set new volume at given player
+   * @param  {object} playerUrl player URL
+   * @param  {number} newVolume new volume, must be integer, in range 0 .. 100
+   * 
+   * @returns {} true
+   *
+   * @throws {error} from executeAction
+   */
+  setPlayerVolume: async function (playerUrl, newVolume) {
+    await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetVolume',
+      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
+    
     return true
   },
 
@@ -518,7 +536,7 @@ module.exports = {
   
   /** Get array of all groups. Each group consist of an array of players<playerGroupData>  
    * Coordinator is always in position 0. Group array may have size 1 (standalone)
-   * @param  {Object<URL>} playerUrl valid URL (JavaScript build in datatype)
+   * @param  {object} playerUrl URL (JavaScript build in datatype)
    * 
    * @returns {promise<Array<playerGroupData[]>>} array of arrays with playerGroupData
    *          First group member is coordinator.
@@ -529,7 +547,7 @@ module.exports = {
   getGroupsAll: async function (playerUrl) {
     
     // get the data from SONOS player and transform to JavaScript Objects
-    const householdPlayers = await module.exports.executeActionV6(playerUrl.origin,
+    const householdPlayers = await module.exports.executeActionV6(playerUrl,
       '/ZoneGroupTopology/Control', 'GetZoneGroupState', {})
     if (!isTruthyAndNotEmptyString(householdPlayers)) {
       throw new Error(`${NRCSP_PREFIX} invalid response GetZoneGroupState..`)
@@ -572,6 +590,7 @@ module.exports = {
       
       for (let iMember = 0; iMember < groupsArray[iGroup].ZoneGroupMember.length; iMember++) {
         url = new URL(groupsArray[iGroup].ZoneGroupMember[iMember].Location)
+        url.pathname = '' // clean up
         uuid = groupsArray[iGroup].ZoneGroupMember[iMember].UUID  
         sonosName = groupsArray[iGroup].ZoneGroupMember[iMember].ZoneName
         invisible = (groupsArray[iGroup].ZoneGroupMember[iMember].Invisible === '1')
@@ -594,7 +613,7 @@ module.exports = {
   },
 
   /**  Get array of all My Sonos items - maximum 200. Includes SONOS-Playlists (maximum 999)
-   * @param {string} playerUrlOrigin valid SONOS player URL.origin http://192.168.178.35:1400
+   * @param {object} playerUrl URL  http://192.168.178.35:1400
    *
    * @returns {Promise<DidlBrowseItem[]>} all My-Sonos Items and SONOS-Playlists as array, 
    * could be empty
@@ -606,9 +625,9 @@ module.exports = {
    * Restrictions: Audible Audio books are missing.
    * Restrictions: Pocket Casts Podcasts without uri, only metadata
    */
-  getMySonosV3: async function (playerUrlOrigin) {
+  getMySonosV3: async function (playerUrl) {
     // get all My-Sonos items (ObjectID FV:2) - maximum 200, but not SONOS-Playlists
-    const browseFv = await module.exports.executeActionV6(playerUrlOrigin,
+    const browseFv = await module.exports.executeActionV6(playerUrl,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*',
@@ -626,13 +645,13 @@ module.exports = {
       throw new Error(`${NRCSP_PREFIX} response form parsing Browse FV-2 is invalid.`)
     }
     let mySonosPlusPl = []
-    // TuneIn radio stations: Radio id, playerUrlOrigin to albumArtUri
+    // TuneIn radio stations: Radio id, playerUrl.origin to albumArtUri
     mySonosPlusPl = listMySonos.map(item => {
       let  artUri = ''  
       if (isValidPropertyNotEmptyString(item, ['artUri'])) {
         artUri = item['artUri']
         if (typeof artUri === 'string' && artUri.startsWith('/getaa')) {
-          artUri = playerUrlOrigin + artUri
+          artUri = playerUrl.origin + artUri
         } 
       }
       item.artUri = artUri
@@ -658,21 +677,21 @@ module.exports = {
     })
 
     // get all SONOS-Playlists
-    const newListPlaylists = await module.exports.getSonosPlaylistsV2(playerUrlOrigin)
+    const newListPlaylists = await module.exports.getSonosPlaylistsV2(playerUrl)
 
     return mySonosPlusPl.concat(newListPlaylists)
   },
 
   /** Get array of all SONOS-Playlists - maximum 999. 
-   * Adds playerUrlOrigin to artUri and processingType
-   * @param {string} playerUrlOrigin valid SONOS player URL origin http://192.168.178.35:1400
+   * Adds playerUrl.origin to artUri and processingType
+   * @param {object} playerUrl player URL http://192.168.178.35:1400
    *
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
    *
    * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
-  getSonosPlaylistsV2: async function (playerUrlOrigin) {
-    const browsePlaylist = await module.exports.executeActionV6(playerUrlOrigin,
+  getSonosPlaylistsV2: async function (playerUrl) {
+    const browsePlaylist = await module.exports.executeActionV6(playerUrl,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
@@ -693,13 +712,13 @@ module.exports = {
         throw new Error(`${NRCSP_PREFIX} response form parsing Browse SQ is invalid.`)
       }
       
-      // add playerUrlOrigin to artUri
+      // add playerUrl.origin to artUri
       modifiedPlaylistsArray = playlistArray.map(item => {
         let  artUri = ''  
         if (isValidPropertyNotEmptyString(item, ['artUri'])) {
           artUri = item['artUri']
           if (typeof artUri === 'string' && artUri.startsWith('/getaa')) {
-            artUri = playerUrlOrigin + artUri
+            artUri = playerUrl.origin + artUri
           } 
         }
         item.artUri = artUri
@@ -712,14 +731,14 @@ module.exports = {
   
   /** Get array of all SONOS-Queue items - maximum 200. 
    * Adds processingType and playerUrlOrigin to artUri.
-   * @param {string} playerUrlOrigin valid SONOS player URL origin http://192.168.178.35:1400
+   * @param {object} playerUrl player URL origin http://192.168.178.35:1400
    *
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
    *
    * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
-  getSonosQueue: async function (playerUrlOrigin) {
-    const browseQueue = await module.exports.executeActionV6(playerUrlOrigin,
+  getSonosQueue: async function (playerUrl) {
+    const browseQueue = await module.exports.executeActionV6(playerUrl,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'Q:0', BrowseFlag: 'BrowseDirectChildren', Filter: '*',
@@ -740,13 +759,13 @@ module.exports = {
         throw new Error(`${NRCSP_PREFIX} response form parsing Browse Q:0 is invalid.`)
       }
 
-      // update artUri with playerUrlOrigin and add proccesingType 'queue'
+      // update artUri with playerUrl.origin and add proccesingType 'queue'
       modifiedQueueArray = queueArray.map((item) => {
         let  artUri = ''  
         if (isValidPropertyNotEmptyString(item, ['artUri'])) {
           artUri = item['artUri']
           if (typeof artUri === 'string' && artUri.startsWith('/getaa')) {
-            artUri = playerUrlOrigin + artUri
+            artUri = playerUrl.origin + artUri
           } 
         }
         item.artUri = artUri
@@ -761,8 +780,8 @@ module.exports = {
   //                                EXECUTE UPNP ACTION COMMAND
   //...............................................................................................
 
-  /**  Sends action with actionInArgs to endpoint at playerUrlOrigin and returns result.
-   * @param  {string} playerUrlOrigin the player URL origin such as http://192.168.178.37:1400
+  /**  Sends action with actionInArgs to endpoint at playerUrl.origin and returns result.
+   * @param  {object} playerUrl player URL such as http://192.168.178.37:1400
    * @param  {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
    * @param  {string} actionName the action name such as Seek
    * @param  {object} actionInArgs all arguments - throws error if one argument is missing!
@@ -778,7 +797,7 @@ module.exports = {
    * Everything OK if statusCode === 200 and body includes expected 
    * response value (set) or value (get)
    */
-  executeActionV6: async function (playerUrlOrigin, endpoint, actionName, actionInArgs) {
+  executeActionV6: async function (playerUrl, endpoint, actionName, actionInArgs) {
     // get action in, out properties from json file
     const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
     const { inArgs, outArgs } = endpointActions[actionName]
@@ -796,7 +815,7 @@ module.exports = {
     const serviceName = tmp[tmp.length - 2]
   
     const response
-      = await sendSoapToPlayer(playerUrlOrigin, endpoint, serviceName, actionName, actionInArgs)
+      = await sendSoapToPlayer(playerUrl.origin, endpoint, serviceName, actionName, actionInArgs)
 
     // Everything OK if statusCode === 200 
     // && body includes expected response value or requested value

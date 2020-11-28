@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * Collection of SOAP protocol related functions doing the basic SOAP stuff such as 
+ * Collection of SOAP protocol and axios related functions doing the basic SOAP stuff such as 
  * creating envelopes, sending data to player via POST and handles the response.
  *
  * @module Soap
@@ -20,10 +20,10 @@ const {
 
 module.exports = {
 
-  ERROR_CODES: require('./Db-Soap-Errorcodes.json'),
+  SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),
 
   /** Send http request in SOAP format to player.
-   * @param {string} playerUrlOrigin JavaScript URL origin such as http://192.168.178.1:80
+   * @param {string} playerUrlOrigin JavaScript URL origin such as http://192.168.178.37:1400
    * @param {string} endpoint SOAP endpoint (URL path) such '/ZoneGroupTopology/Control'
    * @param {string} serviceName such as 'ZoneGroupTopology'
    * @param {string} actionName such as 'GetZoneGroupState'
@@ -75,12 +75,12 @@ module.exports = {
               const errorCode = getErrorCodeFromEnvelope(error.response.data)
               let serviceErrorList = ''
               // eslint-disable-next-line max-len
-              if (isValidPropertyNotEmptyString(module.exports.ERROR_CODES, [serviceName.toUpperCase()])) {
+              if (isValidPropertyNotEmptyString(module.exports.SOAP_ERRORS, [serviceName.toUpperCase()])) {
                 // look up in the service specific error codes 7xx
-                serviceErrorList = module.exports.ERROR_CODES[serviceName.toUpperCase()]
+                serviceErrorList = module.exports.SOAP_ERRORS[serviceName.toUpperCase()]
               }
               const errorMessage
-                = getErrorMessageV1(errorCode, module.exports.ERROR_CODES.UPNP, serviceErrorList)
+                = getErrorMessageV1(errorCode, module.exports.SOAP_ERRORS.UPNP, serviceErrorList)
               // eslint-disable-next-line max-len
               throw new Error(`${NRCSP_PREFIX} statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
             } else {
