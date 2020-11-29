@@ -294,7 +294,6 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_PREFIX} New coordinator must be different from current`)
     }
 
-    // No check - always returns true
     await executeActionV6(groupData.members[groupData.playerIndex].url,
       '/MediaRenderer/AVTransport/Control', 'DelegateGroupCoordinationTo',
       { 'InstanceID': 0,
@@ -327,7 +326,7 @@ module.exports = function (RED) {
       '/MediaRenderer/GroupRenderingControl/Control', 'SetRelativeGroupVolume',
       { 'InstanceID': 0, 'Adjustment': adjustVolume })
 
-    return { newVolume }
+    return { newVolume } // caution newVolume property!
   }
 
   /**
@@ -390,7 +389,7 @@ module.exports = function (RED) {
 
     const nodesonosPlayerArray = []
     for (let index = 0; index < groupData.members.length; index++) {
-      let nodesonosNewPlayer = new Sonos(groupData.members[index].url.hostname)
+      const nodesonosNewPlayer = new Sonos(groupData.members[index].url.hostname)
       nodesonosNewPlayer.url = groupData.members[index].url
       nodesonosPlayerArray.push(nodesonosNewPlayer)
     }
@@ -1012,7 +1011,7 @@ module.exports = function (RED) {
     const nodesonosPlayerArray = []
     
     for (let index = 0; index < groupData.members.length; index++) {
-      let nodesonosNewPlayer = new Sonos(groupData.members[index].url.hostname)
+      const nodesonosNewPlayer = new Sonos(groupData.members[index].url.hostname)
       nodesonosNewPlayer.url = groupData.members[index].url
       nodesonosPlayerArray.push(nodesonosNewPlayer)
     }
@@ -1098,7 +1097,7 @@ module.exports = function (RED) {
 
     const membersPlayerPlus = []
     for (let index = 0; index < groupData.members.length; index++) {
-      let nodesonosSinglePlayer = new Sonos(groupData.members[index].url.hostname)
+      const nodesonosSinglePlayer = new Sonos(groupData.members[index].url.hostname)
       nodesonosSinglePlayer.url = groupData.members[index].url
       membersPlayerPlus.push(nodesonosSinglePlayer)
     }
@@ -1705,7 +1704,7 @@ module.exports = function (RED) {
     }
     let player
     let visible
-    let householdPlayerList = []
+    const householdPlayerList = []
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
       for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
         visible = !allGroupsData[iGroup][iMember].invisible
@@ -2269,22 +2268,18 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise} object to update payload the LED state on/off
+   * @returns {promise<string>} payload on or off
    *
    * @throws any functions throws error and explicit throws
    */
   async function playerGetLed (node, msg, stateName, cmdName, nodesonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
-    nodesonosSinglePlayer.url = groupData.members[groupData.playerIndex].url
-    let payload = await nodesonosSinglePlayer.getLEDState()
-    if (!isTruthyAndNotEmptyString(payload)) {
-      throw new Error(`${NRCSP_PREFIX} player response is undefined`)
-    }
-    payload = payload.toLowerCase()
-
-    return { payload }
+    // returns On or Off
+    const state = await executeActionV6(groupData.members[groupData.playerIndex].url,
+      '/DeviceProperties/Control', 'GetLEDState', {})
+    
+    return { 'payload': state.toLowerCase() }
   }
 
   /**
@@ -2351,17 +2346,17 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
     nodesonosSinglePlayer.url = groupData.members[groupData.playerIndex].url
-    const properties = await nodesonosSinglePlayer.deviceDescription()
-    if (properties._) { // Strange attribute - remove it
-      delete properties._
+    const payload = await nodesonosSinglePlayer.deviceDescription()
+    if (payload._) { // Strange attribute - remove it
+      delete payload._
     }
-    properties.uuid = properties.UDN.substring('uuid:'.length)
-    properties.playerName = properties.roomName
-    if (!isTruthyAndNotEmptyString(properties)) {
+    payload.uuid = payload.UDN.substring('uuid:'.length)
+    payload.playerName = payload.roomName
+    if (!isTruthyAndNotEmptyString(payload)) {
       throw new Error(`${NRCSP_PREFIX} player response is undefined`)
     }
 
-    return { 'payload': properties }
+    return { payload }
   }
 
   /**
@@ -2712,15 +2707,14 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    */
   async function playerSetLed (node, msg, stateName, cmdName, nodesonosPlayer) {
-    // Msg.state is required
-    let newState = isOnOff(msg, stateName, 'led state', NRCSP_PREFIX)
-    newState = (newState ? 'On' : 'Off')
+    // Msg.state is required - convert to On Off
+    const newState = (isOnOff(msg, stateName, 'led state', NRCSP_PREFIX) ? 'On' : 'Off')
 
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
-    nodesonosSinglePlayer.url = groupData.members[groupData.playerIndex].url
-    await nodesonosSinglePlayer.setLEDState(newState)
+    await executeActionV6(groupData.members[groupData.playerIndex].url,
+      '/DeviceProperties/Control', 'SetLEDState',
+      { 'DesiredLEDState': newState })
 
     return {}
   }
@@ -2884,12 +2878,12 @@ module.exports = function (RED) {
 
   /**
    *  Validates group properties msg.playerName, msg.volume, msg.sameVolume, msg.clearQueue
-   * @param {object}       msg incoming message
-   * @param {string}       [msg.playerName = ''] playerName
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = ''] playerName
    * @param {string/number} [msg.volume = -1] volume. if not set don't touch original volume.
-   * @param {boolean}      [msg.sameVolume = true] sameVolume
-   * @param {boolean}      [msg.clearQueue = true] indicator for clear queue
-   * @param {string}       pkgPrefix package identifier
+   * @param {boolean} [msg.sameVolume = true] sameVolume
+   * @param {boolean} [msg.clearQueue = true] indicator for clear queue
+   * @param {string} pkgPrefix package identifier
    *
    * @returns {promise} object {playerName, volume, sameVolume, flushQueue}
    * playerName is '' if missing.

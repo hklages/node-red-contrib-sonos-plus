@@ -24,7 +24,7 @@ const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyStrin
   getNestedProperty, hhmmss2msec, NRCSP_PREFIX
 } = require('./Helper.js')
 
-const { encodeXml, sendSoapToPlayer } = require('./Soap.js')
+const { sendSoapToPlayer } = require('./Soap.js')
 const xml2js = require('xml2js')
 const { GenerateMetadata } = require('sonos').Helpers
 
@@ -90,14 +90,19 @@ module.exports = {
   playGroupNotification: async function (node, nodesonosPlayerArray, options) {
     const WAIT_ADJUSTMENT = 2000
 
-    // generate metadata if not provided
+    // generate metadata if not provided and uri as URL
     let metadata
     if (!isValidProperty(options, ['metadata'])) {
       metadata = GenerateMetadata(options.uri).metadata
     } else {
       metadata = options.metadata
     }
+    if (metadata !== '') {
+      metadata = encodeURIComponent(metadata)
+      //TODO check otherwise back to: metadata = encodeXml(metadata)
+    }
     node.debug('metadata >>' + JSON.stringify(metadata))
+    const uri = new URL(options.uri)
 
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
@@ -121,14 +126,9 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set AVTransport
-    let args = {  InstanceID: 0, CurrentURI: encodeXml(options.uri),  CurrentURIMetaData: '' }
-    if (metadata !== '') {
-      args.CurrentURIMetaData = encodeXml(metadata)
-    }
-    // no check - always returns true
+    const args = {  InstanceID: 0, CurrentURI: uri.toString(),  CurrentURIMetaData: metadata }
     await module.exports.executeActionV6(nodesonosPlayerArray[iCoord].url,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
-      args)
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
 
     if (options.volume !== -1) {
       await module.exports.setPlayerVolume(nodesonosPlayerArray[iCoord].url, options.volume)
@@ -227,14 +227,19 @@ module.exports = {
   playJoinerNotification: async function (node, nodesonosCoordinator, nodesonosJoiner, options) {
     const WAIT_ADJUSTMENT = 2000
 
-    // generate metadata if not provided
+    // generate metadata if not provided and uri as URL
     let metadata
     if (!isValidProperty(options, ['metadata'])) {
       metadata = GenerateMetadata(options.uri).metadata
     } else {
       metadata = options.metadata
     }
+    if (metadata !== '') {
+      metadata = encodeURIComponent(metadata)
+      //TODO check otherwise back to: metadata = encodeXml(metadata)
+    }
     node.debug('metadata >>' + JSON.stringify(metadata))
+    const uri = new URL(options.uri)
 
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
@@ -248,10 +253,7 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    let args = {  InstanceID: 0, CurrentURI: encodeXml(options.uri),  CurrentURIMetaData: '' }
-    if (metadata !== '') {
-      args.CurrentURIMetaData = encodeXml(metadata)
-    }
+    const args = {  InstanceID: 0, CurrentURI: uri.toString(),  CurrentURIMetaData: metadata }
     await module.exports.executeActionV6(nodesonosJoiner.url,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
       args)
@@ -262,7 +264,7 @@ module.exports = {
       { InstanceID: 0, Speed: 1 })
 
     if (options.volume !== -1) {
-      await this.setPlayerVolume(nodesonosJoiner.url, options.volume)
+      await module.exports.setPlayerVolume(nodesonosJoiner.url, options.volume)
     }
     node.debug('Playing notification started - now figuring out the end')
 
@@ -283,7 +285,7 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await this.setPlayerVolume(nodesonosJoiner.url, snapshot.joinerVolume)
+      await module.exports.setPlayerVolume(nodesonosJoiner.url, snapshot.joinerVolume)
     }
     await nodesonosJoiner.setAVTransportURI({
       uri: snapshot.mediaInfo.CurrentURI,
@@ -465,30 +467,31 @@ module.exports = {
           // we compare playerName (string) such as Küche
           if (allGroupsData[iGroup][iMember].sonosName === playerName && visible) {
             foundGroupIndex = iGroup
-            break
+            usedPlayerHostname = allGroupsData[iGroup][iMember].url.hostname
+            break // inner loop
           }
         } else {
           // we compare by URL.hostname such as '192.168.178.35'
           if (allGroupsData[iGroup][iMember].url.hostname
             === nodesonosPlayer.url.hostname && visible) {
             foundGroupIndex = iGroup
-            break
+            usedPlayerHostname = allGroupsData[iGroup][iMember].url.hostname
+            break // inner loop
           }
         }
       }
       if (foundGroupIndex >= 0) {
-        usedPlayerHostname = allGroupsData[iGroup][foundGroupIndex].url.hostname
-        break
+        break // break also outer loop
       }
     }
     if (foundGroupIndex === -1) {
-      throw new Error(`${NRCSP_PREFIX} could not find given player (must be visible) in any group`)
+      throw new Error(`${NRCSP_PREFIX} could not find givenn player in any group`)
     }
     
-    // only accept visible player (in stereopair there is one invisible)
-    let members = allGroupsData[foundGroupIndex].filter((member) => (member.invisible === false))
+    // remove all invisible players player (in stereopair there is one invisible)
+    const members = allGroupsData[foundGroupIndex].filter((member) => (member.invisible === false))
 
-    // find our player index in members. At this position because we did filter!
+    // find our player index in that grup. At this position because we did filter!
     // that helps to figure out role: coordinator, joiner, independent
     const playerIndex = members.findIndex((member) => (member.url.hostname === usedPlayerHostname))
 
@@ -938,8 +941,8 @@ module.exports = {
     }
 
     // transform properties Album related
-    let transformedItems = originalItems.map(item => {
-      let didlBrowseItem = {
+    const transformedItems = originalItems.map(item => {
+      const didlBrowseItem = {
         id: '',
         title: '',
         artist: '',

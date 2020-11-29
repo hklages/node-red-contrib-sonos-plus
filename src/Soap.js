@@ -1,5 +1,3 @@
-'use strict'
-
 /**
  * Collection of SOAP protocol and axios related functions doing the basic SOAP stuff such as 
  * creating envelopes, sending data to player via POST and handles the response.
@@ -11,6 +9,7 @@
  * @since 2020-11-27
 */
 
+'use strict'
 const request = require('axios')
 
 const {
@@ -24,7 +23,7 @@ module.exports = {
 
   /** Send http request in SOAP format to player.
    * @param {string} playerUrlOrigin JavaScript URL origin such as http://192.168.178.37:1400
-   * @param {string} endpoint SOAP endpoint (URL path) such '/ZoneGroupTopology/Control'
+   * @param {string} endpoint SOAP endpoint (URL pathname) such '/ZoneGroupTopology/Control'
    * @param {string} serviceName such as 'ZoneGroupTopology'
    * @param {string} actionName such as 'GetZoneGroupState'
    * @param {object} args such as { InstanceID: 0, EQType: "NightMode" } or just {}
@@ -32,7 +31,7 @@ module.exports = {
    * @returns {promise} response header/body/error code from player
    */
   sendSoapToPlayer: async function (playerUrlOrigin, endpoint, serviceName, actionName, args) {
-    // create action used in header - notice the " inside `
+    // create action used in header - notice the " inside
     const soapAction = `"urn:schemas-upnp-org:service:${serviceName}:1#${actionName}"`
 
     // create body
@@ -45,13 +44,10 @@ module.exports = {
     httpBody += `</u:${actionName}>`
 
     // body wrapped in envelope
-    httpBody = [
-      // '<?xml version="1.0" encoding="utf-8"?>',
-      // eslint-disable-next-line max-len
-      '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">',
-      '<s:Body>' + httpBody + '</s:Body>',
-      '</s:Envelope>'
-    ].join('')
+    // eslint-disable-next-line max-len
+    httpBody = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">' 
+      + '<s:Body>' + httpBody + '</s:Body>'
+      + '</s:Envelope>'
 
     const response = await request({
       method: 'post',
@@ -64,8 +60,7 @@ module.exports = {
       data: httpBody
     })
       .catch((error) => {
-        // In case of an SOAP error error.response held the details.
-        // That goes usually together with status code 500 - triggering catch
+        // In case of an SOAP error error.response held the details and status code 500
         // Experience: When using reject(error) the error.response get lost.
         // Thats why error.response is checked and handled here!
         if (isValidProperty(error, ['response'])) {
@@ -101,23 +96,5 @@ module.exports = {
       body: response.data,
       statusCode: response.status
     }
-  },
-
-  /** Encodes special XML characters such as < to &lt;.
-   * @param  {string} xmlData orignal XML data
-   * 
-   * @returns {string} data without any <, >, &, ', "
-   */
-
-  encodeXml: xmlData => {
-    return xmlData.replace(/[<>&'"]/g, singleChar => {
-      switch (singleChar) {
-      case '<': return '&lt;'
-      case '>': return '&gt;'
-      case '&': return '&amp;'
-      case '\'': return '&apos;'
-      case '"':  return '&quot;'
-      }
-    })
   }
 }

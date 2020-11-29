@@ -24,9 +24,21 @@
       ],
       "outArgs": []
     },
+    "GetLEDState": {
+      "inArgs": [],
+      "outArgs": [
+        "CurrentLEDState"
+      ]
+    },
     "SeparateStereoPair": {
       "inArgs": [
         "ChannelMapSet"
+      ],
+      "outArgs": []
+    },
+    "SetLEDState": {
+      "inArgs": [
+        "DesiredLEDState"
       ],
       "outArgs": []
     }
