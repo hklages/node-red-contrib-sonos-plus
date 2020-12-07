@@ -23,7 +23,13 @@ Either open a github issue (preferred method) or send an email to nrcsplus@gmail
 
 ### NEWS
 
-- !!! msg.size is now msg.requestedCount
+- My Sonos node: !!! library.get.playlists: msg.size is now msg.requestedCount
+
+- Universal node: !!! group.get.sleeptimer returns now "none" if not set
+
+- Universal node: !!! group.get.state, group.get.members, household.get.groups: members have different data: url instead of hostname, port, ...
+
+- Universal node: !!! group.get.state does not anymore provide groupName
 
 - !!! artUri now instead of AlbumArtUri, added serviceName to group.get.trackplus and some others.
 

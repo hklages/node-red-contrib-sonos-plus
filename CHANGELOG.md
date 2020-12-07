@@ -6,13 +6,13 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
-- My Sonos node: !!! msg.size is now msg.requestedCount
+- My Sonos node: !!! library.get.playlists: msg.size is now msg.requestedCount
 
-- Universal node: !!! group.get.sleeptimer now "none" if not set
+- Universal node: !!! group.get.sleeptimer returns now "none" if not set
 
-- Universal node: !!! group.get.state, group.get.members, household.get.groups: group data now url instead of host, .... and added channelMapSet, groupId
+- Universal node: !!! group.get.state, group.get.members, household.get.groups: members have different data: url instead of hostname, port, ...
 
-- Universal node: !!! group.get.state no groupName anymore
+- Universal node: !!! group.get.state does not anymore provide groupName
 
 - Universal node: library.get.playlists, library.export.playlist, library.queue.playlist revised
 
