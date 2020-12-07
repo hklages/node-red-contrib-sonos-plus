@@ -2,15 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
-### [4.5.3] 2020-11-28
+### [4.5.3] 2020-12-07
 
 #### Changed
 
+- My Sonos node: !!! msg.size is now msg.requestedCount
+
+- Universal node: !!! group.get.sleeptimer now "none" if not set
+
+- Universal node: !!! group.get.state, group.get.members, household.get.groups: group data now url instead of host, .... and added channelMapSet, groupId
+
+- Universal node: !!! group.get.state no groupName anymore
+
 - Universal node: library.get.playlists, library.export.playlist, library.queue.playlist revised
 
-- Universal node: group.get.sleeptimer now "none" if not set
-
-- Universal node: group data now url instead of host, .... and added channelMapSet
+- My Sonos node: bug fixing Apple playlist not queued
 
 - internal: JDoc - more function documented, more strict lint
 

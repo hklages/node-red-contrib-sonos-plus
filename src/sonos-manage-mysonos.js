@@ -217,12 +217,9 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(listAlbum)) {
       throw new Error(`${NRCSP_PREFIX} response form parsing Browse Album is invalid.`)
     }
-    
-    const firstAlbum = { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true }
-    const outputChanged = {}
-    outputChanged[stateName] = firstAlbum
 
-    return outputChanged
+    return { [stateName]: { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true } }
+
   }
 
   /**  Exports first Music-Library playlist matching search string (is encoded) - maximum 100
@@ -262,11 +259,7 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_PREFIX} response form parsing Browse playlists is invalid.`)
     }
     
-    const firstPlaylist = { uri: listPls[0].uri, metadata: listPls[0].metadata, queue: true }
-    const outputChanged = {}
-    outputChanged[stateName] = firstPlaylist
-
-    return outputChanged
+    return { [stateName]: { uri: listPls[0].uri, metadata: listPls[0].metadata, queue: true } }
   }
 
   /**  Outputs array Music-Library albums - search string is optional
@@ -327,9 +320,7 @@ module.exports = function (RED) {
       })
     }
 
-    const outputChanged = {}
-    outputChanged[stateName] = albumList.slice()  // copy array and assign to payload
-    return outputChanged
+    return { [stateName]: albumList.slice() }
   }
 
   /**  Outputs array Music-Library playlists - search string is optional
@@ -388,10 +379,8 @@ module.exports = function (RED) {
         return element
       })
     }
-    const outputChanged = {}
-    outputChanged[stateName] = playlistList.slice()  // copy array and assign to payload
 
-    return outputChanged
+    return { [stateName]: playlistList.slice() }
   }
 
   /**  Queue first Music-Library playlist matching search string (is encoded) - maximum 100
@@ -469,14 +458,12 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_PREFIX} No title matching search string >>${validatedSearchString}`)
     }
 
-    const outputChanged = {}
-    outputChanged[stateName] = {
+    return { [stateName]: {
       uri: mySonosItems[foundIndex].uri,
       metadata: mySonosItems[foundIndex].metadata,
       queue: (mySonosItems[foundIndex].processingType === 'queue')
-    }
+    } }
 
-    return outputChanged
   }
 
   /**  Outputs array of My-Sonos items as object.

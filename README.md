@@ -23,6 +23,8 @@ Either open a github issue (preferred method) or send an email to nrcsplus@gmail
 
 ### NEWS
 
+- !!! msg.size is now msg.requestedCount
+
 - !!! artUri now instead of AlbumArtUri, added serviceName to group.get.trackplus and some others.
 
 - In Universal node: household.create.group - use a comma separated list with coordinator at first position to create a group

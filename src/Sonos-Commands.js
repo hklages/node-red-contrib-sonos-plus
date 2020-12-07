@@ -61,7 +61,9 @@ module.exports = {
     'object.container.playlistContainer',
     'object.item.audioItem.musicTrack',
     'object.container',
-    'object.container.playlistContainer#playlistItem'
+    'object.container.playlistContainer#playlistItem',
+    'object.container.playlistContainer.#playlistItem',
+    'object.container.playlistContainer.#PlaylistView'
   ],
 
   //

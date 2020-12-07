@@ -476,7 +476,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise} {payload: crossfade mode} on/off
+   * @returns {promise} {payload: crossfade mode} on|off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -519,7 +519,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise<string>} on/off
+   * @returns {promise<string>} on|off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -668,8 +668,7 @@ module.exports = function (RED) {
         queueMode,
         'members': groupData.members,
         'size': groupData.members.length,
-        'id': groupData.groupId,
-        'name': groupData.groupName
+        'id': groupData.groupId
       }
     }
   }
@@ -1411,10 +1410,10 @@ module.exports = function (RED) {
     if (queueItems.length === 0) {
       throw new Error(`${NRCSP_PREFIX} queue is empty`)
     }
-    await executeActionV6(groupData.members[0].url,
+    await executeActionV6(groupData.members[0].url, // 0 stands for coordinator
       '/MediaRenderer/AVTransport/Control', 'SaveQueue',
-      { 'InstanceID': 0, 'Title': validatedTitle, 'ObjectID': '' }) // 0 stands for coordinator
-
+      { 'InstanceID': 0, 'Title': validatedTitle, 'ObjectID': '' }) 
+    
     return {}
   }
 
@@ -1472,10 +1471,10 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Set group crossfade on/off.
+   *  Set group crossfade on|off.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName on/off.
+   * @param {string} msg.stateName on|off.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
@@ -1501,7 +1500,7 @@ module.exports = function (RED) {
    *  Set group mute state.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName on/off.
+   * @param {string} msg.stateName on|off.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
@@ -1786,7 +1785,7 @@ module.exports = function (RED) {
    * Is only supported for some type of SONOS player.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName - left player, will be visible
+   * @param {string} msg.stateName - left player, will keep visible
    * @param {string} msg.playerNameRight - right player, will become invisible
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
@@ -1811,7 +1810,8 @@ module.exports = function (RED) {
     if (!isTruthyAndNotEmptyString(allGroupsData)) {
       throw new Error(`${NRCSP_PREFIX} all groups data undefined`)
     }
-    let [playerLeftUuid, playerRightUuid] = ''
+    let playerLeftUuid = ''
+    let playerRightUuid = ''
     let name
     let playerLeftUrl // type JavaScript URL
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
@@ -1956,7 +1956,7 @@ module.exports = function (RED) {
    *  Separate a stereo pair of players. Right player will become visible again.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName - left player, will be visible
+   * @param {string} msg.stateName - left SONOS-Playername, is visible
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
@@ -1977,7 +1977,8 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_PREFIX} all groups data undefined`)
     }
 
-    let [playerLeftUuid, playerRightUuid] = ''
+    let playerLeftUuid = ''
+    let playerRightUuid = ''
     let playerChannelMap
     let playerUuid
     let name
@@ -2212,7 +2213,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise} object to update msg. msg.payload the Loudness state LED state on/off
+   * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
    *
    * @throws any functions throws error and explicit throws
    *
@@ -2291,7 +2292,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise} object to update msg. msg.payload the Loudness state LED state on/off
+   * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2314,7 +2315,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise} {payload: muteState} on/off
+   * @returns {promise} {payload: muteState} on|off
    *
    * @throws any functions throws error and explicit throws
    */
@@ -2693,10 +2694,10 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Set player led on/off.
+   *  Set player led on|off.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName on/off
+   * @param {string} msg.stateName on|off
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
@@ -2720,10 +2721,10 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Set player loudness on/off.
+   *  Set player loudness on|off.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName on/off
+   * @param {string} msg.stateName on|off
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
@@ -2750,7 +2751,7 @@ module.exports = function (RED) {
    *  Set mute for given player.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName on/off.
+   * @param {string} msg.stateName on|off.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
    * @param {string} stateName=payload in compatibility mode: topic
    * @param {string} cmdName=topic in compatibility mode: payload
