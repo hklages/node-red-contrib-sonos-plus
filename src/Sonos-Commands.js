@@ -299,21 +299,35 @@ module.exports = {
     }
   },
 
+  /**
+   * @typedef {object} Snapshot snapshot of group
+   * @global
+   * @property {boolean} wasPlaying 
+   * @property {string} playbackstate such Stop, Playing, ...
+   * @property {string} CurrentURI content
+   * @property {string} CurrentURIMetadata content meta data
+   * @property {string} NrTracks tracks in queue
+   * @property {number} Track current track
+   * @property {string} TrackDuration duration hh:mm:ss
+   * @property {string} RelTime position hh:mm:ss
+   * @property {array<memberData>} array of al members in a group
+   * @property {URL} membeData.url URL such as http://192.168.178.37:1400/
+   * @property {boolean} memberData.mutestate null for not available
+   * @property {number} memberData.volume -1 for not available
+   */
+
   /**  Creates snapshot of group.
    * @param  {object}  node current node - for debugging
    * @param  {nodesonosPlayer[]}  nodesonosPlayerArray array of node-sonos player with url,
-   *                   coordinator/selected player has index 0, 
-   *                   members.length = 1 in case independent
+   *                   coordinator player has index 0, 
+   *                   members.length = 1 in case standalone
    * @param  {object}  options
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
    * @param  {boolean} [options.snapMutestates = false] capture all players mute state
    *
-   * @returns {promise} group snapshot object: { memberData: object, isPlaying: boolean, }
-   * memberData is array of all members (coordinator is index 0) as object
-   * {urlHostname, port, sonosName, volume, mutestate }
+   * @returns {promise<Snapshot>} group snapshot object
    * 
    * @throws {error} if invalid response from SONOS player
-   *
   */
   // TODO Notion capture group member
   // TODO Notion player labeling
@@ -324,25 +338,23 @@ module.exports = {
 
     // player ip, port, ... and volume, mutestate in an array
     snapshot.memberData = []
-    let playersVolume
     let playersMutestate
-    let memberSimple
+    let member
     for (let index = 0; index < nodesonosPlayerArray.length; index++) {
-      memberSimple = {
-        url: nodesonosPlayerArray[index].url
+      member = {
+        url: nodesonosPlayerArray[index].url,
+        volume: -1,
+        mutestate: null,
+        sonosName: nodesonosPlayerArray[index].sonosName
       }
-      snapshot.memberData.push(memberSimple)
-      playersVolume = -1 // means not captured
       if (options.snapVolumes) {
-        playersVolume = await nodesonosPlayerArray[index].getVolume()
+        member.volume = await nodesonosPlayerArray[index].getVolume()
       }
-      playersMutestate = null // means not captured
       if (options.snapMutestates) {
         playersMutestate = await nodesonosPlayerArray[index].getMuted()
-        playersMutestate = (playersMutestate ? 'on' : 'off')
+        member.mutestate = (playersMutestate ? 'on' : 'off')
       }
-      snapshot.memberData[index].volume = playersVolume
-      snapshot.memberData[index].mutestate = playersMutestate
+      snapshot.memberData.push(member)
     }
 
     const coordinatorIndex = 0
@@ -355,12 +367,14 @@ module.exports = {
       = await nodesonosPlayerArray[coordinatorIndex].avTransportService().GetPositionInfo()
     Object.assign(snapshot,
       {
-        CurrentURI: mediaData.CurrentURI, CurrentURIMetadata: mediaData.CurrentURIMetaData,
+        CurrentURI: mediaData.CurrentURI,
+        CurrentURIMetadata: mediaData.CurrentURIMetaData,
         NrTracks: mediaData.NrTracks
       })
     Object.assign(snapshot,
       {
-        Track: positionData.Track, RelTime: positionData.RelTime,
+        Track: positionData.Track,
+        RelTime: positionData.RelTime,
         TrackDuration: positionData.TrackDuration
       })
     return snapshot
@@ -368,15 +382,14 @@ module.exports = {
 
   /**  Restore snapshot of group.
    * @param  {object}  node current node - for debugging
-   * @param  {object}  snapshot - see create snapshot of group
+   * @param  {object<Snapshot>}  snapshot - see typedef
    * @param  {array}   nodesonosPlayerArray array of node-sonos player objects with url
-   *                   coordinator/selected player has index 0
-   *                   members.length = 1 in case independent
+   *                   coordinator has index 0
+   *                   members.length = 1 in case standalone
    *
    * @returns {promise} true
    *
    * @throws if invalid response from SONOS player
-   *
    */
 
   // TODO Notion capture group member
@@ -390,6 +403,7 @@ module.exports = {
       metadata: snapshot.CurrentURIMetadata,
       onlySetUri: true
     })
+    
     if (snapshot.Track && snapshot.Track > 1 && snapshot.NrTracks > 1) {
       await nodesonosPlayerArray[coordinatorIndex].selectTrack(snapshot.Track)
         .catch(() => {

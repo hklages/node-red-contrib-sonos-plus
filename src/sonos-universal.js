@@ -265,8 +265,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName new coordinator name - must be in same group and different
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -309,8 +309,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {(string|number)} msg.payload* -100 to + 100, integer (*: in compatibility mode: topic)
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {Promise<String>} Returns the new group volume after adjustment as property newVolume.
@@ -334,8 +334,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -359,8 +359,8 @@ module.exports = function (RED) {
    * @param {boolean} [msg.snapVolumes = false] will capture the players volumes
    * @param {boolean} [msg.snapMutestates = false] will capture the players mutestates
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: snap} snap see createGroupSnapshot
@@ -391,6 +391,7 @@ module.exports = function (RED) {
     for (let index = 0; index < groupData.members.length; index++) {
       const nodesonosNewPlayer = new Sonos(groupData.members[index].url.hostname)
       nodesonosNewPlayer.url = groupData.members[index].url
+      nodesonosNewPlayer.sonosName = groupData.members[index].sonosName
       nodesonosPlayerArray.push(nodesonosNewPlayer)
     }
     const payload = await createGroupSnapshot(node, nodesonosPlayerArray, options)
@@ -403,8 +404,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -426,8 +427,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -449,8 +450,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: transportActions}
@@ -472,8 +473,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: crossfade mode} on|off
@@ -495,8 +496,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {Promise<GroupMember[]>} with key payload!
@@ -515,8 +516,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<string>} on|off
@@ -538,8 +539,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<string>} state
@@ -564,8 +565,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<Array>} object to update msg. msg.payload = array of queue items as object
@@ -585,8 +586,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: crossfade mode} hh:mm:ss
@@ -610,8 +611,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} { see return }
@@ -678,8 +679,8 @@ module.exports = function (RED) {
    * @param {object} node - used for debug and warning
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: media: {object}, trackInfo: {object}, 
@@ -790,8 +791,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<string>} volume
@@ -813,8 +814,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -836,8 +837,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -861,8 +862,8 @@ module.exports = function (RED) {
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {number} [msg.sameVolume=true] shall all players play at same volume level. 
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -905,8 +906,8 @@ module.exports = function (RED) {
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level.
    * @param {boolean} [msg.clearQueue=true] if true and export.queue = true the queue is cleared.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -967,8 +968,8 @@ module.exports = function (RED) {
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    *  - default is calculation, if that fails then 00:00:05
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1026,8 +1027,8 @@ module.exports = function (RED) {
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {number} [msg.sameVolume=true] shall all players play at same volume level. 
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1072,8 +1073,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName snapshot - output form groupCreateSnapshot
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1094,16 +1095,30 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
 
-    const membersPlayerPlus = []
-    for (let index = 0; index < groupData.members.length; index++) {
-      const nodesonosSinglePlayer = new Sonos(groupData.members[index].url.hostname)
-      nodesonosSinglePlayer.url = groupData.members[index].url
-      membersPlayerPlus.push(nodesonosSinglePlayer)
+    const snapshot = msg[stateName]
+    // compare current group with group data from snap
+    if (groupData.members.length !== snapshot.memberData.length) {
+      throw new Error(`${NRCSP_PREFIX}: snapshot and current group have different members`)
     }
-    const snap = msg[stateName]
-    await restoreGroupSnapshot(node, membersPlayerPlus, snap)
-    if (snap.wasPlaying) {
-      await membersPlayerPlus[0].play() // 0 stands for coordinator
+    if (groupData.members[0].sonosName !== snapshot.memberData[0].sonosName) {
+      throw new Error(`${NRCSP_PREFIX}: snapshot and current group have different coordinator`)
+    }
+    // TODO also check other members
+
+    // build array in same order! Important
+    const nodesonosPlayerArray = []
+    let nodesonosNewPlayer
+    let url
+    for (let index = 0; index < snapshot.memberData.length; index++) {
+      url = new URL(snapshot.memberData[index].url) // important as it was imported
+      nodesonosNewPlayer = new Sonos(url.hostname)
+      nodesonosNewPlayer.url = snapshot.memberData[index].url
+      nodesonosPlayerArray.push(nodesonosNewPlayer)
+    }
+  
+    await restoreGroupSnapshot(node, nodesonosPlayerArray, snapshot)
+    if (snapshot.wasPlaying) {
+      await nodesonosPlayerArray[0].play() // 0 stands for coordinator
     }
 
     return {}
@@ -1117,8 +1132,8 @@ module.exports = function (RED) {
    * @param {(number|string)} [msg.volume=unchanged] new volume
    * @param {boolean} [msg.sameVolume=true] force all players to play at same volume level.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
     * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {Promise<boolean>} always true
@@ -1168,8 +1183,8 @@ module.exports = function (RED) {
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1216,8 +1231,8 @@ module.exports = function (RED) {
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level. 
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1258,8 +1273,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1281,8 +1296,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number}msg.[stateName] valid uri
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1306,8 +1321,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number} msg.stateName valid uri from spotify
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * Valid examples
@@ -1352,8 +1367,8 @@ module.exports = function (RED) {
    * @param {string/number} msg.stateName number of track in queue. 1 ... queue length.
    * @param {number/string} msg.numberOfTracks number of track 1 ... queue length. If missing 1.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1390,8 +1405,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName title of Sonos playlist.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1423,8 +1438,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName hh:mm:ss time in song.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1449,8 +1464,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName +/- hh:mm:ss time in song.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1476,8 +1491,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName on|off.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1502,8 +1517,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName on|off.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1528,8 +1543,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName queue modes - may be mixed case
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1577,8 +1592,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName hh:mm:ss time in song.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1605,8 +1620,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number} msg.stateName new volume
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1630,8 +1645,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1653,8 +1668,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1676,8 +1691,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} msg.stateName csv list of playerNames, first will become coordinator
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} array of all group array of members :-)
@@ -1787,8 +1802,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName - left player, will keep visible
    * @param {string} msg.playerNameRight - right player, will become invisible
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1845,8 +1860,8 @@ module.exports = function (RED) {
    *  Get household groups. Ignore hidden player.
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url
    *
    * @returns {promise<Array<Array>>} array of all group array of members
@@ -1863,8 +1878,8 @@ module.exports = function (RED) {
    *  Get SONOS playlists (limited 200, ObjectID SQ)
    * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<Array>} All sonos playlists as array of objects
@@ -1883,8 +1898,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName title of Sonos playlist.
    * @param {boolean} [msg.ignoreNotExists] if missing assume true
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1930,8 +1945,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -1957,8 +1972,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} msg.stateName - left SONOS-Playername, is visible
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2024,8 +2039,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} msg.stateName SONOS player name, required!!!!
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} true | false
@@ -2072,8 +2087,8 @@ module.exports = function (RED) {
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    * - default is calculation, if that fails then 00:00:05
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2134,8 +2149,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number} msg.stateName-100 to +100 integer.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2161,8 +2176,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2186,8 +2201,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: bas} type string -10 .. 10
@@ -2209,8 +2224,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
@@ -2265,8 +2280,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<string>} payload on or off
@@ -2288,8 +2303,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
@@ -2311,8 +2326,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {payload: muteState} on|off
@@ -2334,8 +2349,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} object to update msg. msg.payload the properties object
@@ -2365,8 +2380,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} object to update msg. msg.payload = array of queue items as object
@@ -2386,8 +2401,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} object to update msg. msg.payload to role of player as string.
@@ -2414,8 +2429,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<string>} string -10 .. 10
@@ -2437,8 +2452,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise<string>} range 0 .. 100
@@ -2461,8 +2476,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName SONOS name of any player in the group
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2503,8 +2518,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2532,8 +2547,8 @@ module.exports = function (RED) {
    * @param {string} msg.stateNameextended uri x-***:
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2564,8 +2579,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2617,8 +2632,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number} msg.stateName-10 to +10 integer.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2644,8 +2659,8 @@ module.exports = function (RED) {
    * @param {string} msg.cmdName the lowercase, player.set.nightmode/subgain/dialoglevel
    * @param {string} msg.stateName value on,off or -15 .. 15 in case of subgain
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2699,8 +2714,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName on|off
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2726,8 +2741,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName on|off
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2753,8 +2768,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName on|off.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2780,8 +2795,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number} msg.stateName-10 to +10 integer.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2808,8 +2823,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {number/string} msg.stateNamevolume, integer 0 .. 100 integer.
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2834,8 +2849,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName modified arguments, endpoint, action
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
@@ -2858,8 +2873,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.stateName modified arguments, endpoint, action
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
+   * @param {string} stateName=payload but in compatibility mode: topic
+   * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
    * @returns {promise} {}
