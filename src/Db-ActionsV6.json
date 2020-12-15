@@ -114,13 +114,20 @@
         "Actions"
       ]
     },
-    "GetRemainingSleepTimerDuration": {
+    "GetMediaInfo": {
       "inArgs": [
         "InstanceID"
       ],
       "outArgs": [
-        "CurrentSleepTimerGeneration",
-        "RemainingSleepTimerDuration"
+        "NrTracks",
+        "MediaDuration",
+        "CurrentURI",
+        "CurrentURIMetaData",
+        "NextURI",
+        "NextURIMetaData",
+        "PlayMedium",
+        "RecordMedium",
+        "WriteStatus"
       ]
     },
     "GetTransportInfo": {
@@ -128,9 +135,33 @@
         "InstanceID"
       ],
       "outArgs": [
-        "CurrentSpeed",
         "CurrentTransportState",
-        "CurrentTransportStatus"
+        "CurrentTransportStatus",
+        "CurrentSpeed"
+      ]
+    },
+    "GetPositionInfo": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "Track",
+        "TrackDuration",
+        "TrackMetaData",
+        "TrackURI",
+        "RelTime",
+        "AbsTime",
+        "RelCount",
+        "AbsCount"
+      ]
+    },
+    "GetRemainingSleepTimerDuration": {
+      "inArgs": [
+        "InstanceID"
+      ],
+      "outArgs": [
+        "CurrentSleepTimerGeneration",
+        "RemainingSleepTimerDuration"
       ]
     },
     "GetTransportSettings": {
@@ -144,9 +175,9 @@
     },
     "Play": {
       "inArgs": [
-          "InstanceID",
-          "Speed"
-        ],
+        "InstanceID",
+        "Speed"
+      ],
       "outArgs": []
     },
     "SaveQueue": {

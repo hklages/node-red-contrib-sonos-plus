@@ -21,7 +21,7 @@
 */
 
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
-  getNestedProperty, hhmmss2msec, NRCSP_PREFIX
+  getNestedProperty, hhmmss2msec, NRCSP_PREFIX, isTruthy
 } = require('./Helper.js')
 
 const { sendSoapToPlayer } = require('./Soap.js')
@@ -100,8 +100,7 @@ module.exports = {
       metadata = options.metadata
     }
     if (metadata !== '') {
-      metadata = encodeURIComponent(metadata)
-      //TODO check otherwise back to: metadata = encodeXml(metadata)
+      metadata = module.exports.encodeHtml(metadata) // html not url encoding!
     }
     node.debug('metadata >>' + JSON.stringify(metadata))
     const uri = new URL(options.uri)
@@ -128,7 +127,12 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set AVTransport
-    const args = {  InstanceID: 0, CurrentURI: uri.toString(),  CurrentURIMetaData: metadata }
+    // TODO use setPlayerAVtransport
+    const args = {
+      InstanceID: 0,
+      CurrentURI: module.exports.encodeHtml(uri.toString()),
+      CurrentURIMetaData: metadata
+    }
     await module.exports.executeActionV6(nodesonosPlayerArray[iCoord].url,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
 
@@ -237,8 +241,7 @@ module.exports = {
       metadata = options.metadata
     }
     if (metadata !== '') {
-      metadata = encodeURIComponent(metadata)
-      //TODO check otherwise back to: metadata = encodeXml(metadata)
+      metadata = module.exports.encodeHtml(metadata) // html not url encoding!
     }
     node.debug('metadata >>' + JSON.stringify(metadata))
     const uri = new URL(options.uri)
@@ -255,7 +258,12 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    const args = {  InstanceID: 0, CurrentURI: uri.toString(),  CurrentURIMetaData: metadata }
+    // TODO convert to playerSetAvTransportUri
+    const args = {
+      InstanceID: 0,
+      CurrentURI: module.exports.encodeHtml(uri.toString()),
+      CurrentURIMetaData: metadata
+    }
     await module.exports.executeActionV6(nodesonosJoiner.url,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
       args)
@@ -303,24 +311,26 @@ module.exports = {
    * @typedef {object} Snapshot snapshot of group
    * @global
    * @property {boolean} wasPlaying 
-   * @property {string} playbackstate such Stop, Playing, ...
+   * @property {string} playbackstate such stop, playing, ...
    * @property {string} CurrentURI content
    * @property {string} CurrentURIMetadata content meta data
    * @property {string} NrTracks tracks in queue
    * @property {number} Track current track
    * @property {string} TrackDuration duration hh:mm:ss
    * @property {string} RelTime position hh:mm:ss
-   * @property {array<memberData>} array of al members in a group
-   * @property {URL} membeData.url URL such as http://192.168.178.37:1400/
+   * @property {array<memberData>} array of all members in a group
+   * CAUTION: urlOrigin instead of url object! string is easier in this case!
+   * @property {string} memberData.urlOrigin such as http://192.168.178.37:1400/
    * @property {boolean} memberData.mutestate null for not available
    * @property {number} memberData.volume -1 for not available
+   * @property {string} memberData.sonosName SONOS-Playername
    */
 
-  /**  Creates snapshot of group.
+  /**  Creates snapshot of a current group.
    * @param  {object}  node current node - for debugging
-   * @param  {nodesonosPlayer[]}  nodesonosPlayerArray array of node-sonos player with url,
-   *                   coordinator player has index 0, 
-   *                   members.length = 1 in case standalone
+   * @param  {array<player>}  members array of player data, coordinator at 0 
+   * @param  {object} members.url  URL (JavaScript build in)
+   * @param  {string} sonosName SONOS-Playername
    * @param  {object}  options
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
    * @param  {boolean} [options.snapMutestates = false] capture all players mute state
@@ -329,42 +339,32 @@ module.exports = {
    * 
    * @throws {error} if invalid response from SONOS player
   */
-  // TODO Notion capture group member
-  // TODO Notion player labeling
-  createGroupSnapshot: async function (node, nodesonosPlayerArray, options) {
-    // getCurrentState will return playing for a non-coordinator player even if group is playing
-
+  createGroupSnapshot: async function (node, members, options) {
     const snapshot = {}
-
-    // player ip, port, ... and volume, mutestate in an array
     snapshot.memberData = []
-    let playersMutestate
     let member
-    for (let index = 0; index < nodesonosPlayerArray.length; index++) {
-      member = {
-        url: nodesonosPlayerArray[index].url,
+    for (let index = 0; index < members.length; index++) {
+      member = { // default
+        urlOrigin: members[index].url.origin,
         volume: -1,
         mutestate: null,
-        sonosName: nodesonosPlayerArray[index].sonosName
+        sonosName: members[index].sonosName
       }
       if (options.snapVolumes) {
-        member.volume = await nodesonosPlayerArray[index].getVolume()
+        member.volume = await module.exports.getPlayerVolume(members[index].url)
       }
       if (options.snapMutestates) {
-        playersMutestate = await nodesonosPlayerArray[index].getMuted()
-        member.mutestate = (playersMutestate ? 'on' : 'off')
+        member.mutestate =  await module.exports.getPlayerMutestate(members[index].url)
       }
       snapshot.memberData.push(member)
     }
 
-    const coordinatorIndex = 0
-    snapshot.playbackstate = await nodesonosPlayerArray[coordinatorIndex].getCurrentState()
+    const coordinatorUrl = members[0].url
+    snapshot.playbackstate = await module.exports.getCoordinatorPlaybackstate(coordinatorUrl)
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
       || snapshot.playbackstate === 'transitioning')
-    const mediaData
-      = await nodesonosPlayerArray[coordinatorIndex].avTransportService().GetMediaInfo()
-    const positionData
-      = await nodesonosPlayerArray[coordinatorIndex].avTransportService().GetPositionInfo()
+    const mediaData = await module.exports.getCoordinatorMediaInfo(coordinatorUrl)
+    const positionData = await module.exports.getCoordinatorPositionInfo(coordinatorUrl)
     Object.assign(snapshot,
       {
         CurrentURI: mediaData.CurrentURI,
@@ -380,40 +380,47 @@ module.exports = {
     return snapshot
   },
 
-  /**  Restore snapshot of group.
+  /**  Restore snapshot of group. Group topology must be the same!
    * @param  {object}  node current node - for debugging
    * @param  {object<Snapshot>}  snapshot - see typedef
-   * @param  {array}   nodesonosPlayerArray array of node-sonos player objects with url
-   *                   coordinator has index 0
-   *                   members.length = 1 in case standalone
-   *
+   
    * @returns {promise} true
    *
    * @throws if invalid response from SONOS player
    */
+  restoreGroupSnapshot: async function (node, snapshot) {
+    // restore content
+    // urlOrigin because we do create/restore
+    const coordinatorUrl = new URL(snapshot.memberData[0].urlOrigin)
+    const metadata = snapshot.CurrentURIMetadata
+    await module.exports.setPlayerAVTransport(coordinatorUrl,
+      {
+        'CurrentURI': snapshot.CurrentURI,
+        'CurrentURIMetaData': metadata
+      })
 
-  // TODO Notion capture group member
-  // TODO Notion player labeling
-  // TODO Notion await error handling
-  restoreGroupSnapshot: async function (node, nodesonosPlayerArray, snapshot) {
-    // restore content: URI and track
-    const coordinatorIndex = 0
-    await nodesonosPlayerArray[coordinatorIndex].setAVTransportURI({ // using node-sonos
-      uri: snapshot.CurrentURI,
-      metadata: snapshot.CurrentURIMetadata,
-      onlySetUri: true
-    })
-    
-    if (snapshot.Track && snapshot.Track > 1 && snapshot.NrTracks > 1) {
-      await nodesonosPlayerArray[coordinatorIndex].selectTrack(snapshot.Track)
+    let track
+    if (isValidProperty(snapshot, ['Track'])) {
+      track = parseInt(snapshot['Track'])
+    }
+    let nrTracks
+    if (isValidProperty(snapshot, ['NrTracks'])) {
+      nrTracks = parseInt(snapshot['NrTracks'])
+    }
+    if (track >= 1 && nrTracks >= track) {
+      node.debug('Setting track to >>' + snapshot.Track)
+      // we need to wait until track is selected
+      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500)
+      module.exports.coordinatorPlayTrack(coordinatorUrl, track)
         .catch(() => {
           node.debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
-      node.debug('Setting back time to >>', JSON.stringify(snapshot.RelTime))
-      await nodesonosPlayerArray[coordinatorIndex].avTransportService().Seek(
-        { InstanceID: 0, Unit: 'REL_TIME', Target: snapshot.RelTime })
+      // we need to wait until track is selected
+      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100)
+      node.debug('Setting back time to >>' + snapshot.RelTime)
+      module.exports.coordinatorPositionInTrack(coordinatorUrl, snapshot.RelTime)
         .catch(() => {
           node.debug('Reverting back track time failed, happens for some music services.')
         })
@@ -421,34 +428,21 @@ module.exports = {
     // restore volume/mute if captured.
     let volume
     let mutestate
-    let digit
-    for (let index = 0; index < nodesonosPlayerArray.length; index++) {
+    let url // type URL (JavaScript build in)
+    for (let index = 0; index < snapshot.memberData.length; index++) {
       volume = snapshot.memberData[index].volume
+      url = new URL(snapshot.memberData[index].urlOrigin)
       if (volume !== -1) {
-        module.exports.setPlayerVolume(nodesonosPlayerArray[index].url, volume)
+        await module.exports.setPlayerVolume(url, volume)
       }
       mutestate = snapshot.memberData[index].mutestate
       if (mutestate != null) {
-        digit = (mutestate === 'on')
-        await nodesonosPlayerArray[index].setMuted(digit)
+        await module.exports.setPlayerMutestate(url, mutestate)
       }
     }
-    return true
-  },
-
-  /** Set new volume at given player
-   * @param  {object} playerUrl player URL
-   * @param  {number} newVolume new volume, must be integer, in range 0 .. 100
-   * 
-   * @returns {} true
-   *
-   * @throws {error} from executeAction
-   */
-  setPlayerVolume: async function (playerUrl, newVolume) {
-    await module.exports.executeActionV6(playerUrl,
-      '/MediaRenderer/RenderingControl/Control', 'SetVolume',
-      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
-    
+    if (snapshot.wasPlaying) {
+      await module.exports.coordinatorPlay(coordinatorUrl)
+    }
     return true
   },
 
@@ -795,12 +789,162 @@ module.exports = {
     return modifiedQueueArray
   },
 
+  /** Set the AVTransport stream for given player. Adds InstanceID. Encodes html.
+   * CAUTION: for a joiner may leave group
+   * CAUTION: Does not play - only sets it. Needs a play afterwards
+   * CAUTION: No Metadata generation - must be provided!
+   * CAUTION: Allows to set all to empty - means no content, will not play
+   * Thats done for the createSnapshot, restoreSnapshot!
+   * 
+   * @param {object} playerUrl player URL (build in object)
+   * @param {object} inArgs action arguments (except InstanceID)
+   * @param {string} inArgs.CurrentURI such as "x-sonosapi-stream:s119032?sid=254&flags=8224&sn=0"
+   * @param {string} inArgs.CurrentURIMetaData uri as DIDL-Lite xml
+   *
+   * @returns {promise} true
+   *
+   * @throws {error} from executeActionV6
+   * @throws {error} if any inArgs, playerUrl is missing/invalid
+   */
+  setPlayerAVTransport: async function (playerUrl, inArgs) { 
+    if (!isTruthy(playerUrl)) {
+      throw new Error(`${NRCSP_PREFIX} playerUrl is invalid/missing.`)
+    }
+    if (typeof playerUrl !== 'object') { // does not cover all but is ok
+      throw new Error(`${NRCSP_PREFIX} playerUrl is not object`)
+    }
+    
+    if (!isTruthy(inArgs)) {
+      throw new Error(`${NRCSP_PREFIX} inArgs is invalid/missing.`)
+    }
+    if (!isValidProperty(inArgs, ['CurrentURI'])) {
+      throw new Error(`${NRCSP_PREFIX} CurrentURI is missing.`)
+    }
+    if (typeof inArgs['CurrentURI'] !== 'string') {
+      throw new Error(`${NRCSP_PREFIX} CurrentURI is not type string.`)
+    }
+    if (!isValidProperty(inArgs, ['CurrentURIMetaData'])) {
+      throw new Error(`${NRCSP_PREFIX} CurrentURIMetaData is missing.`)
+    }
+    if (typeof inArgs['CurrentURIMetaData'] !== 'string') {
+      throw new Error(`${NRCSP_PREFIX} CurrentURIMetaData is not type string.`)
+    }
+    const metadata = inArgs['CurrentURIMetaData'].trim()
+    
+    // HTML encoding is very importont (caution: not uri encoding)!
+    const transformedArgs = {
+      'InstanceID': 0, 
+      'CurrentURI': module.exports.encodeHtml(inArgs.CurrentURI),
+      'CurrentURIMetaData': module.exports.encodeHtml(metadata)
+    }
+
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', transformedArgs)
+  },
+
+  //
+  //                    SIMPLE COMMANDS - EXECUTE ACTION AND SIMPLE TRANSFORMATION
+  //
+  //  @param  {object} playerUrl player URL (JavaScript build in )
+  //  @throws {error} from executeAction
+  //
+  //...............................................................................................
+  
+  // Get mute state of given player. Returns promise<string> current mute state, on|off
+  getPlayerMutestate: async function (playerUrl) {
+    return (await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetMute',
+      { 'InstanceID': 0, 'Channel': 'Master' }) === '1' ? 'on' : 'off')
+  },
+
+  // Get media info of given player. Returns promise<object>
+  getCoordinatorMediaInfo: async function (playerUrl) {
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
+      { 'InstanceID': 0 })
+  },
+
+  // Get playbackstate of given player. Returns promise<string> 
+  // Caution: only valid if coordinator. 
+  // values: PLAYING, STOPPED, PLAYING, PAUSED_PLAYBACK, TRANSITIONING, NO_MEDIA_PRESENT
+  // converted to lowercase
+  getCoordinatorPlaybackstate: async function (playerUrl) {
+    const transportInfo = await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
+      { 'InstanceID': 0 })
+    return transportInfo.CurrentTransportState.toLowerCase()
+  },
+
+  // Get position info of given player. Returns promise<object>
+  getCoordinatorPositionInfo: async function (playerUrl) {
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
+      { 'InstanceID': 0 })
+  },
+
+  // Get volume of given player. Returns promise<string> current volume, integer, range 0 .. 100
+  getPlayerVolume: async function (playerUrl) {
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/RenderingControl/Control', 'GetVolume',
+      { 'InstanceID': 0, 'Channel': 'Master' })
+  },
+
+  // Set new mute state at given player. newMutestate string is on|off
+  setPlayerMutestate: async function (playerUrl, newMutestate) {
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetMute',
+      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': (newMutestate ==='on') })
+  },
+
+  // Set new volume at given player. newVolume is number and must be integer, in range 0 .. 100
+  setPlayerVolume: async function (playerUrl, newVolume) {
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/RenderingControl/Control', 'SetVolume',
+      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
+  },
+
+  //** Play (already set) URI.
+  coordinatorPlay: async function (playerUrl) {
+    return await module.exports.executeActionV6(playerUrl,
+      '/MediaRenderer/AVTransport/Control', 'Play',
+      { 'InstanceID': 0, 'Speed': 1 })
+  },
+
+  //** Play track - requires none empty queue. trackPosition (number) 1 to queue length
+  coordinatorPlayTrack: async function (coordinatorUrl, trackPosition) {
+    if (!isTruthy(trackPosition)) {
+      throw new Error(`${NRCSP_PREFIX} trackPosition is invalid/missing.`)
+    }
+    if (typeof trackPosition !== 'string' && typeof trackPosition !== 'number') { 
+      throw new Error(`${NRCSP_PREFIX} trackPosition is not string/number`)
+    }
+    const track = parseInt(trackPosition)
+
+    return await module.exports.executeActionV6(coordinatorUrl,
+      '/MediaRenderer/AVTransport/Control', 'Seek',
+      { 'InstanceID': 0, 'Target': track, 'Unit': 'TRACK_NR' })
+  },
+
+  //** Position in track - requires none empty queue. position h:mm:ss
+  coordinatorPositionInTrack: async function (coordinatorUrl, positionInTrack) {
+    if (!isTruthy(positionInTrack)) {
+      throw new Error(`${NRCSP_PREFIX} positionInTrack is invalid/missing.`)
+    }
+    if (typeof positionInTrack !== 'string') { 
+      throw new Error(`${NRCSP_PREFIX} positionInTrack is not string`)
+    }
+
+    return await module.exports.executeActionV6(coordinatorUrl,
+      '/MediaRenderer/AVTransport/Control', 'Seek',
+      { 'InstanceID': 0, 'Target': positionInTrack, 'Unit': 'REL_TIME' })
+  },
+
   //
   //                                EXECUTE UPNP ACTION COMMAND
   //...............................................................................................
 
   /**  Sends action with actionInArgs to endpoint at playerUrl.origin and returns result.
-   * @param  {object} playerUrl player URL such as http://192.168.178.37:1400
+   * @param  {object} playerUrl player URL (JavaScript build in) such as http://192.168.178.37:1400
    * @param  {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
    * @param  {string} actionName the action name such as Seek
    * @param  {object} actionInArgs all arguments - throws error if one argument is missing!
@@ -1118,5 +1262,22 @@ module.exports = {
       }
     }
     return upnpClass
+  },
+
+  /** Encodes special HTML characters such as < to &lt;.
+   * @param  {string} htmlData original HTML data
+   * @return {string} data without any <, >, &, ', "
+   */
+
+  encodeHtml: htmlData => {
+    return htmlData.replace(/[<>&'"]/g, singleChar => {
+      switch (singleChar) {
+      case '<': return '&lt;'
+      case '>': return '&gt;'
+      case '&': return '&amp;'
+      case '\'': return '&apos;'
+      case '"':  return '&quot;'
+      }
+    })
   }
 }

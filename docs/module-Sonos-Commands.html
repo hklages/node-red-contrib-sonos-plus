@@ -161,7 +161,7 @@
     
 
     
-    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, nodesonosPlayerArray, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, members, sonosName, options)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#Snapshot">Snapshot</a>>}</span></h4>
     
 
     
@@ -169,7 +169,7 @@
 
 
 <div class="description">
-    Creates snapshot of group.
+    Creates snapshot of a current group.
 </div>
 
 
@@ -228,13 +228,13 @@
 
         <tr>
             
-                <td class="name"><code>nodesonosPlayerArray</code></td>
+                <td class="name"><code>members</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;nodesonosPlayer></span>
+<span class="param-type">array.&lt;player></span>
 
 
             
@@ -244,7 +244,79 @@
 
             
 
-            <td class="description last">array of node-sonos player with url,                  coordinator/selected player has index 0,                   members.length = 1 in case independent</td>
+            <td class="description last">array of player data, coordinator at 0
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">URL (JavaScript build in)</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sonosName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">SONOS-Playername</td>
         </tr>
 
     
@@ -416,7 +488,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line320">line 320</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line342">line 342</a>
     </li></ul></dd>
     
 
@@ -474,7 +546,7 @@
 
         
 <div class="param-desc">
-    group snapshot object: { memberData: object, isPlaying: boolean, }memberData is array of all members (coordinator is index 0) as object{urlHostname, port, sonosName, volume, mutestate }
+    group snapshot object
 </div>
 
 
@@ -485,7 +557,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#Snapshot">Snapshot</a>></span>
 
 
     </dd>
@@ -627,7 +699,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line914">line 914</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1072">line 1072</a>
     </li></ul></dd>
     
 
@@ -741,6 +813,165 @@
     
 
     
+    <h4 class="name" id=".encodeHtml"><span class="type-signature">(static) </span>encodeHtml<span class="signature">(htmlData)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Encodes special HTML characters such as < to &lt;.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>htmlData</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">original HTML data</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1272">line 1272</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    data without any <, >, &, ', "
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id=".executeActionV6"><span class="type-signature">(static) </span>executeActionV6<span class="signature">(playerUrl, endpoint, actionName, actionInArgs)</span><span class="type-signature"> &rarr; {Promise.&lt;(object|boolean)>}</span></h4>
     
 
@@ -801,7 +1032,7 @@
 
             
 
-            <td class="description last">player URL such as http://192.168.178.37:1400</td>
+            <td class="description last">player URL (JavaScript build in) such as http://192.168.178.37:1400</td>
         </tr>
 
     
@@ -911,7 +1142,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line805">line 805</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line963">line 963</a>
     </li></ul></dd>
     
 
@@ -1181,7 +1412,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line451">line 451</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line459">line 459</a>
     </li></ul></dd>
     
 
@@ -1396,7 +1627,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line552">line 552</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line560">line 560</a>
     </li></ul></dd>
     
 
@@ -1597,7 +1828,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1040">line 1040</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1198">line 1198</a>
     </li></ul></dd>
     
 
@@ -1756,7 +1987,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1059">line 1059</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1217">line 1217</a>
     </li></ul></dd>
     
 
@@ -1915,7 +2146,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line633">line 633</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line641">line 641</a>
     </li></ul></dd>
     
 
@@ -2103,7 +2334,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1080">line 1080</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1238">line 1238</a>
     </li></ul></dd>
     
 
@@ -2262,7 +2493,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line698">line 698</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line706">line 706</a>
     </li></ul></dd>
     
 
@@ -2450,7 +2681,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line745">line 745</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line753">line 753</a>
     </li></ul></dd>
     
 
@@ -2638,7 +2869,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1097">line 1097</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1255">line 1255</a>
     </li></ul></dd>
     
 
@@ -2797,7 +3028,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1013">line 1013</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1171">line 1171</a>
     </li></ul></dd>
     
 
@@ -3699,7 +3930,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line229">line 229</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line233">line 233</a>
     </li></ul></dd>
     
 
@@ -3769,7 +4000,7 @@
     
 
     
-    <h4 class="name" id=".restoreGroupSnapshot"><span class="type-signature">(static) </span>restoreGroupSnapshot<span class="signature">(node, snapshot, nodesonosPlayerArray)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".restoreGroupSnapshot"><span class="type-signature">(static) </span>restoreGroupSnapshot<span class="signature">(node, snapshot)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -3777,7 +4008,7 @@
 
 
 <div class="description">
-    Restore snapshot of group.
+    Restore snapshot of group. Group topology must be the same!
 </div>
 
 
@@ -3842,7 +4073,7 @@
             <td class="type">
             
                 
-<span class="param-type">object</span>
+<span class="param-type">object.&lt;<a href="global.html#Snapshot">Snapshot</a>></span>
 
 
             
@@ -3852,30 +4083,7 @@
 
             
 
-            <td class="description last">see create snapshot of group</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayerArray</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">array</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">array of node-sonos player objects with url                  coordinator/selected player has index 0                  members.length = 1 in case independent</td>
+            <td class="description last">see typedef</td>
         </tr>
 
     
@@ -3916,7 +4124,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line385">line 385</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line391">line 391</a>
     </li></ul></dd>
     
 
@@ -3986,7 +4194,7 @@
     
 
     
-    <h4 class="name" id=".setPlayerVolume"><span class="type-signature">(static) </span>setPlayerVolume<span class="signature">(playerUrl, newVolume)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".setPlayerAVTransport"><span class="type-signature">(static) </span>setPlayerAVTransport<span class="signature">(playerUrl, inArgs)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -3994,7 +4202,7 @@
 
 
 <div class="description">
-    Set new volume at given player
+    Set the AVTransport stream for given player. Adds InstanceID. Encodes html.CAUTION: for a joiner may leave groupCAUTION: Does not play - only sets it. Needs a play afterwardsCAUTION: No Metadata generation - must be provided!CAUTION: Allows to set all to empty - means no content, will not playThats done for the createSnapshot, restoreSnapshot!
 </div>
 
 
@@ -4046,20 +4254,20 @@
 
             
 
-            <td class="description last">player URL</td>
+            <td class="description last">player URL (build in object)</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>newVolume</code></td>
+                <td class="name"><code>inArgs</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">object</span>
 
 
             
@@ -4069,7 +4277,79 @@
 
             
 
-            <td class="description last">new volume, must be integer, in range 0 .. 100</td>
+            <td class="description last">action arguments (except InstanceID)
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>CurrentURI</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">such as "x-sonosapi-stream:s119032?sid=254&flags=8224&sn=0"</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>CurrentURIMetaData</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">uri as DIDL-Lite xml</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -4110,7 +4390,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line433">line 433</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line809">line 809</a>
     </li></ul></dd>
     
 
@@ -4134,13 +4414,13 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        from executeAction
+        from executeActionV6
         </div>
     </dt>
     <dd></dd>
@@ -4160,8 +4440,35 @@
     <dd></dd>
 </dl>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        if any inArgs, playerUrl is missing/invalid
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
@@ -4172,6 +4479,18 @@
 </div>
 
 
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
 
     
 
@@ -4201,7 +4520,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Mon Dec 07 2020 17:21:28 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 14:06:27 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

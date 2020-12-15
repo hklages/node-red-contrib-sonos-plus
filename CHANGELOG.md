@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.5.4] 2020-12-17
+
+#### Changed
+
+- Universal node: !!! group.create.snap and group.restore.snap revised
+
+- Universal node: !!! bug fix for group.restore.snap
+
+- internal: more direct SOAP commands playerGet/SetMutestate, playerGet/SetVolume, coordinatorPlay, coordinatorPlayTrack, coordinatorPositionInTrack, setPlayerAVTransport, getCoordinatorMediaInfo, getCoordinatorPlaybackstate, getCoordinatorPositionInfo.
+
 ### [4.5.3] 2020-12-07
 
 #### Changed

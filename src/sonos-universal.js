@@ -9,7 +9,8 @@ const {
   playGroupNotification, playJoinerNotification, createGroupSnapshot,
   restoreGroupSnapshot, getSonosQueue, getRadioId,
   getMusicServiceId, getMusicServiceName, executeActionV6, getSonosPlaylistsV2,
-  getGroupsAll, getGroupCurrent, setPlayerVolume
+  getGroupsAll, getGroupCurrent, setPlayerVolume, setPlayerAVTransport, coordinatorPlay, 
+  coordinatorPlayTrack
 } = require('./Sonos-Commands.js')
 
 const { Sonos } = require('sonos')
@@ -387,14 +388,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
 
-    const nodesonosPlayerArray = []
-    for (let index = 0; index < groupData.members.length; index++) {
-      const nodesonosNewPlayer = new Sonos(groupData.members[index].url.hostname)
-      nodesonosNewPlayer.url = groupData.members[index].url
-      nodesonosNewPlayer.sonosName = groupData.members[index].sonosName
-      nodesonosPlayerArray.push(nodesonosNewPlayer)
-    }
-    const payload = await createGroupSnapshot(node, nodesonosPlayerArray, options)
+    const payload = await createGroupSnapshot(node, groupData.members, options)
     
     return { payload }
   }
@@ -1080,8 +1074,6 @@ module.exports = function (RED) {
    * @returns {promise} {}
    *
    * @throws any functions throws error and explicit throws
-   *
-   * Assumption: payload is valid - not checked.
    */
   async function groupPlaySnapshot (node, msg, stateName, cmdName, nodesonosPlayer) {
     if (isValidProperty(msg, [stateName])) {
@@ -1098,29 +1090,23 @@ module.exports = function (RED) {
     const snapshot = msg[stateName]
     // compare current group with group data from snap
     if (groupData.members.length !== snapshot.memberData.length) {
-      throw new Error(`${NRCSP_PREFIX}: snapshot and current group have different members`)
+      throw new Error(`${NRCSP_PREFIX}: snapshot/current group have different size`)
     }
     if (groupData.members[0].sonosName !== snapshot.memberData[0].sonosName) {
-      throw new Error(`${NRCSP_PREFIX}: snapshot and current group have different coordinator`)
+      throw new Error(`${NRCSP_PREFIX}: snapshot/current group have different coordinator`)
     }
-    // TODO also check other members
-
-    // build array in same order! Important
-    const nodesonosPlayerArray = []
-    let nodesonosNewPlayer
-    let url
-    for (let index = 0; index < snapshot.memberData.length; index++) {
-      url = new URL(snapshot.memberData[index].url) // important as it was imported
-      nodesonosNewPlayer = new Sonos(url.hostname)
-      nodesonosNewPlayer.url = snapshot.memberData[index].url
-      nodesonosPlayerArray.push(nodesonosNewPlayer)
+    // check all other member except 0 = coordinator
+    let foundIndex
+    for (let index = 1; index < groupData.members.length; index++) {
+      foundIndex = snapshot.memberData.findIndex((item) =>
+        (item.sonosName === groupData.members[index].sonosName))
+      if (foundIndex < 0) {
+        throw new Error(`${NRCSP_PREFIX}: snapshot/current group members are different`)
+      }
     }
   
-    await restoreGroupSnapshot(node, nodesonosPlayerArray, snapshot)
-    if (snapshot.wasPlaying) {
-      await nodesonosPlayerArray[0].play() // 0 stands for coordinator
-    }
-
+    await restoreGroupSnapshot(node, snapshot)
+    
     return {}
   }
 
@@ -1208,8 +1194,9 @@ module.exports = function (RED) {
     const validatedPosition = validToInteger(msg, stateName, 1, lastTrackInQueue,
       'position in queue', NRCSP_PREFIX)
     await nodesonosCoordinator.selectQueue()
-    await nodesonosCoordinator.selectTrack(validatedPosition)
 
+    await coordinatorPlayTrack(nodesonosCoordinator.url, validatedPosition)
+    
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let index = 0; index < groupData.members.length; index++) {
@@ -2882,10 +2869,15 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    */
   async function playerExecuteTest (node, msg, stateName, cmdName, nodesonosPlayer) {
-    const url = new URL(nodesonosPlayer.url.hostname)
-    const payload = await getGroupsAll(url)
+    const playerUrl = new URL(nodesonosPlayer.url)
+    const inArgs = {
+      'CurrentURI': msg[stateName],
+      'CurrentURIMetaData': msg.CurrentURIMetaData
+    }
+    await setPlayerAVTransport(playerUrl, inArgs)
+    await coordinatorPlay(playerUrl)
     
-    return { payload }
+    return {}
   }
 
   //
