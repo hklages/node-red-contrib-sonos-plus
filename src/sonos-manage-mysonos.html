@@ -5,7 +5,7 @@
   /* eslint no-undef: "error" */
   RED.nodes.registerType('sonos-manage-mysonos', {
     category: 'sonosplus',
-    defaults: {
+    defaults: { // the editable properties of this node
       confignode: {
         value: '',
         type: 'sonos-config'
@@ -52,8 +52,8 @@
   });
 </script>
 
-<!-- Setting design and inputs for node panel (HTML)-->
-<script type="text/x-red" data-template-name="sonos-manage-mysonos">
+<!-- Setting design and inputs for node panel / dialog (HTML)-->
+<script type="text/html" data-template-name="sonos-manage-mysonos">
   <div id="main-props">
     <!-- Config node -->
     <div class="form-row">
@@ -129,7 +129,7 @@
 </script>
 
 <!-- Help text (HTML) -->
-<script type="text/x-red" data-help-name="sonos-manage-mysonos">
+<script type="text/html" data-help-name="sonos-manage-mysonos">
 <p>This node provides all commands related to My Sonos and the Music Library.<p>
 
 Command and state can be provided in the dialog or with incoming message - see dialog.<br><br>

@@ -473,7 +473,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {object} payload  = array of my Sonos items 
+   * @returns {promise<mySonosItem[]>} payload  = array of my Sonos items 
    * {title, albumArt, uri, metadata, sid, upnpClass, processingType}
    * uri, metadata, sid, upnpclass: empty string are allowed
    *

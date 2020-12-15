@@ -346,19 +346,20 @@ module.exports = {
    * @property {number} Track current track
    * @property {string} TrackDuration duration hh:mm:ss
    * @property {string} RelTime position hh:mm:ss
-   * @property {array&lt;memberData>} array of all members in a group
-   * CAUTION: urlOrigin instead of url object! string is easier in this case!
-   * @property {string} memberData.urlOrigin such as http://192.168.178.37:1400/
-   * @property {boolean} memberData.mutestate null for not available
-   * @property {number} memberData.volume -1 for not available
-   * @property {string} memberData.sonosName SONOS-Playername
+   * @property {member[]} membersData array of members in a group
+   * @property {object} member group members relevant data
+   * @property {string} member.urlOrigin such as http://192.168.178.37:1400/
+   * @property {boolean} member.mutestate null for not available
+   * @property {string} member.volume -1 for not available
+   * @property {string} member.playerName SONOS-Playername
    */
 
   /**  Creates snapshot of a current group.
    * @param  {object}  node current node - for debugging
-   * @param  {array&lt;player>}  members array of player data, coordinator at 0 
-   * @param  {object} members.url  URL (JavaScript build in)
-   * @param  {string} sonosName SONOS-Playername
+   * @param  {player[]} playersInGroup player data in group, coordinator at 0 
+   * @param  {object} player player 
+   * @param  {object} player.url  URL (JavaScript build in)
+   * @param  {string} player.playerName SONOS-Playername
    * @param  {object}  options
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
    * @param  {boolean} [options.snapMutestates = false] capture all players mute state
@@ -367,27 +368,27 @@ module.exports = {
    * 
    * @throws {error} if invalid response from SONOS player
   */
-  createGroupSnapshot: async function (node, members, options) {
+  createGroupSnapshot: async function (node, playersInGroup, options) {
     const snapshot = {}
-    snapshot.memberData = []
+    snapshot.membersData = []
     let member
-    for (let index = 0; index &lt; members.length; index++) {
+    for (let index = 0; index &lt; playersInGroup.length; index++) {
       member = { // default
-        urlOrigin: members[index].url.origin,
-        volume: -1,
+        urlOrigin: playersInGroup[index].url.origin,
         mutestate: null,
-        sonosName: members[index].sonosName
+        volume: '-1',
+        playerName: playersInGroup[index].sonosName
       }
       if (options.snapVolumes) {
-        member.volume = await module.exports.getPlayerVolume(members[index].url)
+        member.volume = await module.exports.getPlayerVolume(playersInGroup[index].url)
       }
       if (options.snapMutestates) {
-        member.mutestate =  await module.exports.getPlayerMutestate(members[index].url)
+        member.mutestate =  await module.exports.getPlayerMutestate(playersInGroup[index].url)
       }
-      snapshot.memberData.push(member)
+      snapshot.membersData.push(member)
     }
 
-    const coordinatorUrl = members[0].url
+    const coordinatorUrl = playersInGroup[0].url
     snapshot.playbackstate = await module.exports.getCoordinatorPlaybackstate(coordinatorUrl)
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
       || snapshot.playbackstate === 'transitioning')
@@ -419,7 +420,7 @@ module.exports = {
   restoreGroupSnapshot: async function (node, snapshot) {
     // restore content
     // urlOrigin because we do create/restore
-    const coordinatorUrl = new URL(snapshot.memberData[0].urlOrigin)
+    const coordinatorUrl = new URL(snapshot.membersData[0].urlOrigin)
     const metadata = snapshot.CurrentURIMetadata
     await module.exports.setPlayerAVTransport(coordinatorUrl,
       {
@@ -457,13 +458,13 @@ module.exports = {
     let volume
     let mutestate
     let url // type URL (JavaScript build in)
-    for (let index = 0; index &lt; snapshot.memberData.length; index++) {
-      volume = snapshot.memberData[index].volume
-      url = new URL(snapshot.memberData[index].urlOrigin)
-      if (volume !== -1) {
-        await module.exports.setPlayerVolume(url, volume)
+    for (let index = 0; index &lt; snapshot.membersData.length; index++) {
+      volume = snapshot.membersData[index].volume
+      url = new URL(snapshot.membersData[index].urlOrigin)
+      if (volume !== '-1') { // volume is string
+        await module.exports.setPlayerVolume(url, parseInt(volume))
       }
-      mutestate = snapshot.memberData[index].mutestate
+      mutestate = snapshot.membersData[index].mutestate
       if (mutestate != null) {
         await module.exports.setPlayerMutestate(url, mutestate)
       }
@@ -544,8 +545,9 @@ module.exports = {
    * @typedef {object} groupDataRaw group data from action
    * @global
    * @property {string} Coordinator such as RINCON_5CAAFD00223601400
-   * @property {string} ID such as RINCON_5CAAFD00223601400:481
-   * @property {array&lt;member>} array of al members in a group
+   * @property {string} ID group id such as RINCON_5CAAFD00223601400:481
+   * @property {member[]} ZoneGroupMember 
+   * @property {object} member 
    * @property {string} member.UUID UUID such as RINCON_5CAAFD00223601400
    * @property {string} member.Location such  http://192.168.178.37:1400/xml/device_description.xml
    * @property {string} member.ZoneName such as Küche
@@ -557,7 +559,7 @@ module.exports = {
    * @typedef {object} playerGroupData group data transformed
    * @global
    * @property {Object&lt;URL>} url includes protocol, host, port, ...
-   * @property {string} sonosName SONOS player name such as "Küche"
+   * @property {string} sonosName SONOS-Playername such as "Küche"
    * @property {string} uuid such as RINCON_5CAAFD00223601400
    * @property {string} groupId such as RINCON_5CAAFD00223601400:482
    * @property {boolean} invisible false in case of any bindings otherwise true
@@ -892,10 +894,9 @@ module.exports = {
       { 'InstanceID': 0 })
   },
 
-  // Get playbackstate of given player. Returns promise&lt;string> 
-  // Caution: only valid if coordinator. 
-  // values: PLAYING, STOPPED, PLAYING, PAUSED_PLAYBACK, TRANSITIONING, NO_MEDIA_PRESENT
-  // converted to lowercase
+  // Get playbackstate of given player. Returns promise&lt;string> playbackstate such as playing
+  // values: playing, stopped, playing, paused_playback, transitioning, no_media_present
+  // Only valid on coordinator!
   getCoordinatorPlaybackstate: async function (playerUrl) {
     const transportInfo = await module.exports.executeActionV6(playerUrl,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
@@ -1325,7 +1326,7 @@ module.exports = {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 14:06:27 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 19:05:41 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

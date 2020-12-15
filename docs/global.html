@@ -581,20 +581,20 @@
 
             
 
-            <td class="description last">such as RINCON_5CAAFD00223601400:481</td>
+            <td class="description last">group id such as RINCON_5CAAFD00223601400:481</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>array</code></td>
+                <td class="name"><code>ZoneGroupMember</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">array.&lt;member></span>
+<span class="param-type">Array.&lt;member></span>
 
 
             
@@ -604,14 +604,55 @@
 
             
 
-            <td class="description last">of al members in a group</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>member.UUID</code></td>
+                <td class="name"><code>member</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <h6>Properties</h6>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>UUID</code></td>
             
 
             <td class="type">
@@ -634,7 +675,7 @@
 
         <tr>
             
-                <td class="name"><code>member.Location</code></td>
+                <td class="name"><code>Location</code></td>
             
 
             <td class="type">
@@ -657,7 +698,7 @@
 
         <tr>
             
-                <td class="name"><code>member.ZoneName</code></td>
+                <td class="name"><code>ZoneName</code></td>
             
 
             <td class="type">
@@ -680,7 +721,7 @@
 
         <tr>
             
-                <td class="name"><code>member.invisible</code></td>
+                <td class="name"><code>invisible</code></td>
             
 
             <td class="type">
@@ -697,6 +738,13 @@
             
 
             <td class="description last">... and more</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -735,7 +783,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line515">line 515</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line516">line 516</a>
     </li></ul></dd>
     
 
@@ -843,7 +891,7 @@
 
             
 
-            <td class="description last">SONOS player name such as "Küche"</td>
+            <td class="description last">SONOS-Playername such as "Küche"</td>
         </tr>
 
     
@@ -974,7 +1022,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line528">line 528</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line530">line 530</a>
     </li></ul></dd>
     
 
@@ -1227,13 +1275,13 @@
 
         <tr>
             
-                <td class="name"><code>array</code></td>
+                <td class="name"><code>membersData</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">array.&lt;memberData></span>
+<span class="param-type">Array.&lt;member></span>
 
 
             
@@ -1243,14 +1291,55 @@
 
             
 
-            <td class="description last">of all members in a groupCAUTION: urlOrigin instead of url object! string is easier in this case!</td>
+            <td class="description last">array of members in a group</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>memberData.urlOrigin</code></td>
+                <td class="name"><code>member</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">group members relevant data
+                <h6>Properties</h6>
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>urlOrigin</code></td>
             
 
             <td class="type">
@@ -1273,7 +1362,7 @@
 
         <tr>
             
-                <td class="name"><code>memberData.mutestate</code></td>
+                <td class="name"><code>mutestate</code></td>
             
 
             <td class="type">
@@ -1296,13 +1385,13 @@
 
         <tr>
             
-                <td class="name"><code>memberData.volume</code></td>
+                <td class="name"><code>volume</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">string</span>
 
 
             
@@ -1319,7 +1408,7 @@
 
         <tr>
             
-                <td class="name"><code>memberData.sonosName</code></td>
+                <td class="name"><code>playerName</code></td>
             
 
             <td class="type">
@@ -1336,6 +1425,13 @@
             
 
             <td class="description last">SONOS-Playername</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -1567,7 +1663,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line540">line 540</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line542">line 542</a>
     </li></ul></dd>
     
 
@@ -1603,7 +1699,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 14:06:27 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 19:05:41 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -563,7 +563,7 @@ module.exports = function (RED) {
    * @param {string} cmdName=topic but in compatibility mode: payload
    * @param {object} nodesonosPlayer player with url - as default
    *
-   * @returns {promise<Array>} object to update msg. msg.payload = array of queue items as object
+   * @returns {promise<object>} object to update msg. msg.payload = array of queue items as object
    *
    * @throws any functions throws error and explicit throws
    */
@@ -1089,17 +1089,17 @@ module.exports = function (RED) {
 
     const snapshot = msg[stateName]
     // compare current group with group data from snap
-    if (groupData.members.length !== snapshot.memberData.length) {
+    if (groupData.members.length !== snapshot.membersData.length) {
       throw new Error(`${NRCSP_PREFIX}: snapshot/current group have different size`)
     }
-    if (groupData.members[0].sonosName !== snapshot.memberData[0].sonosName) {
+    if (groupData.members[0].sonosName !== snapshot.membersData[0].playerName) {
       throw new Error(`${NRCSP_PREFIX}: snapshot/current group have different coordinator`)
     }
     // check all other member except 0 = coordinator
     let foundIndex
     for (let index = 1; index < groupData.members.length; index++) {
-      foundIndex = snapshot.memberData.findIndex((item) =>
-        (item.sonosName === groupData.members[index].sonosName))
+      foundIndex = snapshot.membersData.findIndex((item) =>
+        (item.playerName === groupData.members[index].sonosName))
       if (foundIndex < 0) {
         throw new Error(`${NRCSP_PREFIX}: snapshot/current group members are different`)
       }

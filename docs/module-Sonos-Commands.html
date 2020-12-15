@@ -161,7 +161,7 @@
     
 
     
-    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, members, sonosName, options)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#Snapshot">Snapshot</a>>}</span></h4>
+    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, playersInGroup, player, options)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#Snapshot">Snapshot</a>>}</span></h4>
     
 
     
@@ -228,13 +228,13 @@
 
         <tr>
             
-                <td class="name"><code>members</code></td>
+                <td class="name"><code>playersInGroup</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">array.&lt;player></span>
+<span class="param-type">Array.&lt;player></span>
 
 
             
@@ -244,7 +244,30 @@
 
             
 
-            <td class="description last">array of player data, coordinator at 0
+            <td class="description last">player data in group, coordinator at 0</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>player</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">player
                 <h6>Properties</h6>
                 
 
@@ -290,17 +313,10 @@
         </tr>
 
     
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
 
         <tr>
             
-                <td class="name"><code>sonosName</code></td>
+                <td class="name"><code>playerName</code></td>
             
 
             <td class="type">
@@ -317,6 +333,13 @@
             
 
             <td class="description last">SONOS-Playername</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -488,7 +511,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line342">line 342</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line343">line 343</a>
     </li></ul></dd>
     
 
@@ -699,7 +722,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1072">line 1072</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1073">line 1073</a>
     </li></ul></dd>
     
 
@@ -914,7 +937,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1272">line 1272</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1273">line 1273</a>
     </li></ul></dd>
     
 
@@ -1142,7 +1165,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line963">line 963</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line964">line 964</a>
     </li></ul></dd>
     
 
@@ -1412,7 +1435,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line459">line 459</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line460">line 460</a>
     </li></ul></dd>
     
 
@@ -1627,7 +1650,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line560">line 560</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line562">line 562</a>
     </li></ul></dd>
     
 
@@ -1828,7 +1851,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1198">line 1198</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1199">line 1199</a>
     </li></ul></dd>
     
 
@@ -1987,7 +2010,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1217">line 1217</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1218">line 1218</a>
     </li></ul></dd>
     
 
@@ -2146,7 +2169,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line641">line 641</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line643">line 643</a>
     </li></ul></dd>
     
 
@@ -2334,7 +2357,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1238">line 1238</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1239">line 1239</a>
     </li></ul></dd>
     
 
@@ -2493,7 +2516,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line706">line 706</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line708">line 708</a>
     </li></ul></dd>
     
 
@@ -2681,7 +2704,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line753">line 753</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line755">line 755</a>
     </li></ul></dd>
     
 
@@ -2869,7 +2892,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1255">line 1255</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1256">line 1256</a>
     </li></ul></dd>
     
 
@@ -3028,7 +3051,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1171">line 1171</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1172">line 1172</a>
     </li></ul></dd>
     
 
@@ -4124,7 +4147,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line391">line 391</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line392">line 392</a>
     </li></ul></dd>
     
 
@@ -4390,7 +4413,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line809">line 809</a>
+        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line811">line 811</a>
     </li></ul></dd>
     
 
@@ -4520,7 +4543,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 14:06:27 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Dec 15 2020 19:05:41 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
