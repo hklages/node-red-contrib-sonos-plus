@@ -25,6 +25,8 @@ Either open a github issue (preferred method) or send an email to nrcsplus@gmail
 
 - Universal node: !!! group.create.snap, group.restore.snap now use different data
 
+- All nodes: !!! property sonosPlayer is now playerName (meaning SONOS-Playername)
+
 - My Sonos node: !!! library.get.playlists: msg.size is now msg.requestedCount
 
 - Universal node: !!! group.get.sleeptimer returns now "none" if not set

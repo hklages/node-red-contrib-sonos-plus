@@ -3,9 +3,9 @@
 /**
  * Collection of 
  * 
- * - special SONOS commands such as playGroupNotification, group handling, My Sonos handling 
+ * - special SONOS commands for group/My Sonos handling
  * 
- * - the basic executeAction command
+ * - the basic executeAction command and simple commands
  * 
  * - helpers such as getRadioId
  * 
@@ -17,7 +17,7 @@
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-27
+ * @since 2020-12-16
 */
 
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
@@ -84,11 +84,11 @@ module.exports = {
    * @param  {string}  options.duration format hh:mm:ss
    * 
    * @returns {promise} true
-   *
+   * 
    * @throws if invalid response from setAVTransportURI, play,
    */
 
-  // TODO Notion player labeling
+  // TODO optimize and remove node-sonos commands
   playGroupNotification: async function (node, nodesonosPlayerArray, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -127,7 +127,6 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set AVTransport
-    // TODO use setPlayerAVtransport
     const args = {
       InstanceID: 0,
       CurrentURI: module.exports.encodeHtml(uri.toString()),
@@ -229,7 +228,7 @@ module.exports = {
    * State will be imported from group.
    */
 
-  // TODO Notion player labeling
+  // TODO see playGroupNotification
   playJoinerNotification: async function (node, nodesonosCoordinator, nodesonosJoiner, options) {
     const WAIT_ADJUSTMENT = 2000
 
@@ -258,7 +257,6 @@ module.exports = {
     node.debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    // TODO convert to playerSetAvTransportUri
     const args = {
       InstanceID: 0,
       CurrentURI: module.exports.encodeHtml(uri.toString()),
@@ -332,7 +330,7 @@ module.exports = {
    * @param  {object} player player 
    * @param  {object} player.url  URL (JavaScript build in)
    * @param  {string} player.playerName SONOS-Playername
-   * @param  {object}  options
+   * @param  {object} options
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
    * @param  {boolean} [options.snapMutestates = false] capture all players mute state
    *
@@ -346,10 +344,11 @@ module.exports = {
     let member
     for (let index = 0; index < playersInGroup.length; index++) {
       member = { // default
+        // url.origin because it may stored in flow variable
         urlOrigin: playersInGroup[index].url.origin,
         mutestate: null,
         volume: '-1',
-        playerName: playersInGroup[index].sonosName
+        playerName: playersInGroup[index].playerName
       }
       if (options.snapVolumes) {
         member.volume = await module.exports.getPlayerVolume(playersInGroup[index].url)
@@ -433,7 +432,7 @@ module.exports = {
     for (let index = 0; index < snapshot.membersData.length; index++) {
       volume = snapshot.membersData[index].volume
       url = new URL(snapshot.membersData[index].urlOrigin)
-      if (volume !== '-1') { // volume is string
+      if (volume !== '-1') { // volume is of type string
         await module.exports.setPlayerVolume(url, parseInt(volume))
       }
       mutestate = snapshot.membersData[index].mutestate
@@ -476,7 +475,7 @@ module.exports = {
         groupId = allGroupsData[iGroup][iMember].groupId
         if (searchByPlayerName) {
           // we compare playerName (string) such as Küche
-          if (allGroupsData[iGroup][iMember].sonosName === playerName && visible) {
+          if (allGroupsData[iGroup][iMember].playerName === playerName && visible) {
             foundGroupIndex = iGroup
             usedPlayerHostname = allGroupsData[iGroup][iMember].url.hostname
             break // inner loop
@@ -522,7 +521,7 @@ module.exports = {
    * @property {object} member 
    * @property {string} member.UUID UUID such as RINCON_5CAAFD00223601400
    * @property {string} member.Location such  http://192.168.178.37:1400/xml/device_description.xml
-   * @property {string} member.ZoneName such as Küche
+   * @property {string} member.ZoneName SONOS-Playername such as Küche - (my naming: playerName)
    * @property {boolean} member.invisible 
    * ... and more
    */
@@ -531,7 +530,7 @@ module.exports = {
    * @typedef {object} playerGroupData group data transformed
    * @global
    * @property {Object<URL>} url includes protocol, host, port, ...
-   * @property {string} sonosName SONOS-Playername such as "Küche"
+   * @property {string} playerName SONOS-Playername such as "Küche"
    * @property {string} uuid such as RINCON_5CAAFD00223601400
    * @property {string} groupId such as RINCON_5CAAFD00223601400:482
    * @property {boolean} invisible false in case of any bindings otherwise true
@@ -592,31 +591,35 @@ module.exports = {
     // see typeDef playerGroupData
     const groupsArraySorted = [] // result to be returned
     let groupSorted // keeps the group members, now sorted
-    let [coordinatorUuid, groupId, sonosName, uuid, invisible, channelMapSet] = ''
+    let coordinatorUuid = ''
+    let groupId = ''
+    let playerName = ''
+    let uuid = ''
+    let invisible = ''
+    let channelMapSet = ''
     let url // type URL JavaScript build in
     for (let iGroup = 0; iGroup < groupsArray.length; iGroup++) {
       groupSorted = []
       coordinatorUuid = groupsArray[iGroup].Coordinator
       groupId = groupsArray[iGroup].ID
-      groupSorted.push({ // first push coordinator, others will be updated later!
-        groupId,
-        'uuid': coordinatorUuid,
-      })
+      // first push coordinator, others will be updated later!
+      groupSorted.push({ groupId, 'uuid': coordinatorUuid })
       
       for (let iMember = 0; iMember < groupsArray[iGroup].ZoneGroupMember.length; iMember++) {
         url = new URL(groupsArray[iGroup].ZoneGroupMember[iMember].Location)
         url.pathname = '' // clean up
         uuid = groupsArray[iGroup].ZoneGroupMember[iMember].UUID  
-        sonosName = groupsArray[iGroup].ZoneGroupMember[iMember].ZoneName
+        // my naming is playerName instead of the SONOS ZoneName
+        playerName = groupsArray[iGroup].ZoneGroupMember[iMember].ZoneName
         invisible = (groupsArray[iGroup].ZoneGroupMember[iMember].Invisible === '1')
         channelMapSet = groupsArray[iGroup].ZoneGroupMember[iMember].ChannelMapSet || ''
         
         if (groupsArray[iGroup].ZoneGroupMember[iMember].UUID !== coordinatorUuid) {
-          groupSorted.push({ url, sonosName, uuid, groupId, invisible, channelMapSet })
+          groupSorted.push({ url, playerName, uuid, groupId, invisible, channelMapSet })
         } else {
           // update coordinator on position 0 with name
           groupSorted[0].url = url
-          groupSorted[0].sonosName = sonosName
+          groupSorted[0].playerName = playerName
           groupSorted[0].invisible = invisible
           groupSorted[0].channelMapSet = channelMapSet
         }
@@ -792,8 +795,8 @@ module.exports = {
   },
 
   /** Set the AVTransport stream for given player. Adds InstanceID. Encodes html.
-   * CAUTION: for a joiner may leave group
-   * CAUTION: Does not play - only sets it. Needs a play afterwards
+   * CAUTION: a joiner may leave group
+   * CAUTION: Does not play - only sets content. Needs a play afterwards
    * CAUTION: No Metadata generation - must be provided!
    * CAUTION: Allows to set all to empty - means no content, will not play
    * Thats done for the createSnapshot, restoreSnapshot!
@@ -833,7 +836,8 @@ module.exports = {
     }
     const metadata = inArgs['CurrentURIMetaData'].trim()
     
-    // HTML encoding is very importont (caution: not uri encoding)!
+    // HTML encoding is very important (caution: not uri encoding)!
+    // transformedArgs are embedded in SOAP envelop
     const transformedArgs = {
       'InstanceID': 0, 
       'CurrentURI': module.exports.encodeHtml(inArgs.CurrentURI),
@@ -860,8 +864,8 @@ module.exports = {
   },
 
   // Get media info of given player. Returns promise<object>
-  getCoordinatorMediaInfo: async function (playerUrl) {
-    return await module.exports.executeActionV6(playerUrl,
+  getCoordinatorMediaInfo: async function (coordinatorUrl) {
+    return await module.exports.executeActionV6(coordinatorUrl,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
   },
@@ -869,16 +873,16 @@ module.exports = {
   // Get playbackstate of given player. Returns promise<string> playbackstate such as playing
   // values: playing, stopped, playing, paused_playback, transitioning, no_media_present
   // Only valid on coordinator!
-  getCoordinatorPlaybackstate: async function (playerUrl) {
-    const transportInfo = await module.exports.executeActionV6(playerUrl,
+  getCoordinatorPlaybackstate: async function (coordinatorUrl) {
+    const transportInfo = await module.exports.executeActionV6(coordinatorUrl,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
     return transportInfo.CurrentTransportState.toLowerCase()
   },
 
   // Get position info of given player. Returns promise<object>
-  getCoordinatorPositionInfo: async function (playerUrl) {
-    return await module.exports.executeActionV6(playerUrl,
+  getCoordinatorPositionInfo: async function (coordinatorUrl) {
+    return await module.exports.executeActionV6(coordinatorUrl,
       '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
       { 'InstanceID': 0 })
   },
@@ -905,8 +909,8 @@ module.exports = {
   },
 
   //** Play (already set) URI.
-  coordinatorPlay: async function (playerUrl) {
-    return await module.exports.executeActionV6(playerUrl,
+  coordinatorPlay: async function (coordinatorUrl) {
+    return await module.exports.executeActionV6(coordinatorUrl,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { 'InstanceID': 0, 'Speed': 1 })
   },

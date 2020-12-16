@@ -6,7 +6,7 @@
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-27
+ * @since 2020-12-16
 */
 
 'use strict'

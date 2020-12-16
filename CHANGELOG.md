@@ -6,7 +6,9 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
-- Universal node: !!! group.create.snap and group.restore.snap revised
+- All nodes: !!! sonosPlayer is renamed to playerName (meaning SONOS-Playername)
+
+- Universal node: !!! group.create.snap and group.restore.snap revised - some properties are renamed
 
 - Universal node: !!! bug fix for group.restore.snap
 

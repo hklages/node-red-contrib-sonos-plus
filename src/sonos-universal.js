@@ -23,7 +23,7 @@ const { Sonos } = require('sonos')
  *
  * @author Henning Klages
  *
- * @since 2020-11-24
+ * @since 2020-12-16
  */
 
 module.exports = function (RED) {
@@ -286,7 +286,7 @@ module.exports = function (RED) {
 
     // Check PlayerName is in group and not same as old coordinator
     const indexNewCoordinator = groupData.members.findIndex((p) => {
-      return (p.sonosName === validPlayerName)
+      return (p.playerName === validPlayerName)
     })
     if (indexNewCoordinator === -1) {
       throw new Error(`${NRCSP_PREFIX} Could not find player name in current group`)
@@ -655,7 +655,7 @@ module.exports = function (RED) {
     return {
       'payload': {
         playbackstate,
-        'coordinatorName': groupData.members[0].sonosName, // 0 stands for coordinator
+        'coordinatorName': groupData.members[0].playerName, // 0 stands for coordinator
         volume,
         muteState,
         tvActivated,
@@ -1015,7 +1015,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Play not empty queue.
+   *  Play none empty queue.
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
@@ -1092,14 +1092,14 @@ module.exports = function (RED) {
     if (groupData.members.length !== snapshot.membersData.length) {
       throw new Error(`${NRCSP_PREFIX}: snapshot/current group have different size`)
     }
-    if (groupData.members[0].sonosName !== snapshot.membersData[0].playerName) {
+    if (groupData.members[0].playerName !== snapshot.membersData[0].playerName) {
       throw new Error(`${NRCSP_PREFIX}: snapshot/current group have different coordinator`)
     }
     // check all other member except 0 = coordinator
     let foundIndex
     for (let index = 1; index < groupData.members.length; index++) {
       foundIndex = snapshot.membersData.findIndex((item) =>
-        (item.playerName === groupData.members[index].sonosName))
+        (item.playerName === groupData.members[index].playerName))
       if (foundIndex < 0) {
         throw new Error(`${NRCSP_PREFIX}: snapshot/current group members are different`)
       }
@@ -1711,7 +1711,7 @@ module.exports = function (RED) {
         visible = !allGroupsData[iGroup][iMember].invisible
         if (visible) {
           player = {
-            sonosName: allGroupsData[iGroup][iMember].sonosName,
+            playerName: allGroupsData[iGroup][iMember].playerName,
             url: allGroupsData[iGroup][iMember].url,
             uuid: allGroupsData[iGroup][iMember].uuid,
             isCoordinator: (iMember === 0),
@@ -1726,7 +1726,7 @@ module.exports = function (RED) {
     let indexInList
     let iNewCoordinator
     for (let i = 0; i < newGroupPlayerArray.length; i++) {
-      indexInList = householdPlayerList.findIndex((p) => p.sonosName === newGroupPlayerArray[i])
+      indexInList = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
 
       if (indexInList === -1) {
         throw new Error(`${NRCSP_PREFIX} Could not find player: ${newGroupPlayerArray[i]}`)
@@ -1743,7 +1743,7 @@ module.exports = function (RED) {
       let found
       for (let i = 0; i < householdPlayerList.length; i++) {
         // Should this player be in group?
-        found = newGroupPlayerArray.indexOf(householdPlayerList[i].sonosName)
+        found = newGroupPlayerArray.indexOf(householdPlayerList[i].playerName)
         if (found === -1) {
           // Remove if in new coordinator group
           if (
@@ -1771,7 +1771,7 @@ module.exports = function (RED) {
       let indexPlayer
 
       for (let i = 1; i < newGroupPlayerArray.length; i++) { // Start with 1
-        indexPlayer = householdPlayerList.findIndex((p) => p.sonosName === newGroupPlayerArray[i])
+        indexPlayer = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
         // No check - always returns true. Using SetAVTransportURI as AddMember does not work
         await executeActionV6(householdPlayerList[indexPlayer].url,
           '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
@@ -1818,7 +1818,7 @@ module.exports = function (RED) {
     let playerLeftUrl // type JavaScript URL
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
       for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        name = allGroupsData[iGroup][iMember].sonosName
+        name = allGroupsData[iGroup][iMember].playerName
         if (name === playerRight) {
           playerRightUuid = allGroupsData[iGroup][iMember].uuid
         }
@@ -1987,7 +1987,7 @@ module.exports = function (RED) {
     let playerLeftUrl // type JavaScript URL
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
       for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        name = allGroupsData[iGroup][iMember].sonosName
+        name = allGroupsData[iGroup][iMember].playerName
         if (name === playerLeft) {
           // Both player have same name. Get the left one
           playerUuid = allGroupsData[iGroup][iMember].uuid
@@ -2055,7 +2055,7 @@ module.exports = function (RED) {
     let name
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
       for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        name = allGroupsData[iGroup][iMember].sonosName
+        name = allGroupsData[iGroup][iMember].playerName
         if (name === playerToBeTested) {
           return { 'payload': true }
         }
@@ -2408,7 +2408,7 @@ module.exports = function (RED) {
       role = 'joiner'
     }
 
-    return { 'payload': role, 'playerName': groupData.members[groupData.playerIndex].sonosName }
+    return { 'payload': role, 'playerName': groupData.members[groupData.playerIndex].playerName }
   }
 
   /**
@@ -2484,13 +2484,13 @@ module.exports = function (RED) {
     const groupDataToJoin = await getGroupCurrent(nodesonosPlayer, validatedGroupPlayerName)
     const coordinatorRincon = `x-rincon:${groupDataToJoin.members[0].uuid}`
 
-    // Get sonosName and URL oring of joiner (playerName or config node)
+    // Get playerName and URL oring of joiner (playerName or config node)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupDataJoiner = await getGroupCurrent(nodesonosPlayer, validated.playerName)
 
     if (
-      groupDataJoiner.members[groupDataJoiner.playerIndex].sonosName
-      !== groupDataToJoin.members[0].sonosName) {
+      groupDataJoiner.members[groupDataJoiner.playerIndex].playerName
+      !== groupDataToJoin.members[0].playerName) {
       // No check - always returns true. We use SetAVTransport as build in AddMember does not work
       await executeActionV6(groupDataJoiner.members[groupDataJoiner.playerIndex].url,
         '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
