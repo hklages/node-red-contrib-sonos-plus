@@ -1686,6 +1686,11 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
+
+  // Algorithm: If the new coordinator is already the coordinator in a existing group, 
+  // then just take that group and remove (first)/ add (second) the needed players.
+  // else make the new coordinator stand alone and add all needed players.
+  
   async function householdCreateGroup (node, msg, stateName, cmdName, nodesonosPlayer) {
     const validatedPlayerList = validRegex(msg, stateName, REGEX_CSV,
       'player list', NRCSP_PREFIX)
