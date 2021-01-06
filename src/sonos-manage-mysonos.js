@@ -1,3 +1,15 @@
+/**
+ * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
+ *
+ * @module MySonos
+ * 
+ * @author Henning Klages
+ * 
+ * @since 2020-11-27
+*/
+
+'use strict'
+
 const {
   REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR,
   NRCSP_PREFIX,
@@ -12,18 +24,9 @@ const { getMySonosV3, executeActionV6, didlXmlToArray, setPlayerVolume
 
 const { Sonos } = require('sonos')
 
-/**
- * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
- *
- * @module MySonos
- * 
- * @author Henning Klages
- * 
- * @since 2020-11-27
-*/
+const debug = require('debug')('nrcsp:manage-mysonos')
 
 module.exports = function (RED) {
-  'use strict'
 
   // function lexical order, ascending
   const COMMAND_TABLE_MYSONOS = {
@@ -440,6 +443,7 @@ module.exports = function (RED) {
    * Info:  content validation of mediaType, serviceName
    */
   async function mysonosExportItem (node, msg, stateName, cmdName, nodesonosPlayer) {
+    debug('entering method mysonosExportItem')
     // payload title search string is required.
     const validatedSearchString
       = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)

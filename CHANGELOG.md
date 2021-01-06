@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [4.5.5] 2021-01-07
+
+#### Changed
+
+- updated dependencies
+
+- update documentation
+
+- using debug package for debug
+
 ### [4.5.4] 2020-12-17
 
 #### Changed
@@ -252,7 +262,7 @@ All notable changes to this project are documented in this file.
 
 #### Added
 
-- "Universal" / "My Sonos" node: added selection box for commands, imput field for state; and compatibility mode for old Version 3 flow style.
+- "Universal" / "My Sonos" node: added selection box for commands, input field for state; and compatibility mode for old Version 3 flow style.
 
 - "Universal" / "My Sonos" node: added now all missing commands (music library, ... ) from "Control Player", "Get Status", "Manage Radio" node
 
@@ -344,7 +354,7 @@ All notable changes to this project are documented in this file.
 
 - "Universal node": command player.get.role also outputs the SONOS player name
 
-- "My Sonos" node: get.items now alos provides the Sonos playlists.
+- "My Sonos" node: get.items now also provides the Sonos playlists.
 
 - "Manage Radio": is depreciated - please use Universal node instead.
 
@@ -455,7 +465,7 @@ All notable changes to this project are documented in this file.
 #### Added
 
 - Node "Get Status" command get_properties now has new property msg.uuid (needed for stereopair)
-- Node "Control Player" new commands create_stereopair, seperate_stereopair
+- Node "Control Player" new commands create_stereopair, separate_stereopair
 
 #### Changed
 

@@ -1,5 +1,3 @@
-'use strict'
-
 /**
  * Collection of general purpose REGEX strings and methods not being related to SOAP or SONOS.
  *
@@ -9,6 +7,10 @@
  * 
  * @since 2020-11-21
 */
+
+'use strict'
+
+const debug = require('debug')('nrcsp:Helper')
 
 module.exports = {
 
@@ -44,7 +46,7 @@ module.exports = {
    */
   discoverSonosPlayerBySerial: (node, serialNumber, callback) => {
     const sonos = require('sonos')
-
+    
     node.debug('Start find SONOS player.')
     let ipAddress = null
 
@@ -328,6 +330,7 @@ module.exports = {
    * @throws {error} if msg[propertyName] has invalid regex
    */
   validRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
+    debug('entering method validRegex')
     // if defaultValue is missing and error will be throw in case property is not defined or missing
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []

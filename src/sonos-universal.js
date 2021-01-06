@@ -1,3 +1,16 @@
+/**
+ * All functions provided by Universal node. 
+ * Universal node: all except commands related to groups and player.
+ *
+ * @module Universal
+ *
+ * @author Henning Klages
+ *
+ * @since 2020-12-16
+ */
+
+'use strict'
+
 const {
   REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
   NRCSP_PREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV, REGEX_QUEUEMODES,
@@ -15,20 +28,10 @@ const {
 
 const { Sonos } = require('sonos')
 
-/**
- * All functions provided by Universal node. 
- * Universal node: all except commands related to groups and player.
- *
- * @module Universal
- *
- * @author Henning Klages
- *
- * @since 2020-12-16
- */
+const debug = require('debug')('nrcsp:Universal')
 
 module.exports = function (RED) {
-  'use strict'
-
+  
   // Function lexical order, ascending
   const COMMAND_TABLE_UNIVERSAL = {
     'coordinator.delegate': coordinatorDelegateCoordination,
@@ -369,6 +372,7 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    */
   async function groupCreateSnapshot (node, msg, stateName, cmdName, nodesonosPlayer) {
+    debug('entering method groupCreateSnapshot')
     // Validate msg properties
     const options = { 'snapVolumes': false, 'snapMutestates': false } // Default
     if (isValidProperty(msg, ['snapVolumes'])) {

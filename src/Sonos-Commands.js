@@ -1,5 +1,3 @@
-'use strict'
-
 /**
  * Collection of 
  * 
@@ -20,6 +18,8 @@
  * @since 2020-12-16
 */
 
+'use strict'
+
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
   getNestedProperty, hhmmss2msec, NRCSP_PREFIX, isTruthy
 } = require('./Helper.js')
@@ -27,6 +27,8 @@ const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyStrin
 const { sendSoapToPlayer } = require('./Soap.js')
 const xml2js = require('xml2js')
 const { GenerateMetadata } = require('sonos').Helpers
+
+const debug = require('debug')('nrcsp:Sonos-Commands')
 
 /**
   * Transformed data of Browse action response. 
@@ -966,6 +968,7 @@ module.exports = {
    * response value (set) or value (get)
    */
   executeActionV6: async function (playerUrl, endpoint, actionName, actionInArgs) {
+    debug('entering method executeActionV6')
     // get action in, out properties from json file
     const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
     const { inArgs, outArgs } = endpointActions[actionName]

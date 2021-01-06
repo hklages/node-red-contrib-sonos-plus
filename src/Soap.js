@@ -10,12 +10,14 @@
 */
 
 'use strict'
-const request = require('axios')
 
 const {
   isValidProperty, isValidPropertyNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1,
   NRCSP_PREFIX
 } = require('./Helper.js')
+
+const request = require('axios')
+const debug = require('debug')('nrcsp:Soap')
 
 module.exports = {
 
@@ -31,6 +33,7 @@ module.exports = {
    * @returns {promise} response header/body/error code from player
    */
   sendSoapToPlayer: async function (playerUrlOrigin, endpoint, serviceName, actionName, args) {
+    debug('entering method sendSoapToPlayer')
     // create action used in header - notice the " inside
     const soapAction = `"urn:schemas-upnp-org:service:${serviceName}:1#${actionName}"`
 

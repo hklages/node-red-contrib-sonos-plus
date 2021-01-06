@@ -1,5 +1,16 @@
+/**
+ * All configuration data- is being used in Universal and My Sonos node 
+ *
+ * @module Config
+ *
+ * @author Henning Klages
+ *
+ * @since 2020-12-16
+ */
+
+'use strict'
+
 module.exports = function (RED) {
-  'use strict'
 
   let node = {} // used for sending node.error, node.debug
 

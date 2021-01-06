@@ -70,13 +70,13 @@
 
     <!-- Command selection -->
     <div class="form-row">
-      <label for="node-input-command"><i class="fa fa-tasks"></i> Command</label>
+      <label for="node-input-command"><i class="fa fa-tasks"></i> Topic</label>
       <select id="node-input-command" style="width:70%"></select>
     </div>
 
     <!-- input state -->
     <div class="form-row">
-      <label for="node-input-state"><i class="fa fa-envelope"></i> State</label>
+      <label for="node-input-state"><i class="fa fa-envelope"></i> Payload</label>
       <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank (type string) to use msg property"/>
       <input type="hidden" id="node-input-stateType"/>
     </div>
@@ -89,21 +89,18 @@
     
     <!-- Dialog help -->
     <div class="text">        
-      <b>Config Node</b> provides the default SONOS player by ip address or serialnumber.<br>
+      <b>Config Node</b> provides the default SONOS player by ip address or serial number.<br>
       For many commands <code>msg.playerName</code> may be used and should hold Sonos player name.<br>
       <code>msg.playerName</code> overrules config node player.<br><br>
     
-      The new standard (since version 4) for <b>input message usage</b> is:
+      The <b>input message usage</b> is:
       <ul>
         <li><code>msg.topic</code> holds the command</li>
         <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
       </ul>
       Dialog values overrule msg properties.<br><br>
 
-      Tic <b>Compatibility (depreciated)</b> to get the old style (before version 4) with <br>
-      <code>msg.payload</code> for commands and <code>msg.topic</code> for the state/message.<br><br>
-
-      <b>Command</b> provides a pick up list of all available commmands.<br><br>
+      <b>Command</b> provides a pick up list of all available commands.<br><br>
       
       <b>State</b> free form field for additional data such as on/off.<br><br>
       
@@ -113,7 +110,6 @@
 
 <script type="text/javascript">
 // universalCmdList has to be kept in sync with the table .js file! First item is message! 
-// We need two properties for <select>
 // Message first, all others in lexical order, ascending
 // TODO Notion Command Lists Sync
   const universalCmdList = [
