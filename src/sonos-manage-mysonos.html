@@ -29,7 +29,6 @@
     label: function() {
       let found = mySonosCmdList.find(item => item.cmd === this.command);
       // mark all nodes with depreciated compatibility mode
-      console.log(this.command)
       let nodeLabel = this.name || found.cmd || 'My Sonos'
       nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
