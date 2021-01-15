@@ -51,7 +51,8 @@ module.exports = {
     httpBody = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">' 
       + '<s:Body>' + httpBody + '</s:Body>'
       + '</s:Envelope>'
-
+    debug('soa action >>%s', JSON.stringify(soapAction))
+    debug('soap body >>%s', JSON.stringify(httpBody))
     const response = await request({
       method: 'post',
       baseURL: playerUrlOrigin,
@@ -63,9 +64,9 @@ module.exports = {
       data: httpBody
     })
       .catch((error) => {
-        // In case of an SOAP error error.response held the details and status code 500
         // Experience: When using reject(error) the error.response get lost.
         // Thats why error.response is checked and handled here!
+        // In case of an SOAP error error.response held the details and status code 500
         if (isValidProperty(error, ['response'])) {
         // Indicator for SOAP Error
           if (isValidProperty(error, ['message'])) {
@@ -91,6 +92,8 @@ module.exports = {
           }
         } else {
           // usually ECON.. or timed out. Is being handled in failure procedure
+          // eslint-disable-next-line max-len
+          debug('error without error.response >>%s', JSON.stringify(error, Object.getOwnPropertyNames(error)))
           throw error
         }
       })

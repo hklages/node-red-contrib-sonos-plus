@@ -2856,7 +2856,7 @@ module.exports = function (RED) {
   async function playerExecuteActionV6 (node, msg, stateName, cmdName, nodesonosPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const { endpoint, action, inArgs } = msg.payload
+    const { endpoint, action, inArgs } = msg
     const payload = await executeActionV6(groupData.members[groupData.playerIndex].url,
       endpoint, action, inArgs)
     

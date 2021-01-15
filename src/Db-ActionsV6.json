@@ -73,6 +73,20 @@
     }
   },
   "/MediaRenderer/AVTransport/Control": {
+    "AddURIToQueue": {
+      "inArgs": [
+        "InstanceID",
+        "EnqueuedURI",
+        "EnqueuedURIMetaData",
+        "DesiredFirstTrackNumberEnqueued",
+        "EnqueueAsNext"
+      ],
+      "outArgs": [
+        "FirstTrackNumberEnqueued",
+        "NumTracksAdded",
+        "NewQueueLength"
+      ]
+    },
     "BecomeCoordinatorOfStandaloneGroup": {
       "inArgs": [
         "InstanceID"
