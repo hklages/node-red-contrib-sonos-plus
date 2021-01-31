@@ -14,10 +14,6 @@ Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sono
 
 Read the Quickstart and explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
-### ACTION REQUIRED TO MIGRATE TO VERSION 4
-
-> See required action here: [issue 67](https://github.com/hklages/node-red-contrib-sonos-plus/issues/67)
-
 ### SUPPORT
 
 Either open a github issue (preferred method) or send an email to nrcsplus@gmail.com
@@ -29,20 +25,6 @@ Either open a github issue (preferred method) or send an email to nrcsplus@gmail
 - All nodes: !!! property sonosPlayer is now playerName (meaning SONOS-Playername) - replacing sonosName
 
 - My Sonos node: !!! library.get.playlists: msg.size is now msg.requestedCount
-
-- Universal node: !!! group.get.sleeptimer returns now "none" if not set
-
-- Universal node: !!! group.get.state, group.get.members, household.get.groups: members have different data: url instead of hostname, port, ...
-
-- Universal node: !!! group.get.state does not anymore provide groupName
-
-- !!! artUri now instead of AlbumArtUri, added serviceName to group.get.trackplus and some others.
-
-- In Universal node: household.create.group - use a comma separated list with coordinator at first position to create a group
-
-- In Universal node: new command group.get.members
-
-- In Universal node: new command player.play.tv
 
 ### Installation
 

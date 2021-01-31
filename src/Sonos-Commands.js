@@ -690,7 +690,8 @@ module.exports = {
       } else if (module.exports.UPNP_CLASSES_QUEUE.includes(item.upnpClass)) {
         item.processingType = 'queue'
       } else {
-        item.processingType = 'unsupported'
+        // default as it works in most case
+        item.processingType = 'queue'
       }
 
       return item
