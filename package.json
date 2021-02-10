@@ -13,6 +13,7 @@
     "DEV-mtnc-npm-update": "npm install npm@latest -g",
     "DEV-mtnc-eslint-update": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm install eslint@latest",
     "DEV-mtnc-dependencies-update": "open topic - fallback everyone manual",
+    "DEV-generate-docs": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && jsdoc -c mydoc.json",
     "TEST-mtnc-nodered-version": "npm list node-red -g",
     "TEST-mtnc-nodered-update": "npm install node-red@latest -g",
     "TEST-mtnc-node-red-modules-versions": "cd C:/Users/hekla/.node-red && npm list --depth=0",
@@ -21,8 +22,8 @@
     "TEST-rdply-mypackge-code": "not necessary as that is linked to development directory",
     "TEST-strt-server": "NODE-RED",
     "TEST-strt-flows": "start http://127.0.0.1:1880/",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "DEV-generate-docs": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && jsdoc -c mydoc.json"
+    "TEST-HelperTs": "./node_modules/.bin/mocha ./tests/HelperTs.js",
+    "TEST-Sonos-CommandsTs": "./node_modules/.bin/mocha ./tests/Sonos-CommandsTs.js"
   },
   "keywords": [
     "sonos",
@@ -51,9 +52,15 @@
     "axios": "^0.21.1",
     "debug": "^4.3.1",
     "sonos": "^1.14.0",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.4.23",
+    "fast-xml-parser": "^3.17.6",
+    "@svrooij/sonos": "v2.4.0-beta.3"
   },
   "devDependencies": {
-    "eslint": "^7.19.0"
+    "eslint": "^7.19.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1"
   }
 }

@@ -32,7 +32,7 @@ module.exports = {
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
   REGEX_CSV: /^[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9]+)*(,[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9])*)*$/u,
 
-  NRCSP_PREFIX: 'nrcsp: ',
+  PACKAGE_PREFIX: 'nrcsp: ',
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
   NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
 
@@ -168,10 +168,10 @@ module.exports = {
             msgShort = 'statusCode NOT 500'
             msgDet = `upnp envelope: ${error.message}`
           }
-        } else if (error.message.startsWith(module.exports.NRCSP_PREFIX)) {
+        } else if (error.message.startsWith(module.exports.PACKAGE_PREFIX)) {
           // 3. my thrown errors
           msgDet = 'none'
-          msgShort = error.message.replace(module.exports.NRCSP_PREFIX, '')
+          msgShort = error.message.replace(module.exports.PACKAGE_PREFIX, '')
         } else {
           // Caution: getOwn is necessary for some error messages eg play mode!
           msgShort = error.message

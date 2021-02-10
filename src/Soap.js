@@ -13,7 +13,7 @@
 
 const {
   isValidProperty, isValidPropertyNotEmptyString, getErrorCodeFromEnvelope, getErrorMessageV1,
-  NRCSP_PREFIX
+  PACKAGE_PREFIX: NRCSP_PREFIX
 } = require('./Helper.js')
 
 const request = require('axios')

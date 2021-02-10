@@ -13,10 +13,12 @@
 
 const {
   REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
-  NRCSP_PREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV, REGEX_QUEUEMODES,
+  PACKAGE_PREFIX: NRCSP_PREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV, REGEX_QUEUEMODES,
   discoverSonosPlayerBySerial, isValidProperty, isValidPropertyNotEmptyString,
   isTruthyAndNotEmptyString, isOnOff, validToInteger, validRegex, failure, success
 } = require('./Helper.js')
+
+const { isTruthyTs, isTruthyPropertyStringNotEmptyTs, isTruthyPropertyTs } =require('./HelperTs.js')
 
 const {
   playGroupNotification, playJoinerNotification, createGroupSnapshot,
@@ -26,7 +28,10 @@ const {
   coordinatorPlayTrack
 } = require('./Sonos-Commands.js')
 
+const { getGroupCurrentTs } = require('./Sonos-CommandsTs.js')
+
 const { Sonos } = require('sonos')
+const { SonosDevice } = require('@svrooij/sonos/lib')
 
 const debug = require('debug')('nrcsp:Universal')
 
@@ -195,6 +200,8 @@ module.exports = function (RED) {
    *  the original msg[stateName] will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, ipaddress) {
+    
+    // create nodesonosPlayer and now also tsPlayer
     const nodesonosPlayer = new Sonos(ipaddress)
     if (!isTruthyAndNotEmptyString(nodesonosPlayer)) {
       throw new Error(`${NRCSP_PREFIX} sonos player is undefined`)
@@ -204,6 +211,16 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_PREFIX} ip address or port is missing`)
     }
     nodesonosPlayer.url = new URL(`http://${nodesonosPlayer.host}:${nodesonosPlayer.port}`)
+
+    const tsPlayer = new SonosDevice(ipaddress)
+    if (!isTruthyTs(tsPlayer)) {
+      throw new Error(`${NRCSP_PREFIX} tsPlayer is undefined`)
+    }
+    if (!(isTruthyPropertyStringNotEmptyTs(tsPlayer, ['host'])
+      && isTruthyPropertyTs(tsPlayer, ['port']))) {
+      throw new Error(`${NRCSP_PREFIX} tsPlayer ip address or port is missing `)
+    }
+    tsPlayer.url = new URL(`http://${tsPlayer.host}:${tsPlayer.port}`)
     
     // Handle compatibility to older nrcsp version - depreciated 2020-05-25
     // Path have to be arrays showing the path to property.
@@ -256,7 +273,8 @@ module.exports = function (RED) {
       throw new Error(`${NRCSP_PREFIX} command is invalid >>${command} `)
     }
     
-    return COMMAND_TABLE_UNIVERSAL[command](node, msg, stateName, cmdName, nodesonosPlayer)
+    // eslint-disable-next-line max-len
+    return COMMAND_TABLE_UNIVERSAL[command](node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer)
   }
 
   //
@@ -277,7 +295,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function coordinatorDelegateCoordination (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function coordinatorDelegateCoordination (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload new player name is required.
     const validPlayerName = validRegex(msg, stateName, REGEX_ANYCHAR, 'player name', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -321,7 +340,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupAdjustVolume (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupAdjustVolume (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload adjusted volume is required
     const adjustVolume = validToInteger(msg, stateName, -100, +100, 'adjust volume', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -346,7 +365,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupClearQueue (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupClearQueue (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname) // coordinator at 0
@@ -371,7 +390,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupCreateSnapshot (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupCreateSnapshot (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     debug('entering method groupCreateSnapshot')
     // Validate msg properties
     const options = { 'snapVolumes': false, 'snapMutestates': false } // Default
@@ -410,7 +429,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupCreateVolumeSnapshot (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function groupCreateVolumeSnapshot (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     await executeActionV6(groupData.members[0].url, // coordinator at 0
@@ -433,7 +453,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupCancelSleeptimer (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupCancelSleeptimer (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     await executeActionV6(groupData.members[0].url, // coordinator at 0
@@ -456,7 +476,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetTransportActions (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function groupGetTransportActions (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await executeActionV6(groupData.members[0].url, // coordinator at 0
@@ -522,7 +543,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetMute (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetMute (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const state = await executeActionV6(groupData.members[0].url, // coordinator at 0
@@ -548,7 +569,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetPlaybackstate (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetPlaybackstate (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname) 
@@ -571,7 +592,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetQueue (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetQueue (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await getSonosQueue(groupData.members[0].url) // coordinator is at 0
@@ -592,7 +613,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetSleeptimer (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetSleeptimer (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const sleep = await executeActionV6(groupData.members[0].url, // coordinator at 0
@@ -622,7 +643,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetState (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetState (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
@@ -686,7 +707,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetTrackPlus (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetTrackPlus (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
@@ -797,7 +818,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupGetVolume (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupGetVolume (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await executeActionV6(groupData.members[0].url, // coordinator at 0
@@ -812,20 +833,21 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload but in compatibility mode: topic
-   * @param {string} cmdName=topic but in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} stateName not used
+   * @param {string} cmdName not used
+   * @param {object} nodesonosPlayer not used
+   * @param {object} tsPlayer sonos-ts player with url - as default
    *
    * @returns {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupNextTrack (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupNextTrack (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
-    nodesonosCoordinator.url = groupData.members[0].url
-    await nodesonosCoordinator.next()
+    const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
+    tsCoordinator.url = groupData.members[0].url
+    await tsCoordinator.Next()
     
     return {}
   }
@@ -835,20 +857,21 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload but in compatibility mode: topic
-   * @param {string} cmdName=topic but in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} stateName not used
+   * @param {string} cmdName not used
+   * @param {object} nodesonosPlayer not used
+   * @param {object} tsPlayer sonos-ts player with url - as default
    *
    * @returns {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPause (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPause (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
-    nodesonosCoordinator.url = groupData.members[0].url
-    await nodesonosCoordinator.pause()
+    const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
+    tsCoordinator.url = groupData.members[0].url
+    await tsCoordinator.Pause()
     
     return {}
   }
@@ -868,7 +891,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlay (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlay (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
@@ -912,7 +935,7 @@ module.exports = function (RED) {
    *
    * @throws  any functions throws error and explicit throws
    */
-  async function groupPlayExport (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlayExport (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Simple validation of export and activation
 
     const exportData = msg[stateName]
@@ -978,7 +1001,7 @@ module.exports = function (RED) {
    *  While playing a notification (start .. to end + 2 seconds)
    *     there should not be send another request to this group.
    */
-  async function groupPlayNotification (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlayNotification (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload uri is required.
     const validatedUri = validRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_PREFIX)
 
@@ -1033,7 +1056,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlayQueue (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlayQueue (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
@@ -1079,7 +1102,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlaySnapshot (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlaySnapshot (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     if (isValidProperty(msg, [stateName])) {
       if (typeof msg[stateName] !== 'object') {
         throw new Error(`${NRCSP_PREFIX}: snapshot (msg.${stateName}) is not object`)
@@ -1132,7 +1155,7 @@ module.exports = function (RED) {
    * @throws {error} NRCSP error validatedGroupProperties, getGroupCurrent, validRegex
    * @throws {error} from node-sonos setAVTransportURI and setPlayerVolume
    */
-  async function groupPlayStreamHttpV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlayStreamHttpV2 (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload uri is required.
     let validatedUri = validRegex(msg, stateName, REGEX_HTTP, 'uri', NRCSP_PREFIX)
 
@@ -1181,7 +1204,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPlayTrack (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlayTrack (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Get the playerName
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
@@ -1232,7 +1255,7 @@ module.exports = function (RED) {
    *          all from getGroupCurrent
    *          if msg.sameVolume === false and player == standalone because non sense.
    */
-  async function groupPlayTuneIn (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPlayTuneIn (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload radio id is required
     const validatedRadioId = validRegex(msg, stateName, REGEX_RADIO_ID, 'radio id',
       NRCSP_PREFIX)
@@ -1264,20 +1287,22 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload but in compatibility mode: topic
-   * @param {string} cmdName=topic but in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} stateName not used
+   * @param {string} cmdName not used
+   * @param {object} nodesonosPlayer not used
+   * @param {object} tsPlayer sonos-ts player with url - as default
    *
    * @returns {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupPreviousTrack (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupPreviousTrack (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
-    nodesonosCoordinator.url = groupData.members[0].url
-    await nodesonosCoordinator.previous()
+    const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
+    tsCoordinator.url = groupData.members[0].url
+    await tsCoordinator.Previous()
+
     return {}
   }
 
@@ -1295,7 +1320,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupQueueUri (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupQueueUri (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload uri is required.
     const validatedUri = validRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -1328,7 +1353,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupQueueUriFromSpotify (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function groupQueueUriFromSpotify (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload uri is required.
     const validatedUri = validRegex(msg,
       stateName,
@@ -1366,7 +1392,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupRemoveTracks (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupRemoveTracks (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
 
@@ -1404,7 +1430,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSaveQueueToSonosPlaylist (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function groupSaveQueueToSonosPlaylist (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, stateName, REGEX_ANYCHAR, 'title', NRCSP_PREFIX)
 
@@ -1437,7 +1464,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSeek (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSeek (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload seek time is required.
     const validTime = validRegex(msg, stateName, REGEX_TIME, 'seek time', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -1463,7 +1490,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSeekDelta (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSeekDelta (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload seek time is required.
     const validTime = validRegex(msg, stateName, REGEX_TIME_DELTA, 'relative seek time',
       NRCSP_PREFIX)
@@ -1490,7 +1517,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetCrossfade (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSetCrossfade (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload crossfade sate is required.
     const newState = isOnOff(msg, stateName, 'crosssfade state', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -1516,7 +1543,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetMute (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSetMute (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload mute state is required.
     const newState = isOnOff(msg, stateName, 'mute state', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -1542,7 +1569,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetQueuemode (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSetQueuemode (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload queuemode is required.
     const newState = validRegex(msg, stateName, REGEX_QUEUEMODES, 'queue mode', NRCSP_PREFIX)
 
@@ -1591,7 +1618,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetSleeptimer (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSetSleeptimer (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload sleep time is required.
     const validTime = validRegex(msg, stateName, REGEX_TIME, 'timer duration',
       NRCSP_PREFIX)
@@ -1619,7 +1646,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupSetVolume (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupSetVolume (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const newVolume = validToInteger(msg, stateName, -100, +100, 'new volume',
       NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -1636,21 +1663,22 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {string} stateName=payload but in compatibility mode: topic
-   * @param {string} cmdName=topic but in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} stateName not used
+   * @param {string} cmdName not used
+   * @param {object} nodesonosPlayer not used
+   * @param {object} tsPlayer sonos-ts player with url - as default
    *
    * @returns {promise} {}
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupStop (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupStop (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
-    nodesonosCoordinator.url = groupData.members[0].url
-    await nodesonosCoordinator.stop()
-
+    const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
+    tsCoordinator.url = groupData.members[0].url
+    await tsCoordinator.Stop()
+    
     return {}
   }
 
@@ -1667,7 +1695,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function groupTogglePlayback (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function groupTogglePlayback (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
@@ -1695,7 +1723,7 @@ module.exports = function (RED) {
   // then just take that group and remove (first)/ add (second) the needed players.
   // else make the new coordinator stand alone and add all needed players.
   
-  async function householdCreateGroup (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function householdCreateGroup (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validatedPlayerList = validRegex(msg, stateName, REGEX_CSV,
       'player list', NRCSP_PREFIX)
     const newGroupPlayerArray = validatedPlayerList.split(',')
@@ -1809,7 +1837,8 @@ module.exports = function (RED) {
    * Caution: In executeAction it should be left: playerLeftBaseUrl
    *
    */
-  async function householdCreateStereoPair (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function householdCreateStereoPair (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Both player are required
     const playerLeft = validRegex(msg, stateName, REGEX_ANYCHAR, 'player name left',
       NRCSP_PREFIX)
@@ -1864,7 +1893,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdGetGroups (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function householdGetGroups (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const payload = await getGroupsAll(nodesonosPlayer.url)
 
     return { payload }
@@ -1882,7 +1911,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdGetSonosPlaylists (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function householdGetSonosPlaylists (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const payload = await getSonosPlaylistsV2(nodesonosPlayer.url)
 
     return { payload }
@@ -1902,7 +1932,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdRemoveSonosPlaylist (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function householdRemoveSonosPlaylist (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, stateName, REGEX_ANYCHAR, 'title',
       NRCSP_PREFIX)
@@ -1949,7 +1980,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdSeparateGroup (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function householdSeparateGroup (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     for (let i = 1; i < groupData.members.length; i++) { // Start with 1 - coordinator is last
@@ -1977,7 +2008,8 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    *
    */
-  async function householdSeparateStereoPair (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function householdSeparateStereoPair (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Player left is required
     const playerLeft = validRegex(msg, stateName, REGEX_ANYCHAR, 'player name left',
       NRCSP_PREFIX)
@@ -2046,7 +2078,8 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function householdTestPlayerOnline (node, msg, stateName, cmdName, nodesonosPlayer) {
+  // eslint-disable-next-line max-len
+  async function householdTestPlayerOnline (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Player name is required
     if (!isValidProperty(msg, [stateName])) {
       throw new Error(`${NRCSP_PREFIX} player name (msg.${stateName}) is missing/invalid`)
@@ -2095,7 +2128,7 @@ module.exports = function (RED) {
    *  While playing a notification (start .. to end + 2 seconds)
    *     there should not be send another request to this player and the group shound be modified
    */
-  async function joinerPlayNotification (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function joinerPlayNotification (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload notification uri is required.
     const validatedUri = validRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_PREFIX)
 
@@ -2153,7 +2186,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerAdjustVolume (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerAdjustVolume (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload volume is required.
     const adjustVolume = validToInteger(msg, stateName, -100, +100, 'adjust volume',
       NRCSP_PREFIX)
@@ -2180,7 +2213,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerBecomeStandalone (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerBecomeStandalone (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
@@ -2205,7 +2238,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetBass (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetBass (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await executeActionV6(groupData.members[groupData.playerIndex].url,
@@ -2230,7 +2263,7 @@ module.exports = function (RED) {
    *
    * EQ data are only available for specific players.
    */
-  async function playerGetEq (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetEq (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
@@ -2284,7 +2317,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetLed (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetLed (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     // returns On or Off
@@ -2307,7 +2340,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetLoudness (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetLoudness (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const loudness = await executeActionV6(groupData.members[groupData.playerIndex].url,
@@ -2330,7 +2363,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetMute (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetMute (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const state = await executeActionV6(groupData.members[groupData.playerIndex].url,
@@ -2353,7 +2386,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetProperties (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetProperties (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
@@ -2384,7 +2417,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetQueue (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetQueue (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await getSonosQueue(groupData.members[groupData.playerIndex].url)
@@ -2405,7 +2438,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetRole (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetRole (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     let role
@@ -2433,7 +2466,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetTreble (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetTreble (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await executeActionV6(groupData.members[groupData.playerIndex].url,
@@ -2456,7 +2489,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerGetVolume (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerGetVolume (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const payload = await executeActionV6(groupData.members[groupData.playerIndex].url,
@@ -2484,7 +2517,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerJoinGroup (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerJoinGroup (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload a playername in group is required
     const validatedGroupPlayerName = validRegex(msg, stateName, REGEX_ANYCHAR,
       'group player name', NRCSP_PREFIX)
@@ -2526,7 +2559,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerLeaveGroup (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerLeaveGroup (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     await executeActionV6(groupData.members[groupData.playerIndex].url,
@@ -2552,7 +2585,7 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    *
    */
-  async function playerPlayAvtransport (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerPlayAvtransport (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload uri is required: eg x-rincon-stream:RINCON_5CAAFD00223601400 for line in
     const validatedUri = validRegex(msg, stateName, REGEX_ANYCHAR, 'uri', NRCSP_PREFIX)
 
@@ -2584,7 +2617,7 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    *
    */
-  async function playerPlayTv (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerPlayTv (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Validate msg.playerName, msg.volume
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
@@ -2636,7 +2669,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetBass (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetBass (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload volume is required.
     const newBass = validToInteger(msg, stateName, -10, +10, 'set bass', NRCSP_PREFIX)
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
@@ -2663,7 +2696,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetEQ (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetEQ (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
@@ -2718,7 +2751,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetLed (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetLed (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Msg.state is required - convert to On Off
     const newState = (isOnOff(msg, stateName, 'led state', NRCSP_PREFIX) ? 'On' : 'Off')
 
@@ -2745,7 +2778,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetLoudness (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetLoudness (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Msg.state is required
     const newState = isOnOff(msg, stateName, 'loudness state', NRCSP_PREFIX)
 
@@ -2772,7 +2805,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetMute (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetMute (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload mute state is required.
     const newState = isOnOff(msg, stateName, 'mute state', NRCSP_PREFIX)
 
@@ -2799,7 +2832,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetTreble (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetTreble (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload volume is required.
     const newTreble = validToInteger(msg, stateName, -10, +10, 'set treble',
       NRCSP_PREFIX)
@@ -2827,7 +2860,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerSetVolume (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerSetVolume (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     // Payload volume is required.
     const validatedVolume = validToInteger(msg, stateName, 0, 100, 'volume',
       NRCSP_PREFIX)
@@ -2853,7 +2886,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerExecuteActionV6 (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerExecuteActionV6 (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, NRCSP_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const { endpoint, action, inArgs } = msg
@@ -2877,7 +2910,7 @@ module.exports = function (RED) {
    *
    * @throws any functions throws error and explicit throws
    */
-  async function playerExecuteTest (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function playerExecuteTest (node, msg, stateName, cmdName, nodesonosPlayer, tsPlayer) {
     const playerUrl = new URL(nodesonosPlayer.url)
     const inArgs = {
       'CurrentURI': msg[stateName],

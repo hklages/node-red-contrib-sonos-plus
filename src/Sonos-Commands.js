@@ -21,7 +21,7 @@
 'use strict'
 
 const { isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
-  getNestedProperty, hhmmss2msec, NRCSP_PREFIX, isTruthy
+  getNestedProperty, hhmmss2msec, PACKAGE_PREFIX: NRCSP_PREFIX, isTruthy
 } = require('./Helper.js')
 
 const { sendSoapToPlayer } = require('./Soap.js')
