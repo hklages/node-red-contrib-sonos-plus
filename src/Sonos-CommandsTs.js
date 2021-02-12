@@ -33,7 +33,8 @@ module.exports = {
    */
   getGroupCurrentTs: async function (tsPlayer, playerName) {
     const allGroups = await module.exports.getGroupsAllTs(tsPlayer)
-    const thisGroup = await module.exports.extractGroupTs(tsPlayer.url.hostname, allGroups, playerName)
+    // eslint-disable-next-line max-len
+    const thisGroup = await module.exports.extractGroupTs(tsPlayer.xUrl.hostname, allGroups, playerName)
     return thisGroup
   },
   
@@ -121,7 +122,6 @@ module.exports = {
       groupSorted = groupSorted.filter((member) => member.invisible === false)
       groupsArraySorted.push(groupSorted)
     }
-    console.log(groupsArraySorted)
     return groupsArraySorted 
   },
 
