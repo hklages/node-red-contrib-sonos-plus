@@ -1,9 +1,30 @@
-const { encodeHtmlEntityTs, decodeHtmlEntityTs, isTruthyPropertyTs,
+const { matchSerialUuid, encodeHtmlEntityTs, decodeHtmlEntityTs, isTruthyPropertyTs,
   isTruthyTs, isTruthyStringNotEmptyTs, isTruthyArrayTs }
   = require('../src/HelperTs.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
+
+describe('matchSerialUuid function', () => {
+  
+  it('equal provides true', async () => {
+    const serial = '00-0E-58-FE-3A-EA:5'
+    const uuid = 'RINCON_000E58FE3AEA01400'
+    const result = await matchSerialUuid(serial, uuid)
+    expect(result).
+      be.a('boolean').
+      equal(true)
+  })
+
+  it('not same provides false', async () => {
+    const serial = '94-9F-3E-C1-3B-99:8'
+    const uuid = 'RINCON_000E58FE3AEA01400'
+    const result = await matchSerialUuid(serial, uuid)
+    expect(result).
+      be.a('boolean').
+      equal(false)
+  })
+},
 
 describe('encodeHtmlEntityTs function', () => {
 
@@ -70,17 +91,17 @@ describe('encodeHtmlEntityTs function', () => {
   it('empty string allowed', async ()  => {
     const value = ''
     const result = await encodeHtmlEntityTs(value)
-    expect(result).
-      be.a('string').
-      equal(value)
+    expect(result)
+      .be.a('string')
+      .equal(value)
   })
 
   it('no encoding', async ()  => {
     const value = 'Hello Dolly abcdefghijklmnopqrstuvwxyz'
     const result = await encodeHtmlEntityTs(value)
-    expect(result).
-      be.a('string').
-      equal(value)
+    expect(result)
+      .be.a('string')
+      . equal(value)
   })
 
   it('simple encoding <>', async () => {
@@ -107,7 +128,7 @@ describe('encodeHtmlEntityTs function', () => {
       .equal('&lt;&gt;&apos;&amp;&quot;')
   })
 
-})
+}),
 
 describe('decodeHtmlEntityTs function', () => {
 
@@ -211,7 +232,7 @@ describe('decodeHtmlEntityTs function', () => {
       .equal('<>\'&"')
   })
 
-})
+}),
 
 describe('isTruthyPropertyTs function', () => {
   
@@ -379,7 +400,7 @@ describe('isTruthyPropertyTs function', () => {
     expect(isTruthyPropertyTs.bind(obj, [])).to.throw()
   })
 
-})
+}),
 
 describe('isTruthyTs function', () => {
   
@@ -494,7 +515,7 @@ describe('isTruthyTs function', () => {
       .equal(true)
   })
 
-})
+}),
 
 describe('isTruthyStringNotEmptyTs function', () => {
   
@@ -609,7 +630,7 @@ describe('isTruthyStringNotEmptyTs function', () => {
       .equal(true)
   })
 
-})
+}),
 
 describe('isTruthyArrayTs function', () => {
   
@@ -724,4 +745,4 @@ describe('isTruthyArrayTs function', () => {
       .equal(true)
   })
 
-})
+}))

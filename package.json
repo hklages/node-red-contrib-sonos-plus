@@ -23,6 +23,7 @@
     "TEST-strt-server": "NODE-RED",
     "TEST-strt-flows": "start http://127.0.0.1:1880/",
     "TEST-HelperTs": "./node_modules/.bin/mocha ./tests/HelperTs.js",
+    "TEST-Sonos-Extensions": "./node_modules/.bin/mocha ./tests/Sonos-Extensions.js",
     "TEST-Sonos-CommandsTs": "./node_modules/.bin/mocha ./tests/Sonos-CommandsTs.js"
   },
   "keywords": [

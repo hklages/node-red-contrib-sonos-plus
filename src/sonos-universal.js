@@ -12,18 +12,27 @@
 'use strict'
 
 const {
-  REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID,
-  PACKAGE_PREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV, REGEX_QUEUEMODES,
-  discoverSonosPlayerBySerial, isOnOff, validToInteger, validRegex, failure, success
+  REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID, REGEX_QUEUEMODES,
+  PACKAGE_PREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV,
+  TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
+} = require('./Globals.js')
+
+// TODO move to HelperTs
+const {
+  isOnOff, validToInteger, validRegex, failure, success
 } = require('./Helper.js')
 
-const { isTruthyTs, isTruthyPropertyStringNotEmptyTs, isTruthyPropertyTs
+const { discoverSonosPlayerBySerialTs } = require('./Discovery.js')
+
+const {
+  isTruthyTs, isTruthyPropertyStringNotEmptyTs, isTruthyPropertyTs
 } = require('./HelperTs.js')
 
-const { xGetDeviceProperties, xGetMutestate, xGetPlaybackstate, xGetSonosQueue,
+const { xGetDeviceProperties, xIsSonosPlayer, xGetMutestate, xGetPlaybackstate, xGetSonosQueue,
   xGetVolume, xSetMutestate, xSetVolume
 } = require('./Sonos-Extensions.js')
 
+// TODO move to Sonos-Commands.Ts and ExtensionTs
 const {
   playGroupNotification, playJoinerNotification, createGroupSnapshot,
   restoreGroupSnapshot, getRadioId,
@@ -122,65 +131,86 @@ module.exports = function (RED) {
   }
 
   /**
-   * Create Universal node, get valid ip address, store nodeDialog and subscribe to messages.
+   * Create Universal node, store nodeDialog, valid ip address and subscribe to messages.
    * @param {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
+    const thisFunction = 'create and subscribe'
     RED.nodes.createNode(this, config)
-    const nrcspFunction = 'create and subscribe'
     const node = this
-
-    // Ip address overruling serialnum - at least one must be valid
+    node.status({}) // Clear node status
+    
+    // Ip address overruling serialnumber - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
-    if (isTruthyPropertyTs(configNode, ['ipaddress'])
-      && typeof configNode.ipaddress === 'string'
+    if (isTruthyPropertyStringNotEmptyTs(configNode, ['ipaddress']) 
       && REGEX_IP.test(configNode.ipaddress)) {
-      // Ip address is being used - default case
-    } else if (isTruthyPropertyTs(configNode, ['serialnum'])
-      && typeof configNode.serialnum === 'string'
+      // Using config ip address to define the default SONOS player
+      const port = 1400 // assuming this port
+      const playerUrl = new URL(`http://${configNode.ipaddress}:${port}`)
+      xIsSonosPlayer(playerUrl, TIMEOUT_HTTP_REQUEST)
+        .then((isSonos) => {
+          if (isSonos) {
+            node.on('input', (msg) => {
+              node.debug('node - msg received')
+              processInputMsg(node, config, msg, playerUrl.hostname)
+                .then((msgUpdate) => {
+                  Object.assign(msg, msgUpdate) // Defines the output message
+                  success(node, msg, msg.nrcspCmd)
+                })
+                .catch((error) => {
+                  let thisFunction = 'processing input msg'
+                  if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
+                    thisFunction = msg.nrcspCmd
+                  }
+                  failure(node, msg, error, thisFunction)
+                })
+            })
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready for message' })      
+          } else {
+            node.status({ fill: 'red', shape: 'dot', text: 'error: given ip not reachable' })      
+          }
+        })
+        .catch((err) => {
+          debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+          node.status({ fill: 'red', shape: 'dot', text: 'error: xIsSonos went wrong' })
+        })
+      
+    } else if (isTruthyPropertyStringNotEmptyTs(configNode, ['serialnum'])
       && REGEX_SERIAL.test(configNode.serialnum)) {
-      discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpAddress) => {
-        if (err) {
-          failure(node, null,
-            new Error(`${PACKAGE_PREFIX} could not discover ip address)`), nrcspFunction)
+      // start discovery
+      discoverSonosPlayerBySerialTs(configNode.serialnum, TIMEOUT_DISCOVERY)
+        .then((discoveredIp) => {
+          debug('found ip address >>%s', discoveredIp)
+          const validIp = discoveredIp
+          node.on('input', (msg) => {
+            node.debug('node - msg received')
+            processInputMsg(node, config, msg, validIp)
+              .then((msgUpdate) => {
+                Object.assign(msg, msgUpdate) // Defines the output message
+                success(node, msg, msg.nrcspCmd)
+              })
+              .catch((error) => {
+                let thisFunction = 'processing input msg'
+                if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
+                  thisFunction = msg.nrcspCmd
+                }
+                failure(node, msg, error, thisFunction)
+              })
+          })
+          node.status({ fill: 'green', shape: 'dot', text: 'ok:subscribed' })
+        })
+        .catch((err) => {
+          // discovery failed - most likely because could not find any matching player
+          debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+          failure(node, null, 'could not discover player by serial', thisFunction)
           return
-        }
-        if (newIpAddress === null) {
-          failure(node, null,
-            new Error(`${PACKAGE_PREFIX} could not find any player by serial`), nrcspFunction)
-        } else {
-          // Setting of node status is done in following call handelInputMessage
-          node.debug(`OK sonos player ${newIpAddress} was found`)
-          configNode.ipaddress = newIpAddress
-        }
-      })
+        })
+   
     } else {
       failure(node, null,
-        new Error(`${PACKAGE_PREFIX} both ipaddress and serial number are invalid/missing`),
-        nrcspFunction)
+        new Error(`${PACKAGE_PREFIX} both ip address/serial number are invalid`), thisFunction)
       return
     }
-
-    // Clear node status
-    node.status({})
-
-    // Subscribe and handle input message
-    node.on('input',
-      (msg) => {
-        node.debug('node - msg received')
-        processInputMsg(node, config, msg, configNode.ipaddress)
-          .then((msgUpdate) => {
-            Object.assign(msg, msgUpdate) // Defines the output message
-            success(node, msg, msg.nrcspCmd)
-          })
-          .catch((error) => {
-            let functionName = 'processing input msg'
-            if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-              functionName = msg.nrcspCmd
-            }
-            failure(node, msg, error, functionName)
-          })
-      })
   }
 
   /**
@@ -221,7 +251,7 @@ module.exports = function (RED) {
       && isTruthyPropertyTs(tsPlayer, ['port']))) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer ip address or port is missing `)
     }
-    tsPlayer.xUrl = new URL(`http://${tsPlayer.host}:${tsPlayer.port}`)
+    tsPlayer.urlObject = new URL(`http://${tsPlayer.host}:${tsPlayer.port}`)
     
     // Command, required: node dialog overrules msg, store lowercase version in command
     let command
@@ -541,8 +571,8 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsCoordinator = new Sonos(groupData.members[0].url.hostname) 
-    tsCoordinator.xUrl = groupData.members[0].url
-    const payload = xGetPlaybackstate(tsCoordinator.xUrl)
+    tsCoordinator.urlObject = groupData.members[0].url
+    const payload = xGetPlaybackstate(tsCoordinator.urlObject)
 
     return { payload }
   }
@@ -611,9 +641,9 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
-    tsCoordinator.xUrl = groupData.members[0].url
+    tsCoordinator.urlObject = groupData.members[0].url
   
-    const playbackstate = await xGetPlaybackstate(tsCoordinator.xUrl)
+    const playbackstate = await xGetPlaybackstate(tsCoordinator.urlObject)
 
     const state = await executeActionV6(groupData.members[0].url,
       '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupMute',
@@ -637,7 +667,7 @@ module.exports = function (RED) {
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
     // Queue mode is in parameter PlayMode
-    const transportSettings = await executeActionV6(tsCoordinator.xUrl,
+    const transportSettings = await executeActionV6(tsCoordinator.urlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportSettings',
       { 'InstanceID': 0 })
     if (!isTruthyPropertyStringNotEmptyTs(transportSettings, 'PlayMode')) {
@@ -677,7 +707,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
     const nodesonosCoordinator = new Sonos(groupData.members[0].url.hostname)
-    nodesonosCoordinator.xUrl = groupData.members[0].url
+    nodesonosCoordinator.urlObject = groupData.members[0].url
 
     // Get currentTrack data and extract artist, title. Add url.origin to albumArtURL.
     const trackData = await nodesonosCoordinator.currentTrack()
@@ -1018,7 +1048,7 @@ module.exports = function (RED) {
     }
 
     const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
-    tsCoordinator.xUrl = groupData.members[0].url
+    tsCoordinator.urlObject = groupData.members[0].url
     await tsCoordinator.SwitchToQueue()
 
     if (validated.volume !== -1) {
@@ -1157,12 +1187,12 @@ module.exports = function (RED) {
     }
     // Payload position is required
     const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
-    tsCoordinator.xUrl = groupData.members[0].url
+    tsCoordinator.urlObject = groupData.members[0].url
     const validatedPosition = validToInteger(msg, 'payload', 1, lastTrackInQueue,
       'position in queue', PACKAGE_PREFIX)
     await tsCoordinator.SwitchToQueue()
 
-    await coordinatorPlayTrack(tsCoordinator.xUrl, validatedPosition)
+    await coordinatorPlayTrack(tsCoordinator.urlObject, validatedPosition)
     
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
@@ -1584,7 +1614,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
-    tsCoordinator.xUrl = groupData.members[0].url
+    tsCoordinator.urlObject = groupData.members[0].url
     await tsCoordinator.Stop()
     
     return {}
@@ -1605,7 +1635,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].url.hostname)
-    tsCoordinator.xUrl = groupData.members[0].url
+    tsCoordinator.urlObject = groupData.members[0].url
     await tsCoordinator.TogglePlayback()
 
     return {}
@@ -1794,7 +1824,7 @@ module.exports = function (RED) {
    * @throws any functions throws error and explicit throws
    */
   async function householdGetGroups (node, msg, nodesonosPlayer, tsPlayer) {
-    const payload = await getGroupsAllTs(tsPlayer.url)
+    const payload = await getGroupsAllTs(tsPlayer)
 
     return { payload }
   }
@@ -2147,10 +2177,10 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
-    tsSinglePlayer.xUrl = groupData.members[groupData.playerIndex].url
+    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].url
 
     // Verify that player has a TV mode
-    const properties = await xGetDeviceProperties(tsSinglePlayer.xUrl)
+    const properties = await xGetDeviceProperties(tsSinglePlayer.urlObject)
     if (!isTruthyPropertyStringNotEmptyTs(properties, ['modelName'])) {
       throw new Error(`${PACKAGE_PREFIX} Sonos player model name undefined`)
     }
@@ -2260,8 +2290,8 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].url.hostname)
-    tsSinglePlayer.xUrl = groupData.members[groupData.playerIndex].url
-    const properties = await xGetDeviceProperties(tsSinglePlayer.xUrl)
+    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].url
+    const properties = await xGetDeviceProperties(tsSinglePlayer.urlObject)
     const payload = Object.assign({}, properties)
     payload.uuid = payload.UDN.substring('uuid:'.length)
     payload.playerName = payload.roomName
@@ -2446,7 +2476,7 @@ module.exports = function (RED) {
     nodesonosSinglePlayer.url = groupData.members[groupData.playerIndex].url
     await nodesonosSinglePlayer.setAVTransportURI(validatedUri)
     if (validated.volume !== -1) {
-      await setPlayerVolume(groupData.members[groupData.playerIndex].ur, validated.volume)
+      await setPlayerVolume(groupData.members[groupData.playerIndex].url, validated.volume)
     }
     return {}
   }
@@ -2469,9 +2499,9 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].url.hostname)
-    tsSinglePlayer.xUrl = groupData.members[groupData.playerIndex].url
+    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].url
     // Get the device props, check whether TV is supported and extract URI target
-    const deviceProps = await  xGetDeviceProperties(tsSinglePlayer.xUrl)
+    const deviceProps = await  xGetDeviceProperties(tsSinglePlayer.urlObject)
     // Extract services and search for controlURL = "/HTControl/Control" - means tv enabled
     const serviceList = deviceProps.serviceList.service
     const found = serviceList.findIndex((service) => {
@@ -2543,10 +2573,10 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
     const tsSinglePlayer = new Sonos(groupData.members[groupData.playerIndex].url.hostname)
-    tsSinglePlayer.xUrl = groupData.members[groupData.playerIndex].url
+    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].url
 
     // Verify that player has a TV mode
-    const properties = await xGetDeviceProperties(tsSinglePlayer.xUrl)
+    const properties = await xGetDeviceProperties(tsSinglePlayer.urlObject)
     if (!isTruthyPropertyStringNotEmptyTs(properties, ['modelName'])) {
       throw new Error(`${PACKAGE_PREFIX} Sonos player model name undefined`)
     }

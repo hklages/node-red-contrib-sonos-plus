@@ -14,6 +14,25 @@ const debug = require('debug')('nrcsp:HelperTs')
 
 module.exports = {
 
+  /** Comparing player UUID and serial number. Returns true if matching.
+   * @param  {string} serial the string such as 00-0E-58-FE-3A-EA:5
+   * @param  {string} uuid the string such as RINCON_000E58FE3AEA01400
+   * RINCONG_xxxxxxxxxxxx01400  (01400 is port)
+   * @returns {Promise<boolean>} true if matching
+   * 
+   * @since 2021-02-13
+   */
+  matchSerialUuid: (serial, uuid) => {
+    debug('method >>%s', 'matchSerialUuid')
+    
+    let serialClean = serial.split(':')[0]
+    serialClean = serialClean.replace(/-/g, '')
+
+    let uuidClean = uuid.replace(/^(RINCON_)/, '')
+    uuidClean = uuidClean.replace(/(01400)$/, '')
+    return (uuidClean === serialClean)
+  },
+
   /** Encodes specific HTML special characters such as "<"" and others. 
    * Works with multiple occurrences.
    * @param  {string} htmlData the string to be decode, maybe empty.
