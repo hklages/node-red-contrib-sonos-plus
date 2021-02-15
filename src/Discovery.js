@@ -44,7 +44,7 @@ module.exports = {
     const reducedList = flatList.map((item) => { // only some properties
       return {
         'uuid': item.uuid,
-        'urlHost': item.url.hostname
+        'urlHost': item.Object.hostname
       }
     })
     let foundIndex = -1 // not found as default

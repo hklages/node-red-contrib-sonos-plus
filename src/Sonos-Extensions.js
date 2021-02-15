@@ -11,11 +11,12 @@
 
 'use strict'
 
-const PACKAGE_PREFIX = 'nrcsp: '
+const { PACKAGE_PREFIX } = require('./Globals.js')
 
+// TODO move both to extensions
 const { executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
 
-const { isTruthyPropertyStringNotEmptyTs, isTruthyArrayTs, isTruthyTs, isTruthyPropertyTs
+const { isTruthyPropertyStringNotEmptyTs, isTruthyArrayTs, isTruthyTs, isTruthyPropertyTs, encodeHtmlEntityTs
 } = require('./HelperTs.js')
 
 const  request   = require('axios').default
@@ -28,6 +29,37 @@ module.exports = {
   //
   //                    SPECIAL COMMANDS
   //
+
+  /** Validate that ip belongs to a SONOS player.
+   * @param {object} playerUrlObject player URL JavaScript build in Object 
+   * @param {number} timeout in milliseconds
+   * 
+   * @returns {Promise<boolean>} true if typical SONOS player response
+   *
+   * Does not validate parameter!
+   * 
+   * Method: Every SONOS player will answer to http request with 
+   * end point /info and provide the household id. 
+   * 
+   * @throws no programmed error
+   */
+  xIsSonosPlayer: async function (playerUrlObject, timeout) {
+    debug('method >>%s', 'xIsSonosPlayer')
+    let response = null
+    try {
+      response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
+    } catch (error) {
+      // timeout will show up here
+      // eslint-disable-next-line max-len
+      debug('request failed >>%s', playerUrlObject.host + '-' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
+      return false
+    }
+    if (!isTruthyPropertyStringNotEmptyTs(response, ['data', 'householdId'])) {
+      debug('invalid response >>%s', JSON.stringify(response, Object.getOwnPropertyNames(response)))
+      return false
+    }
+    return true
+  },
 
   /** Get device properties.
    * @param {object} playerUrlObject player URL JavaScript build in Object 
@@ -68,37 +100,6 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} xml parser: device data missing`)
     }
     return properties.xml.root.device
-  },
-
-  /** Validate that ip belongs to a SONOS player.
-   * @param {object} playerUrlObject player URL JavaScript build in Object 
-   * @param {number} timeout in milliseconds
-   * 
-   * @returns {Promise<boolean>} true if typical SONOS player response
-   *
-   * Does not validate parameter!
-   * 
-   * Method: Every SONOS player will answer to http request with 
-   * end point /info and provide the household id. 
-   * 
-   * @throws no programmed error
-   */
-  xIsSonosPlayer: async function (playerUrlObject, timeout) {
-    debug('method >>%s', 'xIsSonosPlayer')
-    let response = null
-    try {
-      response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
-    } catch (error) {
-      // timeout will show up here
-      // eslint-disable-next-line max-len
-      debug('request failed >>%s', playerUrlObject.host + '-' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
-      return false
-    }
-    if (!isTruthyPropertyStringNotEmptyTs(response, ['data', 'householdId'])) {
-      debug('invalid response >>%s', JSON.stringify(response, Object.getOwnPropertyNames(response)))
-      return false
-    }
-    return true
   },
 
   //
@@ -151,6 +152,57 @@ module.exports = {
     }
     return modifiedQueueArray
   },
+
+  /** Set the AVTransport stream for given player. Adds InstanceID. Encodes html.
+   * CAUTION: a joiner may leave group
+   * CAUTION: Does not play - only sets content. Needs a play afterwards
+   * CAUTION: No Metadata generation - must be provided!
+   * CAUTION: Allows to set all to empty - means no content, will not play
+   * Thats done for the createSnapshot, restoreSnapshot!
+   * 
+   * @param {object} playerUrlObject player URL build in JavaScript object
+   * @param {object} inArgs action arguments (except InstanceID)
+   * @param {string} inArgs.CurrentURI such as "x-sonosapi-stream:s119032?sid=254&flags=8224&sn=0"
+   * @param {string} inArgs.CurrentURIMetaData uri as DIDL-Lite xml
+   *
+   * @returns {promise} true
+   *
+   * @throws {error} from executeActionV6
+   * @throws {error} if any inArgs, playerUrl is missing/invalid
+   */
+  xSetPlayerAVTransport: async function (playerUrlObject, inArgs) { 
+    if (!isTruthyTs(playerUrlObject)) {
+      throw new Error(`${PACKAGE_PREFIX} playerUrl is invalid/missing.`)
+    }
+    if (typeof playerUrlObject !== 'object') { // does not cover all but is ok
+      throw new Error(`${PACKAGE_PREFIX} playerUrl is not object`)
+    }
+    
+    if (!isTruthyTs(inArgs)) {
+      throw new Error(`${PACKAGE_PREFIX} inArgs is invalid/missing.`)
+    }
+    if (!isTruthyPropertyStringNotEmptyTs(inArgs, ['CurrentURI'])) {
+      throw new Error(`${PACKAGE_PREFIX} CurrentURI is missing/not string/empty string.`)
+    }
+    if (!isTruthyPropertyTs(inArgs, ['CurrentURIMetaData'])) {
+      throw new Error(`${PACKAGE_PREFIX} CurrentURIMetaData is missing.`)
+    }
+    if (typeof inArgs['CurrentURIMetaData'] !== 'string') {
+      throw new Error(`${PACKAGE_PREFIX} CurrentURIMetaData is not type string.`)
+    }
+    const metadata = inArgs['CurrentURIMetaData'].trim()
+    
+    // HTML encoding is very important (caution: not uri encoding)!
+    // transformedArgs are embedded in SOAP envelop
+    const transformedArgs = {
+      'InstanceID': 0, 
+      'CurrentURI': await encodeHtmlEntityTs(inArgs.CurrentURI),
+      'CurrentURIMetaData': await encodeHtmlEntityTs(metadata)
+    }
+
+    return await executeActionV6(playerUrlObject,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', transformedArgs)
+  },
   
   //
   //                    SIMPLE COMMANDS - EXECUTE ACTION AND SIMPLE TRANSFORMATION
@@ -181,7 +233,7 @@ module.exports = {
     const transportInfo = await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
-    if (!isTruthyPropertyStringNotEmptyTs(transportInfo, 'CurrentTransportState')) {
+    if (!isTruthyPropertyStringNotEmptyTs(transportInfo, ['CurrentTransportState'])) {
       throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
     }
     return transportInfo.CurrentTransportState.toLowerCase()
@@ -199,6 +251,43 @@ module.exports = {
     return await executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetVolume',
       { 'InstanceID': 0, 'Channel': 'Master' })
+  },
+
+  //** Play (already set) URI.
+  xPlay: async function (coordinatorUrlObject) {
+    return await executeActionV6(coordinatorUrlObject,
+      '/MediaRenderer/AVTransport/Control', 'Play',
+      { 'InstanceID': 0, 'Speed': 1 })
+  },
+
+  //** Position in track - requires none empty queue. position h:mm:ss
+  xPositionInTrack: async function (coordinatorUrlObject, positionInTrack) {
+    if (!isTruthyTs(positionInTrack)) {
+      throw new Error(`${NRCSP_PREFIX} positionInTrack is invalid/missing.`)
+    }
+    if (typeof positionInTrack !== 'string') { 
+      throw new Error(`${NRCSP_PREFIX} positionInTrack is not string`)
+    }
+
+    return await executeActionV6(coordinatorUrlObject,
+      '/MediaRenderer/AVTransport/Control', 'Seek',
+      { 'InstanceID': 0, 'Target': positionInTrack, 'Unit': 'REL_TIME' })
+  },
+
+  //** Play track - requires none empty queue. trackPosition (number) 1 to queue length
+  // track position number or string in range 1 to lenght
+  xSelectTrack: async function (coordinatorUrlObject, trackPosition) {
+    if (!isTruthyTs(trackPosition)) {
+      throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
+    }
+    if (typeof trackPosition !== 'string' && typeof trackPosition !== 'number') { 
+      throw new Error(`${PACKAGE_PREFIX} trackPosition is not string/number`)
+    }
+    const track = parseInt(trackPosition)
+
+    return await executeActionV6(coordinatorUrlObject,
+      '/MediaRenderer/AVTransport/Control', 'Seek',
+      { 'InstanceID': 0, 'Target': track, 'Unit': 'TRACK_NR' })
   },
 
   // Set new mute state at given player. newMutestate string must be on|off
