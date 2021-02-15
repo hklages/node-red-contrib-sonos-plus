@@ -16,6 +16,7 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 // TODO move both to extensions
 const { executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
 
+// eslint-disable-next-line max-len
 const { isTruthyPropertyStringNotEmptyTs, isTruthyArrayTs, isTruthyTs, isTruthyPropertyTs, encodeHtmlEntityTs
 } = require('./HelperTs.js')
 
@@ -136,7 +137,7 @@ module.exports = {
         throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
       }
 
-      // update artUri with playerUrl.origin and add proccesingType 'queue'
+      // update artUri with playerUrlObject.origin and add processingType 'queue'
       modifiedQueueArray = queueArray.map((item) => {
         let  artUri = ''  
         if (isTruthyPropertyStringNotEmptyTs(item, ['artUri'])) {
@@ -263,10 +264,10 @@ module.exports = {
   //** Position in track - requires none empty queue. position h:mm:ss
   xPositionInTrack: async function (coordinatorUrlObject, positionInTrack) {
     if (!isTruthyTs(positionInTrack)) {
-      throw new Error(`${NRCSP_PREFIX} positionInTrack is invalid/missing.`)
+      throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
     }
     if (typeof positionInTrack !== 'string') { 
-      throw new Error(`${NRCSP_PREFIX} positionInTrack is not string`)
+      throw new Error(`${PACKAGE_PREFIX} positionInTrack is not string`)
     }
 
     return await executeActionV6(coordinatorUrlObject,

@@ -249,7 +249,7 @@ module.exports = {
     let member
     for (let index = 0; index < playersInGroup.length; index++) {
       member = { // default
-      // url.origin because it may stored in flow variable
+      // urlSchemAuthority because it may stored in flow variable
         urlSchemeAuthority: playersInGroup[index].urlObject.origin,
         mutestate: null,
         volume: '-1',

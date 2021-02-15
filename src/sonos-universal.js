@@ -695,10 +695,10 @@ module.exports = function (RED) {
 
   /**
    *  Get group track, media and position info.
-   * @param {object} node - used for debug and warning
+   * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with url - as default
    *
    * @returns {promise} {payload: media: {object}, trackInfo: {object}, 
    *  positionInfo: {object}, queueActivated: true/false
@@ -707,52 +707,12 @@ module.exports = function (RED) {
    */
   async function groupGetTrackPlus (node, msg, nodesonosPlayer, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].urlObject.hostname)
-    nodesonosCoordinator.urlObject = groupData.members[0].urlObject
-
-    // Get currentTrack data and extract artist, title. Add url.origin to albumArtURL.
-    const trackData = await nodesonosCoordinator.currentTrack()
-    let albumArtUri = '' // As default
-    let artist = 'unknown' // As default
-    let title = 'unknown'
-    if (!isTruthyTs(trackData)) {
-      throw new Error(`${PACKAGE_PREFIX} current track data is invalid`)
-    }
-    if (isTruthyPropertyStringNotEmptyTs(trackData, ['albumArtURI'])) {
-      node.debug('got valid albumArtURI')
-      albumArtUri = trackData.albumArtURI
-      if (typeof albumArtUri === 'string' && albumArtUri.startsWith('/getaa')) {
-        albumArtUri = nodesonosCoordinator.url.origin + albumArtUri
-        delete trackData.albumArtURI
-      }
-    }
-    // Extract artist and title if available
-    if (!isTruthyPropertyStringNotEmptyTs(trackData, ['artist'])) {
-      // Missing artist: TuneIn provides artist and title in title field
-      if (!isTruthyPropertyStringNotEmptyTs(trackData, ['title'])) {
-        node.debug('Warning: no artist, no title', `received-> ${JSON.stringify(trackData)}`)
-      } else if (trackData.title.indexOf(' - ') > 0) {
-        node.debug('split data to artist and title')
-        artist = trackData.title.split(' - ')[0] // 0 stands for coordinator
-        title = trackData.title.split(' - ')[1]
-      } else {
-        node.debug('Warning: invalid combination artist title receive')
-        title = trackData.title
-      }
-    } else {
-      artist = trackData.artist
-      if (!isTruthyPropertyStringNotEmptyTs(trackData, ['title'])) {
-        // Title unknown - use unknown
-      } else {
-        node.debug('got artist and title')
-        title = trackData.title
-      }
-    }
-    node.debug('got valid song info')
+    const groupData = await getGroupCurrentTs(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
 
     // Get current media data and extract queueActivated, radioId
-    const mediaData = await nodesonosCoordinator.avTransportService().GetMediaInfo()
+    const mediaData = await tsCoordinator.AVTransportService.GetMediaInfo()
     if (!isTruthyTs(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current media data is invalid`)
     }
@@ -763,38 +723,73 @@ module.exports = function (RED) {
     const queueActivated = uri.startsWith('x-rincon-queue')
     const radioId = getRadioId(uri)
 
-    let sid = getMusicServiceId(uri)
+    let serviceId = getMusicServiceId(uri)
 
     // Get station uri for all "x-sonosapi-stream"
     let stationArtUri = ''
     if (uri.startsWith('x-sonosapi-stream')) {
-      stationArtUri = `${nodesonosCoordinator.url.origin}/getaa?s=1&u=${uri}`
+      stationArtUri = `${tsCoordinator.urlObject.origin}/getaa?s=1&u=${uri}`
     }
 
     // Get current position data
-    const positionData = await nodesonosCoordinator.avTransportService().GetPositionInfo()
+    const positionData = await tsCoordinator.AVTransportService.GetPositionInfo()
     if (!isTruthyTs(positionData)) {
       throw new Error(`${PACKAGE_PREFIX} current position data is invalid`)
     }
 
     if (isTruthyPropertyStringNotEmptyTs(positionData, ['TrackURI'])) {
       const trackUri = positionData.TrackURI
-      if (sid === '') {
-        sid = getMusicServiceId(trackUri)
+      if (serviceId === '') {
+        serviceId = getMusicServiceId(trackUri)
       }
     }
-    const serviceName = getMusicServiceName(sid)
+    const serviceName = getMusicServiceName(serviceId)
 
+    let artist = ''
+    let title = ''
+    if (!isTruthyPropertyStringNotEmptyTs(positionData, ['TrackMetaData', 'Artist'])) {
+      // Missing artist: TuneIn provides artist and title in Title field
+      if (!isTruthyPropertyStringNotEmptyTs(positionData, ['TrackMetaData', 'Title'])) {
+        debug('Warning: no artist, no title %s', JSON.stringify(positionData.TrackMetaData))
+      } else if (positionData.TrackMetaData.Title.indexOf(' - ') > 0) {
+        debug('split data to artist and title')
+        artist = positionData.TrackMetaData.Title.split(' - ')[0] 
+        title = positionData.TrackMetaData.Title.split(' - ')[1]
+      } else {
+        debug('Warning: invalid combination artist title receive')
+        title = positionData.TrackMetaData.Title
+      }
+    } else {
+      artist = positionData.TrackMetaData.Artist
+      if (!isTruthyPropertyStringNotEmptyTs(positionData, ['TrackMetaData', 'Title'])) {
+        // Title unknown
+      } else {
+        debug('got artist and title')
+        title = positionData.TrackMetaData.Title
+      }
+    }
+
+    let album = ''
+    if (isTruthyPropertyStringNotEmptyTs(positionData, ['TrackMetaData', 'Album'])) {
+      album = positionData.TrackMetaData.Album
+    }
+    let artUri = ''
+    if (isTruthyPropertyStringNotEmptyTs(positionData, ['TrackMetaData', 'AlbumArtUri'])) {
+      artUri = positionData.TrackMetaData.AlbumArtUri
+      if (typeof artUri === 'string' && artUri.startsWith('/getaa')) {
+        artUri = tsCoordinator.urlObject.origin + artUri
+      }
+    }
     return {
       'payload': {
-        trackData,
         artist,
+        album,
         title,
-        'artUri': albumArtUri,
+        artUri,
         mediaData,
         queueActivated,
         radioId,
-        'serviceId': sid,
+        serviceId,
         serviceName,
         stationArtUri,
         positionData
@@ -1043,7 +1038,7 @@ module.exports = function (RED) {
     }
 
     const coordinatorIndex = 0
-    const queueData = await xGetSonosQueue(groupData.members[coordinatorIndex].url)
+    const queueData = await xGetSonosQueue(groupData.members[coordinatorIndex].urlObject)
     if (queueData.length === 0) {
       // Queue is empty
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
