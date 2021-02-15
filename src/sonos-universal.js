@@ -6,7 +6,7 @@
  *
  * @author Henning Klages
  *
- * @since 2020-12-16
+ * @since 2021-02-15
  */
 
 'use strict'
@@ -1672,7 +1672,7 @@ module.exports = function (RED) {
 
     // Get groups with members and convert multi dimensional array to simple array 
     // where objects have new property groupIndex, memberIndex
-    const allGroupsData = await getGroupsAllTs(tsPlayer.urlObject)
+    const allGroupsData = await getGroupsAllTs(tsPlayer)
     if (!isTruthyTs(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
@@ -1780,7 +1780,7 @@ module.exports = function (RED) {
       PACKAGE_PREFIX)
 
     // Verify that playerNames are valid and get the uuid
-    const allGroupsData = await getGroupsAllTs(tsPlayer.urlObject)
+    const allGroupsData = await getGroupsAllTs(tsPlayer)
     if (!isTruthyTs(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
@@ -1939,7 +1939,7 @@ module.exports = function (RED) {
       PACKAGE_PREFIX)
 
     // Verify that playerNames are valid and get the uuid
-    const allGroupsData = await getGroupsAllTs(tsPlayer.urlObject)
+    const allGroupsData = await getGroupsAllTs(tsPlayer)
     if (!isTruthyTs(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
@@ -2011,7 +2011,7 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} player name (msg.${msg.payload}) is not string or empty`)
     }
 
-    const allGroupsData = await getGroupsAllTs(tsPlayer.urlObject)
+    const allGroupsData = await getGroupsAllTs(tsPlayer)
     if (!isTruthyTs(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }

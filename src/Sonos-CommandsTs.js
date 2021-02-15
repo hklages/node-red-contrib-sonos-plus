@@ -233,7 +233,7 @@ module.exports = {
   /**  Creates snapshot of a current group.
    * @param  {player[]} playersInGroup player data in group, coordinator at 0 
    * @param  {object} player player 
-   * @param  {object} player.urlObject  URL (JavaScript build in)
+   * @param  {object} player.urlObject  URL JavaScript build in object
    * @param  {string} player.playerName SONOS-Playername
    * @param  {object} options
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
@@ -250,21 +250,21 @@ module.exports = {
     for (let index = 0; index < playersInGroup.length; index++) {
       member = { // default
       // url.origin because it may stored in flow variable
-        urlSchemeAuthority: playersInGroup[index].urlOrigin.origin,
+        urlSchemeAuthority: playersInGroup[index].urlObject.origin,
         mutestate: null,
         volume: '-1',
         playerName: playersInGroup[index].playerName
       }
       if (options.snapVolumes) {
-        member.volume = await xGetVolume(playersInGroup[index].urlOrigin)
+        member.volume = await xGetVolume(playersInGroup[index].urlObject)
       }
       if (options.snapMutestates) {
-        member.mutestate =  await xGetMutestate(playersInGroup[index].urlOrigin)
+        member.mutestate =  await xGetMutestate(playersInGroup[index].urlObject)
       }
       snapshot.membersData.push(member)
     }
 
-    const coordinatorUrlObject = playersInGroup[0].urlOrigin
+    const coordinatorUrlObject = playersInGroup[0].urlObject
     snapshot.playbackstate = await xGetPlaybackstate(coordinatorUrlObject)
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
     || snapshot.playbackstate === 'transitioning')
@@ -294,7 +294,7 @@ module.exports = {
    */
   xRestoreGroupSnapshot: async function (snapshot) {
     // restore content
-    // urlOrigin because we do create/restore
+    // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
     const metadata = snapshot.CurrentURIMetadata
     await xSetPlayerAVTransport(coordinatorUrlObject,
