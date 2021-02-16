@@ -17,13 +17,14 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 const { executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
 
 // eslint-disable-next-line max-len
-const { isTruthyPropertyStringNotEmptyTs, isTruthyArrayTs, isTruthyTs, isTruthyPropertyTs, encodeHtmlEntityTs
+const { isTruthyPropertyStringNotEmpty: isTruthyPropertyStringNotEmptyTs, isTruthyArray: isTruthyArrayTs,
+  isTruthy: isTruthyTs, isTruthyProperty: isTruthyPropertyTs, encodeHtmlEntity: encodeHtmlEntityTs
 } = require('./HelperTs.js')
 
 const  request   = require('axios').default
 const parser = require('fast-xml-parser')
 
-const debug = require('debug')('nrcsp:Extensions')
+const debug = require('debug')(`${PACKAGE_PREFIX}Extensions`)
 
 module.exports = {
 
@@ -44,8 +45,8 @@ module.exports = {
    * 
    * @throws no programmed error
    */
-  xIsSonosPlayer: async function (playerUrlObject, timeout) {
-    debug('method >>%s', 'xIsSonosPlayer')
+  isSonosPlayer: async function (playerUrlObject, timeout) {
+    debug('method >>%s', 'isSonosPlayer')
     let response = null
     try {
       response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
@@ -69,8 +70,8 @@ module.exports = {
    *
    * @throws {error}  ???
    */
-  xGetDeviceProperties: async function (playerUrlObject) {
-    debug('method >>%s', 'xGetDeviceProperties')
+  getDeviceProperties: async function (playerUrlObject) {
+    debug('method >>%s', 'getDeviceProperties')
     const endpoint = '/xml/device_description.xml'
     const response = await request({
       method: 'get',
@@ -115,7 +116,8 @@ module.exports = {
    *
    * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
    */
-  xGetSonosQueue: async function (playerUrlObject) {
+  getSonosQueue: async function (playerUrlObject) {
+    debug('method >>%s', 'getSonosQueue')
     const browseQueue = await executeActionV6(playerUrlObject,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
@@ -154,7 +156,7 @@ module.exports = {
     return modifiedQueueArray
   },
 
-  /** Set the AVTransport stream for given player. Adds InstanceID. Encodes html.
+  /** Set the AVTransport stream for given player. Adds InstanceID. Encodes html!!!!!!!!
    * CAUTION: a joiner may leave group
    * CAUTION: Does not play - only sets content. Needs a play afterwards
    * CAUTION: No Metadata generation - must be provided!
@@ -171,7 +173,8 @@ module.exports = {
    * @throws {error} from executeActionV6
    * @throws {error} if any inArgs, playerUrl is missing/invalid
    */
-  xSetPlayerAVTransport: async function (playerUrlObject, inArgs) { 
+  setAvTransport: async function (playerUrlObject, inArgs) { 
+    debug('method >>%s', 'setAvTransport')
     if (!isTruthyTs(playerUrlObject)) {
       throw new Error(`${PACKAGE_PREFIX} playerUrl is invalid/missing.`)
     }
@@ -215,14 +218,16 @@ module.exports = {
   //...............................................................................................
   
   // Get mute state of given player. values: on|off
-  xGetMutestate: async function (playerUrlObject) {
+  getMutestate: async function (playerUrlObject) {
+    debug('method >>%s', 'setMutestate')
     return (await executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetMute',
       { 'InstanceID': 0, 'Channel': 'Master' }) === '1' ? 'on' : 'off')
   },
 
   // Get media info of given player.
-  xGetMediaInfo: async function (coordinatorUrlObject) {
+  getMediaInfo: async function (coordinatorUrlObject) {
+    debug('method >>%s', 'getMediaInfo')
     return await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
@@ -230,7 +235,8 @@ module.exports = {
 
   // Get playbackstate of given player. 
   // values: playing, stopped, playing, paused_playback, transitioning, no_media_present
-  xGetPlaybackstate: async function (coordinatorUrlObject) {
+  getPlaybackstate: async function (coordinatorUrlObject) {
+    debug('method >>%s', 'getPlaybackstate')
     const transportInfo = await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
@@ -241,28 +247,32 @@ module.exports = {
   },
 
   // Get position info of given player.
-  xGetPositionInfo: async function (coordinatorUrlObject) {
+  getPositionInfo: async function (coordinatorUrlObject) {
+    debug('method >>%s', 'getPositionInfo')
     return await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
       { 'InstanceID': 0 })
   },
 
   // Get volume of given player. value: integer, range 0 .. 100
-  xGetVolume: async function (playerUrlObject) {
+  getVolume: async function (playerUrlObject) {
+    debug('method >>%s', 'getVolume')
     return await executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetVolume',
       { 'InstanceID': 0, 'Channel': 'Master' })
   },
 
   //** Play (already set) URI.
-  xPlay: async function (coordinatorUrlObject) {
+  play: async function (coordinatorUrlObject) {
+    debug('method >>%s', 'play')
     return await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { 'InstanceID': 0, 'Speed': 1 })
   },
 
   //** Position in track - requires none empty queue. position h:mm:ss
-  xPositionInTrack: async function (coordinatorUrlObject, positionInTrack) {
+  positionInTrack: async function (coordinatorUrlObject, positionInTrack) {
+    debug('method >>%s', 'positionInTrack')
     if (!isTruthyTs(positionInTrack)) {
       throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
     }
@@ -277,7 +287,8 @@ module.exports = {
 
   //** Play track - requires none empty queue. trackPosition (number) 1 to queue length
   // track position number or string in range 1 to lenght
-  xSelectTrack: async function (coordinatorUrlObject, trackPosition) {
+  selectTrack: async function (coordinatorUrlObject, trackPosition) {
+    debug('method >>%s', 'selectTrack')
     if (!isTruthyTs(trackPosition)) {
       throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
     }
@@ -292,14 +303,16 @@ module.exports = {
   },
 
   // Set new mute state at given player. newMutestate string must be on|off
-  xSetMutestate: async function (playerUrlObject, newMutestate) {
+  setMutestate: async function (playerUrlObject, newMutestate) {
+    debug('method >>%s', 'setMutestate')
     return await executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetMute',
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': (newMutestate ==='on') })
   },
 
   // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
-  xSetVolume: async function (playerUrlObject, newVolume) {
+  setVolume: async function (playerUrlObject, newVolume) {
+    debug('method >>%s', 'setVolume')
     return await executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetVolume',
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })

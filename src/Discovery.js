@@ -10,12 +10,13 @@
 
 'use strict'
 const { PACKAGE_PREFIX } = require('./Globals.js')
-const { getGroupsAllTs } = require('./Sonos-CommandsTs.js')
-const { matchSerialUuid } = require('./HelperTs.js')
+
+const { getGroupsAll: xGetGroupsAll } = require('./Sonos-CommandsTs.js')
+const { matchSerialUuid: xMatchSerialUuid } = require('./HelperTs.js')
 
 const { SonosDeviceDiscovery, SonosDevice } = require('@svrooij/sonos/lib')
 
-const debug = require('debug')('nrcsp:Discovery')
+const debug = require('debug')(`${PACKAGE_PREFIX}Discovery`)
 
 module.exports = {
 
@@ -27,7 +28,7 @@ module.exports = {
    * @returns {Promise<object>} {'uuid', urlHost} su
    * 
    * @throws error 'could not find any player matching serial'
-   * @throws error from getGroupsAllTs, deviceDiscovery.SearchOne
+   * @throws error from xGetGroupsAll, deviceDiscovery.SearchOne
    *
    */
   discoverSonosPlayerBySerialTs: async (serialNumber, timeoutSeconds) => {
@@ -39,17 +40,17 @@ module.exports = {
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeoutSeconds)
     const tsFirstPlayer = new SonosDevice(firstPlayerData.host)
-    const allGroups = await getGroupsAllTs(tsFirstPlayer)
+    const allGroups = await xGetGroupsAll(tsFirstPlayer)
     const flatList = [].concat.apply([], allGroups) // merge array of array in array
     const reducedList = flatList.map((item) => { // only some properties
       return {
         'uuid': item.uuid,
-        'urlHost': item.Object.hostname
+        'urlHost': item.urlObject.hostname
       }
     })
     let foundIndex = -1 // not found as default
     for (let index = 0; index < reducedList.length; index++) {
-      if (matchSerialUuid(serialNumber, reducedList[index].uuid)) {
+      if (xMatchSerialUuid(serialNumber, reducedList[index].uuid)) {
         foundIndex = index
         break
       }

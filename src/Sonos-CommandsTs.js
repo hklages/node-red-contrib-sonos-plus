@@ -11,22 +11,27 @@
 
 'use strict'
 
-const {
-  PACKAGE_PREFIX
-} = require('./Globals.js')
+const { PACKAGE_PREFIX } = require('./Globals.js')
 
-const { xGetVolume, xGetMutestate, xGetPlaybackstate, xGetMediaInfo, xGetPositionInfo,
-  xSetVolume, xSetMutestate, xPlay, xSelectTrack, xSetPlayerAVTransport, xPositionInTrack
+const { getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate, 
+  getVolume: xGetVolume, setMutestate: xSetMutestate, setVolume: xSetVolume,
+  getMediaInfo: xGetMediaInfo, getPositionInfo: xGetPositionInfo,
+  setAvTransport: xSetAvTransport, selectTrack: xSelectTrack,
+  positionInTrack: xPositionInTrack, play: xPlay
 } = require('./Sonos-Extensions.js')
 
-const { isTruthyPropertyTs, isTruthyStringNotEmptyTs, isTruthyTs, decodeHtmlEntityTs
+const { isTruthyProperty: xIsTruthyProperty, isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
+  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
+  isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity
 } = require('./HelperTS.js')
 
 const parser = require('fast-xml-parser')
 
-const debug = require('debug')(PACKAGE_PREFIX +':Sonos-CommandsTs')
+const debug = require('debug')(`${PACKAGE_PREFIX}Sonos-CommandsTs`)
 
 module.exports = {
+  
+  MUSIC_SERVICES: require('./Db-MusicServices.json'),
 
   /** Get group data for a given player.   
    * @param {string} tsPlayer sonos-ts player
@@ -38,10 +43,10 @@ module.exports = {
    * @throws {error} getGroupsAllTs
    * @throws {error} extractGroupTs 
    */
-  getGroupCurrentTs: async function (tsPlayer, playerName) {
-    const allGroups = await module.exports.getGroupsAllTs(tsPlayer)
+  getGroupCurrent: async function (tsPlayer, playerName) {
+    const allGroups = await module.exports.getGroupsAll(tsPlayer)
     // eslint-disable-next-line max-len
-    const thisGroup = await module.exports.extractGroupTs(tsPlayer.urlObject.hostname, allGroups, playerName)
+    const thisGroup = await module.exports.extractGroup(tsPlayer.urlObject.hostname, allGroups, playerName)
     return thisGroup
   },
   
@@ -67,24 +72,23 @@ module.exports = {
    * @throws {error} GetZoneGroupState response errors
    * @throws {error} parse errors
    */
-  getGroupsAllTs: async function (anyTsPlayer) {
-    debug('method >>%s', 'getGroupsAllFast')
+  getGroupsAll: async function (anyTsPlayer) {
+    debug('method >>%s', 'getGroupsAll')
     
     // get the data from SONOS player and transform to JavaScript Objects
     const householdPlayers = await anyTsPlayer.GetZoneGroupState()
     
     // select only ZoneGroupState not the other attributes and check
-    if (!isTruthyPropertyTs(householdPlayers, ['ZoneGroupState'])) {
+    if (!xIsTruthyProperty(householdPlayers, ['ZoneGroupState'])) {
       throw new Error(`${PACKAGE_PREFIX} property ZoneGroupState is missing`)
     }
-    const decoded = await decodeHtmlEntityTs(householdPlayers.ZoneGroupState)
-    const attributeNamePrefix = '_'
-    const options = { ignoreAttributes: false, attributeNamePrefix }
+    const decoded = await xDecodeHtmlEntity(householdPlayers.ZoneGroupState)
+    const options = { 'ignoreAttributes': false, 'attributeNamePrefix': '_' }
     const groups = await parser.parse(decoded, options) 
-    if (!isTruthyTs(groups)) {
+    if (!xIsTruthy(groups)) {
       throw new Error(`${PACKAGE_PREFIX} response form parse xml is invalid.`)
     }
-    if (!isTruthyPropertyTs(groups, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
+    if (!xIsTruthyProperty(groups, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
       throw new Error(`${PACKAGE_PREFIX} response form parse xml: properties missing.`)
     }
 
@@ -154,11 +158,11 @@ module.exports = {
    *
    * @throws {error} 
    */
-  extractGroupTs: async function (playerUrlHost, allGroupsData, playerName) {
-    debug('method >>%s', 'extractGroupTs')
+  extractGroup: async function (playerUrlHost, allGroupsData, playerName) {
+    debug('method >>%s', 'extractGroup')
     
     // this ensures that playerName overrules given playerUrlHostname
-    const searchByPlayerName = isTruthyStringNotEmptyTs(playerName)
+    const searchByPlayerName = xIsTruthyStringNotEmpty(playerName)
 
     // find player in group bei playerUrlHostname or playerName
     // playerName overrules playerUrlHostname
@@ -243,13 +247,13 @@ module.exports = {
    * 
    * @throws {error} if invalid response from SONOS player
   */
-  xCreateGroupSnapshot: async function (playersInGroup, options) {
+  createGroupSnapshot: async function (playersInGroup, options) {
     const snapshot = {}
     snapshot.membersData = []
     let member
     for (let index = 0; index < playersInGroup.length; index++) {
       member = { // default
-      // urlSchemAuthority because it may stored in flow variable
+      // urlSchemaAuthority because it may stored in flow variable
         urlSchemeAuthority: playersInGroup[index].urlObject.origin,
         mutestate: null,
         volume: '-1',
@@ -292,23 +296,23 @@ module.exports = {
    *
    * @throws if invalid response from SONOS player
    */
-  xRestoreGroupSnapshot: async function (snapshot) {
+  restoreGroupSnapshot: async function (snapshot) {
     // restore content
     // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
     const metadata = snapshot.CurrentURIMetadata
-    await xSetPlayerAVTransport(coordinatorUrlObject,
+    await xSetAvTransport(coordinatorUrlObject,
       {
         'CurrentURI': snapshot.CurrentURI,
         'CurrentURIMetaData': metadata
       })
 
     let track
-    if (isTruthyPropertyTs(snapshot, ['Track'])) {
+    if (xIsTruthyProperty(snapshot, ['Track'])) {
       track = parseInt(snapshot['Track'])
     }
     let nrTracks
-    if (isTruthyPropertyTs(snapshot, ['NrTracks'])) {
+    if (xIsTruthyProperty(snapshot, ['NrTracks'])) {
       nrTracks = parseInt(snapshot['NrTracks'])
     }
     if (track >= 1 && nrTracks >= track) {
@@ -348,5 +352,195 @@ module.exports = {
       await xPlay(coordinatorUrlObject)
     }
     return true
+  },
+
+  /**
+  * Transformed data of Browse action response. 
+  * @global
+  * @typedef {object} DidlBrowseItem
+  * @property {string} id object id, can be used for Browse command 
+  * @property {string} title title 
+  * @property {string} artist='' artist
+  * @property {string} uri='' AVTransportation URI
+  * @property {string} metadata='' metadata usually in DIDL Lite format
+  * @property {string} artUri='' URI of cover, if available
+  * @property {string} sid='' music service id (derived from uri)
+  * @property {string} serviceName='' music service name such as Amazon Music (derived from uri)
+  * @property {string} upnpClass='' UPnP Class (derived from uri or upnp class)
+  * @property {string} processingType='' can be 'queue', 'stream', 'unsupported' or empty
+  */
+
+  /** Get array of all My Sonos Favorite items (except SONOS-Playlist)
+   * @param {object} tsPlayer sonos-ts player
+   * @param {number} requestedCount integer, 1 to ... (no validation)
+   *
+   * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array, could be empty
+   *
+   * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
+   */  
+  getMySonosFavorites: async function (tsPlayer, requestedCount) { 
+    const favorites = await tsPlayer.ContentDirectoryService.Browse({
+      ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
+      RequestedCount: requestedCount, SortCriteria: ''
+    })
+
+    // TODO check existence
+    const decodedFavorites = xDecodeHtmlEntity(favorites.Result)
+    // leave uri metadata r:resMD as as string.
+    const parsedFavorites = parser.parse(decodedFavorites, {
+      attributeNamePrefix: '_',
+      stopNodes: ['r:resMD']
+    })
+    // favorites have tag: <item>
+    // TODO check all elements DIDL-Lite, item ...)
+    const allFavorites = parsedFavorites['DIDL-Lite'].item
+    const allFavoritesWithTitle = allFavorites.map((item) => {
+      return {
+        'id': '', // TODO necessary?
+        // title might be of type number (example album 25 form Adele) - convert it to string
+        // title must be HTML entity decoded because we search
+        'title': xDecodeHtmlEntity(String(item['dc:title'])),
+        'artist': '', // TODO necessary?
+        'uri': item['res'], // keep HTML entity encoded, URI encoded
+        'metadata': item['r:resMD'], // keep HTML entity encoded, URI encoded
+        'artUri': item['upnp:albumArtURI'], // is array or single item!
+        'sid': '', // TODO
+        'serviceName': '', // TODO
+        'upnpclass': item['upnp:class'], // is always 'object.itemobject.item.sonos-favorite'
+        'processingType': '' // TODO has 
+      }
+    })
+
+    return allFavoritesWithTitle
+  },
+
+  /** Get array of all SONOS-Playlists
+   * @param {object} tsPlayer sonos-ts player
+   * @param {number} requestedCount integer, 1 to ...
+   *
+   * @returns {Promise<DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
+   *
+   * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
+   */  
+  getSonosPlaylists: async function (tsPlayer, requestedCount) { 
+
+    const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
+      ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
+      RequestedCount: requestedCount, SortCriteria: ''
+    })
+    if (!xIsTruthyProperty(browsePlaylist, ['NumberReturned'])) {
+      throw new Error(`${PACKAGE_PREFIX} invalid response Browse SQ: - missing NumberReturned`)
+    }
+    let modifiedPlaylistsArray = [] // default for 0
+    if (browsePlaylist.NumberReturned > 0) { 
+      if (!xIsTruthyPropertyStringNotEmpty(browsePlaylist, ['Result'])) {
+        throw new Error(`${PACKAGE_PREFIX} invalid response Browse SQ: - missing Result`)
+      }
+      const decodedSonosPlaylists = await xDecodeHtmlEntity(browsePlaylist.Result)
+      const options = { 'ignoreAttributes': false, 'attributeNamePrefix': '_' }
+      const parsedSonosPlaylists = await parser.parse(decodedSonosPlaylists, options)  
+      if (!xIsTruthyProperty(parsedSonosPlaylists, ['DIDL-Lite'])) {
+        throw new Error(`${PACKAGE_PREFIX} invalid response Browse SQ: - missing DIDL-Lite`)
+      }
+      // playlists have tag: <container>
+      const allSonosPlaylists = parsedSonosPlaylists['DIDL-Lite'].container
+
+      modifiedPlaylistsArray = await Promise.all(allSonosPlaylists.map(async (item) => {
+        const newItem = {
+          id: '',
+          title: '',
+          artist: '',
+          uri: '',
+          artUri: '',
+          metadata: '',
+          sid: '',
+          serviceName: '',
+          upnpClass: '',
+          processingType: '' // for later usage
+        }
+        if (!xIsTruthyProperty(item, ['_id'])) {
+          throw new Error(`${PACKAGE_PREFIX} id is missing`) // should never happen
+        }
+        newItem.id = item['_id']
+
+        if (!xIsTruthyProperty(item, ['dc:title'])) {
+          throw new Error(`${PACKAGE_PREFIX} title is missing`) // should never happen
+        }
+        newItem.title = await xDecodeHtmlEntity(String(item['dc:title'])) // clean title for search
+        if (xIsTruthyProperty(item, ['dc:creator'])) {
+          newItem.artist = item['dc:creator']
+        }
+        if (xIsTruthyProperty(item, ['res', '#text'])) {
+          newItem.uri = item['res']['#text'] // HTML entity encoded, URI encoded
+          newItem.sid = module.exports.getMusicServiceId(newItem.uri)
+          newItem.serviceName = module.exports.getMusicServiceName(newItem.sid)
+        }
+        if (xIsTruthyProperty(item, ['upnp:class'])) {
+          newItem.upnpClass = item['upnp:class']
+        }
+        // artURI (cover) maybe an array (one for each track) then choose first
+        // have to add host if starts with /getaa
+        let artUri = ''
+        if (xIsTruthyProperty(item, ['upnp:albumArtURI'])) {
+          artUri = item['upnp:albumArtURI']
+          if (Array.isArray(artUri)) {
+            if (artUri.length > 0) {
+              newItem.artUri = artUri[0]
+            }
+          } else {
+            newItem.artUri = artUri
+          }
+          if (newItem.artUri.startsWith('/getaa')) {
+            newItem.artUri = tsPlayer.urlObject.origin + newItem.artUri
+          }
+        }
+        newItem.processingType = 'queue' // SONOS-Playlist!
+
+        return newItem
+      }))
+    }
+
+    return modifiedPlaylistsArray
+  },
+
+  /**  Get music service id (sid) from Transport URI.
+   * @param  {string} xuri such as (masked)
+   * "x-rincon-cpcontainer:1004206ccatalog%2falbums%***%2f%23album_desc?sid=201&flags=8300&sn=14"
+   *
+   * @returns {string} service id or if not found empty string
+   *
+   * prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
+   */
+  getMusicServiceId: (xuri) => {
+    let sid = '' // default even if uri undefined.
+    if (xIsTruthyStringNotEmpty(xuri)) {
+      const positionStart = xuri.indexOf('?sid=') + '$sid='.length
+      const positionEnd = xuri.indexOf('&flags=')
+      if (positionStart > 1 && positionEnd > positionStart) {
+        sid = xuri.substring(positionStart, positionEnd)
+      }
+    }
+    return sid
+  },
+
+  /**  Get service name for given service id.
+   * @param  {string} sid service id (integer) such as "201" or blank 
+   * 
+   * @returns {string} service name such as "Amazon Music" or empty string
+   *
+   * @uses database of services (map music service id  to musics service name)
+   */
+  getMusicServiceName: (sid) => {
+    let serviceName = '' // default even if sid is blank
+    if (sid !== '') {
+      const list = module.exports.MUSIC_SERVICES
+      const index = list.findIndex((service) => {
+        return (service.sid === sid)
+      })
+      if (index >= 0) {
+        serviceName = list[index].name
+      }  
+    } 
+    return serviceName
   },
 }

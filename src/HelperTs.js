@@ -5,12 +5,14 @@
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-21
+ * @since 2021-02-16
 */
 
 'use strict'
 
-const debug = require('debug')('nrcsp:HelperTs')
+const { PACKAGE_PREFIX } = require('./Globals.js')
+
+const debug = require('debug')(`${PACKAGE_PREFIX}HelperTs`)
 
 module.exports = {
 
@@ -43,9 +45,9 @@ module.exports = {
    * 
    * @since 2021-01-25
    */
-  encodeHtmlEntityTs: async (htmlData) => {
+  encodeHtmlEntity: async (htmlData) => {
     debug('method >>%s', 'encodeHtmlEntityTs')
-    if (!module.exports.isTruthyTs(htmlData)) {
+    if (!module.exports.isTruthy(htmlData)) {
       throw new Error('htmlData invalid/missing')
     }
     if (typeof htmlData !== 'string') {
@@ -72,9 +74,9 @@ module.exports = {
    * 
    * @since 2021-01-25
    */
-  decodeHtmlEntityTs: async (htmlData) => {
+  decodeHtmlEntity: async (htmlData) => {
     debug('method >>%s', 'decodeHtmlEntityTs')
-    if (!module.exports.isTruthyTs(htmlData)) {
+    if (!module.exports.isTruthy(htmlData)) {
       throw new Error('htmlData invalid/missing')
     }
     if (typeof htmlData !== 'string') {
@@ -101,14 +103,14 @@ module.exports = {
    * @throws error in case pathArray is not an array, non empty, elements string
    * @throws error in case nestedObj is not an object
    */
-  isTruthyPropertyTs: (nestedObj, pathArray) => {
+  isTruthyProperty: (nestedObj, pathArray) => {
     
     const property = pathArray.reduce(
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
 
-    return module.exports.isTruthyTs(property)
+    return module.exports.isTruthy(property)
   },
 
   /** Validates whether property is safely accessible and "truthy", type string, not empty
@@ -121,14 +123,14 @@ module.exports = {
    * 
    * @throws error in case of wrong arguments!
    */
-  isTruthyPropertyStringNotEmptyTs: (nestedObj, pathArray) => {
+  isTruthyPropertyStringNotEmpty: (nestedObj, pathArray) => {
     
     const property = pathArray.reduce(
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
     )
 
-    return module.exports.isTruthyStringNotEmptyTs(property)
+    return module.exports.isTruthyStringNotEmpty(property)
   },
 
   /** Validates whether an const/variable is "truthy", any type
@@ -147,7 +149,7 @@ module.exports = {
    * 
    * @throws nothing
    */
-  isTruthyTs: (input) => {
+  isTruthy: (input) => {
 
     return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite
@@ -171,7 +173,7 @@ module.exports = {
    * 
    * @since 2021-01-25
    */
-  isTruthyStringNotEmptyTs: (input) => {
+  isTruthyStringNotEmpty: (input) => {
     
     return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite, not empty string
@@ -196,7 +198,7 @@ module.exports = {
    * 
    * @since 2021-01-25
    */
-  isTruthyArrayTs: (input) => {
+  isTruthyArray: (input) => {
     
     return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite, not empty string
@@ -219,7 +221,7 @@ module.exports = {
   // to access nested array, just pass in array index as an element the path array.
   // const city = getNestedProperty(user, ['personalInfo', 'addresses', 0, 'city']);
   // this will return the city from the first address item.
-  getNestedPropertyTs: (nestedObj, pathArray) => {
+  getNestedProperty: (nestedObj, pathArray) => {
     return pathArray.reduce((obj, key) => obj[key], nestedObj)
   }
 }
