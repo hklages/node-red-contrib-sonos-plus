@@ -1,5 +1,5 @@
 /**
- * Collection of general purpose REGEX strings and methods not being related to SOAP or SONOS.
+ * Collection of general purpose methods to check variables/constants and object properties
  *
  * @module Helpers
  * 
@@ -20,7 +20,12 @@ module.exports = {
    * @param  {string} serial the string such as 00-0E-58-FE-3A-EA:5
    * @param  {string} uuid the string such as RINCON_000E58FE3AEA01400
    * RINCONG_xxxxxxxxxxxx01400  (01400 is port)
+   * 
    * @returns {Promise<boolean>} true if matching
+   * 
+   * @throws only split, replace exceptions
+   * 
+   * Algorithm: only checks the first part of serial number
    * 
    * @since 2021-02-13
    */
@@ -32,6 +37,7 @@ module.exports = {
 
     let uuidClean = uuid.replace(/^(RINCON_)/, '')
     uuidClean = uuidClean.replace(/(01400)$/, '')
+    
     return (uuidClean === serialClean)
   },
 
@@ -46,7 +52,7 @@ module.exports = {
    * @since 2021-01-25
    */
   encodeHtmlEntity: async (htmlData) => {
-    debug('method >>%s', 'encodeHtmlEntityTs')
+    debug('method >>%s', 'encodeHtmlEntity')
     if (!module.exports.isTruthy(htmlData)) {
       throw new Error('htmlData invalid/missing')
     }
@@ -75,7 +81,7 @@ module.exports = {
    * @since 2021-01-25
    */
   decodeHtmlEntity: async (htmlData) => {
-    debug('method >>%s', 'decodeHtmlEntityTs')
+    debug('method >>%s', 'decodeHtmlEntity')
     if (!module.exports.isTruthy(htmlData)) {
       throw new Error('htmlData invalid/missing')
     }
@@ -104,7 +110,7 @@ module.exports = {
    * @throws error in case nestedObj is not an object
    */
   isTruthyProperty: (nestedObj, pathArray) => {
-    
+    debug('method >>%s', 'isTruthyProperty')
     const property = pathArray.reduce(
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
@@ -124,7 +130,7 @@ module.exports = {
    * @throws error in case of wrong arguments!
    */
   isTruthyPropertyStringNotEmpty: (nestedObj, pathArray) => {
-    
+    debug('method >>%s', 'isTruthyPropertyStringNotEmpty')
     const property = pathArray.reduce(
       (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
       nestedObj
@@ -150,7 +156,7 @@ module.exports = {
    * @throws nothing
    */
   isTruthy: (input) => {
-
+    debug('method >>%s', 'isTruthy')
     return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite
       || (typeof input === 'number' && !Number.isFinite(input)))
@@ -174,7 +180,7 @@ module.exports = {
    * @since 2021-01-25
    */
   isTruthyStringNotEmpty: (input) => {
-    
+    debug('method >>%s', 'isTruthyStringNotEmpty')
     return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite, not empty string
       || (typeof input === 'number' && !Number.isFinite(input))
@@ -199,7 +205,7 @@ module.exports = {
    * @since 2021-01-25
    */
   isTruthyArray: (input) => {
-    
+    debug('method >>%s', 'isTruthyArray')
     return !(typeof input === 'undefined' || input === null
       //this avoids NaN, positive, negative Infinite, not empty string
       || (typeof input === 'number' && !Number.isFinite(input))

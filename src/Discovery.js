@@ -31,8 +31,8 @@ module.exports = {
    * @throws error from xGetGroupsAll, deviceDiscovery.SearchOne
    *
    */
-  discoverSonosPlayerBySerialTs: async (serialNumber, timeoutSeconds) => {
-    debug('method >>%s', 'discoverSonosPlayerBySerialTs')
+  discoverSonosPlayerBySerial: async (serialNumber, timeoutSeconds) => {
+    debug('method >>%s', 'discoverSonosPlayerBySerial')
 
     // discover the first one, then get all others from that player.
     // Thats very reliable -deterministic. Discovering 10 player might be time consuming

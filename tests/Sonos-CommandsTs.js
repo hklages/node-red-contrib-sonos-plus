@@ -1,10 +1,10 @@
-const { extractGroupTs }
+const { extractGroup }
   = require('../src/Sonos-CommandsTs.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
 
-describe('extractGroupTs function', () => {
+describe('extractGroup function', () => {
 
   it('no player name, playerHostname coordinator ', async () => {
     const playerHostname = '192.1681.78.37'
@@ -39,7 +39,7 @@ describe('extractGroupTs function', () => {
         }
       ]
     ]
-    const result = await extractGroupTs(playerHostname, allGroupsData, playerName)
+    const result = await extractGroup(playerHostname, allGroupsData, playerName)
     expect(result.groupId)
       .equal('RINCON_5CAAFD00223601400')
   })
@@ -77,7 +77,7 @@ describe('extractGroupTs function', () => {
         }
       ]
     ]
-    const result = await extractGroupTs(playerHostname, allGroupsData, playerName)
+    const result = await extractGroup(playerHostname, allGroupsData, playerName)
     expect(result.groupId)
       .equal('RINCON_5CAAFD00223601400')
   })

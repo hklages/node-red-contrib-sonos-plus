@@ -14,11 +14,11 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 // TODO move both to extensions
-const { executeActionV6, didlXmlToArray } = require('./Sonos-Commands.js')
+const { executeActionV6 } = require('./Sonos-Commands.js')
 
-// eslint-disable-next-line max-len
-const { isTruthyPropertyStringNotEmpty: isTruthyPropertyStringNotEmptyTs, isTruthyArray: isTruthyArrayTs,
-  isTruthy: isTruthyTs, isTruthyProperty: isTruthyPropertyTs, encodeHtmlEntity: encodeHtmlEntityTs
+const { isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
+  isTruthyArray: xIsTruthyArray, isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
+  encodeHtmlEntity: xEncodeHtmlEntity
 } = require('./HelperTs.js')
 
 const  request   = require('axios').default
@@ -56,7 +56,7 @@ module.exports = {
       debug('request failed >>%s', playerUrlObject.host + '-' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
       return false
     }
-    if (!isTruthyPropertyStringNotEmptyTs(response, ['data', 'householdId'])) {
+    if (!xIsTruthyPropertyStringNotEmpty(response, ['data', 'householdId'])) {
       debug('invalid response >>%s', JSON.stringify(response, Object.getOwnPropertyNames(response)))
       return false
     }
@@ -81,24 +81,25 @@ module.exports = {
         'Content-type': 'text/xml; charset=utf8'
       }
     })
-    if (!isTruthyTs(response)) {
+    if (!xIsTruthy(response)) {
       throw new Error(`${PACKAGE_PREFIX} invalid response from player - response`)
     }
     // TODO Test ECON ....
     let properties = {}
-    if (!isTruthyPropertyStringNotEmptyTs(response, ['data'])) {
+    if (!xIsTruthyPropertyStringNotEmpty(response, ['data'])) {
       throw new Error(`${PACKAGE_PREFIX} response from player is invalid - data missing`)
     }
     let clean = response.data.replace('<?xml', '<xml')
-    clean = clean.replace('?>', '>')
-    const attributeNamePrefix = '_'
-    const parseNodeValue = false
-    const options = { ignoreAttributes: false, attributeNamePrefix, parseNodeValue  }
-    properties = await parser.parse(clean, options) 
-    if (!isTruthyTs) {
+    clean = clean.replace('?>', '>') // strange but necessary
+    properties = await parser.parse(clean, {
+      'ignoreAttributes': false,
+      'attributeNamePrefix': '_',
+      'parseNodeValue': false
+    }) 
+    if (!xIsTruthy) {
       throw new Error(`${PACKAGE_PREFIX} xml parser: invalid response`)
     }
-    if (!isTruthyPropertyTs(properties, ['xml', 'root', 'device'])) {
+    if (!xIsTruthyProperty(properties, ['xml', 'root', 'device'])) {
       throw new Error(`${PACKAGE_PREFIX} xml parser: device data missing`)
     }
     return properties.xml.root.device
@@ -108,52 +109,44 @@ module.exports = {
   //                    COMPLEX COMMANDS - EXECUTE ACTION AND TRANSFORM
   //
 
-  /** Get array of all SONOS-Queue items - maximum 200.
+  /** Get array of all SONOS-Queue items.
    * Adds processingType and playerUrlOrigin to artUri.
-   * @param {object} playerUrlObject player URL JavaScript build in Object 
+   * @param {object} tsPlayer sonos-ts player
+   * @param {number} requestedCount integer, 1 to ...
    *
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
    *
-   * @throws {error} nrcsp: invalid return from Browse, didlXmlToArray error
+   * @throws {error} invalid return from Browse, didlXmlToArray error
    */
-  getSonosQueue: async function (playerUrlObject) {
+  getSonosQueue: async function (tsPlayer, requestedCount) {
     debug('method >>%s', 'getSonosQueue')
-    const browseQueue = await executeActionV6(playerUrlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      {
-        ObjectID: 'Q:0', BrowseFlag: 'BrowseDirectChildren', Filter: '*',
-        StartingIndex: 0, RequestedCount: 200, SortCriteria: ''
-      })
-    if (!isTruthyPropertyStringNotEmptyTs(browseQueue, ['NumberReturned'])) {
+    const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
+      ObjectID: 'Q:0', BrowseFlag: 'BrowseDirectChildren', Filter: '*',
+      StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: ''
+    })
+    if (!xIsTruthyProperty(browseQueue, ['NumberReturned'])) {
       throw new Error(`${PACKAGE_PREFIX} invalid response Browse Q:0 - missing NumberReturned`)
     }
     
-    let modifiedQueueArray = []
-    if (browseQueue.NumberReturned !== '0') {
-      if (!isTruthyPropertyStringNotEmptyTs(browseQueue, ['Result'])) {
+    let transformedItems = [] // empty queue
+    if (browseQueue.NumberReturned > 0) {
+      if (!xIsTruthyPropertyStringNotEmpty(browseQueue, ['Result'])) {
         throw new Error(`${PACKAGE_PREFIX} invalid response Browse Q:0 - missing Result`)
       }
       // item
-      const queueArray = await didlXmlToArray(browseQueue.Result, 'item')
-      if (!isTruthyArrayTs(queueArray)) {
+      // eslint-disable-next-line max-len
+      transformedItems = await module.exports.parseBrowseDidlXmlToArray(browseQueue.Result, 'item')
+      if (!xIsTruthyArray(transformedItems)) {
         throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
       }
-
-      // update artUri with playerUrlObject.origin and add processingType 'queue'
-      modifiedQueueArray = queueArray.map((item) => {
-        let  artUri = ''  
-        if (isTruthyPropertyStringNotEmptyTs(item, ['artUri'])) {
-          artUri = item['artUri']
-          if (typeof artUri === 'string' && artUri.startsWith('/getaa')) {
-            artUri = playerUrlObject.origin + artUri
-          } 
+      transformedItems = transformedItems.map((item) => {
+        if (item.artUri.startsWith('/getaa')) {
+          item.artUri = tsPlayer.urlObject.origin + item.artUri
         }
-        item.artUri = artUri
-        item.processingType = 'queue'
         return item
       })
     }
-    return modifiedQueueArray
+    return transformedItems
   },
 
   /** Set the AVTransport stream for given player. Adds InstanceID. Encodes html!!!!!!!!
@@ -175,20 +168,20 @@ module.exports = {
    */
   setAvTransport: async function (playerUrlObject, inArgs) { 
     debug('method >>%s', 'setAvTransport')
-    if (!isTruthyTs(playerUrlObject)) {
+    if (!xIsTruthy(playerUrlObject)) {
       throw new Error(`${PACKAGE_PREFIX} playerUrl is invalid/missing.`)
     }
     if (typeof playerUrlObject !== 'object') { // does not cover all but is ok
       throw new Error(`${PACKAGE_PREFIX} playerUrl is not object`)
     }
     
-    if (!isTruthyTs(inArgs)) {
+    if (!xIsTruthy(inArgs)) {
       throw new Error(`${PACKAGE_PREFIX} inArgs is invalid/missing.`)
     }
-    if (!isTruthyPropertyStringNotEmptyTs(inArgs, ['CurrentURI'])) {
+    if (!xIsTruthyPropertyStringNotEmpty(inArgs, ['CurrentURI'])) {
       throw new Error(`${PACKAGE_PREFIX} CurrentURI is missing/not string/empty string.`)
     }
-    if (!isTruthyPropertyTs(inArgs, ['CurrentURIMetaData'])) {
+    if (!xIsTruthyProperty(inArgs, ['CurrentURIMetaData'])) {
       throw new Error(`${PACKAGE_PREFIX} CurrentURIMetaData is missing.`)
     }
     if (typeof inArgs['CurrentURIMetaData'] !== 'string') {
@@ -200,8 +193,8 @@ module.exports = {
     // transformedArgs are embedded in SOAP envelop
     const transformedArgs = {
       'InstanceID': 0, 
-      'CurrentURI': await encodeHtmlEntityTs(inArgs.CurrentURI),
-      'CurrentURIMetaData': await encodeHtmlEntityTs(metadata)
+      'CurrentURI': await xEncodeHtmlEntity(inArgs.CurrentURI),
+      'CurrentURIMetaData': await xEncodeHtmlEntity(metadata)
     }
 
     return await executeActionV6(playerUrlObject,
@@ -240,7 +233,7 @@ module.exports = {
     const transportInfo = await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
-    if (!isTruthyPropertyStringNotEmptyTs(transportInfo, ['CurrentTransportState'])) {
+    if (!xIsTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
       throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
     }
     return transportInfo.CurrentTransportState.toLowerCase()
@@ -273,7 +266,7 @@ module.exports = {
   //** Position in track - requires none empty queue. position h:mm:ss
   positionInTrack: async function (coordinatorUrlObject, positionInTrack) {
     debug('method >>%s', 'positionInTrack')
-    if (!isTruthyTs(positionInTrack)) {
+    if (!xIsTruthy(positionInTrack)) {
       throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
     }
     if (typeof positionInTrack !== 'string') { 
@@ -289,7 +282,7 @@ module.exports = {
   // track position number or string in range 1 to lenght
   selectTrack: async function (coordinatorUrlObject, trackPosition) {
     debug('method >>%s', 'selectTrack')
-    if (!isTruthyTs(trackPosition)) {
+    if (!xIsTruthy(trackPosition)) {
       throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
     }
     if (typeof trackPosition !== 'string' && typeof trackPosition !== 'number') { 
