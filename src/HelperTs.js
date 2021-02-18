@@ -41,6 +41,19 @@ module.exports = {
     return (uuidClean === serialClean)
   },
 
+  /** Converts hh:mm:ss time to milliseconds. Does not check input!
+   * 
+   * @param  {string} hhmmss string in format hh:mm:ss
+   * 
+   * @returns {number} milliseconds as integer
+   * 
+   * @throws nothing error if split does nt find :
+   */
+  hhmmss2msec: (hhmmss) => {
+    const [hours, minutes, seconds] = (hhmmss).split(':')
+    return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
+  },
+
   /** Encodes specific HTML special characters such as "<"" and others. 
    * Works with multiple occurrences.
    * @param  {string} htmlData the string to be decode, maybe empty.

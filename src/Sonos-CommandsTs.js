@@ -20,10 +20,14 @@ const { getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate,
   positionInTrack: xPositionInTrack, play: xPlay
 } = require('./Sonos-Extensions.js')
 
+const { executeActionV6 } = require('./Sonos-Commands.js')
+
 const { isTruthyProperty: xIsTruthyProperty, isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
-  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
-  isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity
+  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty, hhmmss2msec: xhhmmss2msec,
+  isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity, encodeHtmlEntity: xEncodeHtmlEntity
 } = require('./HelperTS.js')
+
+const { MetaDataHelper } = require('@svrooij/sonos/lib')
 
 const parser = require('fast-xml-parser')
 
@@ -32,6 +36,230 @@ const debug = require('debug')(`${PACKAGE_PREFIX}Sonos-CommandsTs`)
 module.exports = {
   
   MUSIC_SERVICES: require('./Db-MusicServices.json'),
+  /**  Play notification on a group. Coordinator is index 0 in tsPlayerArray
+   * @param  {tsPlayer[]}  tsPlayerArray array of sonos-ts player with urlObject,
+   *                   coordinator has index 0. Length = 1 is allowed
+   * @param  {object}  options options
+   * @param  {string}  options.uri  uri
+   * @param  {string}  [options.metadata]  metadata - will be generated if missing
+   * @param  {string}  options.volume volume during notification - if -1 don't use, range 1 .. 99
+   * @param  {boolean} options.sameVolume all player in group play at same volume level
+   * @param  {boolean} options.automaticDuration duration will be received from player
+   * @param  {string}  options.duration format hh:mm:ss
+   * 
+   * @returns {promise} true
+   * 
+   * @throws if invalid response from setAVTransportURI, play,
+   */
+
+  // TODO optimize 
+  playGroupNotification: async function (tsPlayerArray, options) {
+    const WAIT_ADJUSTMENT = 2000
+
+    // generate metadata if not provided and uri as URL
+    let metadata
+    if (!xIsTruthyProperty(options, ['metadata'])) {
+      metadata = await MetaDataHelper.GuessMetaDataAndTrackUri(options.uri).metadata
+      // metadata = GenerateMetadata(options.uri).metadata
+    } else {
+      metadata = options.metadata
+    }
+    if (metadata !== '') {
+      metadata = await xEncodeHtmlEntity(metadata) // html not url encoding!
+    }
+    debug('metadata >>%s' + JSON.stringify(metadata))
+
+    // create snapshot state/volume/content
+    // getCurrentState will return playing for a non-coordinator player even if group is playing
+    const iCoord = 0
+    const snapshot = {}
+    const state = await xGetPlaybackstate(tsPlayerArray[iCoord].urlObject)
+    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
+    debug('wasPlaying >>%s', snapshot.wasPlaying)
+    snapshot.mediaInfo
+      = await tsPlayerArray[iCoord].AVTransportService.GetMediaInfo()
+    snapshot.positionInfo = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
+    snapshot.memberVolumes = []
+    if (options.volume !== -1) {
+      snapshot.memberVolumes[0] = await xGetVolume(tsPlayerArray[iCoord].urlObject)
+    }
+    if (options.sameVolume) { // all other members, starting at 1
+      for (let index = 1; index < tsPlayerArray.length; index++) {
+        snapshot.memberVolumes[index] = await xGetVolume(tsPlayerArray[index].urlObject)
+      }
+    }
+    debug('Snapshot created - now start playing notification')
+    
+    // set AVTransport
+    const args = {
+      InstanceID: 0,
+      CurrentURI: await xEncodeHtmlEntity(options.uri),
+      CurrentURIMetaData: metadata
+    }
+    await executeActionV6(tsPlayerArray[iCoord].urlObject,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
+
+    if (options.volume !== -1) {
+      await xSetVolume(tsPlayerArray[iCoord].urlObject, options.volume)
+      debug('same Volume >>%s', options.sameVolume)
+      if (options.sameVolume) { // all other members, starting at 1
+        for (let index = 1; index < tsPlayerArray.length; index++) {
+          await xSetVolume(tsPlayerArray[index].urlObject, options.volume)
+        }
+      }
+    }
+    // no check - always returns true
+    await tsPlayerArray[iCoord].Play()
+   
+    debug('Playing notification started - now figuring out the end')
+
+    // waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds = xhhmmss2msec(options.duration)
+    if (options.automaticDuration) {
+      const positionInfo
+        = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
+      if (xIsTruthyProperty(positionInfo, ['TrackDuration'])) {
+        waitInMilliseconds = xhhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
+        debug('Did retrieve duration from SONOS player')
+      } else {
+        debug('Could NOT retrieve duration from SONOS player - using default/specified length')
+      }
+    }
+    debug('duration >>%s', JSON.stringify(waitInMilliseconds))
+    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
+    debug('notification finished - now starting to restore')
+
+    // return to previous state = restore snapshot
+    if (options.volume !== -1) {
+      await xSetVolume(tsPlayerArray[iCoord].urlObject,
+        snapshot.memberVolumes[iCoord])
+    }
+    if (options.sameVolume) { // all other members, starting at 1
+      for (let index = 1; index < tsPlayerArray.length; index++) {
+        await xSetVolume(tsPlayerArray[index].urlObject,
+          snapshot.memberVolumes[index])
+      }
+    }
+    if (!options.uri.includes('x-sonos-vli')) {
+      // can not recover initiated by Spotify or Amazon Alexa
+      await tsPlayerArray[iCoord].AVTransportService.SetAVTransportURI({
+        'InstanceID': 0,
+        'CurrentURI': snapshot.mediaInfo.CurrentURI,
+        'CurrentURIMetaData': snapshot.mediaInfo.CurrentURIMetaData
+      })
+    }
+    if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1
+      && snapshot.mediaInfo.NrTracks > 1) {
+      await tsPlayerArray[iCoord].SeekTrack(Number(snapshot.positionInfo.Track))
+        .catch(() => {
+          debug('Reverting back track failed, happens for some music services.')
+        })
+    }
+    if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
+      debug('Setting back time to >>%s', JSON.stringify(snapshot.positionInfo.RelTime))
+      await tsPlayerArray[iCoord].SeekPosition(snapshot.positionInfo.RelTime)
+        .catch(() => {
+          debug('Reverting back track time failed, happens for some music services.')
+        })
+    }
+    if (snapshot.wasPlaying) {
+      if (!options.uri.includes('x-sonos-vli')) {
+        await tsPlayerArray[iCoord].Play()
+      }
+    }
+  },
+
+  /**  Play notification on a single joiner but must not be coordinator.
+   * @param  {object}  tsCoordinator sonos-ts coordinator in group with url
+   * @param  {object}  tsJoiner node-sonos player in group with url
+   * @param  {object}  options options
+   * @param  {string}  options.uri  uri
+   * @param  {string}  [options.metadata]  metadata - will be generated if missing
+   * @param  {string}  options.volume volume during notification: 1 means don't use, reage 1 .. 99
+   * @param  {boolean} options.automaticDuration
+   * @param  {string}  options.duration format hh:mm:ss
+   * @returns {promise} true
+   *
+   * @throws all from setAVTransportURI(), avTransportService()*, play, setPlayerVolume
+   *
+   * Hint: joiner will leave group, play notification and rejoin the group. 
+   * State will be imported from group.
+   */
+
+  // TODO see playGroupNotification
+  playJoinerNotification: async function (tsCoordinator, tsJoiner, options) {
+    const WAIT_ADJUSTMENT = 2000
+
+    // generate metadata if not provided and uri as URL
+    let metadata
+    if (!xIsTruthyProperty(options, ['metadata'])) {
+      metadata = await MetaDataHelper.GuessMetaDataAndTrackUri(options.uri).metadata
+      // metadata = GenerateMetadata(options.uri).metadata
+    } else {
+      metadata = options.metadata
+    }
+    if (metadata !== '') {
+      metadata = await xEncodeHtmlEntity(metadata) // html not url encoding!
+    }
+    debug('metadata >>%s' + JSON.stringify(metadata))
+
+    // create snapshot state/volume/content
+    // getCurrentState will return playing for a non-coordinator player even if group is playing
+    const snapshot = {}
+    const state = await xGetPlaybackstate(tsCoordinator.urlObject) 
+    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
+    snapshot.mediaInfo = await tsJoiner.AVTransportService.GetMediaInfo()
+    if (options.volume !== -1) {
+      snapshot.joinerVolume = await xGetVolume(tsJoiner.urlObject)
+    }
+    debug('Snapshot created - now start playing notification')
+
+    // set the joiner to notification - joiner will leave group!
+    const args = {
+      InstanceID: 0,
+      CurrentURI: await xEncodeHtmlEntity(options.uri),
+      CurrentURIMetaData: metadata
+    }
+    await executeActionV6(tsJoiner.urlObject,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
+
+    // no check - always returns true
+    await tsJoiner.Play()
+
+    if (options.volume !== -1) {
+      await xSetVolume(tsJoiner.urlObject, options.volume)
+    }
+    debug('Playing notification started - now figuring out the end')
+
+    // waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds = xhhmmss2msec(options.duration)
+    if (options.automaticDuration) {
+      const positionInfo = await tsJoiner.AVTransportService.GetPositionInfo()
+      if (xIsTruthyProperty(positionInfo, ['TrackDuration'])) {
+        waitInMilliseconds = xhhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
+        debug('Did retrieve duration from SONOS player')
+      } else {
+        debug('Could NOT retrieve duration from SONOS player - using default/specified length')
+      }
+    }
+    debug('duration >>' + JSON.stringify(waitInMilliseconds))
+    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
+    debug('notification finished - now starting to restore')
+
+    // return to previous state = restore snapshot
+    if (options.volume !== -1) {
+      await xSetVolume(tsJoiner.urlObject, snapshot.joinerVolume)
+    }
+
+    await tsJoiner.AVTransportService.SetAVTransportURI({
+      'InstanceID': 0,
+      'CurrentURI': snapshot.mediaInfo.CurrentURI,
+      'CurrentURIMetaData': snapshot.mediaInfo.CurrentURIMetaData
+    })
+    if (snapshot.wasPlaying) {
+      await tsJoiner.Play()
+    }
+  },
 
   /** Get group data for a given player.   
    * @param {string} tsPlayer sonos-ts player

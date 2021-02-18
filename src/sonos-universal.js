@@ -20,15 +20,14 @@ const {
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
 // TODO move to Sonos-Commands.Ts and ExtensionTs
-const {
-  playGroupNotification, playJoinerNotification, getRadioId,
-  getMusicServiceId, getMusicServiceName, executeActionV6,
-  getGroupCurrent, coordinatorPlayTrack
+const { getRadioId, getMusicServiceId, getMusicServiceName, executeActionV6,
+
 } = require('./Sonos-Commands.js')
 
 const { getGroupCurrent: xGetGroupCurrent, getGroupsAll: xGetGroupsAll,
   createGroupSnapshot: xCreateGroupSnapshot, restoreGroupSnapshot: xRestoreGroupSnapshot,
-  getSonosPlaylists: xGetSonosPlaylists
+  getSonosPlaylists: xGetSonosPlaylists, playGroupNotification: xPlayGroupNotification,
+  playJoinerNotification: xPlayJoinerNotification
 } = require('./Sonos-CommandsTs.js')
 
 const { getDeviceProperties: xGetDeviceProperties, isSonosPlayer: xIsSonosPlayer,
@@ -238,17 +237,6 @@ module.exports = function (RED) {
    */
   async function processInputMsg (node, config, msg, urlHost) {
     
-    // create nodesonosPlayer and now also tsPlayer
-    const nodesonosPlayer = new Sonos(urlHost)
-    if (!xIsTruthy(nodesonosPlayer)) {
-      throw new Error(`${PACKAGE_PREFIX} sonos player is undefined`)
-    }
-    if (!(xIsTruthyPropertyStringNotEmpty(nodesonosPlayer, ['host'])
-      && xIsTruthyProperty(nodesonosPlayer, ['port']))) {
-      throw new Error(`${PACKAGE_PREFIX} ip address or port is missing`)
-    }
-    nodesonosPlayer.urlObject = new URL(`http://${nodesonosPlayer.host}:${nodesonosPlayer.port}`)
-
     const tsPlayer = new SonosDevice(urlHost)
     if (!xIsTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
@@ -978,15 +966,15 @@ module.exports = function (RED) {
 
   /**
    *  Play notification on a given group of players. Group topology will not being touched.
-   * @param {object} node only used for debug and warning
+   * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} msg.payload notification uri.
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level. 
-   * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
+   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    *  - default is calculation, if that fails then 00:00:05
-   * @param {object} nodesonosPlayer player with urlObject - as default
+   * @param {object} tsPlayer sonos-ts player with urlObject - as default
    *
    * @returns {promise} {}
    *
@@ -1002,7 +990,7 @@ module.exports = function (RED) {
 
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
 
     const options = { // Set defaults
       'uri': validatedUri,
@@ -1024,14 +1012,14 @@ module.exports = function (RED) {
       options.automaticDuration = false
     }
 
-    const nodesonosPlayerArray = []
+    const tsPlayerArray = []
     
     for (let index = 0; index < groupData.members.length; index++) {
-      const nodesonosNewPlayer = new Sonos(groupData.members[index].urlObject.hostname)
-      nodesonosNewPlayer.urlObject = groupData.members[index].urlObject
-      nodesonosPlayerArray.push(nodesonosNewPlayer)
+      const tsNewPlayer = new SonosDevice(groupData.members[index].urlObject.hostname)
+      tsNewPlayer.urlObject = groupData.members[index].urlObject
+      tsPlayerArray.push(tsNewPlayer)
     }
-    await playGroupNotification(node, nodesonosPlayerArray, options)
+    await xPlayGroupNotification(tsPlayerArray, options)
     
     return {}
   }
@@ -1210,8 +1198,7 @@ module.exports = function (RED) {
     const validatedPosition = validToInteger(msg, 'payload', 1, lastTrackInQueue,
       'position in queue', PACKAGE_PREFIX)
     await tsCoordinator.SwitchToQueue()
-
-    await coordinatorPlayTrack(tsCoordinator.urlObject, validatedPosition)
+    await tsCoordinator.SeekTrack(validatedPosition)
     
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
@@ -1222,7 +1209,7 @@ module.exports = function (RED) {
         await xSetVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
       }
     }
-    
+    await tsCoordinator.Play()
     return {}
   }
 
@@ -1295,7 +1282,7 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number}msg.payload valid uri
    * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {object} nodesonosPlayer player with urlObject - as default
+   * @param {object} tsPlayer sonos-ts player with urlObject - as default
    *
    * @returns {promise} {}
    *
@@ -1305,10 +1292,10 @@ module.exports = function (RED) {
     // Payload uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri', PACKAGE_PREFIX)
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].urlObject.hostname)
-    nodesonosCoordinator.urlObject = groupData.members[0].urlObject
-    await nodesonosCoordinator.queue(validatedUri)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+    await tsCoordinator.AddUriToQueue(validatedUri)
     return {}
   }
 
@@ -1317,8 +1304,8 @@ module.exports = function (RED) {
    * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string/number} msg.payload valid uri from spotify
-   * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {object} nodesonosPlayer player with urlObject - as default
+   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with urlObject - as default
    *
    * Valid examples
    * spotify:track:5AdoS3gS47x40nBNlNmPQ8
@@ -1344,11 +1331,10 @@ module.exports = function (RED) {
     }
 
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].urlObject.hostname)
-    nodesonosCoordinator.urlObject = groupData.members[0].urlObject
-    await nodesonosCoordinator.setSpotifyRegion('2311')
-    await nodesonosCoordinator.queue(validatedUri)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+    await tsCoordinator.AddUriToQueue(validatedUri)
     return {}
   }
 
@@ -2049,14 +2035,14 @@ module.exports = function (RED) {
 
   /**
    *  Play notification on a joiner (in group) specified by sonosPlayer (default) or by playerName.
-   * @param {object} node only used for debug and warning
+   * @param {object} node not used
    * @param {object} msg incoming message
    * @param {string} msg.payload notification uri.
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    * - default is calculation, if that fails then 00:00:05
-   * @param {string} [msg.playerName=using nodesonosPlayer] SONOS-Playername
-   * @param {object} nodesonosPlayer player with urlObject - as default
+   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with urlObject - as default
    *
    * @returns {promise} {}
    *
@@ -2072,7 +2058,7 @@ module.exports = function (RED) {
 
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await getGroupCurrent(nodesonosPlayer, validated.playerName)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
 
     // Verify that player is joiner and not a coordinator
     if (groupData.playerIndex === 0) {
@@ -2100,11 +2086,11 @@ module.exports = function (RED) {
     }
 
     // The coordinator is being used to capture group status (playing, content, ...)
-    const nodesonosCoordinator = new Sonos(groupData.members[0].urlObject.hostname)
-    nodesonosCoordinator.urlObject = groupData.members[0].urlObject
-    const nodesonosJoiner = new Sonos(groupData.members[groupData.playerIndex].urlObject.hostname)
-    nodesonosJoiner.urlObject = groupData.members[groupData.playerIndex].urlObject
-    await playJoinerNotification(node, nodesonosCoordinator, nodesonosJoiner, options)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+    const tsJoiner = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    tsJoiner.urlObject = groupData.members[groupData.playerIndex].urlObject
+    await xPlayJoinerNotification(tsCoordinator, tsJoiner, options)
 
     return {}
   }
