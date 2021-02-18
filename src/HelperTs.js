@@ -1,5 +1,6 @@
 /**
- * Collection of general purpose methods to check variables/constants and object properties
+ * Collection of general purpose methods to check variables/constants and object properties.
+ * Can be used in other packages because it has no relation to SONOS or Node-RED
  *
  * @module Helpers
  * 
@@ -15,31 +16,6 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 const debug = require('debug')(`${PACKAGE_PREFIX}HelperTs`)
 
 module.exports = {
-
-  /** Comparing player UUID and serial number. Returns true if matching.
-   * @param  {string} serial the string such as 00-0E-58-FE-3A-EA:5
-   * @param  {string} uuid the string such as RINCON_000E58FE3AEA01400
-   * RINCONG_xxxxxxxxxxxx01400  (01400 is port)
-   * 
-   * @returns {Promise<boolean>} true if matching
-   * 
-   * @throws only split, replace exceptions
-   * 
-   * Algorithm: only checks the first part of serial number
-   * 
-   * @since 2021-02-13
-   */
-  matchSerialUuid: (serial, uuid) => {
-    debug('method >>%s', 'matchSerialUuid')
-    
-    let serialClean = serial.split(':')[0]
-    serialClean = serialClean.replace(/-/g, '')
-
-    let uuidClean = uuid.replace(/^(RINCON_)/, '')
-    uuidClean = uuidClean.replace(/(01400)$/, '')
-    
-    return (uuidClean === serialClean)
-  },
 
   /** Converts hh:mm:ss time to milliseconds. Does not check input!
    * 

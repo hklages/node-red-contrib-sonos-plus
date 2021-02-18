@@ -17,7 +17,8 @@ const { getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate,
   getVolume: xGetVolume, setMutestate: xSetMutestate, setVolume: xSetVolume,
   getMediaInfo: xGetMediaInfo, getPositionInfo: xGetPositionInfo,
   setAvTransport: xSetAvTransport, selectTrack: xSelectTrack,
-  positionInTrack: xPositionInTrack, play: xPlay
+  positionInTrack: xPositionInTrack, play: xPlay,
+  parseBrowseDidlXmlToArray: xParseBrowseDidlXmlToArray
 } = require('./Sonos-Extensions.js')
 
 const { executeActionV6 } = require('./Sonos-Commands.js')
@@ -37,7 +38,7 @@ module.exports = {
   
   MUSIC_SERVICES: require('./Db-MusicServices.json'),
   /**  Play notification on a group. Coordinator is index 0 in tsPlayerArray
-   * @param  {tsPlayer[]}  tsPlayerArray array of sonos-ts player with urlObject,
+   * @param  {tsPlayer[]}  tsPlayerArray array of sonos-ts player with JavaScript build-in URL urlObject,
    *                   coordinator has index 0. Length = 1 is allowed
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
@@ -347,7 +348,7 @@ module.exports = {
     let uuid = ''
     let invisible = ''
     let channelMapSet = ''
-    let urlObject // type URL JavaScript build in
+    let urlObject // player JavaScript build-in URL
     for (let iGroup = 0; iGroup < groupsArray.length; iGroup++) {
       groupSorted = []
       coordinatorUuid = groupsArray[iGroup]._Coordinator
@@ -414,7 +415,7 @@ module.exports = {
             break // inner loop
           }
         } else {
-          // we compare by URL.hostname such as '192.168.178.35'
+          // we compare by URL hostname such as '192.168.178.35'
           if (allGroupsData[iGroup][iMember].urlObject.hostname
             === playerUrlHost && visible) {
             foundGroupIndex = iGroup
@@ -469,7 +470,7 @@ module.exports = {
   /**  Creates snapshot of a current group.
    * @param  {player[]} playersInGroup player data in group, coordinator at 0 
    * @param  {object} player player 
-   * @param  {object} player.urlObject  URL JavaScript build in object
+   * @param  {object} player.urlObject  player JavaScript build-in URL
    * @param  {string} player.playerName SONOS-Playername
    * @param  {object} options
    * @param  {boolean} [options.snapVolumes = false] capture all players volume
@@ -570,7 +571,7 @@ module.exports = {
     // restore volume/mute if captured.
     let volume
     let mutestate
-    let urlObject // type URL (JavaScript build in)
+    let urlObject // JavaScript build-in URL
     for (let index = 0; index < snapshot.membersData.length; index++) {
       volume = snapshot.membersData[index].volume
       urlObject  = new URL(snapshot.membersData[index].urlSchemeAuthority)
@@ -678,7 +679,7 @@ module.exports = {
         throw new Error(`${PACKAGE_PREFIX} invalid response Browse SQ: - missing Result`)
       }
       // eslint-disable-next-line max-len
-      transformedItems = await module.exports.parseBrowseDidlXmlToArray(browsePlaylist.Result, 'container')
+      transformedItems = await xParseBrowseDidlXmlToArray(browsePlaylist.Result, 'container')
       transformedItems = transformedItems.map((item) => {
         if (item.artUri.startsWith('/getaa')) {
           item.artUri = tsPlayer.urlObject.origin + item.artUri
@@ -687,156 +688,6 @@ module.exports = {
       })
     }
     return transformedItems
-  },
+  }
 
-  /** 
-   * Returns an array of items (DidlBrowseItem) extracted from action "Browse" output.
-   * @param  {string} browseDidlXml DIDL-Light string in xml format from Browse (original!)
-   * @param  {string}  itemName DIDL-Light property holding the data. Such as "item" or "container"
-   *
-   * @returns {Promise<DidlBrowseItem[]>} Promise, array of {@link Sonos-CommandsTs#DidlBrowseItem},
-   *  maybe empty array.
-   *                   
-   * @throws {error} if any parameter is missing
-   * @throws {error} from method xml2js and invalid response (missing id, title)
-   * 
-   * Browse provides the results (property Result) in form of a DIDL-Lite xml format. 
-   * The <DIDL-Lite> includes several attributes such as xmlns:dc" and entries 
-   * all named "container" or "item". These include xml tags such as 'res'. 
-   */
-  parseBrowseDidlXmlToArray: async function (browseDidlXml, itemName) {
-    if (!xIsTruthyStringNotEmpty(browseDidlXml)) {
-      throw new Error(`${PACKAGE_PREFIX} DIDL-Light input is missing`)
-    }
-    if (!xIsTruthyStringNotEmpty(itemName)) {
-      throw new Error(`${PACKAGE_PREFIX} item name such as container is missing`)
-    }
-    const decoded = await xDecodeHtmlEntity(browseDidlXml)
-    const didlJson = await parser.parse(decoded, {
-      'ignoreAttributes': false,
-      'attributeNamePrefix': '_',
-      'parseNodeValue': false // this is important - example Title 49 will otherwise be converted
-    })  
-    if (!xIsTruthyProperty(didlJson, ['DIDL-Lite'])) {
-      throw new Error(`${PACKAGE_PREFIX} invalid response Browse: missing DIDL-Lite`)
-    }
-
-    let originalItems = []
-    // single items are not of type array (fast-xml-parser)
-    const path = ['DIDL-Lite', itemName]
-    if (xIsTruthyProperty(didlJson, path)) {
-      const itemsOrOne = didlJson[path[0]][path[1]]
-      if (Array.isArray(itemsOrOne)) { 
-        originalItems = itemsOrOne.slice()
-      } else { // single item  - convert to array
-        originalItems.push(itemsOrOne) 
-      }
-    } 
-
-    // transform properties Album related
-    const transformedItems = await Promise.all(originalItems.map(async (item) => {
-      const newItem = {
-        'id': '',
-        'title': '',
-        'artist': '',
-        'album': '',
-        'uri': '',
-        'artUri': '',
-        'metadata': '',
-        'sid': '',
-        'serviceName': '',
-        'upnpClass': '',
-        'processingType': 'queue' // has to be updated in calling program
-      }
-      if (!xIsTruthyProperty(item, ['_id'])) {
-        throw new Error(`${PACKAGE_PREFIX} id is missing`) // should never happen
-      }
-      newItem.id = item['_id']
-
-      if (!xIsTruthyProperty(item, ['dc:title'])) {
-        throw new Error(`${PACKAGE_PREFIX} title is missing`) // should never happen
-      }
-      if (xIsTruthyProperty(item, ['dc:creator'])) {
-        newItem.artist = item['dc:creator']
-      }
-      if (!xIsTruthyProperty(item, ['dc:title'])) {
-        throw new Error(`${PACKAGE_PREFIX} title is missing`) // should never happen
-      }
-      newItem.title = await xDecodeHtmlEntity(String(item['dc:title'])) // clean title for search
-      if (xIsTruthyProperty(item, ['dc:creator'])) {
-        newItem.artist = item['dc:creator']
-      }
-      if (xIsTruthyProperty(item, ['res', '#text'])) {
-        newItem.uri = item['res']['#text'] // HTML entity encoded, URI encoded
-        newItem.sid = module.exports.getMusicServiceId(newItem.uri)
-        newItem.serviceName = module.exports.getMusicServiceName(newItem.sid)
-      }
-      if (xIsTruthyProperty(item, ['upnp:class'])) {
-        newItem.upnpClass = item['upnp:class']
-      }
-      // artURI (cover) maybe an array (one for each track) then choose first
-      let artUri = ''
-      if (xIsTruthyProperty(item, ['upnp:albumArtURI'])) {
-        artUri = item['upnp:albumArtURI']
-        if (Array.isArray(artUri)) {
-          if (artUri.length > 0) {
-            newItem.artUri = artUri[0]
-          }
-        } else {
-          newItem.artUri = artUri
-        }
-      }
-      // special case My Sonos favorites. It include metadata in DIDL-lite format.
-      // these metadata include the original title, original upnp:class (processingType)
-      if (xIsTruthyProperty(item, ['r:resMD'])) {
-        newItem.metadata = item['r:resMD']
-      }
-      return newItem
-    })
-    )
-    return transformedItems  // properties see transformedItems definition
-  },
-
-  /**  Get music service id (sid) from Transport URI.
-   * @param  {string} xuri such as (masked)
-   * "x-rincon-cpcontainer:1004206ccatalog%2falbums%***%2f%23album_desc?sid=201&flags=8300&sn=14"
-   *
-   * @returns {string} service id or if not found empty string
-   *
-   * prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
-   */
-  getMusicServiceId: (xuri) => {
-    debug('method >>%s', 'getMusicServiceId')
-    let sid = '' // default even if uri undefined.
-    if (xIsTruthyStringNotEmpty(xuri)) {
-      const positionStart = xuri.indexOf('?sid=') + '$sid='.length
-      const positionEnd = xuri.indexOf('&flags=')
-      if (positionStart > 1 && positionEnd > positionStart) {
-        sid = xuri.substring(positionStart, positionEnd)
-      }
-    }
-    return sid
-  },
-
-  /**  Get service name for given service id.
-   * @param  {string} sid service id (integer) such as "201" or blank 
-   * 
-   * @returns {string} service name such as "Amazon Music" or empty string
-   *
-   * @uses database of services (map music service id  to musics service name)
-   */
-  getMusicServiceName: (sid) => {
-    debug('method >>%s', 'getMusicServiceName')
-    let serviceName = '' // default even if sid is blank
-    if (sid !== '') {
-      const list = module.exports.MUSIC_SERVICES
-      const index = list.findIndex((service) => {
-        return (service.sid === sid)
-      })
-      if (index >= 0) {
-        serviceName = list[index].name
-      }  
-    } 
-    return serviceName
-  },
 }

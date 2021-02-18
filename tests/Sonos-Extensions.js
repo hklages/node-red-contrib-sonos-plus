@@ -3,7 +3,7 @@
 // using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
 // using http://192.168.178.15:1400 a Synology NAS 
 
-const { isSonosPlayer }
+const { isSonosPlayer, matchSerialUuid }
   = require('../src/Sonos-Extensions.js')
 
 const { describe, it } = require('mocha')
@@ -56,4 +56,25 @@ describe('isSonosPlayer function', () => {
       .equal(false)
   })
 
+})
+
+describe('matchSerialUuid function', () => {
+  
+  it('equal provides true', async () => {
+    const serial = '00-0E-58-FE-3A-EA:5'
+    const uuid = 'RINCON_000E58FE3AEA01400'
+    const result = await matchSerialUuid(serial, uuid)
+    expect(result).
+      be.a('boolean').
+      equal(true)
+  })
+
+  it('not same provides false', async () => {
+    const serial = '94-9F-3E-C1-3B-99:8'
+    const uuid = 'RINCON_000E58FE3AEA01400'
+    const result = await matchSerialUuid(serial, uuid)
+    expect(result).
+      be.a('boolean').
+      equal(false)
+  })
 })

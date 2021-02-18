@@ -1,30 +1,9 @@
-const { matchSerialUuid, encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
+const { encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
   isTruthy, isTruthyStringNotEmpty, isTruthyArray }
   = require('../src/HelperTs.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
-
-describe('matchSerialUuid function', () => {
-  
-  it('equal provides true', async () => {
-    const serial = '00-0E-58-FE-3A-EA:5'
-    const uuid = 'RINCON_000E58FE3AEA01400'
-    const result = await matchSerialUuid(serial, uuid)
-    expect(result).
-      be.a('boolean').
-      equal(true)
-  })
-
-  it('not same provides false', async () => {
-    const serial = '94-9F-3E-C1-3B-99:8'
-    const uuid = 'RINCON_000E58FE3AEA01400'
-    const result = await matchSerialUuid(serial, uuid)
-    expect(result).
-      be.a('boolean').
-      equal(false)
-  })
-},
 
 describe('encodeHtmlEntityTs function', () => {
 
@@ -128,7 +107,7 @@ describe('encodeHtmlEntityTs function', () => {
       .equal('&lt;&gt;&apos;&amp;&quot;')
   })
 
-}),
+})
 
 describe('decodeHtmlEntityTs function', () => {
 
@@ -232,7 +211,7 @@ describe('decodeHtmlEntityTs function', () => {
       .equal('<>\'&"')
   })
 
-}),
+})
 
 describe('isTruthyPropertyTs function', () => {
   
@@ -400,7 +379,7 @@ describe('isTruthyPropertyTs function', () => {
     expect(isTruthyProperty.bind(obj, [])).to.throw()
   })
 
-}),
+})
 
 describe('isTruthyTs function', () => {
   
@@ -515,7 +494,7 @@ describe('isTruthyTs function', () => {
       .equal(true)
   })
 
-}),
+})
 
 describe('isTruthyStringNotEmptyTs function', () => {
   
@@ -630,7 +609,7 @@ describe('isTruthyStringNotEmptyTs function', () => {
       .equal(true)
   })
 
-}),
+})
 
 describe('isTruthyArrayTs function', () => {
   
@@ -745,4 +724,4 @@ describe('isTruthyArrayTs function', () => {
       .equal(true)
   })
 
-}))
+})
