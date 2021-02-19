@@ -1,44 +1,59 @@
 /**
- * Collection - now based on sonos ts  - of  special SONOS commands for group/My Sonos handling
- * Handles communication above SOAP level.
+ * Collection of complex SONOS commands. 
  *
  * @module Sonos-CommandsTs
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-15
+ * @since 2021-02-19
  */ 
 
 'use strict'
 
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
-const { getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate, 
+const {
+  getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate, 
   getVolume: xGetVolume, setMutestate: xSetMutestate, setVolume: xSetVolume,
   getMediaInfo: xGetMediaInfo, getPositionInfo: xGetPositionInfo,
   setAvTransport: xSetAvTransport, selectTrack: xSelectTrack,
   positionInTrack: xPositionInTrack, play: xPlay,
-  parseBrowseDidlXmlToArray: xParseBrowseDidlXmlToArray
+  parseBrowseToArray: xParseBrowseToArray, getRadioId: xGetRadioId,
+  getUpnpClassEncoded: xGetUpnpClassEncoded, executeActionV6
 } = require('./Sonos-Extensions.js')
 
-const { executeActionV6 } = require('./Sonos-Commands.js')
-
 const { isTruthyProperty: xIsTruthyProperty, isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
-  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty, hhmmss2msec: xhhmmss2msec,
-  isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity, encodeHtmlEntity: xEncodeHtmlEntity
+  hhmmss2msec: xhhmmss2msec, isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity,
+  encodeHtmlEntity: xEncodeHtmlEntity
 } = require('./HelperTS.js')
 
 const { MetaDataHelper } = require('@svrooij/sonos/lib')
 
 const parser = require('fast-xml-parser')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}Sonos-CommandsTs`)
+const debug = require('debug')(`${PACKAGE_PREFIX}Commands`)
 
 module.exports = {
-  
-  MUSIC_SERVICES: require('./Db-MusicServices.json'),
+
+  UPNP_CLASSES_STREAM: ['object.item.audioItem.audioBroadcast'],
+
+  UPNP_CLASSES_QUEUE: [
+    'object.container.album.musicAlbum',
+    'object.container.playlistContainer',
+    'object.item.audioItem.musicTrack',
+    'object.container',
+    'object.container.playlistContainer#playlistItem',
+    'object.container.playlistContainer.#playlistItem',
+    'object.container.playlistContainer.#PlaylistView'
+  ],
+
+  UNPN_CLASSES_UNSUPPORTED: [
+    'object.container.podcast.#podcastContainer',
+    'object.container.albumlist'
+  ],
+
   /**  Play notification on a group. Coordinator is index 0 in tsPlayerArray
-   * @param  {tsPlayer[]}  tsPlayerArray array of sonos-ts player with JavaScript build-in URL urlObject,
+   * @param  {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
    *                   coordinator has index 0. Length = 1 is allowed
    * @param  {object}  options options
    * @param  {string}  options.uri  uri
@@ -606,53 +621,51 @@ module.exports = {
   * @property {string} processingType='' can be 'queue', 'stream', 'unsupported' or empty
   */
 
-  /** Get array of all My Sonos Favorite items (except SONOS-Playlist)
+  /** Get array of all My Sonos Favorite items including SonosPlaylists
    * @param {object} tsPlayer sonos-ts player
    * @param {number} requestedCount integer, 1 to ... (no validation)
    *
-   * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array, could be empty
+   * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS Playlists)
    *
-   * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
+   * @throws {error} invalid return from Browse, xDecodeHtmlEntity, xParseBrowsDidlXmlToArray
    */  
-  // TODO in error
-  getMySonosFavorites: async function (tsPlayer, requestedCount) { 
-    debug('method >>%s', 'getMySonosFavorites')
+  getMySonos: async function (tsPlayer, requestedCount) { 
+    debug('method >>%s', 'getMySonos')
     const favorites = await tsPlayer.ContentDirectoryService.Browse({
       ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
       RequestedCount: requestedCount, SortCriteria: ''
     })
 
-    // TODO check existence
-    const decodedFavorites = xDecodeHtmlEntity(favorites.Result)
-    // leave uri metadata r:resMD as as string.
-    const parsedFavorites = parser.parse(decodedFavorites, {
-      'attributeNamePrefix': '_',
-      'stopNodes': ['r:resMD'],
-      'parseNodeValue': false,
-      'ignoreAttributes': false,
-    })
-
-    // favorites have tag: <item>
-    // TODO check all elements DIDL-Lite, item ...)
-    const allFavorites = parsedFavorites['DIDL-Lite'].item
-    const allFavoritesWithTitle = allFavorites.map((item) => {
-      return {
-        'id': '', // TODO necessary?
-        // title might be of type number (example album 25 form Adele) - convert it to string
-        // title must be HTML entity decoded because we search
-        'title': xDecodeHtmlEntity(String(item['dc:title'])),
-        'artist': '', // TODO necessary?
-        'uri': item['res'], // keep HTML entity encoded, URI encoded
-        'metadata': item['r:resMD'], // keep HTML entity encoded, URI encoded
-        'artUri': item['upnp:albumArtURI'], // is array or single item!
-        'sid': '', // TODO
-        'serviceName': '', // TODO
-        'upnpclass': item['upnp:class'], // is always 'object.itemobject.item.sonos-favorite'
-        'processingType': '' // TODO has 
+    let transformedItems = await xParseBrowseToArray(favorites, 'item', PACKAGE_PREFIX)
+    transformedItems = await Promise.all(transformedItems.map(async (item) => {
+      if (item.artUri.startsWith('/getaa')) {
+        item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
-    })
+      
+      if (xIsTruthyProperty(item, ['uri'])) {
+        item.radioId = xGetRadioId(item.uri)
+      }
 
-    return allFavoritesWithTitle
+      // My Sonos items have own upnp class object.itemobject.item.sonos-favorite"
+      // metadata contains the relevant upnp class of the track, album, stream, ...
+      if (xIsTruthyProperty(item, ['metadata'])) {
+        item.upnpClass = await xGetUpnpClassEncoded(item['metadata'])
+    
+        if (module.exports.UPNP_CLASSES_STREAM.includes(item.upnpClass)) {
+          item.processingType = 'stream'
+        } else if (module.exports.UPNP_CLASSES_QUEUE.includes(item.upnpClass)) {
+          item.processingType = 'queue'
+        } else {
+          // default as it works in most case
+          item.processingType = 'queue'
+        }
+        return item
+      }
+    }))
+    // TODO requested Count different for MySonos and SONOS Playlists
+    const sonosPlaylists = await module.exports.getSonosPlaylists(tsPlayer, requestedCount)    
+
+    return transformedItems.concat(sonosPlaylists)
   },
 
   /** Get array of all SONOS-Playlists
@@ -670,24 +683,15 @@ module.exports = {
       ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
       RequestedCount: requestedCount, SortCriteria: ''
     })
-    if (!xIsTruthyProperty(browsePlaylist, ['NumberReturned'])) { 
-      throw new Error(`${PACKAGE_PREFIX} invalid response Browse SQ: - missing NumberReturned`)
-    }
-    let transformedItems = [] // no Sonos Playlists
-    if (browsePlaylist.NumberReturned > 0) {
-      if (!xIsTruthyPropertyStringNotEmpty(browsePlaylist, ['Result'])) {
-        throw new Error(`${PACKAGE_PREFIX} invalid response Browse SQ: - missing Result`)
+    
+    let transformed = await xParseBrowseToArray(browsePlaylist, 'container', PACKAGE_PREFIX)
+    transformed = transformed.map((item) => {
+      if (item.artUri.startsWith('/getaa')) {
+        item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
-      // eslint-disable-next-line max-len
-      transformedItems = await xParseBrowseDidlXmlToArray(browsePlaylist.Result, 'container')
-      transformedItems = transformedItems.map((item) => {
-        if (item.artUri.startsWith('/getaa')) {
-          item.artUri = tsPlayer.urlObject.origin + item.artUri
-        }
-        return item
-      })
-    }
-    return transformedItems
-  }
+      return item
+    })
+    return transformed
+  }, 
 
 }

@@ -6,12 +6,12 @@
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-16
+ * @since 2021-02-19
 */
 
 'use strict'
 
-const { PACKAGE_PREFIX } = require('./Globals.js')
+const { PACKAGE_PREFIX, REGEX_3DIGITSSIGN } = require('./Globals.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}HelperTs`)
 
@@ -218,5 +218,158 @@ module.exports = {
   // this will return the city from the first address item.
   getNestedProperty: (nestedObj, pathArray) => {
     return pathArray.reduce((obj, key) => obj[key], nestedObj)
-  }
+  },
+
+  /** Validates property and returns true|false if on|off (NOT case sensitive). 
+   * 
+   * @param  {object} msg Node-RED message
+   * @param  {string} msg.propertyName item, to be validated
+   * @param  {string} propertyName property name
+   * @param  {string} propertyMeaning additional information, including in error message
+   * @param  {string} packageName package name, included in error message
+   *
+   * @returns {boolean} true/false if msg.property is "on/off" ! not case sensitive
+   *
+   * @throws {error} if msg[propertyName] is missing, not string, not on|off (NOT case sensitive)
+   */
+  isOnOff: (msg, propertyName, propertyMeaning, packageName) => {
+    const path = []
+    path.push(propertyName)
+    if (!module.exports.isTruthyProperty(msg, path)) {
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+    }
+    const value = msg[propertyName]
+    if (typeof value !== 'string') {
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not string`)
+    }
+    if (!(value.toLowerCase() === 'on' || value.toLowerCase() === 'off')) {
+      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not on/off`)
+    }
+    return (value.toLowerCase() === 'on')
+  },
+
+  /** Validates and converts msg[propertyName] to number (integer). 
+   * 
+   * If defaultValue is NOT given then msg[propertyName] is required! Throws error if missing.
+   * If defaultValue is given then msg[propertyName] is not required and default value is only used
+   * in case msg[propertyName] is not "isValidProperty" (undefined, null, NaN). 
+   * The defaultValue is not used in case of wrong type, not in range.
+   * defaultValue should be in range min max (not checked). 
+   * 
+   * @param  {object} msg Node-RED message
+   * @param  {(string|number)} msg.propertyName item, to be validated, converted
+   * @param  {string} propertyName property name
+   * @param  {number} min minimum
+   * @param  {number} max maximum, max > min
+   * @param  {string} propertyMeaning additional information, including in error message
+   * @param  {string} packageName package name, included in error message
+   * @param  {number} [defaultValue] integer, specifies the default value. 
+   *
+   * @returns {number} integer in range [min,max] or defaultValue
+   *
+   * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
+   * @throws {error} msg[propertyName] is not of type string, number
+   * @throws {error} min,max,defaultValue not of type number, max <= min
+   */
+  validToInteger: (msg, propertyName, min, max, propertyMeaning,
+    packageName, defaultValue) => {
+    // validate min max
+    if (typeof min !== 'number') {
+      throw new Error(`${packageName} ${propertyMeaning} min is not type number`)
+    } 
+    if (typeof max !== 'number') {
+      throw new Error(`${packageName} ${propertyMeaning} max is not type number`)
+    } 
+    if (min >= max) {
+      throw new Error(`${packageName} ${propertyMeaning} max must be greater then min`)
+    }
+    
+    // if defaultValue is missing an error will be throw in case property is not defined or missing
+    const requiredProperty = (typeof defaultValue === 'undefined')
+    const path = []
+    path.push(propertyName)
+    if (!module.exports.isTruthyProperty(msg, path)) {
+      if (requiredProperty) {
+        throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+      } else {
+        // use defaultValue but check if valid
+        if (typeof defaultValue !== 'number') {
+          throw new Error(`${packageName} ${propertyMeaning} defaultValue is not type number`)
+        } 
+        if (!Number.isInteger(defaultValue)) {
+          throw new Error(`${packageName} ${propertyMeaning} defaultValue is not integer`)
+        }
+        // no check in range to allow such as -1 to indicate no value given
+        return defaultValue
+      }
+    }
+    let value = msg[propertyName]
+    const txtPrefix = `${packageName} ${propertyMeaning} (msg.${propertyName})`
+
+    if (typeof value !== 'number' && typeof value !== 'string') {
+      throw new Error(`${txtPrefix} is not type string/number`)
+    }
+    if (typeof value === 'number') {
+      if (!Number.isInteger(value)) {
+        throw new Error(`${txtPrefix} is not integer`)
+      }
+    } else {
+      // it is a string - allow signed/unsigned
+      if (!REGEX_3DIGITSSIGN.test(value)) {
+        throw new Error(`${txtPrefix} >>${value}) is not 3 signed digits only`)
+      }
+      value = parseInt(value)
+    }
+    if (!(value >= min && value <= max)) {
+      throw new Error(`${txtPrefix} >>${value}) is out of range`)
+    }
+    return value
+  },
+
+  /** Validates msg[propertyName] against regex and returns that value or a default value.
+   * 
+   * If defaultValue is NOT given then msg[propertyName] is required! Throws error if missing.
+   * If defaultValue is given then msg[propertyName] is not required and default value is only used
+   * in case msg[propertyName] is not "isValidProperty" (undefined, null, NaN). 
+   * The defaultValue is not used in case of wrong type, not in range.
+   * defaultValue should be in range min max (not checked). 
+   * 
+   * @param  {object} msg Node-RED message
+   * @param  {string} msg.propertyName item, to be validated - maximum 3 digits
+   * @param  {string} propertyName property name
+   * @param  {string} regex expression to evaluate string
+   * @param  {string} propertyMeaning additional information, including in error message
+   * @param  {string} packageName package name, included in error message
+   * @param  {string} [defaultValue] specifies the default value. If missing property is required.
+   *
+   * @returns {string} if defaultValue is NOT given then msg[propertyName] is required. 
+   *
+   * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
+   * @throws {error} msg[propertyName] is not of type string
+   * @throws {error} if msg[propertyName] has invalid regex
+   */
+  validRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
+    debug('entering method validRegex')
+    // if defaultValue is missing and error will be throw in case property is not defined or missing
+    const requiredProperty = (typeof defaultValue === 'undefined')
+    const path = []
+    path.push(propertyName)
+    if (!module.exports.isTruthyProperty(msg, path)) {
+      if (requiredProperty) {
+        throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+      } else {
+        // set default
+        return defaultValue
+      }
+    }
+    const value = msg[propertyName]
+    const txtPrefix = `${packageName} ${propertyMeaning} (${propertyName})`
+    if (typeof value !== 'string') {
+      throw new Error(`${txtPrefix} is not type string`)
+    }
+    if (!regex.test(value)) {
+      throw new Error(`${txtPrefix} >>${value} wrong syntax. Regular expr. - see documentation`)
+    }
+    return value
+  },
 }

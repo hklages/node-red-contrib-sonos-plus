@@ -13,9 +13,6 @@
 module.exports = {
 
   PACKAGE_PREFIX: 'nrcsp: ',
-  NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
-  NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
-  SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),
 
   TIMEOUT_HTTP_REQUEST: 2000, //is in milliseconds
   TIMEOUT_DISCOVERY: 4, //is in seconds
