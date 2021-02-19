@@ -54,14 +54,14 @@
     "debug": "^4.3.1",
     "sonos": "^1.14.0",
     "xml2js": "^0.4.23",
-    "fast-xml-parser": "^3.17.6",
+    "fast-xml-parser": "^3.18.0",
     "@svrooij/sonos": "v2.4.0-beta.3"
   },
   "devDependencies": {
     "eslint": "^7.19.0",
-    "@typescript-eslint/eslint-plugin": "^4.14.1",
-    "@typescript-eslint/parser": "^4.14.1",
-    "chai": "^4.2.0",
-    "mocha": "^8.2.1"
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
+    "chai": "^4.3.0",
+    "mocha": "^8.3.0"
   }
 }
