@@ -15,20 +15,20 @@ const {
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMySonos: xGetMySonos } = require('./Sonos-CommandsTs.js')
+const { getMySonos: xGetMySonos } = require('./Commands.js')
 
 const { isSonosPlayer: xIsSonosPlayer, parseBrowseToArray: xParseBrowseToArray,
   executeActionV6, failure, success
-} = require('./Sonos-Extensions.js')
+} = require('./Extensions.js')
 
 const {
   isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
   isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty, validRegex, validToInteger,
-} = require('./HelperTs.js')
+} = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}my-sonos`)
+const debug = require('debug')(`${PACKAGE_PREFIX}mysonos`)
 
 module.exports = function (RED) {
 

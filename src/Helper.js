@@ -1,204 +1,223 @@
 /**
- * Collection of general purpose REGEX strings and methods not being related to SOAP or SONOS.
+ * Collection of general purpose methods to check variables/constants and object properties.
+ * Can be used in other packages because it has no relation to SONOS or Node-RED
  *
  * @module Helpers
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-21
+ * @since 2021-02-19
 */
 
 'use strict'
 
-const debug = require('debug')('nrcsp:Helper')
+const { PACKAGE_PREFIX, REGEX_3DIGITSSIGN } = require('./Globals.js')
+
+const debug = require('debug')(`${PACKAGE_PREFIX}helperTs`)
 
 module.exports = {
 
-  SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),
-
-  PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase', 'Sonos Arc'],
-
-  REGEX_TIME: /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only hh:mm:ss and hours from 0 to 19
-  REGEX_TIME_DELTA: /^([-+]?([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only +/- REGEX_TIME
-  REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
-  REGEX_HTTP: /^(http|https):\/\/.+$/,
-  REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
-  REGEX_RADIO_ID: /^([s][0-9]+)$/,
-  REGEX_2DIGITS: /^\d{1,2}$/, // up to 2 digits but at least 1
-  REGEX_3DIGITS: /^\d{1,3}$/, // up to 3 digits but at least 1
-  REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
-  REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
-  REGEX_ANYCHAR: /.+/,  // any character but at least 1
-  REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
-  REGEX_CSV: /^[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9]+)*(,[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9])*)*$/u,
-
-  PACKAGE_PREFIX: 'nrcsp: ',
-  NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
-  NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
-
-  // functions to be used in other modules
-
-  /** Starts async discovery of SONOS player and returns ipAddress - used in callback.
-   * @param  {object} node current node
-   * @param  {string} serialNumber player serial number
-   * @param  {function} callback function with parameter err, ipAddress
-   * provides ipAddress or null (not found) and calls callback handling that.
+  /** Converts hh:mm:ss time to milliseconds. Does not check input!
+   * 
+   * @param  {string} hhmmss string in format hh:mm:ss
+   * 
+   * @returns {number} milliseconds as integer
+   * 
+   * @throws nothing error if split does nt find :
    */
-  discoverSonosPlayerBySerial: (node, serialNumber, callback) => {
-    const sonos = require('sonos')
-    
-    node.debug('Start find SONOS player.')
-    let ipAddress = null
+  hhmmss2msec: (hhmmss) => {
+    const [hours, minutes, seconds] = (hhmmss).split(':')
+    return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
+  },
 
-    // define discovery, find matching player and return ip
-    const searchTime = 4000 // in milliseconds
-    node.debug('Start searching for players')
-    let discovery = sonos.DeviceDiscovery({ timeout: searchTime })
-
-    discovery.on('DeviceAvailable', sonosPlayer => {
-      // serial number is in deviceDescription serialNum
-      // ipAddress is in sonosPlayer.host
-      sonosPlayer
-        .deviceDescription()
-        .then(data => {
-          // compary serial numbers
-          if (module.exports.isTruthyAndNotEmptyString(data.serialNum)) {
-            if (data.serialNum.trim().toUpperCase() === serialNumber.trim().toUpperCase()) {
-              node.debug('Found SONOS player based on serialnumber in device description.')
-              if (module.exports.isTruthyAndNotEmptyString(sonosPlayer.host)) {
-                // success
-                node.debug('Got ipaddres from device.host.')
-                ipAddress = sonosPlayer.host
-                callback(null, ipAddress)
-                node.debug('Cleanup disovery')
-                if (module.exports.isTruthyAndNotEmptyString(discovery)) {
-                  discovery.destroy()
-                  discovery = null
-                }
-              } else {
-                // failure
-                throw new Error('Found player but invalid ip address')
-              }
-            } else {
-              // continue awaiting next players
-            }
-          } else {
-            // failure but ignore and awaiting next player
-          }
-          return true
-        })
-        .catch(error => {
-          callback(error, null)
-          node.debug('Cleanup discovery - error')
-          if (module.exports.isTruthyAndNotEmptyString(discovery)) {
-            discovery.destroy()
-            discovery = null
-          }
-        })
+  /** Encodes specific HTML special characters such as "<"" and others. 
+   * Works with multiple occurrences.
+   * @param  {string} htmlData the string to be decode, maybe empty.
+   * 
+   * @returns {Promise<string>} encoded string
+   * 
+   * @throws Error in case of htmlData is undefined, null, not a string
+   * 
+   * @since 2021-01-25
+   */
+  encodeHtmlEntity: async (htmlData) => {
+    debug('method >>%s', 'encodeHtmlEntity')
+    if (!module.exports.isTruthy(htmlData)) {
+      throw new Error('htmlData invalid/missing')
+    }
+    if (typeof htmlData !== 'string') {
+      throw new Error('htmlData is not string')
+    }
+    return htmlData.replace(/[<>"'&]/g, singleChar => {
+      switch (singleChar) {
+      case '<': return '&lt;'
+      case '>': return '&gt;'
+      case '"': return '&quot;'
+      case '\'': return '&apos;'
+      case '&': return '&amp;'
+      }
     })
-
-    // listener 'timeout' only once
-    discovery.once('timeout', () => {
-      node.debug('Received time out without finding any matching (serial number) SONOS player')
-      // error messages in calling function
-      callback(null, null)
+  },
+  
+  /** Decodes specific HTML special characters such as "&lt;" and others. 
+   * Works with multiple occurrences.
+   * @param  {string} htmlData the string to be decode, maybe empty
+   * 
+   * @returns {Promise<string>} decoded string
+   * 
+   * @throws Error in case of htmlData is undefined, null, not a string
+   * 
+   * @since 2021-01-25
+   */
+  decodeHtmlEntity: async (htmlData) => {
+    debug('method >>%s', 'decodeHtmlEntity')
+    if (!module.exports.isTruthy(htmlData)) {
+      throw new Error('htmlData invalid/missing')
+    }
+    if (typeof htmlData !== 'string') {
+      throw new Error('htmlData is not string')
+    }
+    return String(htmlData).replace(/(&lt;|&gt;|&apos;|&quot;|&amp;)/g, substring => {
+      switch (substring) {
+      case '&lt;': return '<'
+      case '&gt;': return '>'
+      case '&apos;': return '\''
+      case '&quot;': return '"'
+      case '&amp;': return '&'
+      }
     })
   },
 
-  /** Show any error occurring during processing of messages in the node status 
-   * and create node error.
+  /** Validates whether property is safely accessible and "truthy", any type.
+   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
+   * @param  {object} nestedObj object
+   * @param  {array<string>} pathArray property chain- must not be empty
    * 
-   * @param  {object} node current node
-   * @param  {object} msg current msg
-   * @param  {object} error  standard node.js or created with new Error ('')
-   * @param  {string} [functionName] name of calling function
+   * @returns {boolean} property is accessible
+   * 
+   * @throws error in case pathArray is not an array, non empty, elements string
+   * @throws error in case nestedObj is not an object
+   */
+  isTruthyProperty: (nestedObj, pathArray) => {
+    debug('method >>%s', 'isTruthyProperty')
+    const property = pathArray.reduce(
+      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+
+    return module.exports.isTruthy(property)
+  },
+
+  /** Validates whether property is safely accessible and "truthy", type string, not empty
+   * Truthy means not undefined, null, NaN, infinite - see method isTruthy.
+   * 
+   * @param  {object} nestedObj object
+   * @param  {array<string>} path path property chain- must not be empty, type string
+   * 
+   * @returns {boolean} property is accessible and not empty string
+   * 
+   * @throws error in case of wrong arguments!
+   */
+  isTruthyPropertyStringNotEmpty: (nestedObj, pathArray) => {
+    debug('method >>%s', 'isTruthyPropertyStringNotEmpty')
+    const property = pathArray.reduce(
+      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+
+    return module.exports.isTruthyStringNotEmpty(property)
+  },
+
+  /** Validates whether an const/variable is "truthy", any type
+   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
+   *  
+   * @param  {any} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
+   * true: let input = {}, let input = {'a':1]}, let input = [], let input = ['a', 'b']
+   * true: let input = true; let input = 1, let input = 100.5
+   * true: let input = '', let input = 'Hello World'
+   * 
+   * @since 2021-01-25
+   * 
+   * @throws nothing
+   */
+  isTruthy: (input) => {
+    debug('method >>%s', 'isTruthy')
+    return !(typeof input === 'undefined' || input === null
+      //this avoids NaN, positive, negative Infinite
+      || (typeof input === 'number' && !Number.isFinite(input)))
+  },
+
+  /** Validates whether a constant/variable is "truthy", string, not empty.
+   * Not valid : undefined or null or NaN or Infinite, all types except string
+   * 
+   * @param {any} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
+   * false: let input = {},let input = {'a':1]}, let input = [], let input = ['a', 'b']
+   * false: let input = true; let input = 1, let input = 100.5
+   * false: let input = ''
+   * true: non empty string
    * 
    * @throws nothing
    * 
-   * @returns nothing
+   * @since 2021-01-25
    */
-  failure: (node, msg, error, functionName) => {
-  // 1. Is the error a standard nodejs error? Indicator: .code exists
-  // nodejs provides an error object with properties: .code, .message .name .stack
-  // See https://nodejs.org/api/errors.html for more about the error object.
-  // .code provides the best information.
-  // See https://nodejs.org/api/errors.html#errors_common_system_errors
-  // 
-  // 2. Is the error thrown in node-sonos - service _request? Indicator: 
-  // message starts with NODE_SONOS_ERRORPREFIX
-  // The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' 
-  // and the error.response.data or NODE_SONOS_ERRORPREFIX error.message and 
-  // error.response.data
-  // 
-  // 3. Is the error from this package? Indicator: .message starts with NRCSP_PREFIX
-  // 
-  // 4. All other error throw inside all modules (node-sonos, axio, ...)
-    node.debug(`Entering error handling from ${functionName}.`)
-    let msgShort = 'unknown' // default text used for status message
-    let msgDet = 'unknown' // default text for error message in addition to msgShort
-    if (module.exports.isValidPropertyNotEmptyString(error, ['code'])) {
-      // 1. nodejs errors - convert into readable message
-      if (error.code === 'ECONNREFUSED') {
-        msgShort = 'Player refused to connect'
-        msgDet = 'Validate players ip address'
-      } else if (error.code === 'EHOSTUNREACH') {
-        msgShort = 'Player is unreachable'
-        msgDet = 'Validate players ip address / power on'
-      } else if (error.code === 'ETIMEDOUT') {
-        msgShort = 'Request timed out'
-        msgDet = 'Validate players IP address / power on'
-      } else {
-        // Caution: getOwn is necessary for some error messages eg play mode!
-        msgShort = 'nodejs error - contact developer'
-        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
-      }
-    } else {
-      // Caution: getOwn is necessary for some error messages eg play mode!
-      if (module.exports.isValidPropertyNotEmptyString(error, ['message'])) {
-        if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
-          // 2. node sonos upnp errors from service _request
-          if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
-            const uppnText = error.message.substring(module.exports.NODE_SONOS_UPNP500.length)
-            const upnpEc = module.exports.getErrorCodeFromEnvelope(uppnText)
-            msgShort = `statusCode 500 & upnpError ${upnpEc}`
-            // TODO Notion Helper-Service
-            msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.SOAP_ERRORS.UPNP, '')
-          } else {
-            // unlikely as all UPNP errors throw 500
-            msgShort = 'statusCode NOT 500'
-            msgDet = `upnp envelope: ${error.message}`
-          }
-        } else if (error.message.startsWith(module.exports.PACKAGE_PREFIX)) {
-          // 3. my thrown errors
-          msgDet = 'none'
-          msgShort = error.message.replace(module.exports.PACKAGE_PREFIX, '')
-        } else {
-          // Caution: getOwn is necessary for some error messages eg play mode!
-          msgShort = error.message
-          msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
-        }
-      } else {
-        // 4. all the others
-        msgShort = 'Unknown error/ exception -see node.error'
-        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
-      }
-    }
-
-    node.error(`${functionName}:${msgShort} :: Details: ${msgDet}`, msg)
-    node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}`
-    })
+  isTruthyStringNotEmpty: (input) => {
+    debug('method >>%s', 'isTruthyStringNotEmpty')
+    return !(typeof input === 'undefined' || input === null
+      //this avoids NaN, positive, negative Infinite, not empty string
+      || (typeof input === 'number' && !Number.isFinite(input))
+      || typeof input !== 'string' || input === '')
   },
 
-  /** Set node status and send message.
+  /** Validates whether a constant/variable is "truthy" and array.
+   * Not valid : undefined or null or NaN or Infinite, all types except array
    * 
-   * @param  {object} node current node
-   * @param  {object} msg current msg (maybe null)
-   * @param  {string} functionName name of calling function
+   * @param {any} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
+   * false: let input = {},let input = {'a':1]}
+   * false: let input = true; let input = 1, let input = 100.5
+   * false: let input = '', let input = 'Hello World'
+   * true: let input = [], let input = ['a', 'b']
+   * 
+   * @throws nothing
+   * 
+   * @since 2021-01-25
    */
-  success: (node, msg, functionName) => {
-    node.send(msg)
-    node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
-    node.debug(`OK: ${functionName}`)
+  isTruthyArray: (input) => {
+    debug('method >>%s', 'isTruthyArray')
+    return !(typeof input === 'undefined' || input === null
+      //this avoids NaN, positive, negative Infinite, not empty string
+      || (typeof input === 'number' && !Number.isFinite(input))
+      || !Array.isArray(input))
+  },
+
+  /** Gets the property value specified by path. Use isTruthyProperty before!
+   * 
+   * @param  {object} nestedObj object
+   * @param  {array<string>} path path property chain- must not be empty
+   * 
+   * @returns {any} value of that property
+   * 
+   * @throws nothing
+   */
+  // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
+  // pass in your object structure as array elements
+  // const name = getNestedProperty(user, ['personalInfo', 'name']);
+  // to access nested array, just pass in array index as an element the path array.
+  // const city = getNestedProperty(user, ['personalInfo', 'addresses', 0, 'city']);
+  // this will return the city from the first address item.
+  getNestedProperty: (nestedObj, pathArray) => {
+    return pathArray.reduce((obj, key) => obj[key], nestedObj)
   },
 
   /** Validates property and returns true|false if on|off (NOT case sensitive). 
@@ -216,7 +235,7 @@ module.exports = {
   isOnOff: (msg, propertyName, propertyMeaning, packageName) => {
     const path = []
     path.push(propertyName)
-    if (!module.exports.isValidProperty(msg, path)) {
+    if (!module.exports.isTruthyProperty(msg, path)) {
       throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
     }
     const value = msg[propertyName]
@@ -269,7 +288,7 @@ module.exports = {
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []
     path.push(propertyName)
-    if (!module.exports.isValidProperty(msg, path)) {
+    if (!module.exports.isTruthyProperty(msg, path)) {
       if (requiredProperty) {
         throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
@@ -296,7 +315,7 @@ module.exports = {
       }
     } else {
       // it is a string - allow signed/unsigned
-      if (!module.exports.REGEX_3DIGITSSIGN.test(value)) {
+      if (!REGEX_3DIGITSSIGN.test(value)) {
         throw new Error(`${txtPrefix} >>${value}) is not 3 signed digits only`)
       }
       value = parseInt(value)
@@ -335,7 +354,7 @@ module.exports = {
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []
     path.push(propertyName)
-    if (!module.exports.isValidProperty(msg, path)) {
+    if (!module.exports.isTruthyProperty(msg, path)) {
       if (requiredProperty) {
         throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
@@ -353,158 +372,4 @@ module.exports = {
     }
     return value
   },
-
-  /** Validates whether property is safely accessible and "truthy". Empty string allowed.
-   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
-   * 
-   * @param  {object} nestedObj object
-   * @param  {array<string>} path property chain- must not be empty
-   * 
-   * @returns {boolean} property is accessible
-   * 
-   * @throws nothing
-   */
-  isValidProperty: (nestedObj, pathArray) => {
-    const property = pathArray.reduce(
-      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
-      nestedObj
-    )
-    return module.exports.isTruthy(property)
-  },
-
-  /** Validates whether property is safely accessible and "truthy". Empty string NOT allowed.
-   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
-   * 
-   * @param  {object} nestedObj object
-   * @param  {array<string>} path path property chain- must not be empty
-   * 
-   * @returns {boolean} property is accessible and not empty string
-   * 
-   * @throws nothing
-   */
-  isValidPropertyNotEmptyString: (nestedObj, pathArray) => {
-    const property = pathArray.reduce(
-      (obj, key) => (obj && obj[key] !== 'undefined' ? obj[key] : undefined),
-      nestedObj
-    )
-    return module.exports.isTruthyAndNotEmptyString(property)
-  },
-
-  /** Validates whether an const/variable is "valid". Empty string allowed!
-   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
-   *  
-   * @param  {object|array|number|string|boolean} input const, variable
-   * 
-   * @returns {boolean} 
-   * false: let input; let input = null; let input = undefined; let input = NaN; 
-   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0
-   * true: let input = '', let input = {}, let input = [], let input = true
-   * 
-   * @throws nothing
-   */
-  isTruthy: input => {
-    return !(typeof input === 'undefined' || input === null
-      //this avoids NaN, positive, negative Infinite
-      || (typeof input === 'number' && !Number.isFinite(input)))
-  },
-
-  /** Validates whether an constant/variable is "valid". Empty string NOT allowed!
-   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
-   * 
-   * @param  {object|array|number|string|boolean} input const, variable
-   * 
-   * @returns {boolean} 
-   * false: let input = ''
-   * false: let input; let input = null; let input = undefined; let input = NaN; 
-   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0
-   * true: let input = {}, let input = [], let input = true
-   * 
-   * @throws nothing
-   */
-  isTruthyAndNotEmptyString: input => {
-    return !(typeof input === 'undefined' || input === null
-      //this avoids NaN, positive, negative Infinite, not empty string
-      || (typeof input === 'number' && !Number.isFinite(input)) || input === '')
-  },
-
-  /** Gets the property value specified by path. Use isValidProperty before!
-   * 
-   * @param  {object} nestedObj object
-   * @param  {array<string>} path path property chain- must not be empty
-   * 
-   * @returns {any} value of that property
-   * 
-   * @throws nothing
-   */
-  // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
-  // pass in your object structure as array elements
-  // const name = getNestedProperty(user, ['personalInfo', 'name']);
-  // to access nested array, just pass in array index as an element the path array.
-  // const city = getNestedProperty(user, ['personalInfo', 'addresses', 0, 'city']);
-  // this will return the city from the first address item.
-  getNestedProperty: (nestedObj, pathArray) => {
-    return pathArray.reduce((obj, key) => obj[key], nestedObj)
-  },
-
-  /** Converts hh:mm:ss time to milliseconds. Does not check input!
-   * 
-   * @param  {string} hhmmss string in format hh:mm:ss
-   * 
-   * @returns {number} milliseconds as integer
-   * 
-   * @throws nothing
-   */
-  hhmmss2msec: (hhmmss) => {
-    const [hours, minutes, seconds] = (hhmmss).split(':')
-    return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
-  },
-
-  /**  Get error code or empty string.
-   * 
-   * @param  {string} data  upnp error response as envelope with <errorCode>xxx</errorCode>
-   *
-   * @returns {string} error code
-   * 
-   * @throws nothing
-   */
-  getErrorCodeFromEnvelope: data => {
-    let errorCode = '' // default
-    if (module.exports.isTruthyAndNotEmptyString(data)) {
-      const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
-      const positionEnd = data.indexOf('</errorCode>')
-      if (positionStart > 1 && positionEnd > positionStart) {
-        errorCode = data.substring(positionStart, positionEnd)
-      }
-    }
-    return errorCode.trim()
-  },
-
-  /**  Get error message from error code. If not found provide 'unknown error'.
-   * 
-   * @param  {string} errorCode
-   * @param  {JSON} upnpErrorList - simple mapping .code .message
-   * @param  {JSON} [serviceErrorList] - simple mapping .code .message
-   *
-   * @returns {string} error text (from mapping code -  text)
-   * 
-   * @throws nothing
-   */
-  getErrorMessageV1: (errorCode, upnpErrorList, serviceErrorList) => {
-    const errorText = 'unknown error' // default
-    if (module.exports.isTruthyAndNotEmptyString(errorCode)) {
-      if (serviceErrorList !== '') {
-        for (let i = 0; i < serviceErrorList.length; i++) {
-          if (serviceErrorList[i].code === errorCode) {
-            return serviceErrorList[i].message
-          }
-        }
-      }
-      for (let i = 0; i < upnpErrorList.length; i++) {
-        if (upnpErrorList[i].code === errorCode) {
-          return upnpErrorList[i].message
-        }
-      }
-    }
-    return errorText
-  }
 }

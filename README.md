@@ -20,11 +20,7 @@ Either open a github issue (preferred method) or send an email to nrcsplus@gmail
 
 ### NEWS
 
-- Universal node: !!! group.create.snap, group.restore.snap now use different data
-
-- All nodes: !!! property sonosPlayer is now playerName (meaning SONOS-Playername) - replacing sonosName
-
-- My Sonos node: !!! library.get.playlists: msg.size is now msg.requestedCount
+This package is now based on [sonos-ts](https://www.npmjs.com/package/@svrooij/sonos). I had to modify almost all commands.
 
 ### Installation
 
@@ -34,8 +30,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Credentials
 
-[node-sonos api team](https://github.com/bencevans/node-sonos) for the base API
-
-[node-red-sonos team](https://github.com/shbert/node-red-contrib-sonos) shbert, jstrobel, Rolf-M: original package
-
-[node-red-better-sonos team](https://github.com/originallyus/node-red-contrib-better-sonos) for adding IP address search function
+[sonos-ts](https://github.com/svrooij/node-sonos-ts#readme) for the base API.

@@ -23,7 +23,7 @@ const { getGroupCurrent: xGetGroupCurrent, getGroupsAll: xGetGroupsAll,
   createGroupSnapshot: xCreateGroupSnapshot, restoreGroupSnapshot: xRestoreGroupSnapshot,
   getSonosPlaylists: xGetSonosPlaylists, playGroupNotification: xPlayGroupNotification,
   playJoinerNotification: xPlayJoinerNotification
-} = require('./Sonos-CommandsTs.js')
+} = require('./Commands.js')
 
 const { getDeviceProperties: xGetDeviceProperties, isSonosPlayer: xIsSonosPlayer,
   getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate, getSonosQueue: xGetSonosQueue,
@@ -31,16 +31,16 @@ const { getDeviceProperties: xGetDeviceProperties, isSonosPlayer: xIsSonosPlayer
   setAvTransport: xSetAvTransport, play: xPlay, getRadioId: xGetRadioId,
   getMusicServiceId: xGetMusicServiceId, getMusicServiceName: xGetMusicServiceName,
   executeActionV6, failure, success
-} = require('./Sonos-Extensions.js')
+} = require('./Extensions.js')
 
 const {
   isTruthy: xIsTruthy, isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
   isTruthyProperty: xIsTruthyProperty, isOnOff, validToInteger, validRegex
-} = require('./HelperTs.js')
+} = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}Universal`)
+const debug = require('debug')(`${PACKAGE_PREFIX}universal`)
 
 module.exports = function (RED) {
   

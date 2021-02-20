@@ -20,18 +20,18 @@ const {
   positionInTrack: xPositionInTrack, play: xPlay,
   parseBrowseToArray: xParseBrowseToArray, getRadioId: xGetRadioId,
   getUpnpClassEncoded: xGetUpnpClassEncoded, executeActionV6
-} = require('./Sonos-Extensions.js')
+} = require('./Extensions.js')
 
 const { isTruthyProperty: xIsTruthyProperty, isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
   hhmmss2msec: xhhmmss2msec, isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity,
   encodeHtmlEntity: xEncodeHtmlEntity
-} = require('./HelperTS.js')
+} = require('./Helper.js')
 
 const { MetaDataHelper } = require('@svrooij/sonos/lib')
 
 const parser = require('fast-xml-parser')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}Commands`)
+const debug = require('debug')(`${PACKAGE_PREFIX}commands`)
 
 module.exports = {
 

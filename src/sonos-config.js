@@ -10,6 +10,12 @@
 
 'use strict'
 
+const { PACKAGE_PREFIX } = require('./Globals.js')
+
+const { discoverPlayersHost, discoverPlayersSerialnumber } = require('./Discovery.js')
+
+const debug = require('debug')(`${PACKAGE_PREFIX}config`)
+
 module.exports = function (RED) {
 
   let node = {} // used for sending node.error, node.debug
@@ -22,53 +28,40 @@ module.exports = function (RED) {
     node.ipaddress = config.ipaddress
   }
 
-  // Build API to auto detect IP Addresses
-  RED.httpNode.get('/sonosSearch', function (req, response) {
-    discoverSonosPlayer(function (playerList) {
-      response.json(playerList)
-    })
+  RED.httpNode.get('/nrcsp/*', function (req, response) {
+    debug('httpNode - received get')
+
+    switch (req.params[0]) {
+    case 'discoverPlayersHost':
+      debug('starting discovery')
+      discoverPlayersHost()
+        .then((playerList) => {
+          debug('found player during discovery')
+          response.json(playerList)
+        })
+        .catch((error) => {
+          debug('error discovery >>%s', JSON.stringify(error, Object.getOwnPropertyNames(error)))
+        })
+      break
+    
+    case 'discoverPlayersSerialNumber':
+      debug('starting discovery')
+      discoverPlayersSerialnumber()
+        .then((playerList) => {
+          debug('found player during discovery')
+          response.json(playerList)
+        })
+        .catch((error) => {
+          debug('error discovery >>%s', JSON.stringify(error, Object.getOwnPropertyNames(error)))
+        })
+      break
+
+    default:
+      // eslint-disable-next-line max-len
+      response.json('available nrcsp endpoints: discoverPlayers')
+      
+    }   
   })
-
-  function discoverSonosPlayer (discoveryCallback) {
-    const sonos = require('sonos')
-
-    const playerList = [] // list of all discovered SONOS players
-
-    if (!discoveryCallback) {
-      node.error('No callback defined in discoverSonosPlayer')
-      return
-    }
-
-    // define discovery and store in playerList
-    const searchTime = 5000 // in miliseconds
-    node.debug('OK Start searching for players')
-    const discovery = sonos.DeviceDiscovery({ timeout: searchTime })
-
-    // listener  'DeviceAvailable'
-    discovery.on('DeviceAvailable', sonosPlayer => {
-      sonosPlayer.deviceDescription()
-        .then(data => {
-          playerList.push({
-            label: data.friendlyName + '::' + data.roomName,
-            value: data.serialNum
-          })
-          node.debug('OK Found SONOS player ' + data.serialNum)
-        })
-        .catch(err => {
-          node.error('DeviceDiscovery description error:: Details: ' + JSON.stringify(err))
-        })
-    })
-
-    // listener 'timeout' only once
-    discovery.once('timeout', () => {
-      if (playerList.length === 0) {
-        node.error('Did not find any sonos any player')
-      } else {
-        node.debug('OK Found player, returning result')
-      }
-      discoveryCallback(playerList)
-    })
-  }
 
   RED.nodes.registerType('sonos-config', SonosPlayerNode)
 }

@@ -17,13 +17,13 @@ const { isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
   isTruthyArray: xIsTruthyArray, isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
   encodeHtmlEntity: xEncodeHtmlEntity, decodeHtmlEntity: xDecodeHtmlEntity,
   getNestedProperty: xGetNestedProperty 
-} = require('./HelperTs.js')
+} = require('./Helper.js')
 
 const  request   = require('axios').default
 const xml2js = require('xml2js')
 const parser = require('fast-xml-parser')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}Extensions`)
+const debug = require('debug')(`${PACKAGE_PREFIX}extensions`)
 
 module.exports = {
 

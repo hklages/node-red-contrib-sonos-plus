@@ -23,34 +23,6 @@
     },
     oneditprepare: function() {
 
-      // serialnum: enter serial number or select from list
-      try {
-        $('#node-config-input-serialnum').autocomplete('destroy')
-      } catch (err) {}
-      $('#node-config-lookup-serialnum').click(function() {
-        $('#node-config-lookup-serialnum-icon').removeClass('fa-search')
-        $('#node-config-lookup-serialnum-icon').addClass('spinner')
-        $('#node-config-lookup-serialnum').addClass('disabled')
-        $.getJSON('sonosSearch', function(sonosPlayer) {
-          $('#node-config-lookup-serialnum-icon').addClass('fa-search')
-          $('#node-config-lookup-serialnum-icon').removeClass('spinner')
-          $('#node-config-lookup-serialnum').removeClass('disabled')
-          var dataArray = []
-          $.each(sonosPlayer, function(i, element) {
-            dataArray.push(element)
-          })
-          $('#node-config-input-serialnum')
-            .autocomplete({
-              source: dataArray,
-              minLength: 0,
-              close: function(event, ui) {
-                $('#node-config-input-serialnum').autocomplete('destroy')
-              }
-            })
-            .autocomplete('search', '')
-        })
-      })
-
       // ipaddress: enter ip or select from list
       try {
         $('#node-config-input-ipaddress').autocomplete('destroy')
@@ -59,7 +31,7 @@
         $('#node-lookup-ipaddress-icon').removeClass('fa-search')
         $('#node-lookup-ipaddress-icon').addClass('spinner')
         $('#node-lookup-ipaddress').addClass('disabled')
-        $.getJSON('sonosSearch', function(sonosPlayer) {
+        $.getJSON('nrcsp/discoverPlayersHost', function(sonosPlayer) {
           $('#node-lookup-ipaddress-icon').addClass('fa-search')
           $('#node-lookup-ipaddress-icon').removeClass('spinner')
           $('#node-lookup-ipaddress').removeClass('disabled')
@@ -78,7 +50,35 @@
             .autocomplete('search', '')
         })
       })
-    }
+
+    // serialnum: enter serial number or select from list
+    try {
+        $('#node-config-input-serialnum').autocomplete('destroy')
+      } catch (err) {}
+      $('#node-config-lookup-serialnum').click(function() {
+        $('#node-config-lookup-serialnum-icon').removeClass('fa-search')
+        $('#node-config-lookup-serialnum-icon').addClass('spinner')
+        $('#node-config-lookup-serialnum').addClass('disabled')
+        $.getJSON('nrcsp/discoverPlayersSerialNumber', function(sonosPlayer) {
+          $('#node-config-lookup-serialnum-icon').addClass('fa-search')
+          $('#node-config-lookup-serialnum-icon').removeClass('spinner')
+          $('#node-config-lookup-serialnum').removeClass('disabled')
+          var dataArray = []
+          $.each(sonosPlayer, function(i, element) {
+            dataArray.push(element)
+          })
+          $('#node-config-input-serialnum')
+            .autocomplete({
+              source: dataArray,
+              minLength: 0,
+              close: function(event, ui) {
+                $('#node-config-input-serialnum').autocomplete('destroy')
+              }
+            })
+            .autocomplete('search', '')
+        })
+      })
+    },
   })
 </script>
 

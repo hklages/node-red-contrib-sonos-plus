@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Collection of general purpose REGEX strings and methods not being related to SOAP or SONOS.</div>
+            <div class="description">Collection of general purpose methods to check variables/constants and object properties.Can be used in other packages because it has no relation to SONOS or Node-RED</div>
         
 
         
@@ -64,7 +64,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2020-11-21</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>2021-02-19</li></ul></dd>
     
 
     
@@ -97,7 +97,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line3">line 3</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -154,7 +154,7 @@
     
 
     
-    <h4 class="name" id=".discoverSonosPlayerBySerial"><span class="type-signature">(static) </span>discoverSonosPlayerBySerial<span class="signature">(node, serialNumber, callback)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".decodeHtmlEntity"><span class="type-signature">(static) </span>decodeHtmlEntity<span class="signature">(htmlData)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
     
 
     
@@ -162,7 +162,7 @@
 
 
 <div class="description">
-    Starts async discovery of SONOS player and returns ipAddress - used in callback.
+    Decodes specific HTML special characters such as "&lt;" and others. Works with multiple occurrences.
 </div>
 
 
@@ -198,30 +198,7 @@
 
         <tr>
             
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">current node</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>serialNumber</code></td>
+                <td class="name"><code>htmlData</code></td>
             
 
             <td class="type">
@@ -237,30 +214,7 @@
 
             
 
-            <td class="description last">player serial number</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">function with parameter err, ipAddressprovides ipAddress or null (not found) and calls callback handling that.</td>
+            <td class="description last">the string to be decode, maybe empty</td>
         </tr>
 
     
@@ -276,6 +230,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>2021-01-25</li></ul></dd>
     
 
     
@@ -301,249 +258,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line45">line 45</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".failure"><span class="type-signature">(static) </span>failure<span class="signature">(node, msg, error, functionName<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Show any error occurring during processing of messages in the node status and create node error.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">current node</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>msg</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">current msg</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>error</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">standard node.js or created with new Error ('')</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>functionName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">name of calling function</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line118">line 118</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line72">line 72</a>
     </li></ul></dd>
     
 
@@ -572,7 +287,7 @@
 
     <div class="param-desc">
     
-        nothing
+        Error in case of htmlData is undefined, null, not a string
     
     </div>
 
@@ -584,166 +299,7 @@
 
         
 <div class="param-desc">
-    nothing
-</div>
-
-
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getErrorCodeFromEnvelope"><span class="type-signature">(static) </span>getErrorCodeFromEnvelope<span class="signature">(data)</span><span class="type-signature"> &rarr; {string}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get error code or empty string.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>data</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">upnp error response as envelope with <errorCode>xxx</errorCode></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line467">line 467</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        nothing
-    
-    </div>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    error code
+    decoded string
 </div>
 
 
@@ -754,7 +310,7 @@
     </dt>
     <dd>
         
-<span class="param-type">string</span>
+<span class="param-type">Promise.&lt;string></span>
 
 
     </dd>
@@ -772,7 +328,7 @@
     
 
     
-    <h4 class="name" id=".getErrorMessageV1"><span class="type-signature">(static) </span>getErrorMessageV1<span class="signature">(errorCode, upnpErrorList, serviceErrorList<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".encodeHtmlEntity"><span class="type-signature">(static) </span>encodeHtmlEntity<span class="signature">(htmlData)</span><span class="type-signature"> &rarr; {Promise.&lt;string>}</span></h4>
     
 
     
@@ -780,7 +336,7 @@
 
 
 <div class="description">
-    Get error message from error code. If not found provide 'unknown error'.
+    Encodes specific HTML special characters such as "<"" and others. Works with multiple occurrences.
 </div>
 
 
@@ -804,8 +360,6 @@
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -818,7 +372,7 @@
 
         <tr>
             
-                <td class="name"><code>errorCode</code></td>
+                <td class="name"><code>htmlData</code></td>
             
 
             <td class="type">
@@ -831,82 +385,10 @@
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
 
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>upnpErrorList</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">JSON</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">simple mapping .code .message</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>serviceErrorList</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">JSON</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">simple mapping .code .message</td>
+            <td class="description last">the string to be decode, maybe empty.</td>
         </tr>
 
     
@@ -922,6 +404,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>2021-01-25</li></ul></dd>
     
 
     
@@ -947,7 +432,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line489">line 489</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line43">line 43</a>
     </li></ul></dd>
     
 
@@ -976,7 +461,7 @@
 
     <div class="param-desc">
     
-        nothing
+        Error in case of htmlData is undefined, null, not a string
     
     </div>
 
@@ -988,7 +473,7 @@
 
         
 <div class="param-desc">
-    error text (from mapping code -  text)
+    encoded string
 </div>
 
 
@@ -999,7 +484,7 @@
     </dt>
     <dd>
         
-<span class="param-type">string</span>
+<span class="param-type">Promise.&lt;string></span>
 
 
     </dd>
@@ -1025,7 +510,7 @@
 
 
 <div class="description">
-    Gets the property value specified by path. Use isValidProperty before!
+    Gets the property value specified by path. Use isTruthyProperty before!
 </div>
 
 
@@ -1141,7 +626,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line442">line 442</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line219">line 219</a>
     </li></ul></dd>
     
 
@@ -1312,7 +797,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line454">line 454</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line28">line 28</a>
     </li></ul></dd>
     
 
@@ -1341,7 +826,7 @@
 
     <div class="param-desc">
     
-        nothing
+        nothing error if split does nt find :
     
     </div>
 
@@ -1601,7 +1086,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line214">line 214</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line235">line 235</a>
     </li></ul></dd>
     
 
@@ -1696,7 +1181,7 @@
 
 
 <div class="description">
-    Validates whether an const/variable is "valid". Empty string allowed!Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
+    Validates whether an const/variable is "truthy", any typeEmpty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
 </div>
 
 
@@ -1738,19 +1223,7 @@
             <td class="type">
             
                 
-<span class="param-type">object</span>
-|
-
-<span class="param-type">array</span>
-|
-
-<span class="param-type">number</span>
-|
-
-<span class="param-type">string</span>
-|
-
-<span class="param-type">boolean</span>
+<span class="param-type">any</span>
 
 
             
@@ -1777,6 +1250,9 @@
     
 
     
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>2021-01-25</li></ul></dd>
+    
 
     
 
@@ -1801,7 +1277,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line402">line 402</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line147">line 147</a>
     </li></ul></dd>
     
 
@@ -1842,7 +1318,7 @@
 
         
 <div class="param-desc">
-    false: let input; let input = null; let input = undefined; let input = NaN; false: let input = 1.0 divide by 0; let input = -1.0 divide 0true: let input = '', let input = {}, let input = [], let input = true
+    false: let input; let input = null; let input = undefined; let input = NaN; false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)true: let input = {}, let input = {'a':1]}, let input = [], let input = ['a', 'b']true: let input = true; let input = 1, let input = 100.5true: let input = '', let input = 'Hello World'
 </div>
 
 
@@ -1871,7 +1347,7 @@
     
 
     
-    <h4 class="name" id=".isTruthyAndNotEmptyString"><span class="type-signature">(static) </span>isTruthyAndNotEmptyString<span class="signature">(input)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id=".isTruthyArray"><span class="type-signature">(static) </span>isTruthyArray<span class="signature">(input)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -1879,7 +1355,7 @@
 
 
 <div class="description">
-    Validates whether an constant/variable is "valid". Empty string NOT allowed!Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
+    Validates whether a constant/variable is "truthy" and array.Not valid : undefined or null or NaN or Infinite, all types except array
 </div>
 
 
@@ -1921,19 +1397,7 @@
             <td class="type">
             
                 
-<span class="param-type">object</span>
-|
-
-<span class="param-type">array</span>
-|
-
-<span class="param-type">number</span>
-|
-
-<span class="param-type">string</span>
-|
-
-<span class="param-type">boolean</span>
+<span class="param-type">any</span>
 
 
             
@@ -1960,6 +1424,9 @@
     
 
     
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>2021-01-25</li></ul></dd>
+    
 
     
 
@@ -1984,7 +1451,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line421">line 421</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line196">line 196</a>
     </li></ul></dd>
     
 
@@ -2025,7 +1492,7 @@
 
         
 <div class="param-desc">
-    false: let input = ''false: let input; let input = null; let input = undefined; let input = NaN; false: let input = 1.0 divide by 0; let input = -1.0 divide 0true: let input = {}, let input = [], let input = true
+    false: let input; let input = null; let input = undefined; let input = NaN; false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)false: let input = {},let input = {'a':1]}false: let input = true; let input = 1, let input = 100.5false: let input = '', let input = 'Hello World'true: let input = [], let input = ['a', 'b']
 </div>
 
 
@@ -2054,7 +1521,7 @@
     
 
     
-    <h4 class="name" id=".isValidProperty"><span class="type-signature">(static) </span>isValidProperty<span class="signature">(nestedObj, path)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id=".isTruthyProperty"><span class="type-signature">(static) </span>isTruthyProperty<span class="signature">(nestedObj, pathArray)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -2062,7 +1529,7 @@
 
 
 <div class="description">
-    Validates whether property is safely accessible and "truthy". Empty string allowed.truthy means not undefined, null, NaN, infinite - see method isTruthy.
+    Validates whether property is safely accessible and "truthy", any type.truthy means not undefined, null, NaN, infinite - see method isTruthy.
 </div>
 
 
@@ -2121,7 +1588,7 @@
 
         <tr>
             
-                <td class="name"><code>path</code></td>
+                <td class="name"><code>pathArray</code></td>
             
 
             <td class="type">
@@ -2178,7 +1645,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line364">line 364</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line101">line 101</a>
     </li></ul></dd>
     
 
@@ -2202,17 +1669,27 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        nothing
+        error in case pathArray is not an array, non empty, elements string
     
     </div>
 
-
+</li>
     
+        <li>
+
+    <div class="param-desc">
+    
+        error in case nestedObj is not an object
+    
+    </div>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
@@ -2248,7 +1725,7 @@
     
 
     
-    <h4 class="name" id=".isValidPropertyNotEmptyString"><span class="type-signature">(static) </span>isValidPropertyNotEmptyString<span class="signature">(nestedObj, path)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id=".isTruthyPropertyStringNotEmpty"><span class="type-signature">(static) </span>isTruthyPropertyStringNotEmpty<span class="signature">(nestedObj, path)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -2256,7 +1733,7 @@
 
 
 <div class="description">
-    Validates whether property is safely accessible and "truthy". Empty string NOT allowed.truthy means not undefined, null, NaN, infinite - see method isTruthy.
+    Validates whether property is safely accessible and "truthy", type string, not emptyTruthy means not undefined, null, NaN, infinite - see method isTruthy.
 </div>
 
 
@@ -2331,7 +1808,7 @@
 
             
 
-            <td class="description last">path property chain- must not be empty</td>
+            <td class="description last">path property chain- must not be empty, type string</td>
         </tr>
 
     
@@ -2372,7 +1849,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line382">line 382</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line121">line 121</a>
     </li></ul></dd>
     
 
@@ -2401,7 +1878,7 @@
 
     <div class="param-desc">
     
-        nothing
+        error in case of wrong arguments!
     
     </div>
 
@@ -2442,7 +1919,7 @@
     
 
     
-    <h4 class="name" id=".success"><span class="type-signature">(static) </span>success<span class="signature">(node, msg, functionName)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".isTruthyStringNotEmpty"><span class="type-signature">(static) </span>isTruthyStringNotEmpty<span class="signature">(input)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -2450,7 +1927,7 @@
 
 
 <div class="description">
-    Set node status and send message.
+    Validates whether a constant/variable is "truthy", string, not empty.Not valid : undefined or null or NaN or Infinite, all types except string
 </div>
 
 
@@ -2486,13 +1963,13 @@
 
         <tr>
             
-                <td class="name"><code>node</code></td>
+                <td class="name"><code>input</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">object</span>
+<span class="param-type">any</span>
 
 
             
@@ -2502,53 +1979,7 @@
 
             
 
-            <td class="description last">current node</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>msg</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">current msg (maybe null)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>functionName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">name of calling function</td>
+            <td class="description last">const, variable</td>
         </tr>
 
     
@@ -2564,6 +1995,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>2021-01-25</li></ul></dd>
     
 
     
@@ -2589,7 +2023,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line196">line 196</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line171">line 171</a>
     </li></ul></dd>
     
 
@@ -2612,8 +2046,42 @@
 
 
 
+<h5>Throws:</h5>
+
+        
+
+    <div class="param-desc">
+    
+        nothing
+    
+    </div>
 
 
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    false: let input; let input = null; let input = undefined; let input = NaN; false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)false: let input = {},let input = {'a':1]}, let input = [], let input = ['a', 'b']false: let input = true; let input = 1, let input = 100.5false: let input = ''true: non empty string
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -2942,7 +2410,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line330">line 330</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line351">line 351</a>
     </li></ul></dd>
     
 
@@ -3434,7 +2902,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line253">line 253</a>
+        <a href="Helper.js.html">Helper.js</a>, <a href="Helper.js.html#line274">line 274</a>
     </li></ul></dd>
     
 
@@ -3585,13 +3053,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-CommandsTs.html">Sonos-CommandsTs</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Dec 16 2020 09:32:04 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Feb 20 2021 09:04:33 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

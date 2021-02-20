@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.0.0] 2021-0x-xx
+
+#### Changed
+
+- Switched from node-sonos library to node-sonos-ts library because node-sonos is not being maitained for some months
+
+- discovery of players should be much faster, especially in case of many players
+
+#### Added
+
+- config node: you can now use discovery for the ip address
+
 ### [4.5.5] 2021-01-07
 
 #### Changed

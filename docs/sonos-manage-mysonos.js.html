@@ -26,32 +26,39 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>const {
-  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR,
-  NRCSP_PREFIX,
-  discoverSonosPlayerBySerial,
-  isValidProperty, isValidPropertyNotEmptyString, isTruthyAndNotEmptyString,
-  validRegex, validToInteger,
-  failure, success
-} = require('./Helper.js')
-
-const { getMySonosV3, executeActionV6, didlXmlToArray, setPlayerVolume
-} = require('./Sonos-Commands.js')
-
-const { Sonos } = require('sonos')
-
-/**
+            <pre class="prettyprint source linenums"><code>/**
  * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
  *
  * @module MySonos
  * 
  * @author Henning Klages
  * 
- * @since 2020-11-27
+ * @since 2021-02-18
 */
+'use strict'
+
+const {
+  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, PACKAGE_PREFIX, TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY
+} = require('./Globals.js')
+
+const { discoverSonosPlayerBySerial } = require('./Discovery.js')
+
+const { getMySonos: xGetMySonos } = require('./Commands.js')
+
+const { isSonosPlayer: xIsSonosPlayer, parseBrowseToArray: xParseBrowseToArray,
+  executeActionV6, failure, success
+} = require('./Extensions.js')
+
+const {
+  isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
+  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty, validRegex, validToInteger,
+} = require('./Helper.js')
+
+const { SonosDevice } = require('@svrooij/sonos/lib')
+
+const debug = require('debug')(`${PACKAGE_PREFIX}mysonos`)
 
 module.exports = function (RED) {
-  'use strict'
 
   // function lexical order, ascending
   const COMMAND_TABLE_MYSONOS = {
@@ -71,107 +78,118 @@ module.exports = function (RED) {
    */
   function SonosManageMySonosNode (config) {
     RED.nodes.createNode(this, config)
-    const nrcspFunction = 'create and subscribe'
+    const thisFunction = 'create and subscribe'
     const node = this
+    node.status({}) // Clear node status
 
-    // ip address overruling serial number - at least one must be valid
+    // Ip address overruling serial number - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
-    if (isValidProperty(configNode, ['ipaddress'])
-      &amp;&amp; typeof configNode.ipaddress === 'string'
+    if (xIsTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
       &amp;&amp; REGEX_IP.test(configNode.ipaddress)) {
-      // ip address is being used - default case
-    } else if (isValidProperty(configNode, ['serialnum'])
-      &amp;&amp; typeof configNode.serialnum === 'string'
+      // Using config ip address to define the default SONOS player
+      const port = 1400 // assuming this port
+      const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
+      xIsSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
+        .then((isSonos) => {
+          if (isSonos) {
+            node.on('input', (msg) => {
+              node.debug('node - msg received')
+              processInputMsg(node, config, msg, playerUrlObject.hostname)
+                .then((msgUpdate) => {
+                  Object.assign(msg, msgUpdate) // Defines the output message
+                  success(node, msg, msg.nrcspCmd)
+                })
+                .catch((error) => {
+                  let thisFunction = 'processing input msg'
+                  if (msg.nrcspCmd &amp;&amp; typeof msg.nrcspCmd === 'string') {
+                    thisFunction = msg.nrcspCmd
+                  }
+                  failure(node, msg, error, thisFunction)
+                })
+            })
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready for message' })      
+          } else {
+            node.status({ fill: 'red', shape: 'dot', text: 'error: given ip not reachable' })      
+          }
+        })
+        .catch((err) => {
+          debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+          node.status({ fill: 'red', shape: 'dot', text: 'error: xIsSonos went wrong' })
+        })
+      
+    } else if (xIsTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
       &amp;&amp; REGEX_SERIAL.test(configNode.serialnum)) {
-      discoverSonosPlayerBySerial(node, configNode.serialnum, (err, newIpaddress) => {
-        if (err) {
-          failure(
-            node, null, new Error(`${NRCSP_PREFIX} couldn't discover ip address`), nrcspFunction)
+      // start discovery
+      discoverSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
+        .then((discoveredHost) => {
+          debug('found ip address >>%s', discoveredHost)
+          const validHost = discoveredHost
+          node.on('input', (msg) => {
+            node.debug('node - msg received')
+            processInputMsg(node, config, msg, validHost)
+              .then((msgUpdate) => {
+                Object.assign(msg, msgUpdate) // Defines the output message
+                success(node, msg, msg.nrcspCmd)
+              })
+              .catch((error) => {
+                let thisFunction = 'processing input msg'
+                if (msg.nrcspCmd &amp;&amp; typeof msg.nrcspCmd === 'string') {
+                  thisFunction = msg.nrcspCmd
+                }
+                failure(node, msg, error, thisFunction)
+              })
+          })
+          node.status({ fill: 'green', shape: 'dot', text: 'ok:subscribed' })
+        })
+        .catch((err) => {
+          // discovery failed - most likely because could not find any matching player
+          debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+          failure(node, null, 'could not discover player by serial', thisFunction)
           return
-        }
-        if (newIpaddress === null) {
-          failure(node, null,
-            new Error(`${NRCSP_PREFIX} couldn't find any player by serial`), nrcspFunction)
-        } else {
-          // setting of node status is done in following call handleInputMessage
-          node.debug(`OK sonos player ${newIpaddress} was found`)
-          configNode.ipaddress = newIpaddress
-        }
-      })
+        })
+   
     } else {
-      failure(node, null, 
-        new Error(`${NRCSP_PREFIX} both ipaddress and serial number are invalid/missing`),
-        nrcspFunction)
+      failure(node, null,
+        new Error(`${PACKAGE_PREFIX} both ip address/serial number are invalid`), thisFunction)
       return
     }
-
-    // clear node status
-    node.status({})
-
-    // subscribe and handle input message
-    node.on('input', function (msg) {
-      node.debug('node - msg received')
-      processInputMsg(node, config, msg, configNode.ipaddress)
-        .then((msgUpdate) => {
-          Object.assign(msg, msgUpdate) // defines the output message
-          success(node, msg, msg.nrcspCmd)
-        })
-        .catch((error) => {
-          let functionName = 'processing input msg'
-          if (msg.nrcspCmd &amp;&amp; typeof msg.nrcspCmd === 'string') {
-            functionName = msg.nrcspCmd
-          }
-          failure(node, msg, error, functionName)
-        })
-    })
   }
 
   /** Validate sonos player object, command and dispatch further.
-   * @param  {object}  node current node for debug, warning, ...
+   * @param  {object}  node current node
    * @param  {object}  config current node configuration
    * @param  {string}  config.command the command from node dialog
    * @param  {string}  config.state the state from node dialog
-   * @param  {boolean} config.compatibilityMode tic from node dialog
    * @param  {object}  msg incoming message
-   * @param  {string}  ipaddress IP address of sonos player
+   * @param  {string}  urlHost IP address of SONOS player such as 192.168.178.37
    *
-   * Creates also msg.nrcspCmd because in compatibility mode all get commands 
-   * overwrite msg.payload (the command).
    *
    * @returns {promise} All commands have to return a promise - object
    * example: returning {} means message is not modified
-   * example: returning { msg[stateName]: true} means 
+   * example: returning { msg.payload: true} means 
    * the original msg.payload will be modified and set to true.
    */
-  async function processInputMsg (node, config, msg, ipaddress) {
-    const nodesonosPlayer = new Sonos(ipaddress)
-    if (!isTruthyAndNotEmptyString(nodesonosPlayer)) {
-      throw new Error(`${NRCSP_PREFIX} sonos player is undefined`)
+  async function processInputMsg (node, config, msg, urlHost) {
+    
+    const tsPlayer = new SonosDevice(urlHost)
+    if (!xIsTruthy(tsPlayer)) {
+      throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
     }
-    if (!(isValidPropertyNotEmptyString(nodesonosPlayer, ['host'])
-      &amp;&amp; isValidPropertyNotEmptyString(nodesonosPlayer, ['port']))) {
-      throw new Error(`${NRCSP_PREFIX} ip address or port is missing`)
+    if (!(xIsTruthyPropertyStringNotEmpty(tsPlayer, ['host'])
+      &amp;&amp; xIsTruthyProperty(tsPlayer, ['port']))) {
+      throw new Error(`${PACKAGE_PREFIX} tsPlayer ip address or port is missing `)
     }
-    nodesonosPlayer.url = new URL(`http://${nodesonosPlayer.host}:${nodesonosPlayer.port}`)
+    tsPlayer.urlObject = new URL(`http://${tsPlayer.host}:${tsPlayer.port}`)
 
-    // handle compatibility to older nrcsp version - depreciated 2020-05-25
-    // Path have to be arrays showing the path to property.
-    let cmdName = 'topic'
-    let stateName = 'payload'
-    if (config.compatibilityMode) {
-      cmdName = 'payload'
-      stateName = 'topic'
-    }
-
-    // command, required: node dialog overrules msg, store lowercase version in command
+    // Command, required: node dialog overrules msg, store lowercase version in command
     let command
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
     } else {
-      if (!isValidPropertyNotEmptyString(msg, [cmdName])) {
-        throw new Error(`${NRCSP_PREFIX} command is undefined/invalid`)
+      if (!xIsTruthyPropertyStringNotEmpty(msg, ['topic'])) {
+        throw new Error(`${PACKAGE_PREFIX} command is undefined/invalid`)
       }
-      command = String(msg[cmdName])
+      command = String(msg.topic)
       command = command.toLowerCase()
 
       // you may omit mysonos. prefix - so we add it here
@@ -181,7 +199,7 @@ module.exports = function (RED) {
       }
     }
     msg.nrcspCmd = command // store command as get commands will overrides msg.payload
-    msg[cmdName] = command // Sets topic 
+    msg.topic = command // Sets topic - is only used in playerSetEQ, playerGetEQ
 
     // state: node dialog overrules msg.
     let state
@@ -189,21 +207,21 @@ module.exports = function (RED) {
       state = RED.util.evaluateNodeProperty(config.state, config.stateType, node)
       if (typeof state === 'string') {
         if (state !== '') {
-          msg[stateName] = state
+          msg.payload = state
         }
       } else if (typeof state === 'number') {
         if (state !== '') {
-          msg[stateName] = state
+          msg.payload = state
         }
       } else if (typeof state === 'boolean') {
-        msg[stateName] = state
+        msg.topic = state
       }
     }
 
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
-      throw new Error(`${NRCSP_PREFIX} command is invalid >>${command} `)
+      throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
     }
-    return COMMAND_TABLE_MYSONOS[command](node, msg, stateName, cmdName, nodesonosPlayer)
+    return COMMAND_TABLE_MYSONOS[command](msg, tsPlayer)
   }
 
   //
@@ -211,270 +229,222 @@ module.exports = function (RED) {
   //...............................................................................................
 
   /**  Exports first Music-Library album matching search string (is encoded) - maximum 100
-   * @param {object} node used for debug message
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} msg.payload search string
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {stateName: uri metadata queue title artist}  
-   * CAUTION: stateName!! not payload
+   * @returns {promise} {payload: uri metadata queue title artist}  
    *
    * @throws {error} all functions
    */
-  async function libraryExportAlbum (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function libraryExportAlbum (msg, tsPlayer) {
     // payload title search string is required.
-    const validatedSearch = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+    // eslint-disable-next-line max-len
+    const validatedSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
     
-    const browseMlAlbum = await executeActionV6(nodesonosPlayer.url,
+    const browseMlAlbum = await executeActionV6(tsPlayer.urlObject,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearch),
         BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
         RequestedCount: 100, SortCriteria: ''
       })
-    if (!isValidPropertyNotEmptyString(browseMlAlbum, ['NumberReturned'])) {
-      throw new Error(`${NRCSP_PREFIX} invalid response Browse Album, missing NumberReturned`)
-    }
-    if (browseMlAlbum.NumberReturned === '0') {
-      throw new Error(`${NRCSP_PREFIX} Could not find any title matching search string`)
+
+    const listAlbum = await xParseBrowseToArray(browseMlAlbum, 'container', PACKAGE_PREFIX)
+    if (!xIsTruthy(listAlbum)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid.`)
     }
 
-    const listAlbum = await didlXmlToArray(browseMlAlbum.Result, 'container')
-    if (!isTruthyAndNotEmptyString(listAlbum)) {
-      throw new Error(`${NRCSP_PREFIX} response form parsing Browse Album is invalid.`)
-    }
-
-    return { [stateName]: { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true } }
+    return { 'payload': { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true } }
 
   }
 
   /**  Exports first Music-Library playlist matching search string (is encoded) - maximum 100
-   * @param {object} node used for debug message
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} msg.payload search string
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {stateName: uri metadata queue title artist}  
-   * CAUTION: stateName!! not payload
+   * @returns {promise} {payload: uri metadata queue title artist}  
    *
    * @throws {error} all functions
    */
-  async function libraryExportPlaylistV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function libraryExportPlaylistV2 (msg, tsPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
     
-    const browseMlPlaylists = await executeActionV6(nodesonosPlayer.url,
+    const browseMlPlaylists = await executeActionV6(tsPlayer.urlObject,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:PLAYLISTS:' + encodeURIComponent(validatedSearchString),
         BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
         RequestedCount: 100, SortCriteria: ''
       })
-    if (!isValidPropertyNotEmptyString(browseMlPlaylists, ['NumberReturned'])) {
-      throw new Error(`${NRCSP_PREFIX} invalid response Browse playlists, missing NumberReturned`)
-    }
-    if (browseMlPlaylists.NumberReturned === '0') {
-      throw new Error(`${NRCSP_PREFIX} Could not find any title matching search string`)
-    }
 
-    const listPls = await didlXmlToArray(browseMlPlaylists.Result, 'container')
-    if (!isTruthyAndNotEmptyString(listPls)) {
-      throw new Error(`${NRCSP_PREFIX} response form parsing Browse playlists is invalid.`)
+    const listPls = await xParseBrowseToArray(browseMlPlaylists, 'container', PACKAGE_PREFIX)
+    if (!xIsTruthy(listPls)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse playlists is invalid.`)
     }
     
-    return { [stateName]: { uri: listPls[0].uri, metadata: listPls[0].metadata, queue: true } }
+    return { 'payload': { uri: listPls[0].uri, metadata: listPls[0].metadata, queue: true } }
   }
 
   /**  Outputs array Music-Library albums - search string is optional
-   * @param {object} node used for debug message
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
+   * @param {string} msg.payload search string
    * @param {string} msg.requestedCount optional, maximum number of found albums, 
    *                  0...999, default 100
    * @param {string} msg.searchTitle search string, optional
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {stateName: array of objects: uri metadata queue title artist} 
+   * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
-   * CAUTION: stateName!! not payload
    *
    * @throws all functions
    * TODO Notion libraryExportAlbum
    */
-  async function libraryGetAlbums (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function libraryGetAlbums (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is 100
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', NRCSP_PREFIX, 100)
+      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, 100)
 
     // msg albumName search string is optional - default is empty string
     let validatedSearchString
-      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_PREFIX, '')
+      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', PACKAGE_PREFIX, '')
     if (validatedSearchString !== '') {
       validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
     }
 
-    const browseAlbum = await executeActionV6(nodesonosPlayer.url,
+    const browseAlbum = await executeActionV6(tsPlayer.urlObject,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:ALBUM' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren',
         Filter: '*', StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: ''
       })
-    
-    if (!isValidPropertyNotEmptyString(browseAlbum, ['NumberReturned'])) {
-      throw new Error(`${NRCSP_PREFIX} invalid response Browse Album - missing NumberReturned`)
+  
+    const listAlbum = await xParseBrowseToArray(browseAlbum, 'container', PACKAGE_PREFIX)
+    if (!xIsTruthy(listAlbum)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid.`)
     }
 
-    let albumList = []
-    if (browseAlbum.NumberReturned !== '0') {
-      const listAlbum = await didlXmlToArray(browseAlbum.Result, 'container')
-      if (!isTruthyAndNotEmptyString(listAlbum)) {
-        throw new Error(`${NRCSP_PREFIX} response form parsing Browse Album is invalid.`)
-      }
+    // add ip address to albumUri
+    const albumList = listAlbum.map(element => {
+      if (typeof element.artUri === 'string' &amp;&amp; element.artUri.startsWith('/getaa')) {
+        element.artUri = tsPlayer.urlObject.origin + element.artUri
+      }  
+      element.processingType = 'queue'
+      return element
+    })
 
-      // add ip address to albumUri
-      albumList = listAlbum.map(element => {
-        if (typeof element.artUri === 'string' &amp;&amp; element.artUri.startsWith('/getaa')) {
-          element.artUri = nodesonosPlayer.url.origin + element.artUri
-        }  
-        element.processingType = 'queue'
-        return element
-      })
-    }
-
-    return { [stateName]: albumList.slice() }
+    return { 'payload': albumList.slice() }
   }
 
   /**  Outputs array Music-Library playlists - search string is optional
-   * @param {object} node used for debug message
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
+   * @param {string} msg.payload search string
    * @param {string} msg.requestedCount optional, maximum number of found albums, 
    *                 0...999, default 100
    * @param {string} msg.searchTitle search string, optional
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+  * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {stateName: array of objects: uri metadata queue title artist} 
+   * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
-   * CAUTION: stateName!! not payload
    *
    * @throws all functions
    */
-  async function libraryGetPlaylistsV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function libraryGetPlaylistsV2 (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is 100
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', NRCSP_PREFIX, 100)
+      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, 100)
 
     // msg search string is optional - default is empty string
     let validatedSearchString
-      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', NRCSP_PREFIX, '')
+      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', PACKAGE_PREFIX, '')
     if (validatedSearchString !== '') {
       validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
     }
 
-    const browsePlaylists = await executeActionV6(nodesonosPlayer.url,
+    const browsePlaylists = await executeActionV6(tsPlayer.urlObject,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:PLAYLISTS' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren',
         Filter: '*', StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: ''
       })
     
-    if (!isValidPropertyNotEmptyString(browsePlaylists, ['NumberReturned'])) {
-      throw new Error(`${NRCSP_PREFIX} invalid response Browse Playlists - missing NumberReturned`)
+    const listPl = await xParseBrowseToArray(browsePlaylists, 'container', PACKAGE_PREFIX)
+    if (!xIsTruthy(listPl)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Playlists is invalid.`)
     }
 
-    let playlistList = []
-    if (browsePlaylists.NumberReturned !== '0') {
-      const listPlaylist = await didlXmlToArray(browsePlaylists.Result, 'container')
-      if (!isTruthyAndNotEmptyString(listPlaylist)) {
-        throw new Error(`${NRCSP_PREFIX} response form parsing Browse Playlists is invalid.`)
-      }
+    // add ip address to albumUri
+    const playlistList = listPl.map(element => {
+      if (typeof element.artUri === 'string' &amp;&amp; element.artUri.startsWith('/getaa')) {
+        element.artUri = tsPlayer.urlObject.origin + element.artUri
+      }  
+      element.processingType = 'queue'
+      return element
+    })
 
-      // add ip address to albumUri
-      playlistList = listPlaylist.map(element => {
-        if (typeof element.artUri === 'string' &amp;&amp; element.artUri.startsWith('/getaa')) {
-          element.artUri = nodesonosPlayer.url.origin + element.artUri
-        }  
-        element.processingType = 'queue'
-        return element
-      })
-    }
-
-    return { [stateName]: playlistList.slice() }
+    return { 'payload': playlistList.slice() }
   }
 
   /**  Queue first Music-Library playlist matching search string (is encoded) - maximum 100
-   * @param {object} node used for debug message
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} msg.payload search string
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {stateName: uri metadata queue title artist}  
-   * CAUTION: stateName!! not payload
+   * @returns {promise} {payload: uri metadata queue title artist}  
    *
    * @throws {error} all functions
    */
-  async function libraryQueuePlaylistV2 (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function libraryQueuePlaylistV2 (msg, tsPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
     
-    const browseMlPlaylists = await executeActionV6(nodesonosPlayer.url,
+    const browseMlPlaylists = await executeActionV6(tsPlayer.urlObject,
       '/MediaServer/ContentDirectory/Control', 'Browse',
       {
         ObjectID: 'A:PLAYLISTS:' + encodeURIComponent(validatedSearchString),
         BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
         RequestedCount: 100, SortCriteria: ''
       })
-    if (!isValidPropertyNotEmptyString(browseMlPlaylists, ['NumberReturned'])) {
-      throw new Error(`${NRCSP_PREFIX} invalid response Browse playlists, missing NumberReturned`)
+    if (!xIsTruthyProperty(browseMlPlaylists, ['NumberReturned'])) {
+      throw new Error(`${PACKAGE_PREFIX} invalid response Browse playlists, missing NumberReturned`)
     }
-    if (browseMlPlaylists.NumberReturned === '0') {
-      throw new Error(`${NRCSP_PREFIX} Could not find any title matching search string`)
+    if (Number(browseMlPlaylists.NumberReturned) === 0) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any title matching search string`)
     }
 
-    const listPls = await didlXmlToArray(browseMlPlaylists.Result, 'container')
-    if (!isTruthyAndNotEmptyString(listPls)) {
-      throw new Error(`${NRCSP_PREFIX} response form parsing Browse playlists is invalid.`)
+    const listPls = await xParseBrowseToArray(browseMlPlaylists, 'container')
+    if (!xIsTruthy(listPls)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse playlists is invalid.`)
     }
-    await nodesonosPlayer.queue(listPls[0].uri,)
+    await tsPlayer.AddUriToQueue(listPls[0].uri,)
     
     return {}
   }
 
   /**  Export first My-Sonos item matching search string.
-   * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} msg.payload search string
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} see return   CAUTION: stateName!! not payload
+   * @returns {promise} see return
    *
    * @throws all functions
-   *        if getMySonosV3 does not provide values
    *
    * Info:  content validation of mediaType, serviceName
    */
-  async function mysonosExportItem (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function mysonosExportItem (msg, tsPlayer) {
+    debug('entering method mysonosExportItem')
     // payload title search string is required.
     const validatedSearchString
-      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
-
-    const mySonosItems = await getMySonosV3(nodesonosPlayer.url)
-    if (!isTruthyAndNotEmptyString(mySonosItems)) {
-      throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    // TODO requested count in globals
+    const mySonosItems = await xGetMySonos(tsPlayer, 200)
+    if (!xIsTruthy(mySonosItems)) {
+      throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     
     // find in string
@@ -483,10 +453,11 @@ module.exports = function (RED) {
       return (item.title.includes(validatedSearchString))
     })
     if (foundIndex &lt; 0) {
-      throw new Error(`${NRCSP_PREFIX} No title matching search string >>${validatedSearchString}`)
+      // eslint-disable-next-line max-len
+      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validatedSearchString}`)
     }
 
-    return { [stateName]: {
+    return { payload: {
       uri: mySonosItems[foundIndex].uri,
       metadata: mySonosItems[foundIndex].metadata,
       queue: (mySonosItems[foundIndex].processingType === 'queue')
@@ -495,11 +466,8 @@ module.exports = function (RED) {
   }
 
   /**  Outputs array of My-Sonos items as object.
-   * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise&lt;mySonosItem[]>} payload  = array of my Sonos items 
    * {title, albumArt, uri, metadata, sid, upnpClass, processingType}
@@ -507,24 +475,22 @@ module.exports = function (RED) {
    *
    * @throws nrcsp error - all functions
    */
-  async function mysonosGetItems (node, msg, stateName, cmdName, nodesonosPlayer) {
-    const payload = await getMySonosV3(nodesonosPlayer.url)
-    if (!isTruthyAndNotEmptyString(payload)) {
-      throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
+  async function mysonosGetItems (msg, tsPlayer) {
+    // TODO requested count in globals
+    const payload = await xGetMySonos(tsPlayer, 200)
+    if (!xIsTruthy(payload)) {
+      throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
 
     return { payload }
   }
 
   /**  Queues (aka add) first My-Sonos item matching search string.
-   * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} msg.filter optional, example: 
+   * @param {string} msg.payload search string
    * { processingType: "queue", mediaType: "playlist", serviceName: "all" }
-      * @param  {object} nodesonosPlayer player with url - as default
+   
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
    *
@@ -534,37 +500,20 @@ module.exports = function (RED) {
    */
   // TODO Notion implement filter
   // TODO Notion clearQueue as parameter
-  async function mysonosQueueItem (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function mysonosQueueItem (msg, tsPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
 
     // create filter object with processingType queue
     const filter = { processingType: 'queue' } // no streams!
-    // check existence and value of media type/serviceName
-    if (isValidPropertyNotEmptyString(msg, ['filter'])) {
-      if (isValidPropertyNotEmptyString(msg, ['filter', 'mediaType'])) {
-        filter.mediaType = msg.filter.mediaType
-      } else {
-        throw new Error(`${NRCSP_PREFIX} missing media type or empty string`
-          + JSON.stringify(msg.filter))
-      }
-      // check existence of service name
-      if (isValidPropertyNotEmptyString(msg, ['filter', 'serviceName'])) {
-        filter.serviceName = msg.filter.serviceName
-      } else {
-        throw new Error(`${NRCSP_PREFIX} missing service name or empty string. result msg.filter>>`
-          + JSON.stringify(msg.filter))
-      }
-    } else {
-      // default - no filter
-      filter.serviceName = 'all'
-      filter.mediaType = 'all'
-    }
-
-    const mySonosItems = await getMySonosV3(nodesonosPlayer.url)
-    if (!isTruthyAndNotEmptyString(mySonosItems)) {
-      throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
+    filter.serviceName = 'all'
+    filter.mediaType = 'all'
+    
+    // TODO requested count in globals
+    const mySonosItems = await xGetMySonos(tsPlayer, 200)
+    if (!xIsTruthy(mySonosItems)) {
+      throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title
     let foundIndex = -1
@@ -572,10 +521,11 @@ module.exports = function (RED) {
       return (item.title.includes(validatedSearchString))
     })
     if (foundIndex &lt; 0) {
-      throw new Error(`${NRCSP_PREFIX} No title matching search string >>${validatedSearchString}`)
+      // eslint-disable-next-line max-len
+      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validatedSearchString}`)
     }
     
-    await nodesonosPlayer.queue({
+    await tsPlayer.queue({
       uri: mySonosItems[foundIndex].uri,
       metadata: mySonosItems[foundIndex].metadata
     })
@@ -584,25 +534,22 @@ module.exports = function (RED) {
   }
 
   /** Stream (aka play) first My-Sonos item matching search string.
-   * @param {object} node not used
    * @param {object} msg incoming message
-   * @param {string} msg.stateName search string
-   * @param {string} stateName=payload in compatibility mode: topic
-   * @param {string} cmdName=topic in compatibility mode: payload
-   * @param {object} nodesonosPlayer player with url - as default
+   * @param {string} msg.payload search string
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
    *
    * @throws all functions
    */
-  async function mysonosStreamItem (node, msg, stateName, cmdName, nodesonosPlayer) {
+  async function mysonosStreamItem (msg, tsPlayer) {
     // payload title search string is required.
     const validatedSearchString
-      = validRegex(msg, stateName, REGEX_ANYCHAR, 'search string', NRCSP_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
     
-    const mySonosItems = await getMySonosV3(nodesonosPlayer.url)
-    if (!isTruthyAndNotEmptyString(mySonosItems)) {
-      throw new Error(`${NRCSP_PREFIX} could not find any My Sonos items`)
+    const mySonosItems = await xGetMySonos(tsPlayer)
+    if (!xIsTruthy(mySonosItems)) {
+      throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
 
     // find in title
@@ -611,19 +558,21 @@ module.exports = function (RED) {
       return (item.title.includes(validatedSearchString))
     })
     if (foundIndex &lt; 0) {
-      throw new Error(`${NRCSP_PREFIX} No title matching search string >>${validatedSearchString}`)
+      // eslint-disable-next-line max-len
+      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validatedSearchString}`)
     }
 
     // TODO Notion replace node-sonos
     // this does setting the uri AND plays it!
-    await nodesonosPlayer.setAVTransportURI(mySonosItems[foundIndex].uri)
+    await tsPlayer.SetAVTransportURI(mySonosItems[foundIndex].uri)
 
     // change volume if is provided
-    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', NRCSP_PREFIX, -1)
+    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', PACKAGE_PREFIX, -1)
     if (newVolume !== -1) {
-      await setPlayerVolume(nodesonosPlayer, newVolume)
+      await tsPlayer.SetVolume(newVolume)
     }
-
+    tsPlayer.Play()
+    
     return {} // don't touch volume
   }
 
@@ -639,13 +588,13 @@ module.exports = function (RED) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-CommandsTs.html">Sonos-CommandsTs</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Dec 16 2020 09:32:04 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Feb 20 2021 09:04:33 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

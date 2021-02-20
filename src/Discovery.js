@@ -11,13 +11,14 @@
 'use strict'
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
-const { getGroupsAll: xGetGroupsAll } = require('./Sonos-CommandsTs.js')
+const { getGroupsAll: xGetGroupsAll } = require('./Commands.js')
 
-const { matchSerialUuid: xMatchSerialUuid } = require('./Sonos-Extensions.js')
+const { matchSerialUuid: xMatchSerialUuid, getDeviceProperties: xGetDeviceProperties
+} = require('./Extensions.js')
 
 const { SonosDeviceDiscovery, SonosDevice } = require('@svrooij/sonos/lib')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}Discovery`)
+const debug = require('debug')(`${PACKAGE_PREFIX}discovery`)
 
 module.exports = {
 
@@ -60,6 +61,56 @@ module.exports = {
       new Error(`${PACKAGE_PREFIX} could not find any player matching serial`)
     }
     return reducedList[foundIndex].urlHost
+  },
+
+  discoverPlayersHost: async () => {
+    // discover the first one an get all others because we need also the player names
+    // and thats very reliable -deterministic. Discovering 10 player might be time consuming
+    // Sonos player knew best the topology
+    const deviceDiscovery = new SonosDeviceDiscovery()
+    const firstPlayerData = await deviceDiscovery.SearchOne(5)
+    debug('first player found')
+    const firstPlayer = new SonosDevice(firstPlayerData.host)
+    const allGroups = await xGetGroupsAll(firstPlayer)
+    const flatList = [].concat.apply([], allGroups)
+    debug('got more players, in total >>%s', flatList.length)
+
+    const reducedList = flatList.map((item) => {
+      return {
+        'label': item.playerName,
+        'value': item.urlObject.hostname
+      }
+    })
+    return reducedList
+  },
+
+  discoverPlayersSerialnumber: async () => {
+    // discover the first one an get all others because we need also the player names
+    // and thats very reliable -deterministic. Discovering 10 player might be time consuming
+    // Sonos player knew best the topology
+    debug('method >>%s', 'discoverPlayersSerialnumber')
+    const deviceDiscovery = new SonosDeviceDiscovery()
+    const firstPlayerData = await deviceDiscovery.SearchOne(5)
+    debug('first player found')
+    const firstPlayer = new SonosDevice(firstPlayerData.host)
+    const allGroups = await xGetGroupsAll(firstPlayer)
+    const flatList = [].concat.apply([], allGroups)
+    debug('got more players, in total >>%s', flatList.length)
+
+    debug('get the serial nummber for each player')
+    for (let index = 0; index < flatList.length; index++) {
+      const deviceProperties = await xGetDeviceProperties(flatList[index].urlObject)
+      // TODO check existence
+      flatList[index].serialNumber = deviceProperties.serialNum
+    }
+
+    const reducedList = flatList.map((item) => {
+      return {
+        'label': item.playerName,
+        'value': item.serialNumber
+      }
+    })
+    return reducedList
   }
     
 }
