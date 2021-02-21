@@ -31,14 +31,14 @@ module.exports = {
    * 
    * @throws error 'could not find any player matching serial'
    * @throws error from xGetGroupsAll, deviceDiscovery.SearchOne
+   * 
+   * Hint: discover the first one and retrieves all other player from that player.
+   * Thats very reliable -deterministic. 
+   * Discovering 10 player or more might be time consuming in some networks.
    *
    */
   discoverSonosPlayerBySerial: async (serialNumber, timeoutSeconds) => {
     debug('method >>%s', 'discoverSonosPlayerBySerial')
-
-    // discover the first one, then get all others from that player.
-    // Thats very reliable -deterministic. Discovering 10 player might be time consuming
-    // Sonos player knew best the topology
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeoutSeconds)
     const tsFirstPlayer = new SonosDevice(firstPlayerData.host)
@@ -63,12 +63,24 @@ module.exports = {
     return reducedList[foundIndex].urlHost
   },
 
-  discoverPlayersHost: async () => {
-    // discover the first one an get all others because we need also the player names
-    // and thats very reliable -deterministic. Discovering 10 player might be time consuming
-    // Sonos player knew best the topology
+  /** Does an async discovery of SONOS player and returns list of objects
+   * with properties label and value including the IP address = host.
+   * 
+   * @param  {number} timeoutSeconds in seconds
+   * 
+   * @returns {Promise<object>} {'label', value}
+   * 
+     * @throws error from deviceDiscovery with message "No players found"
+   * @throws error xGetGroupsAll
+   * 
+   * Hint: discover the first one and retrieves all other player from that player.
+   * Thats very reliable -deterministic. 
+   * Discovering 10 player or more might be time consuming in some networks.
+   */
+  discoverPlayersHost: async (timeout) => {
+    debug('method >>%s', 'discoverPlayersHost')
     const deviceDiscovery = new SonosDeviceDiscovery()
-    const firstPlayerData = await deviceDiscovery.SearchOne(5)
+    const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
     const firstPlayer = new SonosDevice(firstPlayerData.host)
     const allGroups = await xGetGroupsAll(firstPlayer)
@@ -77,36 +89,47 @@ module.exports = {
 
     const reducedList = flatList.map((item) => {
       return {
-        'label': item.playerName,
+        'label': `${item.urlObject.hostname} for ${item.playerName}`,
         'value': item.urlObject.hostname
       }
     })
     return reducedList
   },
 
-  discoverPlayersSerialnumber: async () => {
-    // discover the first one an get all others because we need also the player names
-    // and thats very reliable -deterministic. Discovering 10 player might be time consuming
-    // Sonos player knew best the topology
+  /** Does an async discovery of SONOS player and returns list of objects
+   * with properties label and value including the serial number.
+   * 
+   * @param  {number} timeoutSeconds in seconds
+   * 
+   * @returns {Promise<object>} {'label', value}
+   * 
+   * @throws error from deviceDiscovery with message "No players found"
+   * @throws error xGetGroupsAll, xGetDeviceProperties
+   * 
+   * Hint: discover the first one and retrieves all other player from that player.
+   * Thats very reliable -deterministic. 
+   * Discovering 10 player or more might be time consuming in some networks.
+   */
+  discoverPlayersSerialnumber: async (timeout) => {
     debug('method >>%s', 'discoverPlayersSerialnumber')
     const deviceDiscovery = new SonosDeviceDiscovery()
-    const firstPlayerData = await deviceDiscovery.SearchOne(5)
+    const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
     const firstPlayer = new SonosDevice(firstPlayerData.host)
     const allGroups = await xGetGroupsAll(firstPlayer)
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)
 
-    debug('get the serial nummber for each player')
+    debug('get the serial number for every player')
     for (let index = 0; index < flatList.length; index++) {
       const deviceProperties = await xGetDeviceProperties(flatList[index].urlObject)
-      // TODO check existence
+      // we assume existns of that property
       flatList[index].serialNumber = deviceProperties.serialNum
     }
 
     const reducedList = flatList.map((item) => {
       return {
-        'label': item.playerName,
+        'label': `${item.serialNumber} for ${item.playerName}`,
         'value': item.serialNumber
       }
     })

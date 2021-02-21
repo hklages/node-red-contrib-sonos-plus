@@ -23,7 +23,7 @@
     },
     oneditprepare: function() {
 
-      // ipaddress: enter ip or select from list
+      // ipaddress: build list
       try {
         $('#node-config-input-ipaddress').autocomplete('destroy')
       } catch (err) {}
@@ -100,7 +100,8 @@
 
 <div class="form-tips">
 <b>IP address</b>: Please enter - or search and select from list - a STATIC(!) SONOS-Player IP address. It must be a valid private address in your local network. 
-This address will be used as default but can be overwritten in some commands with the msg.playerName property. 
+This address will be used as default. Some commands allow usage of msg.playerName property to overrule the default.<br><br>
+A given <b>IP address always overrules serial number</b> 
 </div><br>
 
 <!-- serial number such as 5C-AA-FD-00-22-36:1 -->
@@ -111,13 +112,13 @@ This address will be used as default but can be overwritten in some commands wit
 </div>
 
 <div class="form-tips">
-  <b>Serial number</b>: Please leave this field empty. Enter data - or search and select from list - only in such cases, where it is not possible to use an IP address. Providing
-  the serial number causes a discovery during deployment. This discovery attempts to find a corresponding IP address, which is then being used. 
+  <b>Serial number</b>: Please leave this field empty. Only enter data - or search and select from list - in such cases, where it is not possible to use a (STATIC) IP address.
+  Providing a serial number causes a discovery during deployment. This discovery attempts to find a corresponding IP address, which is then being used. 
 <br><br>
-  If you use serial numbers for many nodes, it may happen that some players can not be discovered due to network traffic / Sonos player overload. The nodes status for those 
+  If you use serial numbers for many nodes, it may happen that some players can not be discovered due to network traffic / SONOS player overload. The node status for those 
   nodes will be marked with red dot. 
 <br><br>
-  You must provide either an IP address (recommended) or a serial number!
+  You must provide <b>either an IP address (recommended) or a serial number!</b>
 </div><br>
 
 </script>

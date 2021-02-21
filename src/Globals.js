@@ -14,8 +14,8 @@ module.exports = {
 
   PACKAGE_PREFIX: 'nrcsp: ',
 
-  TIMEOUT_HTTP_REQUEST: 2000, //is in milliseconds
-  TIMEOUT_DISCOVERY: 4, //is in seconds
+  TIMEOUT_HTTP_REQUEST: 2000, //in milliseconds
+  TIMEOUT_DISCOVERY: 4, //in seconds
 
   REQUESTED_COUNT_PLAYLISTS: 200,
   REQUESTED_COUNT_QUEUE: 500,
