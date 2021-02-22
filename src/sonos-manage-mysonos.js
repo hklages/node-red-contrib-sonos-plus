@@ -13,7 +13,8 @@
 const {
   REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, PACKAGE_PREFIX,
   TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY,
-  REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_ML_DEFAULT
+  REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_ML_DEFAULT,
+  REQUESTED_COUNT_MYSONOS_DEFAULT, REQUESTED_COUNT_MYSONOS_EXPORT
 } = require('./Globals.js')
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
@@ -21,8 +22,7 @@ const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 const { getMySonos: xGetMySonos, getMusicLibraryItems: xGetMusicLibraryItems }
   = require('./Commands.js')
 
-const { isSonosPlayer: xIsSonosPlayer, parseBrowseToArray: xParseBrowseToArray,
-  executeActionV6, failure, success
+const { isSonosPlayer: xIsSonosPlayer, failure, success
 } = require('./Extensions.js')
 
 const {
@@ -43,7 +43,7 @@ module.exports = function (RED) {
     'library.export.track': libraryExportTrack,
     'library.get.albums': libraryGetAlbums,
     'library.get.playlists': libraryGetPlaylists,
-    'library.queue.playlist': libraryQueuePlaylistV2,
+    'library.queue.playlist': libraryQueuePlaylist,
     'mysonos.export.item': mysonosExportItem,
     'mysonos.get.items': mysonosGetItems,
     'mysonos.queue.item': mysonosQueueItem,
@@ -221,8 +221,8 @@ module.exports = function (RED) {
    *
    * @returns {promise<exportedItem>}  
    *
-   * @throws {error} all functions
-   * @throws {error} "no matching item found" with package prefix
+   * @throws {error} all methods
+   * @throws {error} no matching item found
    */
   async function libraryExportAlbum (msg, tsPlayer) {
     // payload title search string is required.
@@ -245,14 +245,16 @@ module.exports = function (RED) {
    *
    * @returns {promise<exportedItem>  
    *
-   * @throws {error} all functions
+   * @throws {error} all methods
+   * @throws {error} no matching item found
+   * 
    */
   async function libraryExportPlaylist (msg, tsPlayer) {
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
   
-    const list
-      = await xGetMusicLibraryItems('A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    const list = await xGetMusicLibraryItems(
+      'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
@@ -266,9 +268,10 @@ module.exports = function (RED) {
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<exportedItem>  
+   * @returns {promise<exportedItem>}  see def
    *
-   * @throws {error} all functions
+   * @throws {error} all methods
+   * @throws {error} no matching item found
    */
   async function libraryExportTrack (msg, tsPlayer) {
     // payload title search string is required.
@@ -294,8 +297,7 @@ module.exports = function (RED) {
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
    *
-   * // TODO update throws
-   * @throws all functions
+   * @throws error methods
    */
   async function libraryGetAlbums (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
@@ -331,7 +333,7 @@ module.exports = function (RED) {
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
    *
-   * @throws all functions
+   * @throws all methods
    */
   async function libraryGetPlaylists (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
@@ -364,32 +366,19 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: uri metadata queue title artist}  
    *
-   * @throws {error} all functions
+   * @throws {error} all methods
    */
-  async function libraryQueuePlaylistV2 (msg, tsPlayer) {
+  async function libraryQueuePlaylist (msg, tsPlayer) {
     // payload title search string is required.
-    const validatedSearchString
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
-    
-    const browseMlPlaylists = await executeActionV6(tsPlayer.urlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      {
-        ObjectID: 'A:PLAYLISTS:' + encodeURIComponent(validatedSearchString),
-        BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
-        RequestedCount: 100, SortCriteria: ''
-      })
-    if (!xIsTruthyProperty(browseMlPlaylists, ['NumberReturned'])) {
-      throw new Error(`${PACKAGE_PREFIX} invalid response Browse playlists, missing NumberReturned`)
-    }
-    if (Number(browseMlPlaylists.NumberReturned) === 0) {
-      throw new Error(`${PACKAGE_PREFIX} Could not find any title matching search string`)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+  
+    const list = await xGetMusicLibraryItems(
+      'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    if (list.length === 0) {
+      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
 
-    const listPls = await xParseBrowseToArray(browseMlPlaylists, 'container')
-    if (!xIsTruthy(listPls)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse playlists is invalid.`)
-    }
-    await tsPlayer.AddUriToQueue(listPls[0].uri,)
+    await tsPlayer.AddUriToQueue(list[0].uri)
     
     return {}
   }
@@ -399,37 +388,37 @@ module.exports = function (RED) {
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} see return
+   * @returns {promise<exportedItem>} 
    *
-   * @throws all functions
+   * @throws all methods
+   * @throws 'could not find any My Sonos items', 'no title matching search string'
    *
    * Info:  content validation of mediaType, serviceName
    */
   async function mysonosExportItem (msg, tsPlayer) {
     debug('entering method mysonosExportItem')
     // payload title search string is required.
-    const validatedSearchString
+    const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
-    // TODO requested count in globals
-    const mySonosItems = await xGetMySonos(tsPlayer, 200)
+
+    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
     if (!xIsTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     
-    // find in string
+    // find in title property
     let foundIndex = -1
     foundIndex = mySonosItems.findIndex((item) => {
-      return (item.title.includes(validatedSearchString))
+      return (item.title.includes(validSearch))
     })
     if (foundIndex < 0) {
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validatedSearchString}`)
+      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validSearch}`)
     }
 
-    return { payload: {
-      uri: mySonosItems[foundIndex].uri,
-      metadata: mySonosItems[foundIndex].metadata,
-      queue: (mySonosItems[foundIndex].processingType === 'queue')
+    return { 'payload': {
+      'uri': mySonosItems[foundIndex].uri,
+      'metadata': mySonosItems[foundIndex].metadata,
+      'queue': (mySonosItems[foundIndex].processingType === 'queue')
     } }
 
   }
@@ -438,15 +427,13 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<mySonosItem[]>} payload  = array of my Sonos items 
-   * {title, albumArt, uri, metadata, sid, upnpClass, processingType}
-   * uri, metadata, sid, upnpclass: empty string are allowed
+   * @returns {promise<mySonosItem[]>}
    *
-   * @throws nrcsp error - all functions
+   * @throws all methods
+   * @throws 'could not find any My Sonos items'
    */
   async function mysonosGetItems (msg, tsPlayer) {
-    // TODO requested count in globals
-    const payload = await xGetMySonos(tsPlayer, 200)
+    const payload = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
     if (!xIsTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
@@ -457,47 +444,40 @@ module.exports = function (RED) {
   /**  Queues (aka add) first My-Sonos item matching search string.
    * @param {object} msg incoming message
    * @param {string} msg.payload search string
-   * { processingType: "queue", mediaType: "playlist", serviceName: "all" }
-   
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
    *
-   * @throws nrcsp-error all functions
-   *
-   * Info:  msg.filter currently undocumented feature.
+   * @throws all methods
+   * @throws 'could not find any My Sonos items', 'no title matching search string'
+   * 
    */
-  // TODO Notion implement filter
-  // TODO Notion clearQueue as parameter
   async function mysonosQueueItem (msg, tsPlayer) {
     // payload title search string is required.
-    const validatedSearchString
+    const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
 
-    // create filter object with processingType queue
-    const filter = { processingType: 'queue' } // no streams!
-    filter.serviceName = 'all'
-    filter.mediaType = 'all'
-    
-    // TODO requested count in globals
-    const mySonosItems = await xGetMySonos(tsPlayer, 200)
+    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
     if (!xIsTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title
+    // TODO only with type = queue!!!
     let foundIndex = -1
     foundIndex = mySonosItems.findIndex((item) => {
-      return (item.title.includes(validatedSearchString))
+      return (item.title.includes(validSearch) && (item.processingType === 'queue'))
     })
     if (foundIndex < 0) {
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validatedSearchString}`)
+      throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
     
-    await tsPlayer.queue({
-      uri: mySonosItems[foundIndex].uri,
-      metadata: mySonosItems[foundIndex].metadata
-    })
+    await tsPlayer.SetAVTransportURI.AddUriToQueue(
+      { 'InstanceID': 0, 
+        'EnqueuedURI': mySonosItems[foundIndex].uri,
+        'EnqueuedURIMetaData': mySonosItems[foundIndex].metadata,
+        'DesiredFirstTrackNumberEnqueued': 0,
+        'EnqueueAsNext': true
+      })
 
     return {}
   }
@@ -505,34 +485,33 @@ module.exports = function (RED) {
   /** Stream (aka play) first My-Sonos item matching search string.
    * @param {object} msg incoming message
    * @param {string} msg.payload search string
+   * @param {string} msg.volume new volume 0 ..100
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
    *
-   * @throws all functions
+   * @throws all methods
+   * @throws 'could not find any My Sonos items', 'no title matching search string'
    */
   async function mysonosStreamItem (msg, tsPlayer) {
     // payload title search string is required.
-    const validatedSearchString
+    const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
-    
-    const mySonosItems = await xGetMySonos(tsPlayer)
+
+    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
     if (!xIsTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
-
     // find in title
+    // TODO only with type = queue!!!
     let foundIndex = -1
     foundIndex = mySonosItems.findIndex((item) => {
-      return (item.title.includes(validatedSearchString))
+      return (item.title.includes(validSearch) && (item.processingType === 'stream'))
     })
     if (foundIndex < 0) {
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validatedSearchString}`)
+      throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
-
-    // TODO Notion replace node-sonos
-    // this does setting the uri AND plays it!
+    
     await tsPlayer.SetAVTransportURI(mySonosItems[foundIndex].uri)
 
     // change volume if is provided
@@ -542,7 +521,7 @@ module.exports = function (RED) {
     }
     tsPlayer.Play()
     
-    return {} // don't touch volume
+    return {}
   }
 
   RED.nodes.registerType('sonos-manage-mysonos', SonosManageMySonosNode)
