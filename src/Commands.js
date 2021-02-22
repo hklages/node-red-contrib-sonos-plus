@@ -691,7 +691,54 @@ module.exports = {
       }
       return item
     })
+
     return transformed
   }, 
 
+  /** Get array of all Music Library items matching category and optional searchstring
+   * @param {string} category such as 'Album:', 'Playlist:'
+   * @param {string} [searchString=''] any search string, being used in category
+   * @param {number} requestedCount integer, 1 to 5000
+   * @param {object} tsPlayer sonos-ts player
+   * 
+   * @returns {Promise<exportedItem[]>} all Music Library items maching criteria, could be emtpy
+   *
+   * @throws {error} invalid return from Browse, ....
+   */  
+  getMusicLibraryItems: async function (category, searchString, requestedCount, tsPlayer) { 
+    debug('method >>%s', 'getMusicLibraryItems')
+
+    // validate parameter
+    if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(category)) {
+      throw new Error(`${PACKAGE_PREFIX} category is unknown.`)
+    }
+    if (typeof searchString !== 'string') {
+      throw new Error(`${PACKAGE_PREFIX} searchString is not string.`)
+    }
+    if (typeof requestedCount !== 'number') {
+      throw new Error(`${PACKAGE_PREFIX} requestedCount is not number.`)
+    }
+    
+    const objectId = category + encodeURIComponent(searchString)
+    const browseCategory = await executeActionV6(tsPlayer.urlObject,
+      '/MediaServer/ContentDirectory/Control', 'Browse',
+      { 
+        'ObjectID': objectId,
+        'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
+        'RequestedCount': requestedCount, 'SortCriteria': ''
+      })
+
+    // TODO check existence of TotalNumber, NumberRE.. result
+    let list
+    if (category === 'A:TRACKS:') {
+      list = await xParseBrowseToArray(browseCategory, 'item', PACKAGE_PREFIX)    
+    } else {
+      list = await xParseBrowseToArray(browseCategory, 'container', PACKAGE_PREFIX)  
+    }
+    if (!xIsTruthy(list)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid.`)
+    }
+    
+    return list
+  }
 }

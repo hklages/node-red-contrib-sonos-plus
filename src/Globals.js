@@ -19,6 +19,8 @@ module.exports = {
 
   REQUESTED_COUNT_PLAYLISTS: 200,
   REQUESTED_COUNT_QUEUE: 500,
+  REQUESTED_COUNT_ML_EXPORT: 1,
+  REQUESTED_COUNT_ML_DEFAULT: 1000,
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase', 'Sonos Arc'],
 

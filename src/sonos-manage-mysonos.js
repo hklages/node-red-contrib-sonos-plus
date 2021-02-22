@@ -1,5 +1,6 @@
 /**
  * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
+ * My Sonos also holds SONOS playlists.
  *
  * @module MySonos
  * 
@@ -10,12 +11,15 @@
 'use strict'
 
 const {
-  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, PACKAGE_PREFIX, TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY
+  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, PACKAGE_PREFIX,
+  TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY,
+  REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_ML_DEFAULT
 } = require('./Globals.js')
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMySonos: xGetMySonos } = require('./Commands.js')
+const { getMySonos: xGetMySonos, getMusicLibraryItems: xGetMusicLibraryItems }
+  = require('./Commands.js')
 
 const { isSonosPlayer: xIsSonosPlayer, parseBrowseToArray: xParseBrowseToArray,
   executeActionV6, failure, success
@@ -35,9 +39,10 @@ module.exports = function (RED) {
   // function lexical order, ascending
   const COMMAND_TABLE_MYSONOS = {
     'library.export.album': libraryExportAlbum,
-    'library.export.playlist': libraryExportPlaylistV2,
+    'library.export.playlist': libraryExportPlaylist,
+    'library.export.track': libraryExportTrack,
     'library.get.albums': libraryGetAlbums,
-    'library.get.playlists': libraryGetPlaylistsV2,
+    'library.get.playlists': libraryGetPlaylists,
     'library.queue.playlist': libraryQueuePlaylistV2,
     'mysonos.export.item': mysonosExportItem,
     'mysonos.get.items': mysonosGetItems,
@@ -59,6 +64,7 @@ module.exports = function (RED) {
     if (xIsTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
       && REGEX_IP.test(configNode.ipaddress)) {
       // Using config ip address to define the default SONOS player
+      // and check whether that IP address is reachable (http request)
       const port = 1400 // assuming this port
       const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
       xIsSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
@@ -79,7 +85,7 @@ module.exports = function (RED) {
                   failure(node, msg, error, thisFunction)
                 })
             })
-            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready for message' })      
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })      
           } else {
             node.status({ fill: 'red', shape: 'dot', text: 'error: given ip not reachable' })      
           }
@@ -111,7 +117,7 @@ module.exports = function (RED) {
                 failure(node, msg, error, thisFunction)
               })
           })
-          node.status({ fill: 'green', shape: 'dot', text: 'ok:subscribed' })
+          node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
         })
         .catch((err) => {
           // discovery failed - most likely because could not find any matching player
@@ -171,7 +177,7 @@ module.exports = function (RED) {
       }
     }
     msg.nrcspCmd = command // store command as get commands will overrides msg.payload
-    msg.topic = command // Sets topic - is only used in playerSetEQ, playerGetEQ
+    msg.topic = command // update msg.topic with dialog data - is used in playerSetEQ, playerGetEQ
 
     // state: node dialog overrules msg.
     let state
@@ -200,107 +206,111 @@ module.exports = function (RED) {
   //                                          COMMANDS
   //...............................................................................................
 
-  /**  Exports first Music-Library album matching search string (is encoded) - maximum 100
+  /**
+   * @typedef {object} exportedItem exported data which can be used in group.play.export
+   * @global
+   * @property {string} uri the URI to be used in SetAVTransport or AddURIToQeueu
+   * @property {string} metadata metadata for the uri
+   * @property {boolean} queue true means use AddURI otherwise SetAVTransport
+   */
+
+  /**  Exports first Music-Library album matching search string (is encoded)
    * @param {object} msg incoming message
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {payload: uri metadata queue title artist}  
+   * @returns {promise<exportedItem>}  
    *
    * @throws {error} all functions
+   * @throws {error} "no matching item found" with package prefix
    */
   async function libraryExportAlbum (msg, tsPlayer) {
     // payload title search string is required.
-    // eslint-disable-next-line max-len
-    const validatedSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
     
-    const browseMlAlbum = await executeActionV6(tsPlayer.urlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      {
-        ObjectID: 'A:ALBUM:' + encodeURIComponent(validatedSearch),
-        BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
-        RequestedCount: 100, SortCriteria: ''
-      })
-
-    const listAlbum = await xParseBrowseToArray(browseMlAlbum, 'container', PACKAGE_PREFIX)
-    if (!xIsTruthy(listAlbum)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid.`)
+    const list
+      = await xGetMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    if (list.length === 0) {
+      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
 
-    return { 'payload': { uri: listAlbum[0].uri, metadata: listAlbum[0].metadata, queue: true } }
-
+    // the first matching is being used
+    return { 'payload': { 'uri': list[0].uri, 'metadata': list[0].metadata, 'queue': true } }
   }
 
-  /**  Exports first Music-Library playlist matching search string (is encoded) - maximum 100
+  /**  Exports first Music-Library playlist matching search string (is encoded)
    * @param {object} msg incoming message
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {payload: uri metadata queue title artist}  
+   * @returns {promise<exportedItem>  
    *
    * @throws {error} all functions
    */
-  async function libraryExportPlaylistV2 (msg, tsPlayer) {
+  async function libraryExportPlaylist (msg, tsPlayer) {
     // payload title search string is required.
-    const validatedSearchString
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
-    
-    const browseMlPlaylists = await executeActionV6(tsPlayer.urlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      {
-        ObjectID: 'A:PLAYLISTS:' + encodeURIComponent(validatedSearchString),
-        BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
-        RequestedCount: 100, SortCriteria: ''
-      })
-
-    const listPls = await xParseBrowseToArray(browseMlPlaylists, 'container', PACKAGE_PREFIX)
-    if (!xIsTruthy(listPls)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse playlists is invalid.`)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+  
+    const list
+      = await xGetMusicLibraryItems('A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    if (list.length === 0) {
+      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
-    
-    return { 'payload': { uri: listPls[0].uri, metadata: listPls[0].metadata, queue: true } }
+  
+    // the first matching is being used
+    return { 'payload': { 'uri': list[0].uri, 'metadata': list[0].metadata, 'queue': true } }
+  }
+
+  /**  Exports first Music-Library track matching search string (is encoded)
+   * @param {object} msg incoming message
+   * @param {string} msg.payload search string
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<exportedItem>  
+   *
+   * @throws {error} all functions
+   */
+  async function libraryExportTrack (msg, tsPlayer) {
+    // payload title search string is required.
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+  
+    const list
+      = await xGetMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    if (list.length === 0) {
+      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
+    }
+  
+    // the first matching is being used
+    return { 'payload': { 'uri': list[0].uri, 'metadata': list[0].metadata, 'queue': true } }
   }
 
   /**  Outputs array Music-Library albums - search string is optional
    * @param {object} msg incoming message
-   * @param {string} msg.payload search string
-   * @param {string} msg.requestedCount optional, maximum number of found albums, 
-   *                  0...999, default 100
-   * @param {string} msg.searchTitle search string, optional
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   * @param {string} [msg.payload] search string
+   * @param {string} [msg.requestedCount= REQUESTED_COUNT_ML_DEFALUT] 
+   *                  maximum number of found albums
+   * @param {object} tsPlayer sonos-ts player with urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
    *
+   * // TODO update throws
    * @throws all functions
-   * TODO Notion libraryExportAlbum
    */
   async function libraryGetAlbums (msg, tsPlayer) {
-    // msg.requestedCount is optional - if missing default is 100
+    // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, 100)
+      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, REQUESTED_COUNT_ML_DEFAULT)
 
-    // msg albumName search string is optional - default is empty string
-    let validatedSearchString
-      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', PACKAGE_PREFIX, '')
-    if (validatedSearchString !== '') {
-      validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
-    }
-
-    const browseAlbum = await executeActionV6(tsPlayer.urlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      {
-        ObjectID: 'A:ALBUM' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren',
-        Filter: '*', StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: ''
-      })
-  
-    const listAlbum = await xParseBrowseToArray(browseAlbum, 'container', PACKAGE_PREFIX)
-    if (!xIsTruthy(listAlbum)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid.`)
-    }
-
+    // payload as title search string is optional.
+    const validSearch
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'payload search in title', PACKAGE_PREFIX, '')
+    
+    const list
+      = await xGetMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
+    
     // add ip address to albumUri
-    const albumList = listAlbum.map(element => {
+    const payload = list.map(element => {
       if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
         element.artUri = tsPlayer.urlObject.origin + element.artUri
       }  
@@ -308,48 +318,35 @@ module.exports = function (RED) {
       return element
     })
 
-    return { 'payload': albumList.slice() }
+    return { payload }
   }
 
   /**  Outputs array Music-Library playlists - search string is optional
    * @param {object} msg incoming message
    * @param {string} msg.payload search string
-   * @param {string} msg.requestedCount optional, maximum number of found albums, 
-   *                 0...999, default 100
-   * @param {string} msg.searchTitle search string, optional
-  * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   * @param {string} [msg.requestedCount= REQUESTED_COUNT_ML_DEFALUT] 
+   *                  maximum number of found albums
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
    *
    * @throws all functions
    */
-  async function libraryGetPlaylistsV2 (msg, tsPlayer) {
-    // msg.requestedCount is optional - if missing default is 100
+  async function libraryGetPlaylists (msg, tsPlayer) {
+    // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, 100)
+      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, REQUESTED_COUNT_ML_DEFAULT)
 
-    // msg search string is optional - default is empty string
-    let validatedSearchString
-      = validRegex(msg, 'searchTitle', REGEX_ANYCHAR, 'search title', PACKAGE_PREFIX, '')
-    if (validatedSearchString !== '') {
-      validatedSearchString = ':' + encodeURIComponent(validatedSearchString)
-    }
-
-    const browsePlaylists = await executeActionV6(tsPlayer.urlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      {
-        ObjectID: 'A:PLAYLISTS' + validatedSearchString, BrowseFlag: 'BrowseDirectChildren',
-        Filter: '*', StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: ''
-      })
+    // payload as title search string is optional.
+    const validSearch
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'payload search in title', PACKAGE_PREFIX, '')
     
-    const listPl = await xParseBrowseToArray(browsePlaylists, 'container', PACKAGE_PREFIX)
-    if (!xIsTruthy(listPl)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Playlists is invalid.`)
-    }
-
+    const list
+      = await xGetMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
+    
     // add ip address to albumUri
-    const playlistList = listPl.map(element => {
+    const payload = list.map(element => {
       if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
         element.artUri = tsPlayer.urlObject.origin + element.artUri
       }  
@@ -357,7 +354,7 @@ module.exports = function (RED) {
       return element
     })
 
-    return { 'payload': playlistList.slice() }
+    return { payload }
   }
 
   /**  Queue first Music-Library playlist matching search string (is encoded) - maximum 100

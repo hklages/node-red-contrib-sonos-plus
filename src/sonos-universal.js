@@ -160,7 +160,7 @@ module.exports = function (RED) {
                   failure(node, msg, error, thisFunction)
                 })
             })
-            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready for message' })      
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })      
           } else {
             node.status({ fill: 'red', shape: 'dot', text: 'error: given ip not reachable' })      
           }
@@ -192,7 +192,7 @@ module.exports = function (RED) {
                 failure(node, msg, error, thisFunction)
               })
           })
-          node.status({ fill: 'green', shape: 'dot', text: 'ok:subscribed' })
+          node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
         })
         .catch((err) => {
           // discovery failed - most likely because could not find any matching player

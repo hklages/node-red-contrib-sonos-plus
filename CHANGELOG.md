@@ -6,13 +6,19 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
-- Switched from node-sonos library to node-sonos-ts library because node-sonos is not being maitained for some months
+- Switched from node-sonos library to node-sonos-ts library because node-sonos is not being maintained for some months
+
+- no compatibility mode anymore
 
 - discovery of players should be much faster, especially in case of many players
+
+- changes library.get.album now with payload instead of searchString
 
 #### Added
 
 - config node: you can now use discovery for the ip address
+
+- My Sonos node: added library.export.track
 
 ### [4.5.5] 2021-01-07
 
