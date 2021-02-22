@@ -462,7 +462,6 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title
-    // TODO only with type = queue!!!
     let foundIndex = -1
     foundIndex = mySonosItems.findIndex((item) => {
       return (item.title.includes(validSearch) && (item.processingType === 'queue'))
@@ -503,7 +502,6 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title
-    // TODO only with type = queue!!!
     let foundIndex = -1
     foundIndex = mySonosItems.findIndex((item) => {
       return (item.title.includes(validSearch) && (item.processingType === 'stream'))
