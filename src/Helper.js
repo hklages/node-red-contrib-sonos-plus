@@ -18,12 +18,14 @@ const debug = require('debug')(`${PACKAGE_PREFIX}helperTs`)
 module.exports = {
 
   /** Converts hh:mm:ss time to milliseconds. Does not check input!
+   * No validation: hh 0 to 23, mm 0 to 59 ss 0 59, : must exist
+   * Recommmendation: do a regex check before calling this!
    * 
    * @param  {string} hhmmss string in format hh:mm:ss
    * 
    * @returns {number} milliseconds as integer
    * 
-   * @throws nothing error if split does nt find :
+   * @throws error if split does not find ':'
    */
   hhmmss2msec: (hhmmss) => {
     const [hours, minutes, seconds] = (hhmmss).split(':')

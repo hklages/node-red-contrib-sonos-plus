@@ -1,5 +1,5 @@
 const { extractGroup }
-  = require('../src/Sonos-CommandsTs.js')
+  = require('../src/Commands.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')

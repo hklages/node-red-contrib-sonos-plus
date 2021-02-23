@@ -728,7 +728,6 @@ module.exports = {
         'RequestedCount': requestedCount, 'SortCriteria': ''
       })
 
-    // TODO check existence of TotalNumber, NumberRE.. result
     let list
     if (category === 'A:TRACKS:') {
       list = await xParseBrowseToArray(browseCategory, 'item', PACKAGE_PREFIX)    

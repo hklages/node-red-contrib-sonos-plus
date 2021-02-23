@@ -1,11 +1,37 @@
-const { encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
-  isTruthy, isTruthyStringNotEmpty, isTruthyArray }
-  = require('../src/HelperTs.js')
+const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
+  isTruthy, isTruthyStringNotEmpty, isTruthyArray, isOnOff, validToInteger, validRegex }
+  = require('../src/Helper.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
 
-describe('encodeHtmlEntityTs function', () => {
+describe('hhmmss2msec function', () => {
+  it('1 sec = 1000msec', ()  => {
+    const value = '00:00:01'
+    const result = hhmmss2msec(value)
+    expect(result)
+      .be.a('number')
+      .equal(1000)
+  })
+
+  it('1h 1m 1s = 3661000', ()  => {
+    const value = '01:01:01'
+    const result = hhmmss2msec(value)
+    expect(result)
+      .be.a('number')
+      .equal(3661000)
+  })
+
+  it('3h 4m 5s =11045000 ', ()  => {
+    const value = '03:04:05'
+    const result = hhmmss2msec(value)
+    expect(result)
+      .be.a('number')
+      .equal(11045000)
+  })
+})
+  
+describe('encodeHtmlEntity function', () => {
 
   it('null throws error', async () => {
     const value = null
@@ -109,7 +135,7 @@ describe('encodeHtmlEntityTs function', () => {
 
 })
 
-describe('decodeHtmlEntityTs function', () => {
+describe('decodeHtmlEntity function', () => {
 
   it('null throws error', async () => {
     const value = null
@@ -213,7 +239,7 @@ describe('decodeHtmlEntityTs function', () => {
 
 })
 
-describe('isTruthyPropertyTs function', () => {
+describe('isTruthyProperty function', () => {
   
   it('undefined returns false', () => {
     let value
@@ -381,7 +407,7 @@ describe('isTruthyPropertyTs function', () => {
 
 })
 
-describe('isTruthyTs function', () => {
+describe('isTruthy function', () => {
   
   it('undefined returns false', () => {
     let value
@@ -496,7 +522,7 @@ describe('isTruthyTs function', () => {
 
 })
 
-describe('isTruthyStringNotEmptyTs function', () => {
+describe('isTruthyStringNotEmpty function', () => {
   
   it('undefined returns false', () => {
     let value
@@ -611,7 +637,7 @@ describe('isTruthyStringNotEmptyTs function', () => {
 
 })
 
-describe('isTruthyArrayTs function', () => {
+describe('isTruthyArray function', () => {
   
   it('undefined returns false', () => {
     let value
@@ -722,6 +748,179 @@ describe('isTruthyArrayTs function', () => {
     expect(result)
       .be.a('boolean')
       .equal(true)
+  })
+})
+
+describe('isOnOff function', () => {
+    
+  it('on means true', () => {
+    const msg = { 'payload': 'on' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const result = isOnOff(msg, propertyName, propertyMeaning, packageName)
+    expect(result)
+      .be.a('boolean')
+      .equal(true)
+  })
+
+  it('ON means true', () => {
+    const msg = { 'payload': 'ON' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const result = isOnOff(msg, propertyName, propertyMeaning, packageName)
+    expect(result)
+      .be.a('boolean')
+      .equal(true)
+  })
+
+  it('off means false', ()  => {
+    const msg = { 'payload': 'off' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const result = isOnOff(msg, propertyName, propertyMeaning, packageName)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+
+  it('OFF means false', ()  => {
+    const msg = { 'payload': 'OFF' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const result = isOnOff(msg, propertyName, propertyMeaning, packageName)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+  
+})
+
+describe('validToInteger function', () => {
+    
+  it('string 5 to integer 5', () => {
+    const msg = { 'payload': '5' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const min = 0
+    const max = 10
+    const defaultValue = 10
+    const result
+      = validToInteger(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('number')
+      .equal(5)
+  })
+
+  it('string 0 to integer 0', () => {
+    const msg = { 'payload': '0' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const min = 0
+    const max = 10
+    const defaultValue = 10
+    const result
+      = validToInteger(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('number')
+      .equal(0)
+  })
+
+  it('string 10 to integer 10', () => {
+    const msg = { 'payload': '10' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const min = 0
+    const max = 10
+    const defaultValue = 10
+    const result
+      = validToInteger(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('number')
+      .equal(10)
+  })
+
+  it('intger 5 to integer 5', () => {
+    const msg = { 'payload': 5 }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const min = 0
+    const max = 10
+    const defaultValue = 10
+    const result
+      = validToInteger(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('number')
+      .equal(5)
+  })
+
+  it('integer 0 to integer 0', () => {
+    const msg = { 'payload': 0 }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const min = 0
+    const max = 10
+    const defaultValue = 10
+    const result
+      = validToInteger(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('number')
+      .equal(0)
+  })
+
+  it('integer 10 to integer 10', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const min = 0
+    const max = 10
+    const defaultValue = 10
+    const result
+      = validToInteger(msg, propertyName, min, max, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('number')
+      .equal(10)
+  })
+  
+})
+
+describe('validRegex function', () => {
+    
+  it('string 01:02:03 to string 01:02:03', () => {
+    const msg = { 'payload': '01:02:03' }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME
+    const defaultValue = '00:00:01'
+    const result
+      = validRegex(msg, propertyName, regex, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('string')
+      .equal('01:02:03')
+  })
+
+  it('string missing to string 00:00:01', () => {
+    const msg = { }
+    const propertyName = 'payload'
+    const propertyMeaning = 'just a test'
+    const packageName = 'test-package'
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME
+    const defaultValue = '00:00:01'
+    const result
+      = validRegex(msg, propertyName, regex, propertyMeaning, packageName, defaultValue)
+    expect(result)
+      .be.a('string')
+      .equal('00:00:01')
   })
 
 })

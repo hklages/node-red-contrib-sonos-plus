@@ -11,7 +11,7 @@
 'use strict'
 
 const {
-  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, PACKAGE_PREFIX,
+  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, PACKAGE_PREFIX,
   TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY,
   REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_ML_DEFAULT,
   REQUESTED_COUNT_MYSONOS_DEFAULT, REQUESTED_COUNT_MYSONOS_EXPORT
@@ -306,7 +306,8 @@ module.exports = function (RED) {
 
     // payload as title search string is optional.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'payload search in title', PACKAGE_PREFIX, '')
+      // eslint-disable-next-line max-len
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
     
     const list
       = await xGetMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
@@ -342,7 +343,8 @@ module.exports = function (RED) {
 
     // payload as title search string is optional.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'payload search in title', PACKAGE_PREFIX, '')
+      // eslint-disable-next-line max-len
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
     
     const list
       = await xGetMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
@@ -470,7 +472,7 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
     
-    await tsPlayer.SetAVTransportURI.AddUriToQueue(
+    await tsPlayer.AVTransportService.AddURIToQueue(
       { 'InstanceID': 0, 
         'EnqueuedURI': mySonosItems[foundIndex].uri,
         'EnqueuedURIMetaData': mySonosItems[foundIndex].metadata,

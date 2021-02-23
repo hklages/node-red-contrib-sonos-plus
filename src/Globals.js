@@ -14,7 +14,7 @@ module.exports = {
 
   PACKAGE_PREFIX: 'nrcsp: ',
 
-  TIMEOUT_HTTP_REQUEST: 2000, //in milliseconds
+  TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
   TIMEOUT_DISCOVERY: 4, //in seconds
 
   REQUESTED_COUNT_PLAYLISTS: 200,
@@ -22,7 +22,7 @@ module.exports = {
   REQUESTED_COUNT_ML_EXPORT: 1,
   REQUESTED_COUNT_ML_DEFAULT: 1000,
   REQUESTED_COUNT_MYSONOS_DEFAULT: 200,
-  REQUESTED_COUNT_MYSONOS_EXPORT: 1,
+  REQUESTED_COUNT_MYSONOS_EXPORT: 200, // because no filter
 
   PLAYER_WITH_TV: ['Sonos Beam', 'Sonos Playbar', 'Sonos Playbase', 'Sonos Arc'],
 
@@ -37,6 +37,8 @@ module.exports = {
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
   REGEX_ANYCHAR: /.+/,  // any character but at least 1
+
+  REGEX_ANYCHAR_BLANK: /.*/, //any character or blank
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
   REGEX_CSV: /^[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9]+)*(,[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9])*)*$/u,
 

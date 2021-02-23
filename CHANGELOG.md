@@ -12,7 +12,7 @@ All notable changes to this project are documented in this file.
 
 - discovery of players should be much faster, especially in case of many players
 
-- changes library.get.album now with payload instead of searchString
+- changes library.get.albums/playlists now with payload instead of searchString
 
 #### Added
 

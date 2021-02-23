@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.</div>
+            <div class="description">All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.My Sonos also holds SONOS playlists.</div>
         
 
         
@@ -154,7 +154,7 @@
     
 
     
-    <h4 class="name" id="~libraryExportAlbum"><span class="type-signature">(async, inner) </span>libraryExportAlbum<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryExportAlbum"><span class="type-signature">(async, inner) </span>libraryExportAlbum<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#exportedItem">exportedItem</a>>}</span></h4>
     
 
     
@@ -162,7 +162,7 @@
 
 
 <div class="description">
-    Exports first Music-Library album matching search string (is encoded) - maximum 100
+    Exports first Music-Library album matching search string (is encoded)
 </div>
 
 
@@ -327,7 +327,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line212">line 212</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line227">line 227</a>
     </li></ul></dd>
     
 
@@ -351,13 +351,13 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        all functions
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -377,17 +377,40 @@
     <dd></dd>
 </dl>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        no matching item found
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    {payload: uri metadata queue title artist}
-</div>
-
 
 
 <dl>
@@ -396,7 +419,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#exportedItem">exportedItem</a>></span>
 
 
     </dd>
@@ -414,7 +437,7 @@
     
 
     
-    <h4 class="name" id="~libraryExportPlaylistV2"><span class="type-signature">(async, inner) </span>libraryExportPlaylistV2<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryExportPlaylist"><span class="type-signature">(async, inner) </span>libraryExportPlaylist<span class="signature">(msg, tsPlayer)</span><span class="type-signature"></span></h4>
     
 
     
@@ -422,7 +445,7 @@
 
 
 <div class="description">
-    Exports first Music-Library playlist matching search string (is encoded) - maximum 100
+    Exports first Music-Library playlist matching search string (is encoded)
 </div>
 
 
@@ -587,7 +610,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line243">line 243</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line252">line 252</a>
     </li></ul></dd>
     
 
@@ -611,13 +634,13 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        all functions
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -637,15 +660,317 @@
     <dd></dd>
 </dl>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        no matching item found
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    {payload: uri metadata queue title artist}
+    {promise<exportedItem>
+</div>
+
+
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~libraryExportTrack"><span class="type-signature">(async, inner) </span>libraryExportTrack<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#exportedItem">exportedItem</a>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Exports first Music-Library track matching search string (is encoded)
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>payload</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tsPlayer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line276">line 276</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        no matching item found
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    see def
 </div>
 
 
@@ -656,7 +981,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#exportedItem">exportedItem</a>></span>
 
 
     </dd>
@@ -748,7 +1073,11 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -773,7 +1102,21 @@
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">search string</td>
@@ -796,33 +1139,26 @@
             </td>
 
             
-
-            
-
-            <td class="description last">optional, maximum number of found albums,                  0...999, default 100</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>searchTitle</code></td>
-            
-
-            <td class="type">
-            
+                <td class="attributes">
                 
-<span class="param-type">string</span>
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
 
             
-            </td>
-
+                <td class="default">
+                
+                    REQUESTED_COUNT_ML_DEFALUT
+                
+                </td>
             
 
-            
-
-            <td class="description last">search string, optional</td>
+            <td class="description last">maximum number of found albums</td>
         </tr>
 
     
@@ -852,7 +1188,7 @@
 
             
 
-            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
+            <td class="description last">sonos-ts player with urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -893,7 +1229,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line278">line 278</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line302">line 302</a>
     </li></ul></dd>
     
 
@@ -922,7 +1258,7 @@
 
     <div class="param-desc">
     
-        all functionsTODO Notion libraryExportAlbum
+        error methods
     
     </div>
 
@@ -963,7 +1299,7 @@
     
 
     
-    <h4 class="name" id="~libraryGetPlaylistsV2"><span class="type-signature">(async, inner) </span>libraryGetPlaylistsV2<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryGetPlaylists"><span class="type-signature">(async, inner) </span>libraryGetPlaylists<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -1037,7 +1373,11 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -1062,7 +1402,19 @@
             </td>
 
             
+                <td class="attributes">
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">search string</td>
@@ -1085,33 +1437,26 @@
             </td>
 
             
-
-            
-
-            <td class="description last">optional, maximum number of found albums,                 0...999, default 100</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>searchTitle</code></td>
-            
-
-            <td class="type">
-            
+                <td class="attributes">
                 
-<span class="param-type">string</span>
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
 
             
-            </td>
-
+                <td class="default">
+                
+                    REQUESTED_COUNT_ML_DEFALUT
+                
+                </td>
             
 
-            
-
-            <td class="description last">search string, optional</td>
+            <td class="description last">maximum number of found albums</td>
         </tr>
 
     
@@ -1182,7 +1527,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line327">line 327</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line339">line 339</a>
     </li></ul></dd>
     
 
@@ -1211,7 +1556,7 @@
 
     <div class="param-desc">
     
-        all functions
+        all methods
     
     </div>
 
@@ -1252,7 +1597,7 @@
     
 
     
-    <h4 class="name" id="~libraryQueuePlaylistV2"><span class="type-signature">(async, inner) </span>libraryQueuePlaylistV2<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryQueuePlaylist"><span class="type-signature">(async, inner) </span>libraryQueuePlaylist<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -1425,7 +1770,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line372">line 372</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line373">line 373</a>
     </li></ul></dd>
     
 
@@ -1455,7 +1800,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        all functions
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -1512,7 +1857,7 @@
     
 
     
-    <h4 class="name" id="~mysonosExportItem"><span class="type-signature">(async, inner) </span>mysonosExportItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~mysonosExportItem"><span class="type-signature">(async, inner) </span>mysonosExportItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#exportedItem">exportedItem</a>>}</span></h4>
     
 
     
@@ -1685,7 +2030,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line411">line 411</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line400">line 400</a>
     </li></ul></dd>
     
 
@@ -1709,26 +2054,32 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        all functionsInfo:  content validation of mediaType, serviceName
+        all methods
     
     </div>
 
-
+</li>
     
+        <li>
+
+    <div class="param-desc">
+    
+        'could not find any My Sonos items', 'no title matching search string'Info:  content validation of mediaType, serviceName
+    
+    </div>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    see return
-</div>
-
 
 
 <dl>
@@ -1737,7 +2088,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#exportedItem">exportedItem</a>></span>
 
 
     </dd>
@@ -1879,7 +2230,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line450">line 450</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line437">line 437</a>
     </li></ul></dd>
     
 
@@ -1903,26 +2254,32 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        nrcsp error - all functions
+        all methods
     
     </div>
 
-
+</li>
     
+        <li>
+
+    <div class="param-desc">
+    
+        'could not find any My Sonos items'
+    
+    </div>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}uri, metadata, sid, upnpclass: empty string are allowed
-</div>
-
 
 
 <dl>
@@ -1958,249 +2315,6 @@
 
 <div class="description">
     Queues (aka add) first My-Sonos item matching search string.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>msg</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">incoming message
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>payload</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">search string{ processingType: "queue", mediaType: "playlist", serviceName: "all" }</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>tsPlayer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line475">line 475</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        nrcsp-error all functionsInfo:  msg.filter currently undocumented feature.
-    
-    </div>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    {}
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="~mysonosStreamItem"><span class="type-signature">(async, inner) </span>mysonosStreamItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Stream (aka play) first My-Sonos item matching search string.
 </div>
 
 
@@ -2365,7 +2479,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line517">line 517</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line457">line 457</a>
     </li></ul></dd>
     
 
@@ -2389,17 +2503,303 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        all functions
+        all methods
     
     </div>
 
+</li>
+    
+        <li>
+
+    <div class="param-desc">
+    
+        'could not find any My Sonos items', 'no title matching search string'
+    
+    </div>
+
+</li>
+    </ul>
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    {}
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise</span>
+
+
+    </dd>
+</dl>
 
     
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~mysonosStreamItem"><span class="type-signature">(async, inner) </span>mysonosStreamItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Stream (aka play) first My-Sonos item matching search string.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>payload</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">search string</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>volume</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">new volume 0 ..100</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tsPlayer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line497">line 497</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+        <li>
+
+    <div class="param-desc">
+    
+        all methods
+    
+    </div>
+
+</li>
+    
+        <li>
+
+    <div class="param-desc">
+    
+        'could not find any My Sonos items', 'no title matching search string'
+    
+    </div>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
@@ -2677,7 +3077,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line144">line 144</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line150">line 150</a>
     </li></ul></dd>
     
 
@@ -2836,7 +3236,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line51">line 51</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line56">line 56</a>
     </li></ul></dd>
     
 
@@ -2888,7 +3288,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Feb 20 2021 09:04:33 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Tue Feb 23 2021 09:14:51 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

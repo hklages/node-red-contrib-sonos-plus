@@ -4,7 +4,7 @@
 // using http://192.168.178.15:1400 a Synology NAS 
 
 const { isSonosPlayer, matchSerialUuid }
-  = require('../src/Sonos-Extensions.js')
+  = require('../src/Extensions.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
