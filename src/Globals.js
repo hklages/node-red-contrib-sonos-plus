@@ -12,7 +12,7 @@
 
 module.exports = {
 
-  PACKAGE_PREFIX: 'nrcsp: ',
+  PACKAGE_PREFIX: 'nrcsp:',
 
   TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
   TIMEOUT_DISCOVERY: 4, //in seconds

@@ -38,7 +38,7 @@ module.exports = {
    * 
    * @returns {Promise<string>} encoded string
    * 
-   * @throws Error in case of htmlData is undefined, null, not a string
+   * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
    * 
    * @since 2021-01-25
    */
@@ -67,7 +67,7 @@ module.exports = {
    * 
    * @returns {Promise<string>} decoded string
    * 
-   * @throws Error in case of htmlData is undefined, null, not a string
+   * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
    * 
    * @since 2021-01-25
    */
@@ -97,8 +97,7 @@ module.exports = {
    * 
    * @returns {boolean} property is accessible
    * 
-   * @throws error in case pathArray is not an array, non empty, elements string
-   * @throws error in case nestedObj is not an object
+   * @throws {error} all methods
    */
   isTruthyProperty: (nestedObj, pathArray) => {
     debug('method >>%s', 'isTruthyProperty')
@@ -118,7 +117,7 @@ module.exports = {
    * 
    * @returns {boolean} property is accessible and not empty string
    * 
-   * @throws error in case of wrong arguments!
+   * @throws {error} all methods
    */
   isTruthyPropertyStringNotEmpty: (nestedObj, pathArray) => {
     debug('method >>%s', 'isTruthyPropertyStringNotEmpty')
@@ -144,7 +143,7 @@ module.exports = {
    * 
    * @since 2021-01-25
    * 
-   * @throws nothing
+   * @throws none
    */
   isTruthy: (input) => {
     debug('method >>%s', 'isTruthy')
@@ -166,7 +165,7 @@ module.exports = {
    * false: let input = ''
    * true: non empty string
    * 
-   * @throws nothing
+   * @throws none
    * 
    * @since 2021-01-25
    */
@@ -191,7 +190,7 @@ module.exports = {
    * false: let input = '', let input = 'Hello World'
    * true: let input = [], let input = ['a', 'b']
    * 
-   * @throws nothing
+   * @throws none
    * 
    * @since 2021-01-25
    */
@@ -210,7 +209,7 @@ module.exports = {
    * 
    * @returns {any} value of that property
    * 
-   * @throws nothing
+   * @throws none
    */
   // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
   // pass in your object structure as array elements
@@ -232,7 +231,9 @@ module.exports = {
    *
    * @returns {boolean} true/false if msg.property is "on/off" ! not case sensitive
    *
-   * @throws {error} if msg[propertyName] is missing, not string, not on|off (NOT case sensitive)
+   * @throws {error} '* ${propertyName}) is missing/invalid', '* ${propertyName}) is not string',
+   * '* ${propertyName}) is not on/off'
+   * @throws {error} all methods
    */
   isOnOff: (msg, propertyName, propertyMeaning, packageName) => {
     const path = []
@@ -269,9 +270,13 @@ module.exports = {
    *
    * @returns {number} integer in range [min,max] or defaultValue
    *
-   * @throws {error} if msg[propertyName] is missing and defaultValue is undefined
-   * @throws {error} msg[propertyName] is not of type string, number
-   * @throws {error} min,max,defaultValue not of type number, max <= min
+   * @throws {error} '${propertyMeaning} min is not type number', 
+   * '${propertyMeaning} max is not type number', 
+   * '${propertyMeaning} max must be greater then min', '*${propertyName}) is missing/invalid', 
+   * 'defaultValue is not type number', 'defaultValue is not integer', 
+   * '${txtPrefix} is not type string/number', '${txtPrefix} is not integer',
+   * '${value}) is not 3 signed digits only', '${value}) is out of range'
+   * @throws {error} all methods
    */
   validToInteger: (msg, propertyName, min, max, propertyMeaning,
     packageName, defaultValue) => {

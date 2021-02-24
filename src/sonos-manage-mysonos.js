@@ -54,8 +54,8 @@ module.exports = function (RED) {
    * @param  {object} config current node configuration data
    */
   function SonosManageMySonosNode (config) {
+    const thisFunctionName = 'create and subscribe'
     RED.nodes.createNode(this, config)
-    const thisFunction = 'create and subscribe'
     const node = this
     node.status({}) // Clear node status
 
@@ -70,24 +70,28 @@ module.exports = function (RED) {
       xIsSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
         .then((isSonos) => {
           if (isSonos) {
+            
+            // subscribe and set processing function
             node.on('input', (msg) => {
               node.debug('node - msg received')
               processInputMsg(node, config, msg, playerUrlObject.hostname)
+                // processInputMsg sets msg.nrcspCmd to current command
                 .then((msgUpdate) => {
                   Object.assign(msg, msgUpdate) // Defines the output message
                   success(node, msg, msg.nrcspCmd)
                 })
                 .catch((error) => {
-                  let thisFunction = 'processing input msg'
+                  let lastFunction = 'processInputMsg'
                   if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-                    thisFunction = msg.nrcspCmd
+                    lastFunction = msg.nrcspCmd
                   }
-                  failure(node, msg, error, thisFunction)
+                  failure(node, msg, error, lastFunction)
                 })
             })
-            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })      
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })  
+            
           } else {
-            node.status({ fill: 'red', shape: 'dot', text: 'error: given ip not reachable' })      
+            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })      
           }
         })
         .catch((err) => {
@@ -102,33 +106,37 @@ module.exports = function (RED) {
         .then((discoveredHost) => {
           debug('found ip address >>%s', discoveredHost)
           const validHost = discoveredHost
+          
+          // subscribe and set processing function
           node.on('input', (msg) => {
             node.debug('node - msg received')
             processInputMsg(node, config, msg, validHost)
+            // processInputMsg sets msg.nrcspCmd to current command
               .then((msgUpdate) => {
                 Object.assign(msg, msgUpdate) // Defines the output message
                 success(node, msg, msg.nrcspCmd)
               })
               .catch((error) => {
-                let thisFunction = 'processing input msg'
+                let lastFunction = 'processInputMsg'
                 if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-                  thisFunction = msg.nrcspCmd
+                  lastFunction = msg.nrcspCmd
                 }
-                failure(node, msg, error, thisFunction)
+                failure(node, msg, error, lastFunction)
               })
           })
           node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
+
         })
         .catch((err) => {
           // discovery failed - most likely because could not find any matching player
           debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          failure(node, null, 'could not discover player by serial', thisFunction)
+          failure(node, null, 'could not discover player by serial', thisFunctionName)
           return
         })
    
     } else {
       failure(node, null,
-        new Error(`${PACKAGE_PREFIX} both ip address/serial number are invalid`), thisFunction)
+        new Error(`${PACKAGE_PREFIX} both ip address/serial number are invalid`), thisFunctionName)
       return
     }
   }
@@ -139,13 +147,15 @@ module.exports = function (RED) {
    * @param  {string}  config.command the command from node dialog
    * @param  {string}  config.state the state from node dialog
    * @param  {object}  msg incoming message
-   * @param  {string}  urlHost IP address of SONOS player such as 192.168.178.37
+   * @param  {string}  urlHost host of SONOS player such as 192.168.178.37
    *
+   * Creates also msg.nrcspCmd with the used command in lower case.
+   * Modifies msg.payload if set in dialog or for output!
    *
    * @returns {promise} All commands have to return a promise - object
-   * example: returning {} means message is not modified
-   * example: returning { msg.payload: true} means 
-   * the original msg.payload will be modified and set to true.
+   * example: returning {} means msg is not modified (except msg.nrcspCmd)
+   * example: returning { 'payload': true } means 
+   *  the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
     
@@ -157,9 +167,10 @@ module.exports = function (RED) {
       && xIsTruthyProperty(tsPlayer, ['port']))) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer ip address or port is missing `)
     }
+    // needed for my extension in Extensions
     tsPlayer.urlObject = new URL(`http://${tsPlayer.host}:${tsPlayer.port}`)
 
-    // Command, required: node dialog overrules msg, store lowercase version in command
+    // Command, required: node dialog overrules msg, store lowercase version in nrcspCmd
     let command
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
@@ -167,8 +178,7 @@ module.exports = function (RED) {
       if (!xIsTruthyPropertyStringNotEmpty(msg, ['topic'])) {
         throw new Error(`${PACKAGE_PREFIX} command is undefined/invalid`)
       }
-      command = String(msg.topic)
-      command = command.toLowerCase()
+      command = String(msg.topic).toLowerCase()
 
       // you may omit mysonos. prefix - so we add it here
       const REGEX_PREFIX = /^(mysonos|library)/
@@ -176,8 +186,10 @@ module.exports = function (RED) {
         command = `mysonos.${command}`
       }
     }
-    msg.nrcspCmd = command // store command as get commands will overrides msg.payload
-    msg.topic = command // update msg.topic with dialog data - is used in playerSetEQ, playerGetEQ
+    if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
+      throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
+    }
+    msg.nrcspCmd = command // store command
 
     // state: node dialog overrules msg.
     let state
@@ -192,13 +204,10 @@ module.exports = function (RED) {
           msg.payload = state
         }
       } else if (typeof state === 'boolean') {
-        msg.topic = state
+        msg.payload = state
       }
     }
-
-    if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
-      throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
-    }
+    
     return COMMAND_TABLE_MYSONOS[command](msg, tsPlayer)
   }
 
@@ -220,9 +229,9 @@ module.exports = function (RED) {
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<exportedItem>}  
-   *
+   * 
+   * @throws {error} 'no matching item found'
    * @throws {error} all methods
-   * @throws {error} no matching item found
    */
   async function libraryExportAlbum (msg, tsPlayer) {
     // payload title search string is required.
@@ -245,8 +254,8 @@ module.exports = function (RED) {
    *
    * @returns {promise<exportedItem>  
    *
+   * @throws {error} 'no matching item found'
    * @throws {error} all methods
-   * @throws {error} no matching item found
    * 
    */
   async function libraryExportPlaylist (msg, tsPlayer) {
@@ -270,8 +279,8 @@ module.exports = function (RED) {
    *
    * @returns {promise<exportedItem>}  see def
    *
+   * @throws {error} 'no matching item found'
    * @throws {error} all methods
-   * @throws {error} no matching item found
    */
   async function libraryExportTrack (msg, tsPlayer) {
     // payload title search string is required.
@@ -297,7 +306,7 @@ module.exports = function (RED) {
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
    *
-   * @throws error methods
+   * @throws {error} all methods
    */
   async function libraryGetAlbums (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
@@ -334,7 +343,7 @@ module.exports = function (RED) {
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty  
    *
-   * @throws all methods
+   * @throws {error} all methods
    */
   async function libraryGetPlaylists (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
@@ -368,6 +377,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: uri metadata queue title artist}  
    *
+   * @throws {error} 'no matching item found'
    * @throws {error} all methods
    */
   async function libraryQueuePlaylist (msg, tsPlayer) {
@@ -392,8 +402,8 @@ module.exports = function (RED) {
    *
    * @returns {promise<exportedItem>} 
    *
-   * @throws all methods
    * @throws 'could not find any My Sonos items', 'no title matching search string'
+   * @throws {error} all methods
    *
    * Info:  content validation of mediaType, serviceName
    */
@@ -414,7 +424,7 @@ module.exports = function (RED) {
       return (item.title.includes(validSearch))
     })
     if (foundIndex < 0) {
-      throw new Error(`${PACKAGE_PREFIX} No title matching search string >>${validSearch}`)
+      throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
 
     return { 'payload': {
@@ -431,8 +441,8 @@ module.exports = function (RED) {
    *
    * @returns {promise<mySonosItem[]>}
    *
-   * @throws all methods
    * @throws 'could not find any My Sonos items'
+   * @throws {error} all methods
    */
   async function mysonosGetItems (msg, tsPlayer) {
     const payload = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
@@ -450,8 +460,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws all methods
    * @throws 'could not find any My Sonos items', 'no title matching search string'
+   * @throws {error} all methods
    * 
    */
   async function mysonosQueueItem (msg, tsPlayer) {
@@ -491,8 +501,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws all methods
    * @throws 'could not find any My Sonos items', 'no title matching search string'
+   * @throws {error} all methods
    */
   async function mysonosStreamItem (msg, tsPlayer) {
     // payload title search string is required.

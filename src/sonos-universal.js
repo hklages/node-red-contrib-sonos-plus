@@ -130,7 +130,7 @@ module.exports = function (RED) {
    * @param {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
-    const thisFunction = 'create and subscribe'
+    const thisFunctionName = 'create and subscribe'
     RED.nodes.createNode(this, config)
     const node = this
     node.status({}) // Clear node status
@@ -140,29 +140,34 @@ module.exports = function (RED) {
     if (xIsTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
       && REGEX_IP.test(configNode.ipaddress)) {
       // Using config ip address to define the default SONOS player
+      // and check whether that IP address is reachable (http request)
       const port = 1400 // assuming this port
       const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
       xIsSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
         .then((isSonos) => {
           if (isSonos) {
+
+            // subscribe and set processing function
             node.on('input', (msg) => {
               node.debug('node - msg received')
               processInputMsg(node, config, msg, playerUrlObject.hostname)
+                // processInputMsg sets msg.nrcspCmd to current command
                 .then((msgUpdate) => {
                   Object.assign(msg, msgUpdate) // Defines the output message
                   success(node, msg, msg.nrcspCmd)
                 })
                 .catch((error) => {
-                  let thisFunction = 'processing input msg'
+                  let lastFunction = 'processInputMsg'
                   if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-                    thisFunction = msg.nrcspCmd
+                    lastFunction = msg.nrcspCmd
                   }
-                  failure(node, msg, error, thisFunction)
+                  failure(node, msg, error, lastFunction)
                 })
             })
-            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })      
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })    
+            
           } else {
-            node.status({ fill: 'red', shape: 'dot', text: 'error: given ip not reachable' })      
+            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })      
           }
         })
         .catch((err) => {
@@ -177,33 +182,37 @@ module.exports = function (RED) {
         .then((discoveredHost) => {
           debug('found ip address >>%s', discoveredHost)
           const validHost = discoveredHost
+          
+          // subscribe and set processing function
           node.on('input', (msg) => {
             node.debug('node - msg received')
             processInputMsg(node, config, msg, validHost)
+              // processInputMsg sets msg.nrcspCmd to current command
               .then((msgUpdate) => {
                 Object.assign(msg, msgUpdate) // Defines the output message
                 success(node, msg, msg.nrcspCmd)
               })
               .catch((error) => {
-                let thisFunction = 'processing input msg'
+                let lastFunction = 'processInputMsg'
                 if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-                  thisFunction = msg.nrcspCmd
+                  lastFunction = msg.nrcspCmd
                 }
-                failure(node, msg, error, thisFunction)
+                failure(node, msg, error, lastFunction)
               })
           })
           node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
+
         })
         .catch((err) => {
           // discovery failed - most likely because could not find any matching player
           debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          failure(node, null, 'could not discover player by serial', thisFunction)
+          failure(node, null, 'could not discover player by serial', thisFunctionName)
           return
         })
    
     } else {
       failure(node, null,
-        new Error(`${PACKAGE_PREFIX} both ip address/serial number are invalid`), thisFunction)
+        new Error(`${PACKAGE_PREFIX} both ip address/serial number are invalid`), thisFunctionName)
       return
     }
   }
@@ -215,14 +224,14 @@ module.exports = function (RED) {
    * @param {string} config.command the command from node dialog
    * @param {string} config.state the state from node dialog
    * @param {object} msg incoming message
-   * @param {string} urlHost IP address of SONOS player such as 192.168.178.37
+   * @param {string} urlHost host of SONOS player such as 192.168.178.37
    *
-   * Creates also msg.nrcspCmd because in compatibility mode all get commands 
-   * overwrite msg.payload (the command).
+   * Creates also msg.nrcspCmd with the used command in lower case.
+   * Modifies msg.payload if set in dialog or for output!
    *
    * @returns {promise} All commands have to return a promise - object
-   * example: returning {} means msg is not modified
-   * example: returning { msg.payload= true } means 
+   * example: returning {} means msg is not modified (except msg.nrcspCmd)
+   * example: returning { 'payload': true } means 
    *  the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
@@ -235,9 +244,10 @@ module.exports = function (RED) {
       && xIsTruthyProperty(tsPlayer, ['port']))) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer ip address or port is missing `)
     }
+    // needed for my extension in Extensions
     tsPlayer.urlObject = new URL(`http://${tsPlayer.host}:${tsPlayer.port}`)
     
-    // Command, required: node dialog overrules msg, store lowercase version in command
+    // Command, required: node dialog overrules msg, store lowercase version in msg.nrcspCmd
     let command
     if (config.command !== 'message') { // Command specified in node dialog
       command = config.command
@@ -245,18 +255,19 @@ module.exports = function (RED) {
       if (!xIsTruthyPropertyStringNotEmpty(msg, ['topic'])) {
         throw new Error(`${PACKAGE_PREFIX} command is undefined/invalid`)
       }
-      command = String(msg.topic)
-      command = command.toLowerCase()
-
+      command = String(msg.topic).toLowerCase()
       // You may omit group. prefix - so we add it here
       const REGEX_PREFIX = /^(household|group|player|joiner)/
       if (!REGEX_PREFIX.test(command)) {
         command = `group.${command}`
       }
     }
-    msg.nrcspCmd = command // Store command as get commands will overrides msg.payload
-    msg.topic = command // Sets topic - is only used in playerSetEQ, playerGetEQ
-
+    if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_UNIVERSAL,
+      command)) {
+      throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
+    }
+    msg.nrcspCmd = command // Store command, is only used in playerSetEQ, playerGetEQ
+    
     // State: node dialog overrules msg.
     let state
     if (config.state) { // Payload specified in node dialog
@@ -270,17 +281,11 @@ module.exports = function (RED) {
           msg.payload = state
         }
       } else if (typeof state === 'boolean') {
-        msg.topic = state
+        msg.payload = state
       }
     }
 
-    if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_UNIVERSAL,
-      command)) {
-      throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
-    }
-    
-    // eslint-disable-next-line max-len
-    return COMMAND_TABLE_UNIVERSAL[command](msg, tsPlayer)
+    return COMMAND_TABLE_UNIVERSAL[msg.nrcspCmd](msg, tsPlayer)
   }
 
   //
@@ -297,7 +302,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'Player is not coordinator', 'Could not find player name in current group'
+   * 'New coordinator must be different from current'
+   * @throws {error} all methods
    */
   // eslint-disable-next-line max-len
   async function coordinatorDelegateCoordination (msg, tsPlayer) {
@@ -339,7 +346,7 @@ module.exports = function (RED) {
    *
    * @returns {Promise<String>} Returns the new group volume after adjustment as property newVolume.
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupAdjustVolume (msg, tsPlayer) {
     // Payload adjusted volume is required
@@ -361,7 +368,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupClearQueue (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -384,7 +391,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: snap} snap see xCreateGroupSnapshot
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'snapVolumes (msg.snapVolumes) is not boolean', 
+   * 'snapMutestates (msg.snapMutestates) is not boolean'
+   * @throws {error} all methods
    */
   async function groupCreateSnapshot (msg, tsPlayer) {
     debug('entering method groupCreateSnapshot')
@@ -419,7 +428,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   // eslint-disable-next-line max-len
   async function groupCreateVolumeSnapshot (msg, tsPlayer) {
@@ -440,7 +449,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupCancelSleeptimer (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -460,7 +469,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: transportActions}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   // eslint-disable-next-line max-len
   async function groupGetTransportActions (msg, tsPlayer) {
@@ -481,7 +490,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: crossfade mode} on|off
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupGetCrossfadeMode (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -501,7 +510,7 @@ module.exports = function (RED) {
    *
    * @returns {Promise<GroupMember[]>} with key payload!
    *
-   * @throws {error} from methods validatedGroupProperties, getGroupsCurrent
+   * @throws {error} all methods
    */
   async function groupGetMembers (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -518,7 +527,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<string>} on|off
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupGetMute (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -538,10 +547,8 @@ module.exports = function (RED) {
    *
    * @returns {promise<string>} state
    * state: { 'stopped', 'playing', 'paused_playback', 'transitioning', 'no_media_present' }
-   
-   * regression: no_media instead of no_media_present, paused instead of paused_playback
-   *
-   * @throws any functions throws error and explicit throws
+   * 
+   * @throws {error} all methods
    */
   async function groupGetPlaybackstate (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -561,7 +568,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<object>} object to update msg. msg.payload = array of queue items as object
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupGetQueue (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -581,7 +588,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: crossfade mode} hh:mm:ss
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupGetSleeptimer (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -610,7 +617,8 @@ module.exports = function (RED) {
    * queue mode: 'NORMAL', 'REPEAT_ONE', 'REPEAT_ALL', 'SHUFFLE', 
    *  'SHUFFLE_NOREPEAT', 'SHUFFLE_REPEAT_ONE'
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'current MediaInfo is invalid', 'PlayMode is invalid/missing/not string'
+   * @throws {error} all methods
    */
   async function groupGetState (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -675,7 +683,8 @@ module.exports = function (RED) {
    * @returns {promise} {payload: media: {object}, trackInfo: {object}, 
    *  positionInfo: {object}, queueActivated: true/false
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'current position data is invalid', 
+   * @throws {error} all methods
    */
   async function groupGetTrackPlus (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -777,7 +786,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<string>} volume
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupGetVolume (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -797,7 +806,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupNextTrack (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -816,7 +825,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupPause (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -837,7 +846,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'msg.sameVolume is nonsense: player is standalone'
+   * @throws {error} all methods
    */
   async function groupPlay (msg, tsPlayer) {
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
@@ -878,7 +888,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws  any functions throws error and explicit throws
+   * @throws {error} 'uri is missing', 'ueue identifier is missing', 
+   * 'msg.sameVolume is nonsense: player is standalone'
+   * @throws {error} all methods
    */
   async function groupPlayExport (msg, tsPlayer) {
     // Simple validation of export and activation
@@ -948,7 +960,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'duration (msg.duration) is not a string', 
+   * 'duration (msg.duration) is not format hh:mm:ss'
+   * @throws {error} all methods
    *
    * Hint:
    *  While playing a notification (start .. to end + 2 seconds)
@@ -1004,7 +1018,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'msg.sameVolume is nonsense: player is standalone', 'queue is empty'
+   * @throws {error} all methods
    */
   async function groupPlayQueue (msg, tsPlayer) {
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
@@ -1048,7 +1063,10 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'snapshot (msg.payload) is not object', 'snapshot (msg.payload) is missing'
+   * 'snapshot/current group have different coordinator', 
+   * 'snapshot/current group have different size', 'snapshot/current group members are different'
+   * @throws {error} all methods
    */
   async function groupPlaySnapshot (msg, tsPlayer) {
     if (xIsTruthyProperty(msg, ['payload'])) {
@@ -1079,7 +1097,6 @@ module.exports = function (RED) {
         throw new Error(`${PACKAGE_PREFIX}: snapshot/current group members are different`)
       }
     }
-  
     await xRestoreGroupSnapshot(snapshot)
     
     return {}
@@ -1096,9 +1113,8 @@ module.exports = function (RED) {
    *
    * @returns {Promise<boolean>} always true
    * 
-   * @throws {error} if msg.sameValue true and standalone player
-   * @throws {error} NRCSP error validatedGroupProperties, getGroupCurrent, validRegex
-   * @throws {error} from node-sonos setAVTransportURI and setPlayerVolume
+   * @throws {error} 'msg.sameVolume is nonsense: player is standalone'
+   * @throws {error} all methods
    */
   async function groupPlayStreamHttpV2 (msg, tsPlayer) {
     // Payload uri is required.
@@ -1144,7 +1160,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'queue is empty'
+   * @throws {error} all methods
    */
   async function groupPlayTrack (msg, tsPlayer) {
     // Get the playerName
@@ -1190,9 +1207,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws  all from validatedGroupProperties
-   *          all from getGroupCurrent
-   *          if msg.sameVolume === false and player == standalone because non sense.
+   * @throws {error} 'msg.sameVolume is nonsense: player is standalone'
+   * @throws {error} all methods
    */
   async function groupPlayTuneIn (msg, tsPlayer) {
     // Payload radio id is required
@@ -1229,7 +1245,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupPreviousTrack (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -1249,7 +1265,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupQueueUri (msg, tsPlayer) {
     // Payload uri is required.
@@ -1279,9 +1295,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'not supported type of spotify uri'
+   * @throws {error} all methods
    */
-  // eslint-disable-next-line max-len
   async function groupQueueUriFromSpotify (msg, tsPlayer) {
     // Payload uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'spotify uri', PACKAGE_PREFIX)
@@ -1310,7 +1326,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'queue is empty'
+   * @throws {error} all methods
    */
   async function groupRemoveTracks (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -1351,7 +1368,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'queue is empty'
+   * @throws {error} all methods
    */
   // eslint-disable-next-line max-len
   async function groupSaveQueueToSonosPlaylist (msg, tsPlayer) {
@@ -1384,7 +1402,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupSeek (msg, tsPlayer) {
     // Payload seek time is required.
@@ -1408,7 +1426,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupSeekDelta (msg, tsPlayer) {
     // Payload seek time is required.
@@ -1432,7 +1450,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupSetCrossfade (msg, tsPlayer) {
     // Payload crossfade sate is required.
@@ -1455,7 +1473,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupSetMute (msg, tsPlayer) {
     // Payload mute state is required.
@@ -1478,7 +1496,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'queue is empty', 'current media data is invalid', 'queue is not activated'
+   * @throws {error} all methods
    */
   async function groupSetQueuemode (msg, tsPlayer) {
     // Payload queuemode is required.
@@ -1524,7 +1543,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupSetSleeptimer (msg, tsPlayer) {
     // Payload sleep time is required.
@@ -1549,7 +1568,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error
+   * @throws {error} all methods
    */
   async function groupSetVolume (msg, tsPlayer) {
     const newVolume = validToInteger(msg, 'payload', -100, +100, 'new volume', PACKAGE_PREFIX)
@@ -1570,7 +1589,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupStop (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -1590,7 +1609,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function groupTogglePlayback (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -1610,7 +1629,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} array of all group array of members :-)
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'List includes a player multiple times', 'all groups data undefined',
+   * 'Could not find player *'
+   * @throws {error} all methods
    */
 
   // Algorithm: If the new coordinator is already the coordinator in a existing group, 
@@ -1723,7 +1744,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'all groups data undefined', 'player name left was not found', 
+   * 'player name right was not found'
+   * @throws {error} all methods
    *
    * Caution: In executeAction it should be left: playerLeftBaseUrl
    *
@@ -1780,7 +1803,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<Array<Array>>} array of all group array of members
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function householdGetGroups (msg, tsPlayer) {
     const payload = await xGetGroupsAll(tsPlayer)
@@ -1795,7 +1818,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<Array>} All sonos playlists as array of objects
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function householdGetSonosPlaylists (msg, tsPlayer) {
     const payload = await xGetSonosPlaylists(tsPlayer, REQUESTED_COUNT_PLAYLISTS)
@@ -1812,7 +1835,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'msg.ignoreNotExists is not boolean', 
+   * 'No Sonos playlist title matching search string'
+   * @throws {error} all methods
    */
   async function householdRemoveSonosPlaylist (msg, tsPlayer) {
     // Payload title search string is required.
@@ -1838,7 +1863,7 @@ module.exports = function (RED) {
     }
     if (id === '') { // Not found
       if (!ignoreNotExists) {
-        throw new Error(`${PACKAGE_PREFIX} No Sonos playlist title matching search string.`)
+        throw new Error(`${PACKAGE_PREFIX} No Sonos playlist title matching search string`)
       }
     } else {
       await tsPlayer.ContentDirectoryService.DestroyObject({ 'ObjectID': id })
@@ -1855,7 +1880,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function householdSeparateGroup (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -1879,7 +1904,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'all groups data undefined', 'channelmap is in error - right uuid', 
+   * 'player name left was not found', 'player name right was not found'
+   * @throws {error} all methods
    *
    */
   // eslint-disable-next-line max-len
@@ -1947,7 +1974,9 @@ module.exports = function (RED) {
    * Caution: sonosPlayer can not be used here as default for input.
    * It should be a "always on always available" player.
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'player name (msg.${msg.payload}) is missing/invalid', 
+   * 'player name (msg.${msg.payload}) is not string or empty', 'all groups data undefined'
+   * @throws {error} all methods
    */
   // eslint-disable-next-line max-len
   async function householdTestPlayerOnline (msg, tsPlayer) {
@@ -1990,7 +2019,9 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'player (msg.player/node) is not a joiner', 
+   * 'duration (msg.duration) is not a string', duration (msg.duration) is not format hh:mm:ss'
+   * @throws {error} all methods
    *
    * Hints:
    *  While playing a notification (start .. to end + 2 seconds)
@@ -2048,7 +2079,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerAdjustVolume (msg, tsPlayer) {
     // Payload volume is required.
@@ -2074,7 +2105,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerBecomeStandalone (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2097,7 +2128,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: bas} type string -10 .. 10
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetBass (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2113,11 +2144,14 @@ module.exports = function (RED) {
    *  Get player EQ data.
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} msg.nrcspCmd command
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'Sonos player model name undefined', 'Selected player does not support TV',
+   * 'player response is undefined`'
+   * @throws {error} all methods
    *
    * EQ data are only available for specific players.
    */
@@ -2139,11 +2173,11 @@ module.exports = function (RED) {
 
     let args
     // No check exist needed as command has already been checked
-    if (msg.topic === 'player.get.nightmode') {
+    if (msg.nrcspCmd === 'player.get.nightmode') {
       args = { 'InstanceID': 0, 'EQType': 'NightMode' }
-    } else if (msg.topic === 'player.get.subgain') {
+    } else if (msg.nrcspCmd === 'player.get.subgain') {
       args = { 'InstanceID': 0, 'EQType': 'SubGain' }
-    } else if (msg.topic === 'player.get.dialoglevel') {
+    } else if (msg.nrcspCmd === 'player.get.dialoglevel') {
       args = { 'InstanceID': 0, 'EQType': 'DialogLevel' }
     } else {
       // Can not happen
@@ -2171,7 +2205,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<string>} payload on or off
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetLed (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2191,7 +2225,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetLoudness (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2211,7 +2245,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {payload: muteState} on|off
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetMute (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2229,7 +2263,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} object to update msg. msg.payload the properties object
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetProperties (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2253,7 +2287,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} object to update msg. msg.payload = array of queue items as object
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetQueue (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2274,7 +2308,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} object to update msg. msg.payload to role of player as string.
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetRole (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2299,7 +2333,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<string>} string -10 .. 10
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetTreble (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2319,7 +2353,7 @@ module.exports = function (RED) {
    *
    * @returns {promise<string>} range 0 .. 100
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerGetVolume (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2342,7 +2376,7 @@ module.exports = function (RED) {
    * If already in that group - it will just continue.
    * if coordinator of that group - no action and continue
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerJoinGroup (msg, tsPlayer) {
     // Payload a playername in group is required
@@ -2381,7 +2415,7 @@ module.exports = function (RED) {
    *  another will take over coordinator role
    * if standalone - no change
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerLeaveGroup (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2403,7 +2437,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    *
    */
   async function playerPlayAvtransport (msg, tsPlayer) {
@@ -2436,7 +2470,8 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'Sonos player is not TV enabled'
+   * @throws {error} all methods
    *
    */
   async function playerPlayTv (msg, tsPlayer) {
@@ -2487,7 +2522,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerSetBass (msg, tsPlayer) {
     // Payload volume is required.
@@ -2504,14 +2539,15 @@ module.exports = function (RED) {
   /**
    *  Set player EQ type
    * @param {object} msg incoming message
-   * @param {string} msg.topic the lowercase, player.set.nightmode/subgain/dialoglevel
+   * @param {string} msg.nrcspCmd the lowercase, player.set.nightmode/subgain/dialoglevel
    * @param {string} msg.payload value on,off or -15 .. 15 in case of subgain
    * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} 'Sonos player model name undefined', 'Selected player does not support TV'
+   * @throws {error} all methods
    */
   async function playerSetEQ (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2532,15 +2568,15 @@ module.exports = function (RED) {
     let eqType
     let eqValue
     // No check exist needed as command has already been checked
-    if (msg.topic === 'player.set.nightmode') {
+    if (msg.nrcspCmd === 'player.set.nightmode') {
       eqType = 'NightMode'
       eqValue = isOnOff(msg, 'payload', 'nightmode', PACKAGE_PREFIX) // Required
       eqValue = (eqValue ? 1 : 0)
-    } else if (msg.topic === 'player.set.subgain') {
+    } else if (msg.nrcspCmd === 'player.set.subgain') {
       eqType = 'SubGain'
       eqValue = validToInteger(msg, 'payload', -15, 15, 'subgain',
         PACKAGE_PREFIX) // Required
-    } else if (msg.topic === 'player.set.dialoglevel') {
+    } else if (msg.nrcspCmd === 'player.set.dialoglevel') {
       eqType = 'DialogLevel'
       eqValue = isOnOff(msg, 'payload', 'dialoglevel', PACKAGE_PREFIX) // Required
       eqValue = (eqValue ? 1 : 0)
@@ -2563,7 +2599,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerSetLed (msg, tsPlayer) {
     // Msg.state is required - convert to On Off
@@ -2587,7 +2623,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerSetLoudness (msg, tsPlayer) {
     // Msg.state is required
@@ -2611,7 +2647,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerSetMute (msg, tsPlayer) {
     // Payload mute state is required.
@@ -2633,7 +2669,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerSetTreble (msg, tsPlayer) {
     // Payload volume is required.
@@ -2658,7 +2694,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerSetVolume (msg, tsPlayer) {
     // Payload volume is required.
@@ -2682,7 +2718,7 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws any functions throws error and explicit throws
+   * @throws {error} all methods
    */
   async function playerExecuteActionV6 (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
@@ -2713,7 +2749,10 @@ module.exports = function (RED) {
    * sameVolume is true if missing.
    * clearQueue is true if missing.
    *
-   * @throws error for all invalid values
+   * @throws {error} 'sameVolume (msg.sameVolume) is not boolean', 
+   * 'sameVolume (msg.sameVolume) is true but msg.volume is not specified', 
+   * 'clearQueue (msg.cleanQueue) is not boolean'
+   * @throws {error} all methods
    */
   async function validatedGroupProperties (msg, pkgPrefix) {
     // If missing set to ''.
@@ -2747,7 +2786,8 @@ module.exports = function (RED) {
 
     return {
       'playerName': newPlayerName,
-      'volume': newVolume, 'sameVolume': newSameVolume, clearQueue
+      'volume': newVolume,
+      'sameVolume': newSameVolume, clearQueue
     }
   }
 

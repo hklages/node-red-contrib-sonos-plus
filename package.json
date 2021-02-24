@@ -25,7 +25,6 @@
     "TEST-Helper": "./node_modules/.bin/mocha ./test/Helper.js",
     "TEST-Extensions": "./node_modules/.bin/mocha ./test/Extensions.js",
     "TEST-Commands": "./node_modules/.bin/mocha ./test/Commands.js"
-    
   },
   "keywords": [
     "sonos",
@@ -55,7 +54,7 @@
     "debug": "^4.3.1",
     "xml2js": "^0.4.23",
     "fast-xml-parser": "^3.18.0",
-    "@svrooij/sonos": "v2.4.0-beta.3"
+    "@svrooij/sonos": "v2.4.0-beta.4"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.15.1",

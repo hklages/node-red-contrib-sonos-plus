@@ -65,7 +65,7 @@ module.exports = {
    * 
    * @returns {promise} true
    * 
-   * @throws if invalid response from setAVTransportURI, play,
+   * @throws {error} all methods
    */
 
   // TODO optimize 
@@ -108,9 +108,9 @@ module.exports = {
     
     // set AVTransport
     const args = {
-      InstanceID: 0,
-      CurrentURI: await xEncodeHtmlEntity(options.uri),
-      CurrentURIMetaData: metadata
+      'InstanceID': 0,
+      'CurrentURI': await xEncodeHtmlEntity(options.uri),
+      'CurrentURIMetaData': metadata
     }
     await executeActionV6(tsPlayerArray[iCoord].urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
@@ -196,7 +196,7 @@ module.exports = {
    * @param  {string}  options.duration format hh:mm:ss
    * @returns {promise} true
    *
-   * @throws all from setAVTransportURI(), avTransportService()*, play, setPlayerVolume
+   * @throws {error} all methods
    *
    * Hint: joiner will leave group, play notification and rejoin the group. 
    * State will be imported from group.
@@ -231,13 +231,12 @@ module.exports = {
     debug('Snapshot created - now start playing notification')
 
     // set the joiner to notification - joiner will leave group!
-    const args = {
-      InstanceID: 0,
-      CurrentURI: await xEncodeHtmlEntity(options.uri),
-      CurrentURIMetaData: metadata
-    }
     await executeActionV6(tsJoiner.urlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
+        'InstanceID': 0,
+        'CurrentURI': await xEncodeHtmlEntity(options.uri),
+        'CurrentURIMetaData': metadata
+      })
 
     // no check - always returns true
     await tsJoiner.Play()
@@ -284,8 +283,7 @@ module.exports = {
    * @returns {promise<object>}  returns object:
    *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
    *
-   * @throws {error} getGroupsAll
-   * @throws {error} extractGroup 
+   * @throws {error} all methods
    */
   getGroupCurrent: async function (tsPlayer, playerName) {
     debug('method >>%s', 'getGroupCurrent')
@@ -314,8 +312,8 @@ module.exports = {
    * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
    *          First group member is coordinator.
    *
-   * @throws {error} GetZoneGroupState response errors
-   * @throws {error} parse errors
+   * @throws {error} 'property ZoneGroupState is missing', 'response form parse xml is invalid'
+   * @throws {error} all methods
    */
   getGroupsAll: async function (anyTsPlayer) {
     debug('method >>%s', 'getGroupsAll')
@@ -334,7 +332,7 @@ module.exports = {
       'parseNodeValue': false
     }) 
     if (!xIsTruthy(groups)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parse xml is invalid.`)
+      throw new Error(`${PACKAGE_PREFIX} response form parse xml is invalid`)
     }
     if (!xIsTruthyProperty(groups, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
       throw new Error(`${PACKAGE_PREFIX} response form parse xml: properties missing.`)
@@ -404,7 +402,8 @@ module.exports = {
    * @returns {promise<object>}  returns object:
    *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
    *
-   * @throws {error} 
+   * @throws {error} 'could not find given player in any group'
+   * @throws {error} all methods
    */
   extractGroup: async function (playerUrlHost, allGroupsData, playerName) {
     debug('method >>%s', 'extractGroup')
@@ -493,7 +492,7 @@ module.exports = {
    *
    * @returns {promise<Snapshot>} group snapshot object
    * 
-   * @throws {error} if invalid response from SONOS player
+   * @throws {error} all methods
   */
   createGroupSnapshot: async function (playersInGroup, options) {
     debug('method >>%s', 'createGroupSnapshot')
@@ -525,15 +524,15 @@ module.exports = {
     const positionData = await xGetPositionInfo(coordinatorUrlObject)
     Object.assign(snapshot,
       {
-        CurrentURI: mediaData.CurrentURI,
-        CurrentURIMetadata: mediaData.CurrentURIMetaData,
-        NrTracks: mediaData.NrTracks
+        'CurrentURI': mediaData.CurrentURI,
+        'CurrentURIMetadata': mediaData.CurrentURIMetaData,
+        'NrTracks': mediaData.NrTracks
       })
     Object.assign(snapshot,
       {
-        Track: positionData.Track,
-        RelTime: positionData.RelTime,
-        TrackDuration: positionData.TrackDuration
+        'Track': positionData.Track,
+        'RelTime': positionData.RelTime,
+        'TrackDuration': positionData.TrackDuration
       })
     return snapshot
   },
@@ -627,13 +626,13 @@ module.exports = {
    *
    * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS Playlists)
    *
-   * @throws {error} invalid return from Browse, xDecodeHtmlEntity, xParseBrowsDidlXmlToArray
+      * @throws {error} all methods
    */  
   getMySonos: async function (tsPlayer, requestedCount) { 
     debug('method >>%s', 'getMySonos')
     const favorites = await tsPlayer.ContentDirectoryService.Browse({
-      ObjectID: 'FV:2', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
-      RequestedCount: requestedCount, SortCriteria: ''
+      'ObjectID': 'FV:2', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
+      'RequestedCount': requestedCount, 'SortCriteria': ''
     })
 
     let transformedItems = await xParseBrowseToArray(favorites, 'item', PACKAGE_PREFIX)
@@ -680,8 +679,8 @@ module.exports = {
     debug('method >>%s', 'getSonosPlaylists')
 
     const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
-      ObjectID: 'SQ:', BrowseFlag: 'BrowseDirectChildren', Filter: '*', StartingIndex: 0,
-      RequestedCount: requestedCount, SortCriteria: ''
+      'ObjectID': 'SQ:', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
+      'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
     let transformed = await xParseBrowseToArray(browsePlaylist, 'container', PACKAGE_PREFIX)
@@ -703,20 +702,22 @@ module.exports = {
    * 
    * @returns {Promise<exportedItem[]>} all Music Library items maching criteria, could be emtpy
    *
-   * @throws {error} invalid return from Browse, ....
+   * @throws {error} 'category is unknown', 'searchString is not string', 
+   * 'requestedCount is not number', 'response form parsing Browse Album is invalid'
+   * @throws {error} all methods
    */  
   getMusicLibraryItems: async function (category, searchString, requestedCount, tsPlayer) { 
     debug('method >>%s', 'getMusicLibraryItems')
 
     // validate parameter
     if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(category)) {
-      throw new Error(`${PACKAGE_PREFIX} category is unknown.`)
+      throw new Error(`${PACKAGE_PREFIX} category is unknown`)
     }
     if (typeof searchString !== 'string') {
-      throw new Error(`${PACKAGE_PREFIX} searchString is not string.`)
+      throw new Error(`${PACKAGE_PREFIX} searchString is not string`)
     }
     if (typeof requestedCount !== 'number') {
-      throw new Error(`${PACKAGE_PREFIX} requestedCount is not number.`)
+      throw new Error(`${PACKAGE_PREFIX} requestedCount is not number`)
     }
     
     const objectId = category + encodeURIComponent(searchString)
@@ -735,7 +736,7 @@ module.exports = {
       list = await xParseBrowseToArray(browseCategory, 'container', PACKAGE_PREFIX)  
     }
     if (!xIsTruthy(list)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid.`)
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
     }
     
     return list

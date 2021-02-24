@@ -30,7 +30,7 @@ module.exports = {
    * @returns {Promise<object>} {'uuid', urlHost} su
    * 
    * @throws error 'could not find any player matching serial'
-   * @throws error from xGetGroupsAll, deviceDiscovery.SearchOne
+   * @throws {error} all methods
    * 
    * Hint: discover the first one and retrieves all other player from that player.
    * Thats very reliable -deterministic. 
@@ -70,8 +70,7 @@ module.exports = {
    * 
    * @returns {Promise<object>} {'label', value}
    * 
-     * @throws error from deviceDiscovery with message "No players found"
-   * @throws error xGetGroupsAll
+   * @throws {error} all methods
    * 
    * Hint: discover the first one and retrieves all other player from that player.
    * Thats very reliable -deterministic. 
@@ -103,8 +102,7 @@ module.exports = {
    * 
    * @returns {Promise<object>} {'label', value}
    * 
-   * @throws error from deviceDiscovery with message "No players found"
-   * @throws error xGetGroupsAll, xGetDeviceProperties
+   * @throws {error} all methods
    * 
    * Hint: discover the first one and retrieves all other player from that player.
    * Thats very reliable -deterministic. 

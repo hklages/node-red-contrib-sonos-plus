@@ -80,10 +80,10 @@ module.exports = {
     debug('method >>%s', 'getDeviceProperties')
     const endpoint = '/xml/device_description.xml'
     const response = await request({
-      method: 'get',
-      baseURL: playerUrlObject.origin,
-      url: endpoint,
-      headers: {
+      'method': 'get',
+      'baseURL': playerUrlObject.origin,
+      'url': endpoint,
+      'headers': {
         'Content-type': 'text/xml; charset=utf8'
       }
     })
@@ -127,8 +127,8 @@ module.exports = {
   getSonosQueue: async function (tsPlayer, requestedCount) {
     debug('method >>%s', 'getSonosQueue')
     const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
-      ObjectID: 'Q:0', BrowseFlag: 'BrowseDirectChildren', Filter: '*',
-      StartingIndex: 0, RequestedCount: requestedCount, SortCriteria: ''
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
     let transformed = await module.exports.parseBrowseToArray(browseQueue, 'item', PACKAGE_PREFIX)
@@ -364,7 +364,7 @@ module.exports = {
       throw new Error(`${packageName} item name such as container is missing`)
     }
     if (!xIsTruthyProperty(browseOutcome, ['NumberReturned'])) { 
-      throw new Error(`${PACKAGE_PREFIX} invalid response Browse: - missing NumberReturned`)
+      throw new Error(`${packageName} invalid response Browse: - missing NumberReturned`)
     }
     if (browseOutcome.NumberReturned < 1) {
       return [] // no My Sonos favorites
@@ -372,7 +372,7 @@ module.exports = {
     
     // process the Result with Didl-Light
     if (!xIsTruthyPropertyStringNotEmpty(browseOutcome, ['Result'])) {
-      throw new Error(`${PACKAGE_PREFIX} invalid response Browse: - missing Result`)
+      throw new Error(`${packageName} invalid response Browse: - missing Result`)
     }
     const decodedResult = await xDecodeHtmlEntity(browseOutcome['Result'])
     const resultJson = await parser.parse(decodedResult, {
@@ -570,7 +570,7 @@ module.exports = {
     // and the error.response.data or NODE_SONOS_ERRORPREFIX error.message and 
     // error.response.data
     // 
-    // 3. Is the error from this package? Indicator: .message starts with NRCSP_PREFIX
+    // 3. Is the error from this package? Indicator: .message starts with PACKAGE_PREFIX
     // 
     // 4. All other error throw inside all modules (node-sonos, axio, ...)
     let msgShort = 'unknown' // default text used for status message
@@ -624,7 +624,7 @@ module.exports = {
     }
   
     node.error(`${functionName}:${msgShort} :: Details: ${msgDet}`, msg)
-    node.status({ fill: 'red', shape: 'dot', text: `error: ${functionName} - ${msgShort}`
+    node.status({ 'fill': 'red', 'shape': 'dot', 'text': `error: ${functionName} - ${msgShort}`
     })
   },
   
@@ -636,7 +636,7 @@ module.exports = {
      */
   success: (node, msg, functionName) => {
     node.send(msg)
-    node.status({ fill: 'green', shape: 'dot', text: `ok:${functionName}` })
+    node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${functionName}` })
     node.debug(`OK: ${functionName}`)
   },
   
@@ -707,7 +707,7 @@ module.exports = {
     }
 
     // Convert XML to JSON
-    const parseXMLArgs = { mergeAttrs: true, explicitArray: false, charkey: '' } 
+    const parseXMLArgs = { 'mergeAttrs': true, 'explicitArray': false, 'charkey': '' } 
     // documentation: https://www.npmjs.com/package/xml2js#options  -- don't change option!
     const bodyXml = await xml2js.parseStringPromise(response.body, parseXMLArgs)
 
@@ -793,14 +793,14 @@ module.exports = {
     debug('soa action >>%s', JSON.stringify(soapAction))
     debug('soap body >>%s', JSON.stringify(httpBody))
     const response = await request({
-      method: 'post',
-      baseURL: playerUrlOrigin,
-      url: endpoint,
-      headers: {
+      'method': 'post',
+      'baseURL': playerUrlOrigin,
+      'url': endpoint,
+      'headers': {
         SOAPAction: soapAction,
         'Content-type': 'text/xml; charset=utf8'
       },
-      data: httpBody
+      'data': httpBody
     })
       .catch((error) => {
         // Experience: When using reject(error) the error.response get lost.
@@ -837,9 +837,9 @@ module.exports = {
         }
       })
     return {
-      headers: response.headers,
-      body: response.data,
-      statusCode: response.status
+      'headers': response.headers,
+      'body': response.data,
+      'statusCode': response.status
     }
   },
 

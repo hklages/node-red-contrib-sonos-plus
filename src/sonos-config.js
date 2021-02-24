@@ -74,7 +74,7 @@ module.exports = function (RED) {
       break
 
     default:
-      response.json('available nrcsp endpoints: discoverPlayersSerialNumber, discoverPlayersHost')
+      response.json('available endpoints: discoverPlayersSerialNumber, discoverPlayersHost')
     }   
   })
 

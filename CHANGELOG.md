@@ -14,6 +14,10 @@ All notable changes to this project are documented in this file.
 
 - changes library.get.albums/playlists now with payload instead of searchString
 
+- playback state is now paused_playback instead of paused, no_media_present instead of no_media
+
+- node status is now "ok:ready" when node is successfully deployed (before first msg arrived)
+
 #### Added
 
 - config node: you can now use discovery for the ip address
