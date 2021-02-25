@@ -317,9 +317,7 @@ module.exports = function (RED) {
     }
 
     // Check PlayerName is in group and not same as old coordinator
-    const indexNewCoordinator = groupData.members.findIndex((p) => {
-      return (p.playerName === validPlayerName)
-    })
+    const indexNewCoordinator = groupData.members.findIndex((p) => p.playerName === validPlayerName)
     if (indexNewCoordinator === -1) {
       throw new Error(`${PACKAGE_PREFIX} Could not find player name in current group`)
     }
@@ -1088,8 +1086,8 @@ module.exports = function (RED) {
     // check all other member except 0 = coordinator
     let foundIndex
     for (let index = 1; index < groupData.members.length; index++) {
-      foundIndex = snapshot.membersData.findIndex((item) =>
-        (item.playerName === groupData.members[index].playerName))
+      foundIndex = snapshot.membersData.findIndex(
+        (item) => (item.playerName === groupData.members[index].playerName))
       if (foundIndex === -1) {
         throw new Error(`${PACKAGE_PREFIX}: snapshot/current group members are different`)
       }
@@ -1638,8 +1636,7 @@ module.exports = function (RED) {
   // else make the new coordinator stand alone and add all needed players.
   
   async function householdCreateGroup (msg, tsPlayer) {
-    const validatedPlayerList = validRegex(msg, 'payload', REGEX_CSV,
-      'player list', PACKAGE_PREFIX)
+    const validatedPlayerList = validRegex(msg, 'payload', REGEX_CSV, 'player list', PACKAGE_PREFIX)
     const newGroupPlayerArray = validatedPlayerList.split(',')
 
     // Verify all are unique
@@ -1753,8 +1750,7 @@ module.exports = function (RED) {
   // eslint-disable-next-line max-len
   async function householdCreateStereoPair (msg, tsPlayer) {
     // Both player are required
-    const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left',
-      PACKAGE_PREFIX)
+    const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left', PACKAGE_PREFIX)
     const playerRight = validRegex(msg, 'playerNameRight', REGEX_ANYCHAR, 'player name right',
       PACKAGE_PREFIX)
 
@@ -1795,7 +1791,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Get household groups. Ignore hidden player.
+   *  Get household groups. Ignores hidden player.
 
    * @param {object} msg incoming message
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
@@ -1811,7 +1807,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Get SONOS playlists (limited 200, ObjectID SQ)
+   *  Get SONOS playlists - only the first REQUESTED_COUNT_PLAYLISTS
    * @param {object} msg incoming message
    * @param {object} tsPlayer sonos-ts player
    *
@@ -1835,13 +1831,12 @@ module.exports = function (RED) {
    * @returns {promise} {}
    *
    * @throws {error} 'msg.ignoreNotExists is not boolean', 
-   * 'No Sonos playlist title matching search string'
+   * 'no Sonos playlist title matching search string'
    * @throws {error} all methods
    */
   async function householdRemoveSonosPlaylist (msg, tsPlayer) {
     // Payload title search string is required.
-    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title',
-      PACKAGE_PREFIX)
+    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title', PACKAGE_PREFIX)
 
     let ignoreNotExists = true
     if (xIsTruthyProperty(msg, ['ignoreNotExists'])) {
@@ -1853,19 +1848,16 @@ module.exports = function (RED) {
 
     // Using the default player of this node
     const sonosPlaylists = await xGetSonosPlaylists(tsPlayer)
-    // Find title in playlist - exact - return id
-    let id = ''
-    for (let i = 0; i < sonosPlaylists.length; i++) {
-      if (sonosPlaylists[i].title === validatedTitle) {
-        id = sonosPlaylists[i].id
-      }
-    }
-    if (id === '') { // Not found
+    // Find title in playlist - exact
+    const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
+    if (foundIndex === -1) {
       if (!ignoreNotExists) {
-        throw new Error(`${PACKAGE_PREFIX} No Sonos playlist title matching search string`)
+        throw new Error(`${PACKAGE_PREFIX} no Sonos playlist title matching search string`)
       }
+      //ignore and return
     } else {
-      await tsPlayer.ContentDirectoryService.DestroyObject({ 'ObjectID': id })
+      await tsPlayer.ContentDirectoryService.DestroyObject(
+        { 'ObjectID': sonosPlaylists[foundIndex].id })
     }
 
     return {}
@@ -1874,7 +1866,7 @@ module.exports = function (RED) {
   /**
    *  Separate group in household.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1885,7 +1877,6 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
     for (let i = 1; i < groupData.members.length; i++) { // Start with 1 - coordinator is last
-      groupData.members[i]
       // No check - always returns true
       await executeActionV6(groupData.members[i].urlObject,
         '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
@@ -1910,8 +1901,7 @@ module.exports = function (RED) {
    */
   async function householdSeparateStereoPair (msg, tsPlayer) {
     // Player left is required
-    const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left',
-      PACKAGE_PREFIX)
+    const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left', PACKAGE_PREFIX)
 
     // Verify that playerNames are valid and get the uuid
     const allGroupsData = await xGetGroupsAll(tsPlayer)
@@ -1924,7 +1914,7 @@ module.exports = function (RED) {
     let playerChannelMap
     let playerUuid
     let name
-    let playerLeftUrl // type JavaScript URL
+    let playerLeftUrlObject // type JavaScript URL
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
       for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
         name = allGroupsData[iGroup][iMember].playerName
@@ -1935,7 +1925,7 @@ module.exports = function (RED) {
           playerChannelMap = allGroupsData[iGroup][iMember].channelMapSet
           if (playerChannelMap.startsWith(playerUuid)) {
             playerLeftUuid = playerUuid
-            playerLeftUrl = allGroupsData[iGroup][iMember].urlObject
+            playerLeftUrlObject = allGroupsData[iGroup][iMember].urlObject
             if (!playerChannelMap.includes(';')) {
               throw new Error(`${PACKAGE_PREFIX} channelmap is in error - right uuid`)
             }
@@ -1954,7 +1944,7 @@ module.exports = function (RED) {
     }
 
     // No check - always returns true
-    await executeActionV6(playerLeftUrl,
+    await executeActionV6(playerLeftUrlObject,
       '/DeviceProperties/Control', 'SeparateStereoPair',
       { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
 
@@ -2481,12 +2471,7 @@ module.exports = function (RED) {
     const deviceProps = await  xGetDeviceProperties(tsSinglePlayer.urlObject)
     // Extract services and search for controlURL = "/HTControl/Control" - means tv enabled
     const serviceList = deviceProps.serviceList.service
-    const found = serviceList.findIndex((service) => {
-      if (service.controlURL === '/HTControl/Control') {
-        return true
-      }
-    })
-
+    const found = serviceList.findIndex((service) => (service.controlURL === '/HTControl/Control'))
     if (found >= 0) {
       // Extract RINCON
       const rincon = deviceProps.UDN.substring('uuid: '.length - 1)

@@ -500,9 +500,7 @@ module.exports = {
     let serviceName = '' // default even if sid is blank
     if (sid !== '') {
       const list = module.exports.MUSIC_SERVICES
-      const index = list.findIndex((service) => {
-        return (service.sid === sid)
-      })
+      const index = list.findIndex((service) => (service.sid === sid))
       if (index >= 0) {
         serviceName = list[index].name
       }  
