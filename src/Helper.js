@@ -113,7 +113,7 @@ module.exports = {
    * Truthy means not undefined, null, NaN, infinite - see method isTruthy.
    * 
    * @param  {object} nestedObj object
-   * @param  {array<string>} path path property chain- must not be empty, type string
+   * @param  {string[]} path path property chain- must not be empty, type string
    * 
    * @returns {boolean} property is accessible and not empty string
    * 

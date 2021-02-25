@@ -18,6 +18,11 @@ All notable changes to this project are documented in this file.
 
 - node status is now "ok:ready" when node is successfully deployed (before first msg arrived)
 
+- group member data url is renamed to urlObject (http://192.168.178.37:1400/)
+
+- group.get.trackplus: property payload.trackData is now payload.positionData.TrackMetaData, some properties (such as NextUri) are now undefined instead of empty string,
+payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty string, payload.positionData.TrackMetaData is now object instead of string.
+
 #### Added
 
 - config node: you can now use discovery for the ip address

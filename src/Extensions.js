@@ -16,7 +16,7 @@ const { isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
   isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
   isTruthyArray: xIsTruthyArray, isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
   encodeHtmlEntity: xEncodeHtmlEntity, decodeHtmlEntity: xDecodeHtmlEntity,
-  getNestedProperty: xGetNestedProperty 
+  getNestedProperty: xGetNestedProperty
 } = require('./Helper.js')
 
 const  request   = require('axios').default
@@ -51,7 +51,7 @@ module.exports = {
    * 
    * @throws no programmed error
    */
-  isSonosPlayer: async function (playerUrlObject, timeout) {
+  isSonosPlayer: async (playerUrlObject, timeout) => {
     debug('method >>%s', 'isSonosPlayer')
     let response = null
     try {
@@ -76,7 +76,7 @@ module.exports = {
    *
    * @throws {error}  ???
    */
-  getDeviceProperties: async function (playerUrlObject) {
+  getDeviceProperties: async (playerUrlObject) => {
     debug('method >>%s', 'getDeviceProperties')
     const endpoint = '/xml/device_description.xml'
     const response = await request({
@@ -124,7 +124,7 @@ module.exports = {
    *
    * @throws {error} invalid return from Browse, parseBrowseToArray error
    */
-  getSonosQueue: async function (tsPlayer, requestedCount) {
+  getSonosQueue: async (tsPlayer, requestedCount) => {
     debug('method >>%s', 'getSonosQueue')
     const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
@@ -139,6 +139,7 @@ module.exports = {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
+      
       return item
     })
 
@@ -162,7 +163,7 @@ module.exports = {
    * @throws {error} from module.exports.executeActionV6
    * @throws {error} if any inArgs, playerUrl is missing/invalid
    */
-  setAvTransport: async function (playerUrlObject, inArgs) { 
+  setAvTransport: async (playerUrlObject, inArgs) => { 
     debug('method >>%s', 'setAvTransport')
     if (!xIsTruthy(playerUrlObject)) {
       throw new Error(`${PACKAGE_PREFIX} playerUrl is invalid/missing.`)
@@ -207,15 +208,15 @@ module.exports = {
   //...............................................................................................
   
   // Get mute state of given player. values: on|off
-  getMutestate: async function (playerUrlObject) {
-    debug('method >>%s', 'setMutestate')
+  getMutestate: async (playerUrlObject) => {
+    debug('method >>%s', 'getMutestate')
     return (await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetMute',
       { 'InstanceID': 0, 'Channel': 'Master' }) === '1' ? 'on' : 'off')
   },
 
   // Get media info of given player.
-  getMediaInfo: async function (coordinatorUrlObject) {
+  getMediaInfo: async (coordinatorUrlObject) => {
     debug('method >>%s', 'getMediaInfo')
     return await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
@@ -224,7 +225,7 @@ module.exports = {
 
   // Get playbackstate of given player. 
   // values: playing, stopped, playing, paused_playback, transitioning, no_media_present
-  getPlaybackstate: async function (coordinatorUrlObject) {
+  getPlaybackstate: async (coordinatorUrlObject) => {
     debug('method >>%s', 'getPlaybackstate')
     const transportInfo = await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
@@ -236,7 +237,7 @@ module.exports = {
   },
 
   // Get position info of given player.
-  getPositionInfo: async function (coordinatorUrlObject) {
+  getPositionInfo: async (coordinatorUrlObject) => {
     debug('method >>%s', 'getPositionInfo')
     return await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
@@ -244,7 +245,7 @@ module.exports = {
   },
 
   // Get volume of given player. value: integer, range 0 .. 100
-  getVolume: async function (playerUrlObject) {
+  getVolume: async (playerUrlObject) => {
     debug('method >>%s', 'getVolume')
     return await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetVolume',
@@ -252,7 +253,7 @@ module.exports = {
   },
 
   //** Play (already set) URI.
-  play: async function (coordinatorUrlObject) {
+  play: async (coordinatorUrlObject) => {
     debug('method >>%s', 'play')
     return await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'Play',
@@ -260,7 +261,7 @@ module.exports = {
   },
 
   //** Position in track - requires none empty queue. position h:mm:ss
-  positionInTrack: async function (coordinatorUrlObject, positionInTrack) {
+  positionInTrack: async (coordinatorUrlObject, positionInTrack) => {
     debug('method >>%s', 'positionInTrack')
     if (!xIsTruthy(positionInTrack)) {
       throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
@@ -276,7 +277,7 @@ module.exports = {
 
   //** Play track - requires none empty queue. trackPosition (number) 1 to queue length
   // track position number or string in range 1 to lenght
-  selectTrack: async function (coordinatorUrlObject, trackPosition) {
+  selectTrack: async (coordinatorUrlObject, trackPosition) => {
     debug('method >>%s', 'selectTrack')
     if (!xIsTruthy(trackPosition)) {
       throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
@@ -292,15 +293,15 @@ module.exports = {
   },
 
   // Set new mute state at given player. newMutestate string must be on|off
-  setMutestate: async function (playerUrlObject, newMutestate) {
+  setMutestate: async (playerUrlObject, newMutestate) => {
     debug('method >>%s', 'setMutestate')
     return await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetMute',
-      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': (newMutestate ==='on') })
+      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': newMutestate })
   },
 
   // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
-  setVolume: async function (playerUrlObject, newVolume) {
+  setVolume: async (playerUrlObject, newVolume) => {
     debug('method >>%s', 'setVolume')
     return await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetVolume',
@@ -351,7 +352,7 @@ module.exports = {
    * The <DIDL-Lite> includes several attributes such as xmlns:dc" and entries 
    * all named "container" or "item". These include xml tags such as 'res'. 
    */
-  parseBrowseToArray: async function (browseOutcome, itemName, packageName) {
+  parseBrowseToArray: async (browseOutcome, itemName, packageName) => {
     
     // validate method parameter
     if (!xIsTruthy(packageName)) {
@@ -432,7 +433,7 @@ module.exports = {
       }
       if (xIsTruthyProperty(item, ['res', '#text'])) {
         newItem.uri = item['res']['#text'] // HTML entity encoded, URI encoded
-        newItem.sid = module.exports.getMusicServiceId(newItem.uri)
+        newItem.sid = await module.exports.getMusicServiceId(newItem.uri)
         newItem.serviceName = module.exports.getMusicServiceName(newItem.sid)
       }
       if (xIsTruthyProperty(item, ['r:resMD'])) {
@@ -464,22 +465,24 @@ module.exports = {
     return transformedItems  // properties see transformedItems definition
   },
 
-  /**  Get music service id (sid) from Transport URI.
+  /**  Get music service id (sid) from HTML ENTITY DECODED Transport URI.
    * @param  {string} uri such as (masked)
-   * "x-rincon-cpcontainer:1004206ccatalog%2falbums%***%2f%23album_desc?sid=201&flags=8300&sn=14"
+   * 'x-rincon-cpcontainer:1004206ccatalog%2falbums%***%2f%23album_desc?sid=201&flags=8300&sn=14'
+   * ''
    *
-   * @returns {string} service id or if not found empty string
+   * @returns {promise<string>} service id or if not found empty string
    *
    * prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
    */
-  getMusicServiceId: (uri) => {
+  getMusicServiceId: async (uri) => {
     debug('method >>%s', 'getMusicServiceId')
     let sid = '' // default even if uri undefined.
     if (xIsTruthyStringNotEmpty(uri)) {
-      const positionStart = uri.indexOf('?sid=') + '$sid='.length
-      const positionEnd = uri.indexOf('&flags=')
+      const decodedUri = await xDecodeHtmlEntity(uri)
+      const positionStart = decodedUri.indexOf('?sid=') + '$sid='.length
+      const positionEnd = decodedUri.indexOf('&flags=')
       if (positionStart > 1 && positionEnd > positionStart) {
-        sid = uri.substring(positionStart, positionEnd)
+        sid = decodedUri.substring(positionStart, positionEnd)
       }
     }
     return sid
@@ -661,7 +664,7 @@ module.exports = {
    * Everything OK if statusCode === 200 and body includes expected 
    * response value (set) or value (get)
    */
-  executeActionV6: async function (playerUrl, endpoint, actionName, actionInArgs, packageName) {
+  executeActionV6: async (playerUrl, endpoint, actionName, actionInArgs, packageName) => {
     debug('entering method executeActionV6')
    
     let throwName = ''
@@ -766,7 +769,7 @@ module.exports = {
    * @returns {promise} response header/body/error code from player
    */
   // eslint-disable-next-line max-len
-  sendSoapToPlayer: async function (playerUrlOrigin, endpoint, serviceName, actionName, args, packageName) {
+  sendSoapToPlayer: async (playerUrlOrigin, endpoint, serviceName, actionName, args, packageName) => {
     debug('entering method sendSoapToPlayer')
     let throwName = ''
     if (xIsTruthy(packageName)) {

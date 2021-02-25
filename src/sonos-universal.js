@@ -297,7 +297,7 @@ module.exports = function (RED) {
 
    * @param {object} msg incoming message
    * @param {string} msg.payload new coordinator name - must be in same group and different
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -306,7 +306,6 @@ module.exports = function (RED) {
    * 'New coordinator must be different from current'
    * @throws {error} all methods
    */
-  // eslint-disable-next-line max-len
   async function coordinatorDelegateCoordination (msg, tsPlayer) {
     // Payload new player name is required.
     const validPlayerName = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name', PACKAGE_PREFIX)
@@ -341,7 +340,7 @@ module.exports = function (RED) {
    *  Adjust group volume and outputs new volume.
    * @param {object} msg incoming message
    * @param {(string|number)} msg.payload -100 to + 100, integer
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {Promise<String>} Returns the new group volume after adjustment as property newVolume.
@@ -361,90 +360,9 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Clear queue.
-   * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise} {}
-   *
-   * @throws {error} all methods
-   */
-  async function groupClearQueue (msg, tsPlayer) {
-    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) // coordinator at 0
-    tsCoordinator.urlObject = groupData.members[0].urlObject
-    await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
-    
-    return {}
-  }
-
-  /**
-   *  Create a snapshot of the given group of players.
-   * @param {object} msg incoming message
-   * @param {boolean} [msg.snapVolumes = false] will capture the players volumes
-   * @param {boolean} [msg.snapMutestates = false] will capture the players mutestates
-   * @param {string} [msg.playerName=using tssPlayer] SONOS-Playername
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise} {payload: snap} snap see xCreateGroupSnapshot
-   *
-   * @throws {error} 'snapVolumes (msg.snapVolumes) is not boolean', 
-   * 'snapMutestates (msg.snapMutestates) is not boolean'
-   * @throws {error} all methods
-   */
-  async function groupCreateSnapshot (msg, tsPlayer) {
-    debug('entering method groupCreateSnapshot')
-    // Validate msg properties
-    const options = { 'snapVolumes': false, 'snapMutestates': false } // Default
-    if (xIsTruthyProperty(msg, ['snapVolumes'])) {
-      if (typeof msg.snapVolumes !== 'boolean') {
-        throw new Error(`${PACKAGE_PREFIX}: snapVolumes (msg.snapVolumes) is not boolean`)
-      }
-      options.snapVolumes = msg.snapVolumes
-    }
-    if (xIsTruthyProperty(msg, ['snapMutestates'])) {
-      if (typeof msg.snapVolumes !== 'boolean') {
-        throw new Error(`${PACKAGE_PREFIX}: snapMutestates (msg.snapMutestates) is not boolean`)
-      }
-      options.snapMutestates = msg.snapMutestates
-    }
-
-    // Validate msg.playerName - error are thrown
-    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
-    const payload = await xCreateGroupSnapshot(groupData.members, options)
-    
-    return { payload }
-  }
-
-  /**
-   *  Group create volume snap shot (used for adjust group volume)
-   * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise} {}
-   *
-   * @throws {error} all methods
-   */
-  // eslint-disable-next-line max-len
-  async function groupCreateVolumeSnapshot (msg, tsPlayer) {
-    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
-    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'SnapshotGroupVolume',
-      { 'InstanceID': 0 }) 
-
-    return {}
-  }
-
-  /**
    *  Cancel group sleep timer.
    * @param {object} msg incoming message.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -462,9 +380,88 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Clear queue.
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise} {}
+   *
+   * @throws {error} all methods
+   */
+  async function groupClearQueue (msg, tsPlayer) {
+    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+    await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
+    
+    return {}
+  }
+
+  /**
+   *  Create a snapshot of the given group of players.
+   * @param {object} msg incoming message
+   * @param {boolean} [msg.snapVolumes = false] will capture the players volumes
+   * @param {boolean} [msg.snapMutestates = false] will capture the players mutestates
+   * @param {string} [msg.playerName = using tssPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise} {payload: snap} snap see createGroupSnapshot
+   *
+   * @throws {error} 'snapVolumes (msg.snapVolumes) is not boolean', 
+   * 'snapMutestates (msg.snapMutestates) is not boolean'
+   * @throws {error} all methods
+   */
+  async function groupCreateSnapshot (msg, tsPlayer) {
+    debug('method >>%s', 'groupCreateSnapshot')
+    // Validate msg properties
+    const options = { 'snapVolumes': false, 'snapMutestates': false } // Default
+    if (xIsTruthyProperty(msg, ['snapVolumes'])) {
+      if (typeof msg.snapVolumes !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: snapVolumes (msg.snapVolumes) is not boolean`)
+      }
+      options.snapVolumes = msg.snapVolumes
+    }
+    if (xIsTruthyProperty(msg, ['snapMutestates'])) {
+      if (typeof msg.snapVolumes !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: snapMutestates (msg.snapMutestates) is not boolean`)
+      }
+      options.snapMutestates = msg.snapMutestates
+    }
+
+    // Validate msg.playerName 
+    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
+    const payload = await xCreateGroupSnapshot(groupData.members, options)
+    
+    return { payload }
+  }
+
+  /**
+   *  Group create volume snap shot (used for adjust group volume)
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise} {}
+   *
+   * @throws {error} all methods
+   */
+  async function groupCreateVolumeSnapshot (msg, tsPlayer) {
+    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
+    const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
+    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
+      '/MediaRenderer/GroupRenderingControl/Control', 'SnapshotGroupVolume',
+      { 'InstanceID': 0 }) 
+
+    return {}
+  }
+
+  /**
    *  Get group transport actions.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: transportActions}
@@ -485,7 +482,7 @@ module.exports = function (RED) {
   /**
    *  Get group crossfade mode.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: crossfade mode} on|off
@@ -505,7 +502,7 @@ module.exports = function (RED) {
   /**
    *  Get array of group member - this group.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {Promise<GroupMember[]>} with key payload!
@@ -522,7 +519,7 @@ module.exports = function (RED) {
   /**
    *  Get group mute.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<string>} on|off
@@ -542,7 +539,7 @@ module.exports = function (RED) {
   /**
    *  Get the playback state of that group, the specified player belongs to.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<string>} state
@@ -563,7 +560,7 @@ module.exports = function (RED) {
   /**
    *  Get group SONOS queue - the SONOS queue of the coordinator.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} object to update msg. msg.payload = array of queue items as object
@@ -583,7 +580,7 @@ module.exports = function (RED) {
   /**
    *  Get group sleeptimer.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: crossfade mode} hh:mm:ss
@@ -609,7 +606,7 @@ module.exports = function (RED) {
   /**
    *  Get state (see return) of that group, the specified player belongs to.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with JavaScript build-in URL urlObject- as default
    *
    * @returns {promise} { see return }
@@ -675,9 +672,9 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Get group track, media and position info.
+   *  Get group media and position(track) info.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: media: {object}, trackInfo: {object}, 
@@ -704,7 +701,7 @@ module.exports = function (RED) {
     const queueActivated = uri.startsWith('x-rincon-queue')
     const radioId = xGetRadioId(uri)
 
-    let serviceId = xGetMusicServiceId(uri)
+    let serviceId = await xGetMusicServiceId(uri)
 
     // Get station uri for all "x-sonosapi-stream"
     let stationArtUri = ''
@@ -721,7 +718,7 @@ module.exports = function (RED) {
     if (xIsTruthyPropertyStringNotEmpty(positionData, ['TrackURI'])) {
       const trackUri = positionData.TrackURI
       if (serviceId === '') {
-        serviceId = xGetMusicServiceId(trackUri)
+        serviceId = await xGetMusicServiceId(trackUri)
       }
     }
     const serviceName = xGetMusicServiceName(serviceId)
@@ -781,7 +778,7 @@ module.exports = function (RED) {
   /**
    *  Get group volume.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<string>} volume
@@ -799,7 +796,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Play next track on given group of players.
+   *  Play next track in that group.
    * @param {object} msg incoming message
    * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
@@ -1093,7 +1090,7 @@ module.exports = function (RED) {
     for (let index = 1; index < groupData.members.length; index++) {
       foundIndex = snapshot.membersData.findIndex((item) =>
         (item.playerName === groupData.members[index].playerName))
-      if (foundIndex < 0) {
+      if (foundIndex === -1) {
         throw new Error(`${PACKAGE_PREFIX}: snapshot/current group members are different`)
       }
     }
@@ -1317,11 +1314,11 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Remove a number of tracks in queue.
+   *  Remove a number of tracks in queue (queue must be non empty)
    * @param {object} msg incoming message
    * @param {string/number} msg.payload number of track in queue. 1 ... queue length.
    * @param {number/string} [msg.numberOfTracks=1] number of track 1 ... queue length.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1349,12 +1346,12 @@ module.exports = function (RED) {
     const validatedNumberOfTracks = validToInteger(msg, 'numberOfTracks', 1,
       lastTrackInQueue, 'number of tracks', PACKAGE_PREFIX, 1)
     const args = {
-      'InstanceID': 1,
+      'InstanceID': 0,
       'StartingIndex': validatedPosition,
       'NumberOfTracks': validatedNumberOfTracks,
-      'ObjectID': ''
+      'UpdateID': ''
     }
-    await tsCoordinator.RemoveTrackRangeFromQueue(args)
+    await tsCoordinator.AVTransportService.RemoveTrackRangeFromQueue(args)
     
     return {}
   }
@@ -1363,7 +1360,7 @@ module.exports = function (RED) {
    *  Save SONOS queue to Sonos playlist.
    * @param {object} msg incoming message
    * @param {string} msg.payload title of Sonos playlist.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1397,7 +1394,7 @@ module.exports = function (RED) {
    *  Group seek to specific time.
    * @param {object} msg incoming message
    * @param {string} msg.payload hh:mm:ss time in song.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1421,7 +1418,7 @@ module.exports = function (RED) {
 
    * @param {object} msg incoming message
    * @param {string} msg.payload +/- hh:mm:ss time in song.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1445,7 +1442,7 @@ module.exports = function (RED) {
    *  Set group crossfade on|off.
    * @param {object} msg incoming message
    * @param {string} msg.payload on|off.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1468,7 +1465,7 @@ module.exports = function (RED) {
    *  Set group mute state.
    * @param {object} msg incoming message
    * @param {string} msg.payload on|off.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1491,7 +1488,7 @@ module.exports = function (RED) {
    *  Set group queuemode - queue must being activated and must not be empty.
    * @param {object} msg incoming message
    * @param {string} msg.payload queue modes - may be mixed case
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1503,10 +1500,10 @@ module.exports = function (RED) {
     // Payload queuemode is required.
     const newState = validRegex(msg, 'payload', REGEX_QUEUEMODES, 'queue mode', PACKAGE_PREFIX)
 
-    // Check queue is not empty and activated
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
-
+    
+    // Check queue is not empty and activated
     const coordinatorIndex = 0
     const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
@@ -1514,6 +1511,8 @@ module.exports = function (RED) {
     if (queueItems.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
+
+    // check queue is activated
     const mediaData = await tsCoordinator.AVTransportService.GetMediaInfo()
     if (!xIsTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current media data is invalid`)
@@ -1538,7 +1537,7 @@ module.exports = function (RED) {
    *  Set group sleep timer.
    * @param {object} msg incoming message
    * @param {string} msg.payload hh:mm:ss time in song.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1563,7 +1562,7 @@ module.exports = function (RED) {
    *  Group set volume.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload new volume
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1584,7 +1583,7 @@ module.exports = function (RED) {
   /**
    *  Stop playing in that group, the specified player belongs to.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1604,7 +1603,7 @@ module.exports = function (RED) {
   /**
    *  Toggle playback on given group of players.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -1909,7 +1908,6 @@ module.exports = function (RED) {
    * @throws {error} all methods
    *
    */
-  // eslint-disable-next-line max-len
   async function householdSeparateStereoPair (msg, tsPlayer) {
     // Player left is required
     const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left',
@@ -1978,7 +1976,6 @@ module.exports = function (RED) {
    * 'player name (msg.${msg.payload}) is not string or empty', 'all groups data undefined'
    * @throws {error} all methods
    */
-  // eslint-disable-next-line max-len
   async function householdTestPlayerOnline (msg, tsPlayer) {
     // Player name is required
     if (!xIsTruthyProperty(msg, ['payload'])) {
@@ -2074,7 +2071,7 @@ module.exports = function (RED) {
    *  Adjust player volume.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload -100 to +100 integer.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2083,8 +2080,7 @@ module.exports = function (RED) {
    */
   async function playerAdjustVolume (msg, tsPlayer) {
     // Payload volume is required.
-    const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume',
-      PACKAGE_PREFIX)
+    const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume', PACKAGE_PREFIX)
 
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await xGetGroupCurrent(tsPlayer, validated.playerName)
@@ -2100,7 +2096,7 @@ module.exports = function (RED) {
   /**
    *  Player become coordinator of standalone group.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2123,7 +2119,7 @@ module.exports = function (RED) {
   /**
    *  Get player bass.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: bas} type string -10 .. 10
@@ -2143,7 +2139,7 @@ module.exports = function (RED) {
   /**
    *  Get player EQ data.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {string} msg.nrcspCmd command
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -2200,7 +2196,7 @@ module.exports = function (RED) {
   /**
    *  Get player LED state.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<string>} payload on or off
@@ -2220,7 +2216,7 @@ module.exports = function (RED) {
   /**
    *  Get player loudness.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} object to update msg. msg.payload the Loudness state LED state on|off
@@ -2240,7 +2236,7 @@ module.exports = function (RED) {
   /**
    *  Get mute state for given player.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: muteState} on|off
@@ -2258,7 +2254,7 @@ module.exports = function (RED) {
   /**
    *  Get player properties.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} object to update msg. msg.payload the properties object
@@ -2282,7 +2278,7 @@ module.exports = function (RED) {
   /**
    *  Get the SONOS-Queue of the specified player.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} object to update msg. msg.payload = array of queue items as object
@@ -2303,7 +2299,7 @@ module.exports = function (RED) {
   /**
    *  Get the role and name of a player.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} object to update msg. msg.payload to role of player as string.
@@ -2328,7 +2324,7 @@ module.exports = function (RED) {
   /**
    *  Get player treble.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<string>} string -10 .. 10
@@ -2348,7 +2344,7 @@ module.exports = function (RED) {
   /**
    *  Get volume of given player.
    * @param {object} msg incoming message
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<string>} range 0 .. 100
@@ -2517,7 +2513,7 @@ module.exports = function (RED) {
    *  Set bass.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload-10 to +10 integer.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2541,7 +2537,7 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.nrcspCmd the lowercase, player.set.nightmode/subgain/dialoglevel
    * @param {string} msg.payload value on,off or -15 .. 15 in case of subgain
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2594,7 +2590,7 @@ module.exports = function (RED) {
    *  Set player led on|off.
    * @param {object} msg incoming message
    * @param {string} msg.payload on|off
-   * @param {string} [msg.playerName=using tslayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tslayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2618,7 +2614,7 @@ module.exports = function (RED) {
    *  Set player loudness on|off.
    * @param {object} msg incoming message
    * @param {string} msg.payload on|off
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2642,7 +2638,7 @@ module.exports = function (RED) {
    *  Set mute for given player.
    * @param {object} msg incoming message
    * @param {string} msg.payload on|off.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2664,7 +2660,7 @@ module.exports = function (RED) {
    *  Player set treble.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload -10 to +10 integer.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2689,7 +2685,7 @@ module.exports = function (RED) {
    *  Set volume for given player.
    * @param {object} msg incoming message
    * @param {number/string} msg.payload, integer 0 .. 100 integer.
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -2713,7 +2709,7 @@ module.exports = function (RED) {
    * @param {string} msg.endpoint 
    * @param {string} msg.action
    * @param {object} msg.inArgs
-   * @param {string} [msg.playerName=using tsPlayer] SONOS-Playername
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}

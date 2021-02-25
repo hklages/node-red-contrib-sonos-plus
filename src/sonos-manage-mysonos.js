@@ -418,12 +418,11 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     
-    // find in title property
-    let foundIndex = -1
-    foundIndex = mySonosItems.findIndex((item) => {
+    // find in title property (findIndex returns -1 if not found)
+    const foundIndex = mySonosItems.findIndex((item) => {
       return (item.title.includes(validSearch))
     })
-    if (foundIndex < 0) {
+    if (foundIndex === -1) {
       throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
 
@@ -473,12 +472,11 @@ module.exports = function (RED) {
     if (!xIsTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
-    // find in title
-    let foundIndex = -1
-    foundIndex = mySonosItems.findIndex((item) => {
+    // find in title, findIndex returns -1 if not found
+    const foundIndex = mySonosItems.findIndex((item) => {
       return (item.title.includes(validSearch) && (item.processingType === 'queue'))
     })
-    if (foundIndex < 0) {
+    if (foundIndex === -1) {
       throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
     
@@ -513,12 +511,11 @@ module.exports = function (RED) {
     if (!xIsTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
-    // find in title
-    let foundIndex = -1
-    foundIndex = mySonosItems.findIndex((item) => {
+    // find in title, findIndex returns -1 if not found
+    const foundIndex = mySonosItems.findIndex((item) => {
       return (item.title.includes(validSearch) && (item.processingType === 'stream'))
     })
-    if (foundIndex < 0) {
+    if (foundIndex === -1) {
       throw new Error(`${PACKAGE_PREFIX} no title matching search string >>${validSearch}`)
     }
     
