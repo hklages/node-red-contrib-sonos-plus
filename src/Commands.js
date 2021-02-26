@@ -13,18 +13,13 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  getMutestate: xGetMutestate, getPlaybackstate: xGetPlaybackstate, 
-  getVolume: xGetVolume, setMutestate: xSetMutestate, setVolume: xSetVolume,
-  getMediaInfo: xGetMediaInfo, getPositionInfo: xGetPositionInfo,
-  setAvTransport: xSetAvTransport, selectTrack: xSelectTrack,
-  positionInTrack: xPositionInTrack, play: xPlay,
-  parseBrowseToArray: xParseBrowseToArray, getRadioId: xGetRadioId,
-  getUpnpClassEncoded: xGetUpnpClassEncoded, executeActionV6
+  getMutestate, getPlaybackstate, getVolume, setMutestate, setVolume, getMediaInfo, getPositionInfo,
+  setAvTransport, selectTrack, positionInTrack, parseBrowseToArray, getRadioId, getUpnpClassEncoded,
+  executeActionV6
 } = require('./Extensions.js')
 
-const { isTruthyProperty: xIsTruthyProperty, isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
-  hhmmss2msec: xhhmmss2msec, isTruthy: xIsTruthy, decodeHtmlEntity: xDecodeHtmlEntity,
-  encodeHtmlEntity: xEncodeHtmlEntity
+const { isTruthyProperty, isTruthyStringNotEmpty, hhmmss2msec, isTruthy,
+  decodeHtmlEntity, encodeHtmlEntity
 } = require('./Helper.js')
 
 const { MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -74,14 +69,14 @@ module.exports = {
 
     // generate metadata if not provided and uri as URL
     let metadata
-    if (!xIsTruthyProperty(options, ['metadata'])) {
+    if (!isTruthyProperty(options, ['metadata'])) {
       metadata = await MetaDataHelper.GuessMetaDataAndTrackUri(options.uri).metadata
       // metadata = GenerateMetadata(options.uri).metadata
     } else {
       metadata = options.metadata
     }
     if (metadata !== '') {
-      metadata = await xEncodeHtmlEntity(metadata) // html not url encoding!
+      metadata = await encodeHtmlEntity(metadata) // html not url encoding!
     }
     debug('metadata >>%s' + JSON.stringify(metadata))
 
@@ -89,7 +84,7 @@ module.exports = {
     // getCurrentState will return playing for a non-coordinator player even if group is playing
     const iCoord = 0
     const snapshot = {}
-    const state = await xGetPlaybackstate(tsPlayerArray[iCoord].urlObject)
+    const state = await getPlaybackstate(tsPlayerArray[iCoord].urlObject)
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     debug('wasPlaying >>%s', snapshot.wasPlaying)
     snapshot.mediaInfo
@@ -97,11 +92,11 @@ module.exports = {
     snapshot.positionInfo = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
     snapshot.memberVolumes = []
     if (options.volume !== -1) {
-      snapshot.memberVolumes[0] = await xGetVolume(tsPlayerArray[iCoord].urlObject)
+      snapshot.memberVolumes[0] = await getVolume(tsPlayerArray[iCoord].urlObject)
     }
     if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < tsPlayerArray.length; index++) {
-        snapshot.memberVolumes[index] = await xGetVolume(tsPlayerArray[index].urlObject)
+        snapshot.memberVolumes[index] = await getVolume(tsPlayerArray[index].urlObject)
       }
     }
     debug('Snapshot created - now start playing notification')
@@ -109,18 +104,18 @@ module.exports = {
     // set AVTransport
     const args = {
       'InstanceID': 0,
-      'CurrentURI': await xEncodeHtmlEntity(options.uri),
+      'CurrentURI': await encodeHtmlEntity(options.uri),
       'CurrentURIMetaData': metadata
     }
     await executeActionV6(tsPlayerArray[iCoord].urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
 
     if (options.volume !== -1) {
-      await xSetVolume(tsPlayerArray[iCoord].urlObject, options.volume)
+      await setVolume(tsPlayerArray[iCoord].urlObject, options.volume)
       debug('same Volume >>%s', options.sameVolume)
       if (options.sameVolume) { // all other members, starting at 1
         for (let index = 1; index < tsPlayerArray.length; index++) {
-          await xSetVolume(tsPlayerArray[index].urlObject, options.volume)
+          await setVolume(tsPlayerArray[index].urlObject, options.volume)
         }
       }
     }
@@ -130,12 +125,12 @@ module.exports = {
     debug('Playing notification started - now figuring out the end')
 
     // waiting either based on SONOS estimation, per default or user specified
-    let waitInMilliseconds = xhhmmss2msec(options.duration)
+    let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
       const positionInfo
         = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
-      if (xIsTruthyProperty(positionInfo, ['TrackDuration'])) {
-        waitInMilliseconds = xhhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
+      if (isTruthyProperty(positionInfo, ['TrackDuration'])) {
+        waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         debug('Did retrieve duration from SONOS player')
       } else {
         debug('Could NOT retrieve duration from SONOS player - using default/specified length')
@@ -147,12 +142,12 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await xSetVolume(tsPlayerArray[iCoord].urlObject,
+      await setVolume(tsPlayerArray[iCoord].urlObject,
         snapshot.memberVolumes[iCoord])
     }
     if (options.sameVolume) { // all other members, starting at 1
       for (let index = 1; index < tsPlayerArray.length; index++) {
-        await xSetVolume(tsPlayerArray[index].urlObject,
+        await setVolume(tsPlayerArray[index].urlObject,
           snapshot.memberVolumes[index])
       }
     }
@@ -208,25 +203,25 @@ module.exports = {
 
     // generate metadata if not provided and uri as URL
     let metadata
-    if (!xIsTruthyProperty(options, ['metadata'])) {
+    if (!isTruthyProperty(options, ['metadata'])) {
       metadata = await MetaDataHelper.GuessMetaDataAndTrackUri(options.uri).metadata
       // metadata = GenerateMetadata(options.uri).metadata
     } else {
       metadata = options.metadata
     }
     if (metadata !== '') {
-      metadata = await xEncodeHtmlEntity(metadata) // html not url encoding!
+      metadata = await encodeHtmlEntity(metadata) // html not url encoding!
     }
     debug('metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
     const snapshot = {}
-    const state = await xGetPlaybackstate(tsCoordinator.urlObject) 
+    const state = await getPlaybackstate(tsCoordinator.urlObject) 
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     snapshot.mediaInfo = await tsJoiner.AVTransportService.GetMediaInfo()
     if (options.volume !== -1) {
-      snapshot.joinerVolume = await xGetVolume(tsJoiner.urlObject)
+      snapshot.joinerVolume = await getVolume(tsJoiner.urlObject)
     }
     debug('Snapshot created - now start playing notification')
 
@@ -234,7 +229,7 @@ module.exports = {
     await executeActionV6(tsJoiner.urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
         'InstanceID': 0,
-        'CurrentURI': await xEncodeHtmlEntity(options.uri),
+        'CurrentURI': await encodeHtmlEntity(options.uri),
         'CurrentURIMetaData': metadata
       })
 
@@ -242,16 +237,16 @@ module.exports = {
     await tsJoiner.Play()
 
     if (options.volume !== -1) {
-      await xSetVolume(tsJoiner.urlObject, options.volume)
+      await setVolume(tsJoiner.urlObject, options.volume)
     }
     debug('Playing notification started - now figuring out the end')
 
     // waiting either based on SONOS estimation, per default or user specified
-    let waitInMilliseconds = xhhmmss2msec(options.duration)
+    let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
       const positionInfo = await tsJoiner.AVTransportService.GetPositionInfo()
-      if (xIsTruthyProperty(positionInfo, ['TrackDuration'])) {
-        waitInMilliseconds = xhhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
+      if (isTruthyProperty(positionInfo, ['TrackDuration'])) {
+        waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
         debug('Did retrieve duration from SONOS player')
       } else {
         debug('Could NOT retrieve duration from SONOS player - using default/specified length')
@@ -263,7 +258,7 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await xSetVolume(tsJoiner.urlObject, snapshot.joinerVolume)
+      await setVolume(tsJoiner.urlObject, snapshot.joinerVolume)
     }
 
     await tsJoiner.AVTransportService.SetAVTransportURI({
@@ -322,19 +317,19 @@ module.exports = {
     const householdPlayers = await anyTsPlayer.GetZoneGroupState()
     
     // select only ZoneGroupState not the other attributes and check
-    if (!xIsTruthyProperty(householdPlayers, ['ZoneGroupState'])) {
+    if (!isTruthyProperty(householdPlayers, ['ZoneGroupState'])) {
       throw new Error(`${PACKAGE_PREFIX} property ZoneGroupState is missing`)
     }
-    const decoded = await xDecodeHtmlEntity(householdPlayers.ZoneGroupState)
+    const decoded = await decodeHtmlEntity(householdPlayers.ZoneGroupState)
     const groups = await parser.parse(decoded, {
       'ignoreAttributes': false,
       'attributeNamePrefix': '_',
       'parseNodeValue': false
     }) 
-    if (!xIsTruthy(groups)) {
+    if (!isTruthy(groups)) {
       throw new Error(`${PACKAGE_PREFIX} response form parse xml is invalid`)
     }
-    if (!xIsTruthyProperty(groups, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
+    if (!isTruthyProperty(groups, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
       throw new Error(`${PACKAGE_PREFIX} response form parse xml: properties missing.`)
     }
 
@@ -409,7 +404,7 @@ module.exports = {
     debug('method >>%s', 'extractGroup')
     
     // this ensures that playerName overrules given playerUrlHostname
-    const searchByPlayerName = xIsTruthyStringNotEmpty(playerName)
+    const searchByPlayerName = isTruthyStringNotEmpty(playerName)
 
     // find player in group bei playerUrlHostname or playerName
     // playerName overrules playerUrlHostname
@@ -508,20 +503,20 @@ module.exports = {
         playerName: playersInGroup[index].playerName
       }
       if (options.snapVolumes) {
-        member.volume = await xGetVolume(playersInGroup[index].urlObject)
+        member.volume = await getVolume(playersInGroup[index].urlObject)
       }
       if (options.snapMutestates) {
-        member.mutestate =  await xGetMutestate(playersInGroup[index].urlObject)
+        member.mutestate =  await getMutestate(playersInGroup[index].urlObject)
       }
       snapshot.membersData.push(member)
     }
 
     const coordinatorUrlObject = playersInGroup[0].urlObject
-    snapshot.playbackstate = await xGetPlaybackstate(coordinatorUrlObject)
+    snapshot.playbackstate = await getPlaybackstate(coordinatorUrlObject)
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
     || snapshot.playbackstate === 'transitioning')
-    const mediaData = await xGetMediaInfo(coordinatorUrlObject)
-    const positionData = await xGetPositionInfo(coordinatorUrlObject)
+    const mediaData = await getMediaInfo(coordinatorUrlObject)
+    const positionData = await getPositionInfo(coordinatorUrlObject)
     Object.assign(snapshot,
       {
         'CurrentURI': mediaData.CurrentURI,
@@ -550,25 +545,25 @@ module.exports = {
     // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
     const metadata = snapshot.CurrentURIMetadata
-    await xSetAvTransport(coordinatorUrlObject,
+    await setAvTransport(coordinatorUrlObject,
       {
         'CurrentURI': snapshot.CurrentURI,
         'CurrentURIMetaData': metadata
       })
 
     let track
-    if (xIsTruthyProperty(snapshot, ['Track'])) {
+    if (isTruthyProperty(snapshot, ['Track'])) {
       track = parseInt(snapshot['Track'])
     }
     let nrTracks
-    if (xIsTruthyProperty(snapshot, ['NrTracks'])) {
+    if (isTruthyProperty(snapshot, ['NrTracks'])) {
       nrTracks = parseInt(snapshot['NrTracks'])
     }
     if (track >= 1 && nrTracks >= track) {
       debug('Setting track to >>%s', snapshot.Track)
       // we need to wait until track is selected
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500)
-      xSelectTrack(coordinatorUrlObject, track)
+      selectTrack(coordinatorUrlObject, track)
         .catch(() => {
           debug('Reverting back track failed, happens for some music services.')
         })
@@ -577,7 +572,7 @@ module.exports = {
       // we need to wait until track is selected
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100)
       debug('Setting back time to >>%', snapshot.RelTime)
-      await xPositionInTrack(coordinatorUrlObject, snapshot.RelTime)
+      await positionInTrack(coordinatorUrlObject, snapshot.RelTime)
         .catch(() => {
           debug('Reverting back track time failed, happens for some music services.')
         })
@@ -590,11 +585,11 @@ module.exports = {
       volume = snapshot.membersData[index].volume
       urlObject  = new URL(snapshot.membersData[index].urlSchemeAuthority)
       if (volume !== '-1') { // volume is of type string
-        await xSetVolume(urlObject, parseInt(volume))
+        await setVolume(urlObject, parseInt(volume))
       }
       mutestate = snapshot.membersData[index].mutestate
       if (mutestate != null) {
-        await xSetMutestate(urlObject, mutestate)
+        await setMutestate(urlObject, mutestate)
       }
     }
     
@@ -633,20 +628,20 @@ module.exports = {
       'RequestedCount': requestedCount, 'SortCriteria': ''
     })
 
-    let transformedItems = await xParseBrowseToArray(favorites, 'item', PACKAGE_PREFIX)
+    let transformedItems = await parseBrowseToArray(favorites, 'item', PACKAGE_PREFIX)
     transformedItems = await Promise.all(transformedItems.map(async (item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
       
-      if (xIsTruthyProperty(item, ['uri'])) {
-        item.radioId = xGetRadioId(item.uri)
+      if (isTruthyProperty(item, ['uri'])) {
+        item.radioId = getRadioId(item.uri)
       }
 
       // My Sonos items have own upnp class object.itemobject.item.sonos-favorite"
       // metadata contains the relevant upnp class of the track, album, stream, ...
-      if (xIsTruthyProperty(item, ['metadata'])) {
-        item.upnpClass = await xGetUpnpClassEncoded(item['metadata'])
+      if (isTruthyProperty(item, ['metadata'])) {
+        item.upnpClass = await getUpnpClassEncoded(item['metadata'])
     
         if (module.exports.UPNP_CLASSES_STREAM.includes(item.upnpClass)) {
           item.processingType = 'stream'
@@ -681,7 +676,7 @@ module.exports = {
       'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
-    let transformed = await xParseBrowseToArray(browsePlaylist, 'container', PACKAGE_PREFIX)
+    let transformed = await parseBrowseToArray(browsePlaylist, 'container', PACKAGE_PREFIX)
     transformed = transformed.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
@@ -729,11 +724,11 @@ module.exports = {
 
     let list
     if (category === 'A:TRACKS:') {
-      list = await xParseBrowseToArray(browseCategory, 'item', PACKAGE_PREFIX)    
+      list = await parseBrowseToArray(browseCategory, 'item', PACKAGE_PREFIX)    
     } else {
-      list = await xParseBrowseToArray(browseCategory, 'container', PACKAGE_PREFIX)  
+      list = await parseBrowseToArray(browseCategory, 'container', PACKAGE_PREFIX)  
     }
-    if (!xIsTruthy(list)) {
+    if (!isTruthy(list)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
     }
     

@@ -11,9 +11,9 @@
 'use strict'
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
-const { getGroupsAll: xGetGroupsAll } = require('./Commands.js')
+const { getGroupsAll: getGroupsAll } = require('./Commands.js')
 
-const { matchSerialUuid: xMatchSerialUuid, getDeviceProperties: xGetDeviceProperties
+const { matchSerialUuid: matchSerialUuid, getDeviceProperties: getDeviceProperties
 } = require('./Extensions.js')
 
 const { SonosDeviceDiscovery, SonosDevice } = require('@svrooij/sonos/lib')
@@ -42,7 +42,7 @@ module.exports = {
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeoutSeconds)
     const tsFirstPlayer = new SonosDevice(firstPlayerData.host)
-    const allGroups = await xGetGroupsAll(tsFirstPlayer)
+    const allGroups = await getGroupsAll(tsFirstPlayer)
     const flatList = [].concat.apply([], allGroups) // merge array of array in array
     const reducedList = flatList.map((item) => { // only some properties
       return {
@@ -52,7 +52,7 @@ module.exports = {
     })
     let foundIndex = -1 // not found as default
     for (let index = 0; index < reducedList.length; index++) {
-      if (xMatchSerialUuid(serialNumber, reducedList[index].uuid)) {
+      if (matchSerialUuid(serialNumber, reducedList[index].uuid)) {
         foundIndex = index
         break
       }
@@ -82,7 +82,7 @@ module.exports = {
     const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
     const firstPlayer = new SonosDevice(firstPlayerData.host)
-    const allGroups = await xGetGroupsAll(firstPlayer)
+    const allGroups = await getGroupsAll(firstPlayer)
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)
 
@@ -114,13 +114,13 @@ module.exports = {
     const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
     const firstPlayer = new SonosDevice(firstPlayerData.host)
-    const allGroups = await xGetGroupsAll(firstPlayer)
+    const allGroups = await getGroupsAll(firstPlayer)
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)
 
     debug('get the serial number for every player')
     for (let index = 0; index < flatList.length; index++) {
-      const deviceProperties = await xGetDeviceProperties(flatList[index].urlObject)
+      const deviceProperties = await getDeviceProperties(flatList[index].urlObject)
       // we assume existns of that property
       flatList[index].serialNumber = deviceProperties.serialNum
     }

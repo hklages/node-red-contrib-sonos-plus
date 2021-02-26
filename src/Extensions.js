@@ -12,11 +12,8 @@
 
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
-const { isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty,
-  isTruthyStringNotEmpty: xIsTruthyStringNotEmpty,
-  isTruthyArray: xIsTruthyArray, isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
-  encodeHtmlEntity: xEncodeHtmlEntity, decodeHtmlEntity: xDecodeHtmlEntity,
-  getNestedProperty: xGetNestedProperty
+const { isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, isTruthyArray, isTruthy,
+  isTruthyProperty, encodeHtmlEntity, decodeHtmlEntity, getNestedProperty
 } = require('./Helper.js')
 
 const  request   = require('axios').default
@@ -62,7 +59,7 @@ module.exports = {
       debug('request failed >>%s', playerUrlObject.host + '-' + JSON.stringify(error, Object.getOwnPropertyNames(error)))
       return false
     }
-    if (!xIsTruthyPropertyStringNotEmpty(response, ['data', 'householdId'])) {
+    if (!isTruthyPropertyStringNotEmpty(response, ['data', 'householdId'])) {
       debug('invalid response >>%s', JSON.stringify(response, Object.getOwnPropertyNames(response)))
       return false
     }
@@ -87,12 +84,12 @@ module.exports = {
         'Content-type': 'text/xml; charset=utf8'
       }
     })
-    if (!xIsTruthy(response)) {
+    if (!isTruthy(response)) {
       throw new Error(`${PACKAGE_PREFIX} invalid response from player - response`)
     }
     // TODO Test ECON ....
     let properties = {}
-    if (!xIsTruthyPropertyStringNotEmpty(response, ['data'])) {
+    if (!isTruthyPropertyStringNotEmpty(response, ['data'])) {
       throw new Error(`${PACKAGE_PREFIX} response from player is invalid - data missing`)
     }
     let clean = response.data.replace('<?xml', '<xml')
@@ -102,10 +99,10 @@ module.exports = {
       'attributeNamePrefix': '_',
       'parseNodeValue': false
     }) 
-    if (!xIsTruthy) {
+    if (!isTruthy) {
       throw new Error(`${PACKAGE_PREFIX} xml parser: invalid response`)
     }
-    if (!xIsTruthyProperty(properties, ['xml', 'root', 'device'])) {
+    if (!isTruthyProperty(properties, ['xml', 'root', 'device'])) {
       throw new Error(`${PACKAGE_PREFIX} xml parser: device data missing`)
     }
     return properties.xml.root.device
@@ -132,7 +129,7 @@ module.exports = {
     })
     
     let transformed = await module.exports.parseBrowseToArray(browseQueue, 'item', PACKAGE_PREFIX)
-    if (!xIsTruthyArray(transformed)) {
+    if (!isTruthyArray(transformed)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
     }
     transformed = transformed.map((item) => {
@@ -165,20 +162,20 @@ module.exports = {
    */
   setAvTransport: async (playerUrlObject, inArgs) => { 
     debug('method >>%s', 'setAvTransport')
-    if (!xIsTruthy(playerUrlObject)) {
+    if (!isTruthy(playerUrlObject)) {
       throw new Error(`${PACKAGE_PREFIX} playerUrl is invalid/missing.`)
     }
     if (typeof playerUrlObject !== 'object') { // does not cover all but is ok
       throw new Error(`${PACKAGE_PREFIX} playerUrl is not object`)
     }
     
-    if (!xIsTruthy(inArgs)) {
+    if (!isTruthy(inArgs)) {
       throw new Error(`${PACKAGE_PREFIX} inArgs is invalid/missing.`)
     }
-    if (!xIsTruthyPropertyStringNotEmpty(inArgs, ['CurrentURI'])) {
+    if (!isTruthyPropertyStringNotEmpty(inArgs, ['CurrentURI'])) {
       throw new Error(`${PACKAGE_PREFIX} CurrentURI is missing/not string/empty string.`)
     }
-    if (!xIsTruthyProperty(inArgs, ['CurrentURIMetaData'])) {
+    if (!isTruthyProperty(inArgs, ['CurrentURIMetaData'])) {
       throw new Error(`${PACKAGE_PREFIX} CurrentURIMetaData is missing.`)
     }
     if (typeof inArgs['CurrentURIMetaData'] !== 'string') {
@@ -190,8 +187,8 @@ module.exports = {
     // transformedArgs are embedded in SOAP envelop
     const transformedArgs = {
       'InstanceID': 0, 
-      'CurrentURI': await xEncodeHtmlEntity(inArgs.CurrentURI),
-      'CurrentURIMetaData': await xEncodeHtmlEntity(metadata)
+      'CurrentURI': await encodeHtmlEntity(inArgs.CurrentURI),
+      'CurrentURIMetaData': await encodeHtmlEntity(metadata)
     }
 
     return await module.exports.executeActionV6(playerUrlObject,
@@ -230,7 +227,7 @@ module.exports = {
     const transportInfo = await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
-    if (!xIsTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
+    if (!isTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
       throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
     }
     return transportInfo.CurrentTransportState.toLowerCase()
@@ -263,7 +260,7 @@ module.exports = {
   //** Position in track - requires none empty queue. position h:mm:ss
   positionInTrack: async (coordinatorUrlObject, positionInTrack) => {
     debug('method >>%s', 'positionInTrack')
-    if (!xIsTruthy(positionInTrack)) {
+    if (!isTruthy(positionInTrack)) {
       throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
     }
     if (typeof positionInTrack !== 'string') { 
@@ -279,7 +276,7 @@ module.exports = {
   // track position number or string in range 1 to lenght
   selectTrack: async (coordinatorUrlObject, trackPosition) => {
     debug('method >>%s', 'selectTrack')
-    if (!xIsTruthy(trackPosition)) {
+    if (!isTruthy(trackPosition)) {
       throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
     }
     if (typeof trackPosition !== 'string' && typeof trackPosition !== 'number') { 
@@ -355,16 +352,16 @@ module.exports = {
   parseBrowseToArray: async (browseOutcome, itemName, packageName) => {
     
     // validate method parameter
-    if (!xIsTruthy(packageName)) {
+    if (!isTruthy(packageName)) {
       throw new Error('Package name is missing')
     }
-    if (!xIsTruthy(browseOutcome)) {
+    if (!isTruthy(browseOutcome)) {
       throw new Error(`${packageName} Browse input is missing`)
     }
-    if (!xIsTruthyStringNotEmpty(itemName)) {
+    if (!isTruthyStringNotEmpty(itemName)) {
       throw new Error(`${packageName} item name such as container is missing`)
     }
-    if (!xIsTruthyProperty(browseOutcome, ['NumberReturned'])) { 
+    if (!isTruthyProperty(browseOutcome, ['NumberReturned'])) { 
       throw new Error(`${packageName} invalid response Browse: - missing NumberReturned`)
     }
     if (browseOutcome.NumberReturned < 1) {
@@ -372,24 +369,24 @@ module.exports = {
     }
     
     // process the Result with Didl-Light
-    if (!xIsTruthyPropertyStringNotEmpty(browseOutcome, ['Result'])) {
+    if (!isTruthyPropertyStringNotEmpty(browseOutcome, ['Result'])) {
       throw new Error(`${packageName} invalid response Browse: - missing Result`)
     }
-    const decodedResult = await xDecodeHtmlEntity(browseOutcome['Result'])
+    const decodedResult = await decodeHtmlEntity(browseOutcome['Result'])
     const resultJson = await parser.parse(decodedResult, {
       'ignoreAttributes': false,
       'attributeNamePrefix': '_',
       'stopNodes': ['r:resMD'], // for My-Sonos items
       'parseNodeValue': false // this is important - example Title 49 will otherwise be converted
     })  
-    if (!xIsTruthyProperty(resultJson, ['DIDL-Lite'])) {
+    if (!isTruthyProperty(resultJson, ['DIDL-Lite'])) {
       throw new Error(`${packageName} invalid response Browse: missing DIDL-Lite`)
     }
 
     let originalItems = []
     // single items are not of type array (fast-xml-parser)
     const path = ['DIDL-Lite', itemName]
-    if (xIsTruthyProperty(resultJson, path)) {
+    if (isTruthyProperty(resultJson, path)) {
       const itemsOrOne = resultJson[path[0]][path[1]]
       if (Array.isArray(itemsOrOne)) { 
         originalItems = itemsOrOne.slice()
@@ -413,38 +410,38 @@ module.exports = {
         'upnpClass': '',
         'processingType': 'queue' // has to be updated in calling program
       }
-      if (!xIsTruthyProperty(item, ['_id'])) {
+      if (!isTruthyProperty(item, ['_id'])) {
         throw new Error(`${packageName} id is missing`) // should never happen
       }
       newItem.id = item['_id']
 
-      if (!xIsTruthyProperty(item, ['dc:title'])) {
+      if (!isTruthyProperty(item, ['dc:title'])) {
         throw new Error(`${packageName} title is missing`) // should never happen
       }
-      if (xIsTruthyProperty(item, ['dc:creator'])) {
+      if (isTruthyProperty(item, ['dc:creator'])) {
         newItem.artist = item['dc:creator']
       }
-      if (!xIsTruthyProperty(item, ['dc:title'])) {
+      if (!isTruthyProperty(item, ['dc:title'])) {
         throw new Error(`${packageName} title is missing`) // should never happen
       }
-      newItem.title = await xDecodeHtmlEntity(String(item['dc:title'])) // clean title for search
-      if (xIsTruthyProperty(item, ['dc:creator'])) {
+      newItem.title = await decodeHtmlEntity(String(item['dc:title'])) // clean title for search
+      if (isTruthyProperty(item, ['dc:creator'])) {
         newItem.artist = item['dc:creator']
       }
-      if (xIsTruthyProperty(item, ['res', '#text'])) {
+      if (isTruthyProperty(item, ['res', '#text'])) {
         newItem.uri = item['res']['#text'] // HTML entity encoded, URI encoded
         newItem.sid = await module.exports.getMusicServiceId(newItem.uri)
         newItem.serviceName = module.exports.getMusicServiceName(newItem.sid)
       }
-      if (xIsTruthyProperty(item, ['r:resMD'])) {
+      if (isTruthyProperty(item, ['r:resMD'])) {
         newItem.metadata = item['r:resMD']  // keep HTML entity encoded, URI encoded
       } 
-      if (xIsTruthyProperty(item, ['upnp:class'])) {
+      if (isTruthyProperty(item, ['upnp:class'])) {
         newItem.upnpClass = item['upnp:class']
       }
       // artURI (cover) maybe an array (one for each track) then choose first
       let artUri = ''
-      if (xIsTruthyProperty(item, ['upnp:albumArtURI'])) {
+      if (isTruthyProperty(item, ['upnp:albumArtURI'])) {
         artUri = item['upnp:albumArtURI']
         if (Array.isArray(artUri)) {
           if (artUri.length > 0) {
@@ -456,7 +453,7 @@ module.exports = {
       }
       // special case My Sonos favorites. It include metadata in DIDL-lite format.
       // these metadata include the original title, original upnp:class (processingType)
-      if (xIsTruthyProperty(item, ['r:resMD'])) {
+      if (isTruthyProperty(item, ['r:resMD'])) {
         newItem.metadata = item['r:resMD']
       }
       return newItem
@@ -477,8 +474,8 @@ module.exports = {
   getMusicServiceId: async (uri) => {
     debug('method >>%s', 'getMusicServiceId')
     let sid = '' // default even if uri undefined.
-    if (xIsTruthyStringNotEmpty(uri)) {
-      const decodedUri = await xDecodeHtmlEntity(uri)
+    if (isTruthyStringNotEmpty(uri)) {
+      const decodedUri = await decodeHtmlEntity(uri)
       const positionStart = decodedUri.indexOf('?sid=') + '$sid='.length
       const positionEnd = decodedUri.indexOf('&flags=')
       if (positionStart > 1 && positionEnd > positionStart) {
@@ -534,9 +531,9 @@ module.exports = {
    */
   getUpnpClassEncoded: async (metadataEncoded) => {
     // TODO has to be parsed - check with event and kidsplayer!
-    const decoded = await xDecodeHtmlEntity(metadataEncoded)
+    const decoded = await decodeHtmlEntity(metadataEncoded)
     let upnpClass = '' // default
-    if (xIsTruthyStringNotEmpty(decoded)) {
+    if (isTruthyStringNotEmpty(decoded)) {
       const positionStart = decoded.indexOf('<upnp:class>') + '<upnp:class>'.length
       const positionEnd = decoded.indexOf('</upnp:class>')
       if (positionStart >= 0 && positionEnd > positionStart) {
@@ -576,7 +573,7 @@ module.exports = {
     // 4. All other error throw inside all modules (node-sonos, axio, ...)
     let msgShort = 'unknown' // default text used for status message
     let msgDet = 'unknown' // default text for error message in addition to msgShort
-    if (xIsTruthyPropertyStringNotEmpty(error, ['code'])) {
+    if (isTruthyPropertyStringNotEmpty(error, ['code'])) {
       // 1. nodejs errors - convert into readable message
       if (error.code === 'ECONNREFUSED') {
         msgShort = 'Player refused to connect'
@@ -594,7 +591,7 @@ module.exports = {
       }
     } else {
       // Caution: getOwn is necessary for some error messages eg play mode!
-      if (xIsTruthyPropertyStringNotEmpty(error, ['message'])) {
+      if (isTruthyPropertyStringNotEmpty(error, ['message'])) {
         if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
           // 2. node sonos upnp errors from service _request
           if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
@@ -666,7 +663,7 @@ module.exports = {
     debug('entering method executeActionV6')
    
     let throwName = ''
-    if (xIsTruthy(packageName)) {
+    if (isTruthy(packageName)) {
       throwName = packageName
     }
     // get action in, out properties from json file 
@@ -675,7 +672,7 @@ module.exports = {
     
     // actionInArgs must have all properties
     inArgs.forEach(property => {
-      if (!xIsTruthyProperty(actionInArgs, [property])) {
+      if (!isTruthyProperty(actionInArgs, [property])) {
         throw new Error(`${throwName} property ${property} is missing}`)
       }
     })
@@ -691,7 +688,7 @@ module.exports = {
 
     // Everything OK if statusCode === 200 
     // && body includes expected response value or requested value
-    if (!xIsTruthyProperty(response, ['statusCode'])) {
+    if (!isTruthyProperty(response, ['statusCode'])) {
       // This should never happen. Just to avoid unhandled exception.
       // eslint-disable-next-line max-len
       throw new Error(`${throwName} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
@@ -701,7 +698,7 @@ module.exports = {
       // eslint-disable-next-line max-len
       throw new Error(`${throwName} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
     }
-    if (!xIsTruthyProperty(response, ['body'])) {
+    if (!isTruthyProperty(response, ['body'])) {
       // This should not happen. Just to avoid unhandled exception.
       // eslint-disable-next-line max-len
       throw new Error(`${throwName} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
@@ -727,12 +724,12 @@ module.exports = {
     key.push(`u:${actionName}Response`)
 
     // check body response
-    if (!xIsTruthyProperty(bodyXml, key)) {
+    if (!isTruthyProperty(bodyXml, key)) {
       // eslint-disable-next-line max-len
       throw new Error(`${throwName} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
-    let result = xGetNestedProperty(bodyXml, key)
-    if (!xIsTruthyProperty(result, ['xmlns:u'])) {
+    let result = getNestedProperty(bodyXml, key)
+    if (!isTruthyProperty(result, ['xmlns:u'])) {
       throw new Error(`${throwName} xmlns:u property is missing`)
     }
     const expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`  
@@ -745,7 +742,7 @@ module.exports = {
     } else {
       // check whether all outArgs exist and return them as object!
       outArgs.forEach(property => { 
-        if (!xIsTruthyProperty(result, [property])) {
+        if (!isTruthyProperty(result, [property])) {
           throw new Error(`${throwName} response property ${property} is missing}`)
         }
       })
@@ -770,7 +767,7 @@ module.exports = {
   sendSoapToPlayer: async (playerUrlOrigin, endpoint, serviceName, actionName, args, packageName) => {
     debug('entering method sendSoapToPlayer')
     let throwName = ''
-    if (xIsTruthy(packageName)) {
+    if (isTruthy(packageName)) {
       throwName = packageName
     }
 
@@ -807,14 +804,14 @@ module.exports = {
         // Experience: When using reject(error) the error.response get lost.
         // Thats why error.response is checked and handled here!
         // In case of an SOAP error error.response held the details and status code 500
-        if (xIsTruthyProperty(error, ['response'])) {
+        if (isTruthyProperty(error, ['response'])) {
         // Indicator for SOAP Error
-          if (xIsTruthyProperty(error, ['message'])) {
+          if (isTruthyProperty(error, ['message'])) {
             if (error.message.startsWith('Request failed with status code 500')) {
               const errorCode = module.exports.getErrorCodeFromEnvelope(error.response.data)
               let serviceErrorList = ''
               // eslint-disable-next-line max-len
-              if (xIsTruthyPropertyStringNotEmpty(module.exports.SOAP_ERRORS, [serviceName.toUpperCase()])) {
+              if (isTruthyPropertyStringNotEmpty(module.exports.SOAP_ERRORS, [serviceName.toUpperCase()])) {
                 // look up in the service specific error codes 7xx
                 serviceErrorList = module.exports.SOAP_ERRORS[serviceName.toUpperCase()]
               }
@@ -854,7 +851,7 @@ module.exports = {
    */
   getErrorCodeFromEnvelope: (data) => {
     let errorCode = '' // default
-    if (xIsTruthyStringNotEmpty(data)) {
+    if (isTruthyStringNotEmpty(data)) {
       const positionStart = data.indexOf('<errorCode>') + '<errorCode>'.length
       const positionEnd = data.indexOf('</errorCode>')
       if (positionStart > 1 && positionEnd > positionStart) {
@@ -876,7 +873,7 @@ module.exports = {
    */
   getErrorMessageV1: (errorCode, upnpErrorList, serviceErrorList) => {
     const errorText = 'unknown error' // default
-    if (xIsTruthyStringNotEmpty(errorCode)) {
+    if (isTruthyStringNotEmpty(errorCode)) {
       if (serviceErrorList !== '') {
         for (let i = 0; i < serviceErrorList.length; i++) {
           if (serviceErrorList[i].code === errorCode) {

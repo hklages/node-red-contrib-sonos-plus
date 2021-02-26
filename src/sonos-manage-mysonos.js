@@ -19,15 +19,14 @@ const {
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMySonos: xGetMySonos, getMusicLibraryItems: xGetMusicLibraryItems }
+const { getMySonos, getMusicLibraryItems }
   = require('./Commands.js')
 
-const { isSonosPlayer: xIsSonosPlayer, failure, success
+const { isSonosPlayer, failure, success
 } = require('./Extensions.js')
 
 const {
-  isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
-  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty, validRegex, validToInteger,
+  isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, validToInteger
 } = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
@@ -61,13 +60,13 @@ module.exports = function (RED) {
 
     // Ip address overruling serial number - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
-    if (xIsTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
+    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
       && REGEX_IP.test(configNode.ipaddress)) {
       // Using config ip address to define the default SONOS player
       // and check whether that IP address is reachable (http request)
       const port = 1400 // assuming this port
       const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
-      xIsSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
+      isSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
         .then((isSonos) => {
           if (isSonos) {
             
@@ -96,10 +95,10 @@ module.exports = function (RED) {
         })
         .catch((err) => {
           debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          node.status({ fill: 'red', shape: 'dot', text: 'error: xIsSonos went wrong' })
+          node.status({ fill: 'red', shape: 'dot', text: 'error: isSonos went wrong' })
         })
       
-    } else if (xIsTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
+    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
       && REGEX_SERIAL.test(configNode.serialnum)) {
       // start discovery
       discoverSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
@@ -160,11 +159,11 @@ module.exports = function (RED) {
   async function processInputMsg (node, config, msg, urlHost) {
     
     const tsPlayer = new SonosDevice(urlHost)
-    if (!xIsTruthy(tsPlayer)) {
+    if (!isTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
     }
-    if (!(xIsTruthyPropertyStringNotEmpty(tsPlayer, ['host'])
-      && xIsTruthyProperty(tsPlayer, ['port']))) {
+    if (!(isTruthyPropertyStringNotEmpty(tsPlayer, ['host'])
+      && isTruthyProperty(tsPlayer, ['port']))) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer ip address or port is missing `)
     }
     // needed for my extension in Extensions
@@ -175,7 +174,7 @@ module.exports = function (RED) {
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
     } else {
-      if (!xIsTruthyPropertyStringNotEmpty(msg, ['topic'])) {
+      if (!isTruthyPropertyStringNotEmpty(msg, ['topic'])) {
         throw new Error(`${PACKAGE_PREFIX} command is undefined/invalid`)
       }
       command = String(msg.topic).toLowerCase()
@@ -238,7 +237,7 @@ module.exports = function (RED) {
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
     
     const list
-      = await xGetMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+      = await getMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
@@ -262,7 +261,7 @@ module.exports = function (RED) {
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
   
-    const list = await xGetMusicLibraryItems(
+    const list = await getMusicLibraryItems(
       'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
@@ -287,7 +286,7 @@ module.exports = function (RED) {
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
   
     const list
-      = await xGetMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+      = await getMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
@@ -319,7 +318,7 @@ module.exports = function (RED) {
       = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
     
     const list
-      = await xGetMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
+      = await getMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
     
     // add ip address to albumUri
     const payload = list.map(element => {
@@ -356,7 +355,7 @@ module.exports = function (RED) {
       = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
     
     const list
-      = await xGetMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
+      = await getMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
     
     // add ip address to albumUri
     const payload = list.map(element => {
@@ -384,7 +383,7 @@ module.exports = function (RED) {
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
   
-    const list = await xGetMusicLibraryItems(
+    const list = await getMusicLibraryItems(
       'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
@@ -413,8 +412,8 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
 
-    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
-    if (!xIsTruthy(mySonosItems)) {
+    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
+    if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     
@@ -444,8 +443,8 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function mysonosGetItems (msg, tsPlayer) {
-    const payload = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
-    if (!xIsTruthy(payload)) {
+    const payload = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    if (!isTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
 
@@ -468,8 +467,8 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
 
-    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
-    if (!xIsTruthy(mySonosItems)) {
+    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title, findIndex returns -1 if not found
@@ -507,8 +506,8 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
 
-    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
-    if (!xIsTruthy(mySonosItems)) {
+    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title, findIndex returns -1 if not found

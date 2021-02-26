@@ -13,7 +13,8 @@
 const { PACKAGE_PREFIX, TIMEOUT_DISCOVERY } = require('./Globals.js')
 
 const { discoverPlayersHost, discoverPlayersSerialnumber } = require('./Discovery.js')
-const { isTruthy, isTruthyProperty } = require('./Helper.js')
+
+const { isTruthyProperty } = require('./Helper.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}config`)
 
