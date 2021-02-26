@@ -537,7 +537,7 @@ module.exports = {
     return snapshot
   },
 
-  /**  Restore snapshot of group. Group topology must be the same!
+  /**  Restore snapshot of group. Group topology must be the same! Does NOT play!
    * @param  {object<Snapshot>}  snapshot - see typedef
    
    * @returns {promise} true
@@ -597,9 +597,7 @@ module.exports = {
         await xSetMutestate(urlObject, mutestate)
       }
     }
-    if (snapshot.wasPlaying) {
-      await xPlay(coordinatorUrlObject)
-    }
+    
     return true
   },
 

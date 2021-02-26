@@ -341,6 +341,8 @@ payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty
 
 - "Universal node": household.get.groups
 
+- New Globals.js as central place for customizable parameter
+
 #### Changed
 
 - "My Sonos" node: bug fix Sonos playlist without AlbumArtURI issue #35
