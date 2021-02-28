@@ -3,7 +3,7 @@
 // using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
 // using http://192.168.178.15:1400 a Synology NAS 
 
-const { isSonosPlayer, matchSerialUuid }
+const { isSonosPlayer, getDeviceInfo, matchSerialUuid }
   = require('../src/Extensions.js')
 
 const { describe, it } = require('mocha')
@@ -54,6 +54,82 @@ describe('isSonosPlayer function', () => {
     expect(result)
       .be.a('boolean')
       .equal(false)
+  })
+
+})
+
+describe('getDeviceInfo function', () => { 
+
+  it('kitchen returns id RINCON_5CAAFD00223601400', async () => {
+    const playerUrl = new URL('http://192.168.178.37:1400')
+    const timeout = 2000
+    const result = await getDeviceInfo(playerUrl, timeout)
+    expect(result.device.id)
+      .be.a('string')
+      .equal('RINCON_5CAAFD00223601400')
+  })
+
+  it('kitchen has line in', async () => {
+    const playerUrl = new URL('http://192.168.178.37:1400')
+    const timeout = 2000
+    const result = await getDeviceInfo(playerUrl, timeout)
+    expect(result.device.capabilities)
+      .to.include('LINE_IN')
+  })
+
+  it('living returns id RINCON_949F3EC13B9901400', async () => {
+    const playerUrl = new URL('http://192.168.178.36:1400')
+    const timeout = 2000
+    const result = await getDeviceInfo(playerUrl, timeout)
+    expect(result.device.id)
+      .be.a('string')
+      .equal('RINCON_949F3EC13B9901400')
+  })
+
+  it('living has tv', async () => {
+    const playerUrl = new URL('http://192.168.178.36:1400')
+    const timeout = 2000
+    const result = await getDeviceInfo(playerUrl, timeout)
+    expect(result.device.capabilities)
+      .to.include('HT_PLAYBACK')
+  })
+
+  it('bath has no tv', async () => {
+    const playerUrl = new URL('http://192.168.178.35:1400')
+    const timeout = 2000
+    const result = await getDeviceInfo(playerUrl, timeout)
+    expect(result.device.capabilities)
+      .to.not.include('HT_PLAYBACK')
+  })
+
+  it('bath has no line in', async () => {
+    const playerUrl = new URL('http://192.168.178.35:1400')
+    const timeout = 2000
+    const result = await getDeviceInfo(playerUrl, timeout)
+    expect(result.device.capabilities)
+      .to.not.include('LINE_IN')
+  })
+
+  it('bath with too small time out throws error', async () => {
+    const playerUrl = new URL('http://192.168.178.35:1400')
+    const timeout = 50
+    await getDeviceInfo(playerUrl, timeout)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw(Error, 'timeout of 50ms exceeded')
+      })
+  })
+
+  it('fritzbox throws error', async () => {
+    const playerUrl = new URL('http://192.168.178.1:1400')
+    const timeout = 2000
+    await getDeviceInfo(playerUrl, timeout)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw(Error, 'timeout of 2000ms exceeded')
+      })
   })
 
 })

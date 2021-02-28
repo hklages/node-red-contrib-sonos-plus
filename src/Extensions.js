@@ -46,7 +46,7 @@ module.exports = {
    * Method: Every SONOS player will answer to http request with 
    * end point /info and provide the household id. 
    * 
-   * @throws no programmed error
+   * @throws none - they are caught insight
    */
   isSonosPlayer: async (playerUrlObject, timeout) => {
     debug('method >>%s', 'isSonosPlayer')
@@ -64,6 +64,35 @@ module.exports = {
       return false
     }
     return true
+  },
+
+  /** Get device info and verifies existence of capabilities and id.
+   * @param {object} playerUrlObject player JavaScript build-in URL
+   * @param {number} timeout in milliseconds
+   *
+   * @returns {Promise<object>} device properties as object
+   *
+   * @throws {error} response from player is invalid - data missing|id missing|capabilities missing
+   * @throws {error} all methods especially a timeout
+   */
+  getDeviceInfo: async (playerUrlObject, timeout) => {
+    debug('method >>%s', 'getDeviceInfo')
+    // error is thrown if not status code 200
+    const response = await request.get(`${playerUrlObject.origin}/info`, {
+      'timeout': timeout, 
+      'validateStatus': (status) => (status === 200) // Resolve only if the status code is 200
+    })  
+    if (!isTruthyProperty(response, ['data'])) {
+      throw new Error(`${PACKAGE_PREFIX} response from player is invalid - data missing`)
+    }
+    if (!isTruthyProperty(response, ['data', 'device', 'id'])) {
+      throw new Error(`${PACKAGE_PREFIX} response from player is invalid - id missing`)
+    }
+    if (!isTruthyProperty(response, ['data', 'device', 'capabilities'])) {
+      throw new Error(`${PACKAGE_PREFIX} response from player is invalid - capabilities missing`)
+    }
+
+    return response.data
   },
 
   /** Get device properties.
@@ -160,8 +189,8 @@ module.exports = {
    * @throws {error} from module.exports.executeActionV6
    * @throws {error} if any inArgs, playerUrl is missing/invalid
    */
-  setAvTransport: async (playerUrlObject, inArgs) => { 
-    debug('method >>%s', 'setAvTransport')
+  setAvTransportEncoded: async (playerUrlObject, inArgs) => { 
+    debug('method >>%s', 'setAvTransportEncoded')
     if (!isTruthy(playerUrlObject)) {
       throw new Error(`${PACKAGE_PREFIX} playerUrl is invalid/missing.`)
     }
@@ -185,9 +214,17 @@ module.exports = {
     
     // HTML encoding is very important (caution: not uri encoding)!
     // transformedArgs are embedded in SOAP envelop
+    let currentUri = inArgs.CurrentURI
+    // But we check whether it might be alreayd encoded
+    if (!(currentUri.includes('&lt;') || currentUri.includes('&gt;') || currentUri.includes('&quot')
+      || currentUri.includes('&apos;') || currentUri.includes('&amp;'))) {
+      currentUri = await encodeHtmlEntity(currentUri)
+    }
+    // TODO check - same for Metadata? 
+
     const transformedArgs = {
       'InstanceID': 0, 
-      'CurrentURI': await encodeHtmlEntity(inArgs.CurrentURI),
+      'CurrentURI': currentUri,
       'CurrentURIMetaData': await encodeHtmlEntity(metadata)
     }
 

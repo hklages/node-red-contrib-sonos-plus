@@ -31,6 +31,8 @@ payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty
 
 - My Sonos node: added library.export.track
 
+- Universal node: player.play.linein (if supported by player)
+
 ### [4.5.5] 2021-01-07
 
 #### Changed

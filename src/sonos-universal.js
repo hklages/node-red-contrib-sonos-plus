@@ -6,14 +6,13 @@
  *
  * @author Henning Klages
  *
- * @since 2021-02-15
+ * @since 2021-02-27
  */
 
 'use strict'
 
-const {
-  REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID, REGEX_QUEUEMODES,
-  PACKAGE_PREFIX, PLAYER_WITH_TV, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV,
+const { REGEX_SERIAL, REGEX_IP, REGEX_TIME, REGEX_TIME_DELTA, REGEX_RADIO_ID, REGEX_QUEUEMODES,
+  PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_HTTP, REGEX_CSV,
   TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST, REQUESTED_COUNT_PLAYLISTS, REQUESTED_COUNT_QUEUE
 } = require('./Globals.js')
 
@@ -24,12 +23,12 @@ const { getGroupCurrent, getGroupsAll, createGroupSnapshot, restoreGroupSnapshot
 } = require('./Commands.js')
 
 const { getDeviceProperties, isSonosPlayer, getMutestate, getVolume, getPlaybackstate,
-  getSonosQueue, setVolume, setAvTransport, play, getRadioId, getMusicServiceId,
-  getMusicServiceName, setMutestate, executeActionV6, failure, success
+  getSonosQueue, setVolume, play, getRadioId, getMusicServiceId,
+  getMusicServiceName, setMutestate, executeActionV6, failure, success, getDeviceInfo
 } = require('./Extensions.js')
 
-const {
-  isTruthy, isTruthyPropertyStringNotEmpty, isTruthyProperty, isOnOff, validToInteger, validRegex
+const { isTruthy, isTruthyPropertyStringNotEmpty, isTruthyProperty, isOnOff, validToInteger,
+  validRegex
 } = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
@@ -106,6 +105,7 @@ module.exports = function (RED) {
     'player.join.group': playerJoinGroup,
     'player.leave.group': playerLeaveGroup,
     'player.play.avtransport': playerPlayAvtransport,
+    'player.play.linein': playerPlayLineIn,
     'player.play.tv': playerPlayTv,
     'player.set.bass': playerSetBass,
     'player.set.dialoglevel': playerSetEQ,
@@ -116,6 +116,7 @@ module.exports = function (RED) {
     'player.set.subgain': playerSetEQ,
     'player.set.treble': playerSetTreble,
     'player.set.volume': playerSetVolume,
+    'player.test': playerTest,
     'player.execute.action': playerExecuteActionV6
   }
 
@@ -2149,12 +2150,10 @@ module.exports = function (RED) {
     tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
 
     // Verify that player has a TV mode
-    const properties = await getDeviceProperties(tsSinglePlayer.urlObject)
-    if (!isTruthyPropertyStringNotEmpty(properties, ['modelName'])) {
-      throw new Error(`${PACKAGE_PREFIX} Sonos player model name undefined`)
-    }
-    if (!PLAYER_WITH_TV.includes(properties.modelName)) {
-      throw new Error(`${PACKAGE_PREFIX} Selected player does not support TV`)
+    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'HT_PLAYBACK'))
+    if (found === -1) {
+      throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
     }
 
     let args
@@ -2414,7 +2413,7 @@ module.exports = function (RED) {
   }
   
   /**
-   *  Player play AVTransport uri: LineIn, TV
+   *  Player play AVTransport uri: LineIn, TV, or streams.
    * @param {object} msg incoming message
    * @param {string} msg.payload uri x-***:
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
@@ -2422,6 +2421,13 @@ module.exports = function (RED) {
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
+   * 
+   * @deprecated recommendation is to use group.play.queue, player.play.linein, player.play.tv
+   * or the group.play.* commands. 
+   * 
+   * why depriciated: for some streams metadata are needed and have to be "guessed". For some 
+   * such as Tunein it works fine but many are still open. Using My Sonos is much better!
+   *  
    *
    * @throws {error} all methods
    *
@@ -2434,21 +2440,22 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    const playerUrlObject = groupData.members[groupData.playerIndex].urlObject
-    await setAvTransport(playerUrlObject, {
-      CurrentURI: validatedUri,
-      metadata: ''
-    })
+    // eslint-disable-next-line max-len   
+    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    
+    await tsSinglePlayer.SetAVTransportURI(validatedUri)
 
     if (validated.volume !== -1) {
-      await setVolume(playerUrlObject, validated.volume)
+      await tsSinglePlayer.SetVolume(validated.volume)
     }
-    await play(playerUrlObject)
+    await tsSinglePlayer.Play()
+  
     return {}
   }
 
   /**
-   *  Player play TV
+   *  Player play line in - if supported by player.
    * @param {object} msg incoming message
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
@@ -2456,7 +2463,49 @@ module.exports = function (RED) {
    *
    * @returns {promise} {}
    *
-   * @throws {error} 'Sonos player is not TV enabled'
+   * @throws {error} 'player does not support line in'
+   * @throws {error} all methods
+   *
+   */
+  async function playerPlayLineIn (msg, tsPlayer) {
+    // Validate msg.playerName, msg.volume
+    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // eslint-disable-next-line max-len
+    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    // Get the device info, check whether line in is supported and get uuid
+    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'LINE_IN'))
+    if (found >= 0) {
+      // get uuid
+      const uuid = deviceInfo.device.id
+      // No check - always returns true - will play automatically
+      await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
+        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+        {
+          'InstanceID': 0, 'CurrentURI': `x-rincon-stream:${uuid}`, 'CurrentURIMetaData': ''
+        })
+      if (validated.volume !== -1) {
+        await tsSinglePlayer.SetVolume(validated.volume)
+      }
+    } else {
+      throw new Error(`${PACKAGE_PREFIX} player does not support line in`)
+    }
+
+    return {}
+  }
+
+  /**
+   *  Player play TV - if supported by player.
+   * @param {object} msg incoming message
+   * @param {number/string} [msg.volume] volume - if missing do not touch volume
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise} {}
+   *
+   * @throws {error} 'player does not support TV'
    * @throws {error} all methods
    *
    */
@@ -2467,28 +2516,25 @@ module.exports = function (RED) {
     // eslint-disable-next-line max-len
     const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
-    // Get the device props, check whether TV is supported and extract URI target
-    const deviceProps = await  getDeviceProperties(tsSinglePlayer.urlObject)
-    // Extract services and search for controlURL = "/HTControl/Control" - means tv enabled
-    const serviceList = deviceProps.serviceList.service
-    const found = serviceList.findIndex((service) => (service.controlURL === '/HTControl/Control'))
+    // Get the device info, check whether TV is supported and get uuid
+    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'HT_PLAYBACK'))
     if (found >= 0) {
-      // Extract RINCON
-      const rincon = deviceProps.UDN.substring('uuid: '.length - 1)
-
+      // get uuid
+      const uuid = deviceInfo.device.id
       // No check - always returns true - will play automatically
       await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
         '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
         {
-          'InstanceID': 0, 'CurrentURI': `x-sonos-htastream:${rincon}:spdif`,
+          'InstanceID': 0, 'CurrentURI': `x-sonos-htastream:${uuid}:spdif`,
           'CurrentURIMetaData': ''
         })
       
       if (validated.volume !== -1) {
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        await tsSinglePlayer.SetVolume(validated.volume)
       }
     } else {
-      throw new Error(`${PACKAGE_PREFIX} Sonos player is not TV enabled`)
+      throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
     }
 
     return {}
@@ -2538,12 +2584,10 @@ module.exports = function (RED) {
     tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
 
     // Verify that player has a TV mode
-    const properties = await getDeviceProperties(tsSinglePlayer.urlObject)
-    if (!isTruthyPropertyStringNotEmpty(properties, ['modelName'])) {
-      throw new Error(`${PACKAGE_PREFIX} Sonos player model name undefined`)
-    }
-    if (!PLAYER_WITH_TV.includes(properties.modelName)) {
-      throw new Error(`${PACKAGE_PREFIX} Selected player does not support TV`)
+    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'HT_PLAYBACK'))
+    if (found === -1) {
+      throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
     }
 
     let eqType
@@ -2689,7 +2733,30 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Test action V5
+   *  Test
+   *
+   * @returns {promise} {}
+   *
+   * @throws {error} all methods
+   */
+  async function playerTest (msg, tsPlayer) {
+    const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    const endpoint = '/MediaRenderer/AVTransport/Control'
+    const action = 'SetAVTransportURI'
+    const inArgs = {
+      'InstanceID': 0, 
+      'CurrentURI': msg.payload,
+      'CurrentURIMetaData': ''
+    }
+    const payload = await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
+      endpoint, action, inArgs)
+    
+    return { payload }
+  }
+
+  /**
+   *  Test action
    * @param {object} msg incoming message
    * @param {string} msg.endpoint 
    * @param {string} msg.action
