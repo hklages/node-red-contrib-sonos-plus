@@ -1,11 +1,14 @@
 /**
- * Collection of complex SONOS commands. 
+ * Collection of complex SONOS commands.
+ * - notification and snapshopt
+ * - group related
+ * - content related 
  *
- * @module Sonos-CommandsTs
+ * @module Sonos-Commands
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-19
+ * @since 2021-03-01
  */ 
 
 'use strict'
@@ -14,17 +17,14 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
   getMutestate, getPlaybackstate, getVolume, setMutestate, setVolume, getMediaInfo, getPositionInfo,
-  setAvTransport, selectTrack, positionInTrack, parseBrowseToArray, getRadioId, getUpnpClassEncoded,
-  executeActionV6
+  selectTrack, positionInTrack, parseBrowseToArray, getRadioId, getUpnpClassEncoded,
+  executeActionV6, parseZoneGroupToArray, extractGroup
 } = require('./Extensions.js')
 
-const { isTruthyProperty, isTruthyStringNotEmpty, hhmmss2msec, isTruthy,
-  decodeHtmlEntity, encodeHtmlEntity
+const { isTruthyProperty, hhmmss2msec, isTruthy, encodeHtmlEntity
 } = require('./Helper.js')
 
 const { MetaDataHelper } = require('@svrooij/sonos/lib')
-
-const parser = require('fast-xml-parser')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}commands`)
 
@@ -46,6 +46,10 @@ module.exports = {
     'object.container.podcast.#podcastContainer',
     'object.container.albumlist'
   ],
+
+  //
+  //     NOTIFICATION & SNAPSHOT 
+  //     .......................
 
   /**  Play notification on a group. Coordinator is index 0 in tsPlayerArray
    * @param  {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
@@ -102,13 +106,12 @@ module.exports = {
     debug('Snapshot created - now start playing notification')
     
     // set AVTransport
-    const args = {
-      'InstanceID': 0,
-      'CurrentURI': await encodeHtmlEntity(options.uri),
-      'CurrentURIMetaData': metadata
-    }
     await executeActionV6(tsPlayerArray[iCoord].urlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', args)
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
+        'InstanceID': 0,
+        'CurrentURI': await encodeHtmlEntity(options.uri),
+        'CurrentURIMetaData': metadata
+      })
 
     if (options.volume !== -1) {
       await setVolume(tsPlayerArray[iCoord].urlObject, options.volume)
@@ -271,192 +274,6 @@ module.exports = {
     }
   },
 
-  /** Get group data for a given player.   
-   * @param {string} tsPlayer sonos-ts player
-   * @param {string} [playerName] SONOS-Playername such as Kitchen 
-   * 
-   * @returns {promise<object>}  returns object:
-   *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
-   *
-   * @throws {error} all methods
-   */
-  getGroupCurrent: async function (tsPlayer, playerName) {
-    debug('method >>%s', 'getGroupCurrent')
-    const allGroups = await module.exports.getGroupsAll(tsPlayer)
-    // eslint-disable-next-line max-len
-    const thisGroup = await module.exports.extractGroup(tsPlayer.urlObject.hostname, allGroups, playerName)
-    return thisGroup
-  },
-  
-  /**
-   * @typedef {object} playerGroupData group data transformed
-   * @global
-   * @property {object} urlObject JavaScript URL object
-   * @property {string} playerName SONOS-Playername such as "Küche"
-   * @property {string} uuid such as RINCON_5CAAFD00223601400
-   * @property {string} groupId such as RINCON_5CAAFD00223601400:482
-   * @property {boolean} invisible false in case of any bindings otherwise true
-   * @property {string} channelMapSet such as 
-   *                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
-   */
-
-  /** Get array of all groups. Each group consist of an array of players <playerGroupData>[]
-   * Coordinator is always in position 0. Group array may have size 1 (standalone)
-   * @param  {object} player sonos-ts player
-   * 
-   * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
-   *          First group member is coordinator.
-   *
-   * @throws {error} 'property ZoneGroupState is missing', 'response form parse xml is invalid'
-   * @throws {error} all methods
-   */
-  getGroupsAll: async function (anyTsPlayer) {
-    debug('method >>%s', 'getGroupsAll')
-    
-    // get the data from SONOS player and transform to JavaScript Objects
-    const householdPlayers = await anyTsPlayer.GetZoneGroupState()
-    
-    // select only ZoneGroupState not the other attributes and check
-    if (!isTruthyProperty(householdPlayers, ['ZoneGroupState'])) {
-      throw new Error(`${PACKAGE_PREFIX} property ZoneGroupState is missing`)
-    }
-    const decoded = await decodeHtmlEntity(householdPlayers.ZoneGroupState)
-    const groups = await parser.parse(decoded, {
-      'ignoreAttributes': false,
-      'attributeNamePrefix': '_',
-      'parseNodeValue': false
-    }) 
-    if (!isTruthy(groups)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parse xml is invalid`)
-    }
-    if (!isTruthyProperty(groups, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
-      throw new Error(`${PACKAGE_PREFIX} response form parse xml: properties missing.`)
-    }
-
-    // convert single item to array: all groups array and all members array
-    let groupsArray
-    if (Array.isArray(groups.ZoneGroupState.ZoneGroups.ZoneGroup)) {
-      groupsArray = groups.ZoneGroupState.ZoneGroups.ZoneGroup.slice()
-    } else {
-      groupsArray = [groups.ZoneGroupState.ZoneGroups.ZoneGroup] //convert to single item array
-    }
-    groupsArray = groupsArray.map(group => {
-      if (!Array.isArray(group.ZoneGroupMember)) group.ZoneGroupMember = [group.ZoneGroupMember]
-      return group
-    })
-    // result is groupsArray is array<groupDataRaw> and always arrays (not single item)
-
-    // sort all groups that coordinator is in position 0 and select properties
-    // see typeDef playerGroupData
-    const groupsArraySorted = [] // result to be returned
-    let groupSorted // keeps the group members, now sorted
-    let coordinatorUuid = ''
-    let groupId = ''
-    let playerName = ''
-    let uuid = ''
-    let invisible = ''
-    let channelMapSet = ''
-    let urlObject // player JavaScript build-in URL
-    for (let iGroup = 0; iGroup < groupsArray.length; iGroup++) {
-      groupSorted = []
-      coordinatorUuid = groupsArray[iGroup]._Coordinator
-      groupId = groupsArray[iGroup]._ID
-      // first push coordinator, other properties will be updated later!
-      groupSorted.push({ groupId, 'uuid': coordinatorUuid })
-      
-      for (let iMember = 0; iMember < groupsArray[iGroup].ZoneGroupMember.length; iMember++) {
-        urlObject = new URL(groupsArray[iGroup].ZoneGroupMember[iMember]._Location)
-        urlObject.pathname = '' // clean up
-        uuid = groupsArray[iGroup].ZoneGroupMember[iMember]._UUID  
-        // my naming is playerName instead of the SONOS ZoneName
-        playerName = groupsArray[iGroup].ZoneGroupMember[iMember]._ZoneName
-        invisible = (groupsArray[iGroup].ZoneGroupMember[iMember]._Invisible === '1')
-        channelMapSet = groupsArray[iGroup].ZoneGroupMember[iMember]._ChannelMapSet || ''      
-        if (groupsArray[iGroup].ZoneGroupMember[iMember]._UUID !== coordinatorUuid) {
-          // push new except coordinator
-          groupSorted.push({ urlObject, playerName, uuid, groupId, invisible, channelMapSet })
-        } else {
-          // update coordinator on position 0 with name
-          groupSorted[0].urlObject = urlObject
-          groupSorted[0].playerName = playerName
-          groupSorted[0].invisible = invisible
-          groupSorted[0].channelMapSet = channelMapSet
-        }
-      }
-      groupSorted = groupSorted.filter((member) => member.invisible === false)
-      groupsArraySorted.push(groupSorted)
-    }
-    return groupsArraySorted 
-  },
-
-  /** Extract group for a given player.
-   * @param {string} playerUrlHost (wikipedia) host such as 192.168.178.37
-   * @param {object} allGroupsData from getGroupsAll
-   * @param {string} [playerName] SONOS-Playername such as Kitchen 
-   * 
-   * @returns {promise<object>}  returns object:
-   *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
-   *
-   * @throws {error} 'could not find given player in any group'
-   * @throws {error} all methods
-   */
-  extractGroup: async function (playerUrlHost, allGroupsData, playerName) {
-    debug('method >>%s', 'extractGroup')
-    
-    // this ensures that playerName overrules given playerUrlHostname
-    const searchByPlayerName = isTruthyStringNotEmpty(playerName)
-
-    // find player in group bei playerUrlHostname or playerName
-    // playerName overrules playerUrlHostname
-    let foundGroupIndex = -1 // indicator for player NOT found
-    let visible
-    let groupId
-    let usedPlayerUrlHost = ''
-    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        visible = !allGroupsData[iGroup][iMember].invisible
-        groupId = allGroupsData[iGroup][iMember].groupId
-        if (searchByPlayerName) {
-          // we compare playerName (string) such as Küche
-          if (allGroupsData[iGroup][iMember].playerName === playerName && visible) {
-            foundGroupIndex = iGroup
-            usedPlayerUrlHost = allGroupsData[iGroup][iMember].urlObject.hostname
-            break // inner loop
-          }
-        } else {
-          // we compare by URL hostname such as '192.168.178.35'
-          if (allGroupsData[iGroup][iMember].urlObject.hostname
-            === playerUrlHost && visible) {
-            foundGroupIndex = iGroup
-            usedPlayerUrlHost = allGroupsData[iGroup][iMember].urlObject.hostname
-            break // inner loop
-          }
-        }
-      }
-      if (foundGroupIndex >= 0) {
-        break // break also outer loop
-      }
-    }
-    if (foundGroupIndex === -1) {
-      throw new Error(`${PACKAGE_PREFIX} could not find given player in any group`)
-    }
-    
-    // remove all invisible players player (in stereopair there is one invisible)
-    const members = allGroupsData[foundGroupIndex].filter((member) => (member.invisible === false))
-
-    // find our player index in that group. At this position because we did filter!
-    // that helps to figure out role: coordinator, joiner, independent
-    // eslint-disable-next-line max-len
-    const playerIndex = members.findIndex((member) => (member.urlObject.hostname === usedPlayerUrlHost))
-
-    return {
-      groupId,
-      playerIndex,
-      'coordinatorIndex': 0,
-      members
-    }
-  },
-
   /**
    * @typedef {object} Snapshot snapshot of group
    * @global
@@ -496,7 +313,7 @@ module.exports = {
     let member
     for (let index = 0; index < playersInGroup.length; index++) {
       member = { // default
-      // urlSchemaAuthority because it may stored in flow variable
+        // urlSchemaAuthority because it may stored in flow variable
         urlSchemeAuthority: playersInGroup[index].urlObject.origin,
         mutestate: null,
         volume: '-1',
@@ -514,7 +331,7 @@ module.exports = {
     const coordinatorUrlObject = playersInGroup[0].urlObject
     snapshot.playbackstate = await getPlaybackstate(coordinatorUrlObject)
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
-    || snapshot.playbackstate === 'transitioning')
+  || snapshot.playbackstate === 'transitioning')
     const mediaData = await getMediaInfo(coordinatorUrlObject)
     const positionData = await getPositionInfo(coordinatorUrlObject)
     Object.assign(snapshot,
@@ -533,20 +350,21 @@ module.exports = {
   },
 
   /**  Restore snapshot of group. Group topology must be the same! Does NOT play!
-   * @param  {object<Snapshot>}  snapshot - see typedef
-   
-   * @returns {promise} true
-   *
-   * @throws if invalid response from SONOS player
-   */
+ * @param  {object<Snapshot>}  snapshot - see typedef
+ 
+ * @returns {promise} true
+ *
+ * @throws if invalid response from SONOS player
+ */
   restoreGroupSnapshot: async function (snapshot) {
     debug('method >>%s', 'restoreGroupSnapshot')
     // restore content
     // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
     const metadata = snapshot.CurrentURIMetadata
-    await setAvTransport(coordinatorUrlObject,
-      {
+    await executeActionV6(coordinatorUrlObject,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
+        'InstanceID': 0,
         'CurrentURI': snapshot.CurrentURI,
         'CurrentURIMetaData': metadata
       })
@@ -569,7 +387,7 @@ module.exports = {
         })
     }
     if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
-      // we need to wait until track is selected
+    // we need to wait until track is selected
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100)
       debug('Setting back time to >>%', snapshot.RelTime)
       await positionInTrack(coordinatorUrlObject, snapshot.RelTime)
@@ -592,10 +410,67 @@ module.exports = {
         await setMutestate(urlObject, mutestate)
       }
     }
-    
+  
     return true
   },
 
+  //
+  //     GROUP RELATED
+  //     .............
+
+  /** Get group data for a given player.   
+   * @param {string} tsPlayer sonos-ts player
+   * @param {string} [playerName] SONOS-Playername such as Kitchen 
+   * 
+   * @returns {promise<object>}  returns object:
+   *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
+   *
+   * @throws {error} all methods
+   */
+  getGroupCurrent: async function (tsPlayer, playerName) {
+    debug('method >>%s', 'getGroupCurrent')
+    const allGroups = await module.exports.getGroupsAll(tsPlayer)
+    const thisGroup = await extractGroup(tsPlayer.urlObject.hostname, allGroups, playerName)
+    return thisGroup
+  },
+  
+  /**
+   * @typedef {object} playerGroupData group data transformed
+   * @global
+   * @property {object} urlObject JavaScript URL object
+   * @property {string} playerName SONOS-Playername such as "Küche"
+   * @property {string} uuid such as RINCON_5CAAFD00223601400
+   * @property {string} groupId such as RINCON_5CAAFD00223601400:482
+   * @property {boolean} invisible false in case of any bindings otherwise true
+   * @property {string} channelMapSet such as 
+   *                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
+   */
+
+  /** Get array of all groups. Each group consist of an array of players <playerGroupData>[]
+   * Coordinator is always in position 0. Group array may have size 1 (standalone)
+   * @param  {object} player sonos-ts player
+   * 
+   * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
+   *          First group member is coordinator.
+   *
+   * @throws {error} 'property ZoneGroupState is missing', 'response form parse xml is invalid'
+   * @throws {error} all methods
+   */
+  getGroupsAll: async function (anyTsPlayer) {
+    debug('method >>%s', 'getGroupsAll')
+    
+    // get all groups
+    const householdGroups = await anyTsPlayer.ZoneGroupTopologyService.GetZoneGroupState({})   
+    if (!isTruthyProperty(householdGroups, ['ZoneGroupState'])) {
+      throw new Error(`${PACKAGE_PREFIX} property ZoneGroupState is missing`)
+    }
+    
+    return await parseZoneGroupToArray(householdGroups.ZoneGroupState, PACKAGE_PREFIX) 
+  },
+
+  //
+  //     CONTENT RELATED
+  //     ...............
   /**
   * Transformed data of Browse action response. 
   * @global

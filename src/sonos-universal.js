@@ -2771,7 +2771,7 @@ module.exports = function (RED) {
   async function playerExecuteActionV6 (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg, PACKAGE_PREFIX)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const { endpoint, action, inArgs } = msg
+    const { endpoint, action, inArgs } = msg.payload
     const payload = await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
       endpoint, action, inArgs)
     

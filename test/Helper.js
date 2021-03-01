@@ -241,6 +241,51 @@ describe('decodeHtmlEntity function', () => {
 
 describe('isTruthyProperty function', () => {
   
+  it('object undefined returns false', () => {
+    let obj 
+    const path = ['value']
+    const result = isTruthyProperty(obj, path)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+
+  it('object undefined explicit returns false', () => {
+    const obj = undefined
+    const path = ['value']
+    const result = isTruthyProperty(obj, path)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+
+  it('object null returns false', () => {
+    const obj = null
+    const path = ['value']
+    const result = isTruthyProperty(obj, path)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+
+  it('object NaN returns false', () => {
+    const obj = NaN
+    const path = ['value']
+    const result = isTruthyProperty(obj, path)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+
+  it('object sting returns false', () => {
+    const obj = 'Hello'
+    const path = ['value']
+    const result = isTruthyProperty(obj, path)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+  
   it('undefined returns false', () => {
     let value
     const path = ['value']

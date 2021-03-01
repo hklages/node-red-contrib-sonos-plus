@@ -3,11 +3,107 @@
 // using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
 // using http://192.168.178.15:1400 a Synology NAS 
 
-const { isSonosPlayer, getDeviceInfo, matchSerialUuid }
+const { isSonosPlayer, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray }
   = require('../src/Extensions.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
+const { PACKAGE_PREFIX } = require('../src/Globals.js')
+
+describe('parseZoneGroupToArray function', () => { 
+  
+  const TEST_DATA =  require('./testdata.json')
+  
+  // deep comparison not possible as urlObject is object or string
+  it('3Player-1Group-CoKitchen - lenght and coordinator name', async () => {
+    const TEST_1 = TEST_DATA['3Player_1Group_Coordinator_Kitchen']
+    const result = await parseZoneGroupToArray(TEST_1.ZoneGroupState, PACKAGE_PREFIX)
+    expect(result.length)
+      .to.equal(TEST_1.result.length)
+    expect(result[0].length)
+      .to.equal(TEST_1.result[0].length)
+    expect(result[0][0].playerName)
+      .be.a('string')
+      .to.equal(TEST_1.result[0][0].playerName)
+    expect(result[0][0].uuid)
+      .to.equal(TEST_1.result[0][0].uuid)
+  })
+
+  it('3Player-1Group-CoLiving -  length and coordinator name', async () => {
+    const TEST = TEST_DATA['3Player_1Group_Coordinator_Living']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    expect(result.length)
+      .to.equal(TEST.result.length)
+    expect(result[0].length)
+      .to.equal(TEST.result[0].length)
+    expect(result[0][0].playerName)
+      .be.a('string')
+      .to.equal(TEST.result[0][0].playerName)
+    expect(result[0][0].uuid)
+      .to.equal(TEST.result[0][0].uuid)
+  })
+
+  it('3Player-3Groups - length and playerName string', async () => {
+    const TEST = TEST_DATA['3Player_3Groups']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    expect(result.length) // number of groups
+      .to.equal(TEST.result.length)
+    expect(result[0].length)
+      .to.equal(TEST.result[0].length)
+    expect(result[1].length)
+      .to.equal(TEST.result[1].length)
+    expect(result[2].length)
+      .to.equal(TEST.result[2].length)
+    expect(result[0][0].playerName)
+      .be.a('string')
+    expect(result[1][0].playerName)
+      .be.a('string')
+    expect(result[2][0].playerName)
+      .be.a('string')
+  })
+
+  it('1Player - length and playerName string', async () => {
+    const TEST = TEST_DATA['1Player']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    expect(result.length) // number of groups
+      .to.equal(TEST.result.length)
+    expect(result[0].length)
+      .to.equal(TEST.result[0].length)
+    expect(result[0][0].playerName)
+      .be.a('string')
+      .equal(TEST.result[0][0].playerName)
+  })
+
+  it('1Player-name39 - length and playerName string', async () => {
+    const TEST = TEST_DATA['1Player-name-39']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    expect(result.length) // number of groups
+      .to.equal(TEST.result.length)
+    expect(result[0].length)
+      .to.equal(TEST.result[0].length)
+    expect(result[0][0].playerName)
+      .be.a('string')
+      .equal(TEST.result[0][0].playerName)
+  })
+
+  it('4Player-2Groups - length and Coordinator', async () => {
+    const TEST = TEST_DATA['4Player-2Group-CoKitchen-CoBath']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    expect(result.length) // number of groups
+      .to.equal(TEST.result.length)
+    expect(result[0].length)
+      .to.equal(TEST.result[0].length)
+    expect(result[1].length)
+      .to.equal(TEST.result[1].length)
+    expect(result[0][0].playerName)
+      .be.a('string')
+      .equal('Küche')
+    expect(result[1][0].playerName)
+      .be.a('string')
+      .equal('Bad')
+    
+  })
+})
 
 describe('isSonosPlayer function', () => {
   

@@ -25,6 +25,8 @@ payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty
 
 - household.get.groups: members, url renamed to urlObject
 
+- player.play.avtransport now based on sonos-ts and depreciated!
+
 #### Added
 
 - config node: you can now use discovery for the ip address
