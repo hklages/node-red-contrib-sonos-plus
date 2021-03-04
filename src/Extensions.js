@@ -37,6 +37,154 @@ module.exports = {
   MUSIC_SERVICES: require('./Db-MusicServices.json'),
 
   //
+  //     NODE-RED STATUS & ERROR HANDLING 
+  //     ................................
+
+  /**
+   *  Validates general group properties msg.playerName, msg.volume, msg.sameVolume, msg.clearQueue
+   * Returns default if is NOT isTruthyProperty (undefined, null, ...) 
+   * but throws error if has wrong type or wrong value (such as out of range, regex, ...)
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = ''] playerName
+   * @param {string/number} [msg.volume = -1] volume. if not set don't touch original volume.
+   * @param {boolean} [msg.sameVolume = true] sameVolume
+   * @param {boolean} [msg.clearQueue = true] indicator for clear queue
+   *
+   * @returns {promise} object {playerName, volume, sameVolume, flushQueue}
+   *
+   * @throws {error} 'sameVolume (msg.sameVolume) is not boolean', 
+   * 'sameVolume (msg.sameVolume) is true but msg.volume is not specified', 
+   * 'clearQueue (msg.cleanQueue) is not boolean'
+   * @throws {error} all methods
+   */
+  validatedGroupProperties: async (msg) => {
+    // playerName 
+    const playerName = validRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', '')
+
+    // volume 
+    const volume = validToInteger(msg, 'volume', 0, 100, 'volume', -1)
+
+    // sameVolume
+    let sameVolume = true
+    if (isTruthyProperty(msg, ['sameVolume'])) {
+      if (typeof msg.sameVolume !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: sameVolume (msg.sameVolume) is not boolean`)
+      }
+      if (volume === -1 && msg.sameVolume === true) {
+        throw new Error(
+          `${PACKAGE_PREFIX}: sameVolume (msg.sameVolume) is true but msg.volume is not specified`)
+      }
+      sameVolume = msg.sameVolume
+    }
+
+    // clearQueue
+    let clearQueue = true
+    if (isTruthyProperty(msg, ['clearQueue'])) {
+      if (typeof msg.clearQueue !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: clearQueue (msg.cleanQueue) is not boolean`)
+      }
+      clearQueue = msg.clearQueue
+    }
+
+    return { playerName, volume, sameVolume, clearQueue }
+  },
+
+  /** Show any error occurring during processing of messages in the node status 
+   * and create node error.
+   * 
+   * @param  {object} node current node
+   * @param  {object} msg current msg
+   * @param  {object} error  standard node.js or created with new Error ('')
+   * @param  {string} [functionName] name of calling function
+   * 
+   * @throws nothing
+   * 
+   * @returns nothing
+   */
+  failure: (node, msg, error, functionName) => {
+    // 1. Is the error a standard nodejs error? Indicator: .code exists
+    // nodejs provides an error object with properties: .code, .message .name .stack
+    // See https://nodejs.org/api/errors.html for more about the error object.
+    // .code provides the best information.
+    // See https://nodejs.org/api/errors.html#errors_common_system_errors
+    // 
+    // 2. Is the error thrown in node-sonos - service _request? Indicator: 
+    // message starts with NODE_SONOS_ERRORPREFIX
+    // The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' 
+    // and the error.response.data or NODE_SONOS_ERRORPREFIX error.message and 
+    // error.response.data
+    // 
+    // 3. Is the error from this package? Indicator: .message starts with PACKAGE_PREFIX
+    // 
+    // 4. All other error throw inside all modules (node-sonos, axio, ...)
+    let msgShort = 'unknown' // default text used for status message
+    let msgDet = 'unknown' // default text for error message in addition to msgShort
+    if (isTruthyPropertyStringNotEmpty(error, ['code'])) {
+      // 1. nodejs errors - convert into readable message
+      if (error.code === 'ECONNREFUSED') {
+        msgShort = 'Player refused to connect'
+        msgDet = 'Validate players ip address'
+      } else if (error.code === 'EHOSTUNREACH') {
+        msgShort = 'Player is unreachable'
+        msgDet = 'Validate players ip address / power on'
+      } else if (error.code === 'ETIMEDOUT') {
+        msgShort = 'Request timed out'
+        msgDet = 'Validate players IP address / power on'
+      } else {
+        // Caution: getOwn is necessary for some error messages eg play mode!
+        msgShort = 'nodejs error - contact developer'
+        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
+      }
+    } else {
+      // Caution: getOwn is necessary for some error messages eg play mode!
+      if (isTruthyPropertyStringNotEmpty(error, ['message'])) {
+        if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
+          // 2. node sonos upnp errors from service _request
+          if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
+            const uppnText = error.message.substring(module.exports.NODE_SONOS_UPNP500.length)
+            const upnpEc = module.exports.getErrorCodeFromEnvelope(uppnText)
+            msgShort = `statusCode 500 & upnpError ${upnpEc}`
+            // TODO Notion Helper-Service
+            msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.SOAP_ERRORS.UPNP, '')
+          } else {
+            // unlikely as all UPNP errors throw 500
+            msgShort = 'statusCode NOT 500'
+            msgDet = `upnp envelope: ${error.message}`
+          }
+        } else if (error.message.startsWith(PACKAGE_PREFIX)) {
+          // 3. my thrown errors
+          msgDet = 'none'
+          msgShort = error.message.replace(PACKAGE_PREFIX, '')
+        } else {
+          // Caution: getOwn is necessary for some error messages eg play mode!
+          msgShort = error.message
+          msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
+        }
+      } else {
+        // 4. all the others
+        msgShort = 'Unknown error/ exception -see node.error'
+        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
+      }
+    }
+  
+    node.error(`${functionName}:${msgShort} :: Details: ${msgDet}`, msg)
+    node.status({ 'fill': 'red', 'shape': 'dot', 'text': `error: ${functionName} - ${msgShort}`
+    })
+  },
+  
+  /** Set node status and send message.
+     * 
+     * @param  {object} node current node
+     * @param  {object} msg current msg (maybe null)
+     * @param  {string} functionName name of calling function
+     */
+  success: (node, msg, functionName) => {
+    node.send(msg)
+    node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${functionName}` })
+    node.debug(`OK: ${functionName}`)
+  },
+
+  //
   //     SPECIAL COMMANDS - SIMPLE HTML REQUEST  
   //     ......................................
 
@@ -255,7 +403,7 @@ module.exports = {
   },
 
   //
-  //     SONOS RELATED HELPER 
+  //     SONOS RELATED HELPER
   //     ....................
 
   /** Comparing player UUID and serial number. Returns true if matching.
@@ -704,161 +852,6 @@ module.exports = {
     }
   },
 
-  //
-  //     NODE-RED STATUS & ERROR HANDLING 
-  //     ................................
-
-  /**
-   *  Validates group properties msg.playerName, msg.volume, msg.sameVolume, msg.clearQueue
-   * @param {object} msg incoming message
-   * @param {string} [msg.playerName = ''] playerName
-   * @param {string/number} [msg.volume = -1] volume. if not set don't touch original volume.
-   * @param {boolean} [msg.sameVolume = true] sameVolume
-   * @param {boolean} [msg.clearQueue = true] indicator for clear queue
-   * @param {string} pkgPrefix package identifier
-   *
-   * @returns {promise} object {playerName, volume, sameVolume, flushQueue}
-   * playerName is '' if missing.
-   * volume is -1 if missing. Otherwise number, integer in range 0 ... 100
-   * sameVolume is true if missing.
-   * clearQueue is true if missing.
-   *
-   * @throws {error} 'sameVolume (msg.sameVolume) is not boolean', 
-   * 'sameVolume (msg.sameVolume) is true but msg.volume is not specified', 
-   * 'clearQueue (msg.cleanQueue) is not boolean'
-   * @throws {error} all methods
-   */
-  validatedGroupProperties: async (msg, pkgPrefix) => {
-    // If missing set to ''.
-    const newPlayerName = validRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', '')
-
-    // If missing set to -1.
-    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', -1)
-
-    // If missing set to true - throws errors if invalid
-    let newSameVolume = true
-    if (isTruthyProperty(msg, ['sameVolume'])) {
-      if (typeof msg.sameVolume !== 'boolean') {
-        throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is not boolean`)
-      }
-      if (newVolume === -1 && msg.sameVolume === true) {
-        throw new Error(
-          `${pkgPrefix}: sameVolume (msg.sameVolume) is true but msg.volume is not specified`)
-      }
-      newSameVolume = msg.sameVolume
-    }
-
-    // If missing set to true - throws errors if invalid
-    let clearQueue = true
-    if (isTruthyProperty(msg, ['clearQueue'])) {
-      if (typeof msg.flushQueue !== 'boolean') {
-        throw new Error(`${pkgPrefix}: clearQueue (msg.cleanQueue) is not boolean`)
-      }
-      clearQueue = msg.clearQueue
-    }
-
-    return {
-      'playerName': newPlayerName,
-      'volume': newVolume,
-      'sameVolume': newSameVolume, clearQueue
-    }
-  },
-
-  /** Show any error occurring during processing of messages in the node status 
-   * and create node error.
-   * 
-   * @param  {object} node current node
-   * @param  {object} msg current msg
-   * @param  {object} error  standard node.js or created with new Error ('')
-   * @param  {string} [functionName] name of calling function
-   * 
-   * @throws nothing
-   * 
-   * @returns nothing
-   */
-  failure: (node, msg, error, functionName) => {
-    // 1. Is the error a standard nodejs error? Indicator: .code exists
-    // nodejs provides an error object with properties: .code, .message .name .stack
-    // See https://nodejs.org/api/errors.html for more about the error object.
-    // .code provides the best information.
-    // See https://nodejs.org/api/errors.html#errors_common_system_errors
-    // 
-    // 2. Is the error thrown in node-sonos - service _request? Indicator: 
-    // message starts with NODE_SONOS_ERRORPREFIX
-    // The .message then contains either NODE_SONOS_ERRORPREFIX statusCode 500 & upnpErrorCode ' 
-    // and the error.response.data or NODE_SONOS_ERRORPREFIX error.message and 
-    // error.response.data
-    // 
-    // 3. Is the error from this package? Indicator: .message starts with PACKAGE_PREFIX
-    // 
-    // 4. All other error throw inside all modules (node-sonos, axio, ...)
-    let msgShort = 'unknown' // default text used for status message
-    let msgDet = 'unknown' // default text for error message in addition to msgShort
-    if (isTruthyPropertyStringNotEmpty(error, ['code'])) {
-      // 1. nodejs errors - convert into readable message
-      if (error.code === 'ECONNREFUSED') {
-        msgShort = 'Player refused to connect'
-        msgDet = 'Validate players ip address'
-      } else if (error.code === 'EHOSTUNREACH') {
-        msgShort = 'Player is unreachable'
-        msgDet = 'Validate players ip address / power on'
-      } else if (error.code === 'ETIMEDOUT') {
-        msgShort = 'Request timed out'
-        msgDet = 'Validate players IP address / power on'
-      } else {
-        // Caution: getOwn is necessary for some error messages eg play mode!
-        msgShort = 'nodejs error - contact developer'
-        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
-      }
-    } else {
-      // Caution: getOwn is necessary for some error messages eg play mode!
-      if (isTruthyPropertyStringNotEmpty(error, ['message'])) {
-        if (error.message.startsWith(module.exports.NODE_SONOS_ERRORPREFIX)) {
-          // 2. node sonos upnp errors from service _request
-          if (error.message.startsWith(module.exports.NODE_SONOS_UPNP500)) {
-            const uppnText = error.message.substring(module.exports.NODE_SONOS_UPNP500.length)
-            const upnpEc = module.exports.getErrorCodeFromEnvelope(uppnText)
-            msgShort = `statusCode 500 & upnpError ${upnpEc}`
-            // TODO Notion Helper-Service
-            msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.SOAP_ERRORS.UPNP, '')
-          } else {
-            // unlikely as all UPNP errors throw 500
-            msgShort = 'statusCode NOT 500'
-            msgDet = `upnp envelope: ${error.message}`
-          }
-        } else if (error.message.startsWith(PACKAGE_PREFIX)) {
-          // 3. my thrown errors
-          msgDet = 'none'
-          msgShort = error.message.replace(PACKAGE_PREFIX, '')
-        } else {
-          // Caution: getOwn is necessary for some error messages eg play mode!
-          msgShort = error.message
-          msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
-        }
-      } else {
-        // 4. all the others
-        msgShort = 'Unknown error/ exception -see node.error'
-        msgDet = JSON.stringify(error, Object.getOwnPropertyNames(error))
-      }
-    }
-  
-    node.error(`${functionName}:${msgShort} :: Details: ${msgDet}`, msg)
-    node.status({ 'fill': 'red', 'shape': 'dot', 'text': `error: ${functionName} - ${msgShort}`
-    })
-  },
-  
-  /** Set node status and send message.
-     * 
-     * @param  {object} node current node
-     * @param  {object} msg current msg (maybe null)
-     * @param  {string} functionName name of calling function
-     */
-  success: (node, msg, functionName) => {
-    node.send(msg)
-    node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${functionName}` })
-    node.debug(`OK: ${functionName}`)
-  },
-  
   //
   //    BASIC EXECUTE UPNP ACTION COMMAND AND SOAP REQUEST
   //    ..................................................
