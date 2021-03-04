@@ -3,7 +3,8 @@
 // using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
 // using http://192.168.178.15:1400 a Synology NAS 
 
-const { isSonosPlayer, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray }
+const { isSonosPlayer, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray, parseBrowseToArray,
+  guessProcessingType }
   = require('../src/Extensions.js')
 
 const { describe, it } = require('mocha')
@@ -12,12 +13,12 @@ const { PACKAGE_PREFIX } = require('../src/Globals.js')
 
 describe('parseZoneGroupToArray function', () => { 
   
-  const TEST_DATA =  require('./testdata.json')
+  const TEST_DATA_ZONEGROUP =  require('./testdata-parsezonegroup.json')
   
   // deep comparison not possible as urlObject is object or string
   it('3Player-1Group-CoKitchen - lenght and coordinator name', async () => {
-    const TEST_1 = TEST_DATA['3Player_1Group_Coordinator_Kitchen']
-    const result = await parseZoneGroupToArray(TEST_1.ZoneGroupState, PACKAGE_PREFIX)
+    const TEST_1 = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen']
+    const result = await parseZoneGroupToArray(TEST_1.ZoneGroupState)
     expect(result.length)
       .to.equal(TEST_1.result.length)
     expect(result[0].length)
@@ -30,8 +31,8 @@ describe('parseZoneGroupToArray function', () => {
   })
 
   it('3Player-1Group-CoLiving -  length and coordinator name', async () => {
-    const TEST = TEST_DATA['3Player_1Group_Coordinator_Living']
-    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    const TEST = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Living']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState)
     expect(result.length)
       .to.equal(TEST.result.length)
     expect(result[0].length)
@@ -44,8 +45,8 @@ describe('parseZoneGroupToArray function', () => {
   })
 
   it('3Player-3Groups - length and playerName string', async () => {
-    const TEST = TEST_DATA['3Player_3Groups']
-    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    const TEST = TEST_DATA_ZONEGROUP['3Player_3Groups']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState)
     expect(result.length) // number of groups
       .to.equal(TEST.result.length)
     expect(result[0].length)
@@ -63,8 +64,8 @@ describe('parseZoneGroupToArray function', () => {
   })
 
   it('1Player - length and playerName string', async () => {
-    const TEST = TEST_DATA['1Player']
-    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    const TEST = TEST_DATA_ZONEGROUP['1Player']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState)
     expect(result.length) // number of groups
       .to.equal(TEST.result.length)
     expect(result[0].length)
@@ -75,8 +76,8 @@ describe('parseZoneGroupToArray function', () => {
   })
 
   it('1Player-name39 - length and playerName string', async () => {
-    const TEST = TEST_DATA['1Player-name-39']
-    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    const TEST = TEST_DATA_ZONEGROUP['1Player-name-39']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState)
     expect(result.length) // number of groups
       .to.equal(TEST.result.length)
     expect(result[0].length)
@@ -87,8 +88,8 @@ describe('parseZoneGroupToArray function', () => {
   })
 
   it('4Player-2Groups - length and Coordinator', async () => {
-    const TEST = TEST_DATA['4Player-2Group-CoKitchen-CoBath']
-    const result = await parseZoneGroupToArray(TEST.ZoneGroupState, PACKAGE_PREFIX)
+    const TEST = TEST_DATA_ZONEGROUP['4Player-2Group-CoKitchen-CoBath']
+    const result = await parseZoneGroupToArray(TEST.ZoneGroupState)
     expect(result.length) // number of groups
       .to.equal(TEST.result.length)
     expect(result[0].length)
@@ -103,6 +104,191 @@ describe('parseZoneGroupToArray function', () => {
       .equal('Bad')
     
   })
+})
+
+describe('parseBrowseToArray function', () => {
+  
+  const TEST_DATA_BROWSE = require('./testdata-parseBrowse.json')
+
+  // keep in mind that get mysonos appends SONNS playlists at the end. 
+  // for testing they have to be removed from the result array!
+  it('mysonos with out playlist 42 entries - array, length, some items', async () => {
+    const TEST = TEST_DATA_BROWSE['mysonos-42entries']
+    const result = await parseBrowseToArray(TEST.browseOut, 'item')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[0].title)
+      .be.a('string')
+      .equal('1. HERZ KRAFT WERKE (Deluxe Version)')
+      .to.not.be.null
+      .to.not.be.undefined
+    expect(result[0].id)
+      .be.a('string')
+      .equal('FV:2/139')
+      .to.not.be.null
+      .to.not.be.undefined
+    expect(result[0].metadata)
+      .be.a('string')
+    expect(result[0].artUri)
+      .be.a('string')
+    expect(result[0].uri)
+      .be.a('string')
+    expect(result[0])
+      .deep.eq(result[0])
+    expect(result[40])
+      .deep.eq(result[40])
+  })
+
+  it('mysonos without playlist 1 entry - array, length, some items', async () => {
+    const TEST = TEST_DATA_BROWSE['mysonos-1entry']
+    const result = await parseBrowseToArray(TEST.browseOut, 'item')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[0].title)
+      .be.a('string')
+      .equal('x (Deluxe Edition)')
+      .to.not.be.null
+      .to.not.be.undefined
+    expect(result[0].id)
+      .be.a('string')
+      .equal('FV:2/180')
+      .to.not.be.null
+      .to.not.be.undefined
+    expect(result[0].metadata)
+      .be.a('string')
+    expect(result[0].artUri)
+      .be.a('string')
+    expect(result[0].uri)
+      .be.a('string')
+    expect(result[0])
+      .deep.eq(result[0])
+  })
+
+  it('sonos queue 0 entries - array & length', async () => {
+    const TEST = TEST_DATA_BROWSE['queue-0entries']
+    const result = await parseBrowseToArray(TEST.browseOut, 'item')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+  })
+
+  it('sonos queue 1 entry - array, length, first item', async () => {
+    const TEST = TEST_DATA_BROWSE['queue-1entry']
+    const result = await parseBrowseToArray(TEST.browseOut, 'item')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[0].title)
+      .be.a('string')
+    expect(result[0].id)
+      .be.a('string')
+    expect(result[0].processingType)
+      .be.a('string')
+      .equal('queue')
+    expect(result[0])
+      .deep.eq(result[0])
+  })
+
+  it('sonos queue 24 entry - array, length, some items', async () => {
+    const TEST = TEST_DATA_BROWSE['queue-24entries']
+    const result = await parseBrowseToArray(TEST.browseOut, 'item')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[10].title)
+      .be.a('string')
+    expect(result[10].id)
+      .be.a('string')
+    expect(result[10].processingType)
+      .be.a('string')
+      .equal('queue')
+    expect(result[5])
+      .deep.eq(result[5])
+    expect(result[23])
+      .deep.eq(result[23])
+  })
+
+  it('sonos playlist 0 entries - array & length', async () => {
+    const TEST = TEST_DATA_BROWSE['sonosplaylist-0entries']
+    const result = await parseBrowseToArray(TEST.browseOut, 'container')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+  })
+
+  it('sonos playlist  1 entry - array, length, first item', async () => {
+    const TEST = TEST_DATA_BROWSE['sonosplaylist-1entry']
+    const result = await parseBrowseToArray(TEST.browseOut, 'container')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[0].title)
+      .be.a('string')
+    expect(result[0].id)
+      .be.a('string')
+    expect(result[0].processingType)
+      .be.a('string')
+      .equal('queue')
+    expect(result[0])
+      .deep.eq(result[0])
+  })
+
+  it('ml album  0 entries - array & length', async () => {
+    const TEST = TEST_DATA_BROWSE['mlalbum-0entries']
+    const result = await parseBrowseToArray(TEST.browseOut, 'container')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+  })
+
+  it('ml album  1 entry - array, length, first item', async () => {
+    const TEST = TEST_DATA_BROWSE['mlalbum-1entry']
+    const result = await parseBrowseToArray(TEST.browseOut, 'container')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[0].title)
+      .be.a('string')
+    expect(result[0].id)
+      .be.a('string')
+    expect(result[0].processingType)
+      .be.a('string')
+      .equal('queue')
+    expect(result[0])
+      .deep.eq(result[0])
+  })
+
+  it('ml album  6 entries - array, length, some items', async () => {
+    const TEST = TEST_DATA_BROWSE['mlalbum-6entries']
+    const result = await parseBrowseToArray(TEST.browseOut, 'container')
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .to.equal(TEST.result.length)
+    expect(result[3].title)
+      .be.a('string')
+    expect(result[3].id)
+      .be.a('string')
+    expect(result[3].processingType)
+      .be.a('string')
+      .equal('queue')
+    expect(result[4])
+      .deep.eq(result[4])
+    expect(result[5])
+      .deep.eq(result[5])
+  })
+  
 })
 
 describe('isSonosPlayer function', () => {
@@ -236,17 +422,44 @@ describe('matchSerialUuid function', () => {
     const serial = '00-0E-58-FE-3A-EA:5'
     const uuid = 'RINCON_000E58FE3AEA01400'
     const result = await matchSerialUuid(serial, uuid)
-    expect(result).
-      be.a('boolean').
-      equal(true)
+    expect(result)
+      .be.a('boolean')
+      .equal(true)
   })
 
   it('not same provides false', async () => {
     const serial = '94-9F-3E-C1-3B-99:8'
     const uuid = 'RINCON_000E58FE3AEA01400'
     const result = await matchSerialUuid(serial, uuid)
-    expect(result).
-      be.a('boolean').
-      equal(false)
+    expect(result)
+      .be.a('boolean')
+      .equal(false)
+  })
+})
+
+describe('guessProcessingType function', () => {
+  
+  it('audiobroadcast means stream ', async () => {
+    const upnpClass = 'object.item.audioItem.audioBroadcast'
+    const result = await guessProcessingType(upnpClass)
+    expect(result)
+      .be.a('string')
+      .equal('stream')
+  })
+
+  it('musicTack provides queue', async () => {
+    const upnpClass = 'object.item.audioItem.musicTrack'
+    const result = await guessProcessingType(upnpClass)
+    expect(result)
+      .be.a('string')
+      .equal('queue')
+  })
+
+  it('nonsense provides queue', async () => {
+    const upnpClass = 'xxxx'
+    const result = await guessProcessingType(upnpClass)
+    expect(result)
+      .be.a('string')
+      .equal('queue')
   })
 })

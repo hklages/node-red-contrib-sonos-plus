@@ -1,20 +1,24 @@
 /**
- * Collection of simple commands either they are simple HTML requests or based on executeAction.
- * executeAction is based on sendSoapToPlayer.
+ * Collection of 
+ * - Node-RED related such as failure, success, validRegex, validToInteger
+ * - simple HTML commands
+ * - simple SOAP commands based on executeAction and sendSoapToPlayer
+ * - SONOS related helper for parsing xml data
+ * - executeAction, sendSoapToPlayer.
  *
  * @module Sonos-Extensions.js
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-19
+ * @since 2021-03-04
 */
 
 'use strict'
 
-const { PACKAGE_PREFIX } = require('./Globals.js')
+const { PACKAGE_PREFIX, REGEX_ANYCHAR } = require('./Globals.js')
 
-const { isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, isTruthyArray, isTruthy,
-  isTruthyProperty, decodeHtmlEntity, getNestedProperty
+const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
+  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger, 
 } = require('./Helper.js')
 
 const  request   = require('axios').default
@@ -50,7 +54,7 @@ module.exports = {
    * @throws none - they are caught insight
    */
   isSonosPlayer: async (playerUrlObject, timeout) => {
-    debug('method >>%s', 'isSonosPlayer')
+    debug('method:%s', 'isSonosPlayer')
     let response = null
     try {
       response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
@@ -77,7 +81,7 @@ module.exports = {
    * @throws {error} all methods especially a timeout
    */
   getDeviceInfo: async (playerUrlObject, timeout) => {
-    debug('method >>%s', 'getDeviceInfo')
+    debug('method:%s', 'getDeviceInfo')
     // error is thrown if not status code 200
     const response = await request.get(`${playerUrlObject.origin}/info`, {
       'timeout': timeout, 
@@ -107,7 +111,7 @@ module.exports = {
    * @throws {error} all methods
    */
   getDeviceProperties: async (playerUrlObject) => {
-    debug('method >>%s', 'getDeviceProperties')
+    debug('method:%s', 'getDeviceProperties')
     const endpoint = '/xml/device_description.xml'
     const response = await request({
       'method': 'get',
@@ -142,40 +146,6 @@ module.exports = {
   },
 
   //
-  //     COMPLEX COMMANDS - EXECUTE ACTION AND TRANSFORM  
-  //     ...............................................
-
-  /** Get array of all SONOS-Queue items.
-   * Adds processingType and player urlobject.origin to artUri.
-   * @param {object} tsPlayer sonos-ts player
-   * @param {number} requestedCount integer, 1 to ...
-   *
-   * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
-   *
-   * @throws {error} invalid return from Browse, parseBrowseToArray error
-   */
-  getSonosQueue: async (tsPlayer, requestedCount) => {
-    debug('method >>%s', 'getSonosQueue')
-    const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
-      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-      'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
-    })
-    
-    let transformed = await module.exports.parseBrowseToArray(browseQueue, 'item', PACKAGE_PREFIX)
-    if (!isTruthyArray(transformed)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
-    }
-    transformed = transformed.map((item) => {
-      if (item.artUri.startsWith('/getaa')) {
-        item.artUri = tsPlayer.urlObject.origin + item.artUri
-      }
-      return item
-    })
-
-    return transformed
-  },
-  
-  //
   //     SIMPLE COMMANDS - EXECUTE ACTION AND SIMPLE TRANSFORMATION
   //
   //     @param  {object} playerUrlObject/coordinatorUrlObject JavaScript build-in URL urlObject
@@ -185,7 +155,7 @@ module.exports = {
   
   // Get mute state of given player. values: on|off
   getMutestate: async (playerUrlObject) => {
-    debug('method >>%s', 'getMutestate')
+    debug('method:%s', 'getMutestate')
     return (await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetMute',
       { 'InstanceID': 0, 'Channel': 'Master' }) === '1' ? 'on' : 'off')
@@ -193,7 +163,7 @@ module.exports = {
 
   // Get media info of given player.
   getMediaInfo: async (coordinatorUrlObject) => {
-    debug('method >>%s', 'getMediaInfo')
+    debug('method:%s', 'getMediaInfo')
     return await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
@@ -202,7 +172,7 @@ module.exports = {
   // Get playbackstate of given player. 
   // values: playing, stopped, playing, paused_playback, transitioning, no_media_present
   getPlaybackstate: async (coordinatorUrlObject) => {
-    debug('method >>%s', 'getPlaybackstate')
+    debug('method:%s', 'getPlaybackstate')
     const transportInfo = await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
@@ -214,7 +184,7 @@ module.exports = {
 
   // Get position info of given player.
   getPositionInfo: async (coordinatorUrlObject) => {
-    debug('method >>%s', 'getPositionInfo')
+    debug('method:%s', 'getPositionInfo')
     return await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
       { 'InstanceID': 0 })
@@ -222,7 +192,7 @@ module.exports = {
 
   // Get volume of given player. value: integer, range 0 .. 100
   getVolume: async (playerUrlObject) => {
-    debug('method >>%s', 'getVolume')
+    debug('method:%s', 'getVolume')
     return await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetVolume',
       { 'InstanceID': 0, 'Channel': 'Master' })
@@ -230,7 +200,7 @@ module.exports = {
 
   //** Play (already set) URI.
   play: async (coordinatorUrlObject) => {
-    debug('method >>%s', 'play')
+    debug('method:%s', 'play')
     return await module.exports.executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { 'InstanceID': 0, 'Speed': 1 })
@@ -238,7 +208,7 @@ module.exports = {
 
   //** Position in track - requires none empty queue. position h:mm:ss
   positionInTrack: async (coordinatorUrlObject, positionInTrack) => {
-    debug('method >>%s', 'positionInTrack')
+    debug('method:%s', 'positionInTrack')
     if (!isTruthy(positionInTrack)) {
       throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
     }
@@ -254,7 +224,7 @@ module.exports = {
   //** Play track - requires none empty queue. trackPosition (number) 1 to queue length
   // track position number or string in range 1 to lenght
   selectTrack: async (coordinatorUrlObject, trackPosition) => {
-    debug('method >>%s', 'selectTrack')
+    debug('method:%s', 'selectTrack')
     if (!isTruthy(trackPosition)) {
       throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
     }
@@ -270,7 +240,7 @@ module.exports = {
 
   // Set new mute state at given player. newMutestate string must be on|off
   setMutestate: async (playerUrlObject, newMutestate) => {
-    debug('method >>%s', 'setMutestate')
+    debug('method:%s', 'setMutestate')
     return await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetMute',
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': newMutestate })
@@ -278,7 +248,7 @@ module.exports = {
 
   // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
   setVolume: async (playerUrlObject, newVolume) => {
-    debug('method >>%s', 'setVolume')
+    debug('method:%s', 'setVolume')
     return await module.exports.executeActionV6(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetVolume',
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
@@ -302,7 +272,7 @@ module.exports = {
    * @since 2021-02-13
    */
   matchSerialUuid: (serial, uuid) => {
-    debug('method >>%s', 'matchSerialUuid')
+    debug('method:%s', 'matchSerialUuid')
     
     let serialClean = serial.split(':')[0]
     serialClean = serialClean.replace(/-/g, '')
@@ -320,7 +290,6 @@ module.exports = {
    * @param  {number} browseOutcome.TotalMatches amount of total item
    * @param  {string} browseOutcome.Result Didl-Light format, xml 
    * @param  {string} itemName DIDL-Light property holding the data. Such as "item" or "container"
-   * @param  {string} packageName name of calling package  - used for throws
    * 
    * @returns {Promise<DidlBrowseItem[]>} Promise, array of {@link Sonos-CommandsTs#DidlBrowseItem},
    *  maybe empty array.
@@ -332,20 +301,19 @@ module.exports = {
    * The <DIDL-Lite> includes several attributes such as xmlns:dc" and entries 
    * all named "container" or "item". These include xml tags such as 'res'. 
    */
-  parseBrowseToArray: async (browseOutcome, itemName, packageName) => {
-    
+  parseBrowseToArray: async (browseOutcome, itemName) => {
     // validate method parameter
-    if (!isTruthy(packageName)) {
-      throw new Error('Package name is missing')
+    if (!isTruthy(PACKAGE_PREFIX)) {
+      throw new Error('parameter package name is missing')
     }
     if (!isTruthy(browseOutcome)) {
-      throw new Error(`${packageName} Browse input is missing`)
+      throw new Error('parameter browse input is missing')
     }
     if (!isTruthyStringNotEmpty(itemName)) {
-      throw new Error(`${packageName} item name such as container is missing`)
+      throw new Error('parameter item name such as container is missing')
     }
     if (!isTruthyProperty(browseOutcome, ['NumberReturned'])) { 
-      throw new Error(`${packageName} invalid response Browse: - missing NumberReturned`)
+      throw new Error(`${PACKAGE_PREFIX} invalid response Browse: - missing NumberReturned`)
     }
     if (browseOutcome.NumberReturned < 1) {
       return [] // no My Sonos favorites
@@ -353,71 +321,81 @@ module.exports = {
     
     // process the Result with Didl-Light
     if (!isTruthyPropertyStringNotEmpty(browseOutcome, ['Result'])) {
-      throw new Error(`${packageName} invalid response Browse: - missing Result`)
+      throw new Error(`${PACKAGE_PREFIX} invalid response Browse: - missing Result DIDL XML`)
     }
     const decodedResult = await decodeHtmlEntity(browseOutcome['Result'])
-    const resultJson = await parser.parse(decodedResult, {
+    // stopNodes because we use that value for export and import and no further processing
+    const browseJson = await parser.parse(decodedResult, {
+      'arrayMode': false, // watch fields of type array!
       'ignoreAttributes': false,
-      'attributeNamePrefix': '_',
-      'stopNodes': ['r:resMD'], // for My-Sonos items
-      'parseNodeValue': false // this is important - example Title 49 will otherwise be converted
+      'attributeNamePrefix': '_', 
+      'stopNodes': ['r:resMD'], // for My-Sonos items, play export!
+      'parseNodeValue': false, // is default - example Title 49 will otherwise be converted
+      'parseAttributeValue': false,  // is default
+      'textNodeName': '#text'  //is default, just to remember
     })  
-    if (!isTruthyProperty(resultJson, ['DIDL-Lite'])) {
-      throw new Error(`${packageName} invalid response Browse: missing DIDL-Lite`)
+    if (!isTruthyProperty(browseJson, ['DIDL-Lite'])) {
+      throw new Error(`${PACKAGE_PREFIX} invalid response Browse: missing DIDL-Lite`)
     }
 
-    let originalItems = []
-    // single items are not of type array (fast-xml-parser)
+    // The following section is because of fast-xml-parser with 'arrayMode' = false
+    // if only ONE item then convert it to array with one 
+    let itemsAlwaysArray = []
     const path = ['DIDL-Lite', itemName]
-    if (isTruthyProperty(resultJson, path)) {
-      const itemsOrOne = resultJson[path[0]][path[1]]
+    if (isTruthyProperty(browseJson, path)) {
+      const itemsOrOne = browseJson[path[0]][path[1]]
       if (Array.isArray(itemsOrOne)) { 
-        originalItems = itemsOrOne.slice()
+        itemsAlwaysArray = itemsOrOne.slice()
       } else { // single item  - convert to array
-        originalItems.push(itemsOrOne) 
+        itemsAlwaysArray = [itemsOrOne]
       }
     } 
 
-    // transform properties Album related
-    const transformedItems = await Promise.all(originalItems.map(async (item) => {
+    // transform properties
+    const transformedItems = await Promise.all(itemsAlwaysArray.map(async (item) => {
       const newItem = {
-        'id': '',
-        'title': '',
+        'id': '', // required
+        'title': '', // required
         'artist': '',
         'album': '',
+        'description': '',
         'uri': '',
         'artUri': '',
         'metadata': '',
         'sid': '',
         'serviceName': '',
-        'upnpClass': '',
+        'upnpClass': '',  // might be overwritten
         'processingType': 'queue' // has to be updated in calling program
       }
-      if (!isTruthyProperty(item, ['_id'])) {
-        throw new Error(`${packageName} id is missing`) // should never happen
-      }
-      newItem.id = item['_id']
 
+      // String() not necessary, see parsing options. But used in case 
+      // there might be a number.
+      // special property, required. 
+      if (!isTruthyProperty(item, ['_id'])) {
+        throw new Error(`${PACKAGE_PREFIX} id is missing`) // should never happen
+      }
+      newItem.id = String(item['_id'])
       if (!isTruthyProperty(item, ['dc:title'])) {
-        throw new Error(`${packageName} title is missing`) // should never happen
+        throw new Error(`${PACKAGE_PREFIX} title is missing`) // should never happen
       }
+      newItem.title = await decodeHtmlEntity(String(item['dc:title']))
+
+      // properties, optional
       if (isTruthyProperty(item, ['dc:creator'])) {
-        newItem.artist = item['dc:creator']
+        newItem.artist = await decodeHtmlEntity(String(item['dc:creator']))
       }
-      if (!isTruthyProperty(item, ['dc:title'])) {
-        throw new Error(`${packageName} title is missing`) // should never happen
+
+      if (isTruthyProperty(item, ['upnp:album'])) {
+        newItem.album = await decodeHtmlEntity(String(item['upnp:album']))
       }
-      newItem.title = await decodeHtmlEntity(String(item['dc:title'])) // clean title for search
-      if (isTruthyProperty(item, ['dc:creator'])) {
-        newItem.artist = item['dc:creator']
-      }
+
       if (isTruthyProperty(item, ['res', '#text'])) {
         newItem.uri = item['res']['#text'] // HTML entity encoded, URI encoded
         newItem.sid = await module.exports.getMusicServiceId(newItem.uri)
         newItem.serviceName = module.exports.getMusicServiceName(newItem.sid)
       }
-      if (isTruthyProperty(item, ['r:resMD'])) {
-        newItem.metadata = item['r:resMD']  // keep HTML entity encoded, URI encoded
+      if (isTruthyProperty(item, ['r:description'])) { // my sonos
+        newItem.description = item['r:description'] 
       } 
       if (isTruthyProperty(item, ['upnp:class'])) {
         newItem.upnpClass = item['upnp:class']
@@ -455,7 +433,7 @@ module.exports = {
    * prerequisites: uri is string where the sid is in between "?sid=" and "&flags="
    */
   getMusicServiceId: async (uri) => {
-    debug('method >>%s', 'getMusicServiceId')
+    debug('method:%s', 'getMusicServiceId')
     let sid = '' // default even if uri undefined.
     if (isTruthyStringNotEmpty(uri)) {
       const decodedUri = await decodeHtmlEntity(uri)
@@ -476,7 +454,7 @@ module.exports = {
    * @uses database of services (map music service id  to musics service name)
    */
   getMusicServiceName: (sid) => {
-    debug('method >>%s', 'getMusicServiceName')
+    debug('method:%s', 'getMusicServiceName')
     let serviceName = '' // default even if sid is blank
     if (sid !== '') {
       const list = module.exports.MUSIC_SERVICES
@@ -508,11 +486,12 @@ module.exports = {
   /**  Get UpnP class from string metadata. 
    * @param  {string} metadataEncoded DIDL-Lite metadata, encoded
    * 
-   * @returns {string} Upnp class such as "object.container.album.musicAlbum"
+   * @returns {Promise<string>} Upnp class such as "object.container.album.musicAlbum"
    *
    * prerequisites: metadata containing xml tag <upnp:class>
    */
   getUpnpClassEncoded: async (metadataEncoded) => {
+    debug('method:%s', 'getUpnpClassEncoded')
     // TODO has to be parsed - check with event and kidsplayer!
     const decoded = await decodeHtmlEntity(metadataEncoded)
     let upnpClass = '' // default
@@ -526,22 +505,66 @@ module.exports = {
     return upnpClass
   },
 
-  /** Parse outcome of GetZoneGroupState and create an array of all household groups. 
+  /**  guessProcessingType from UPnP string
+   * @param  {string} upnpClass the UPNP class such as 'object.item.audioItem.audioBroadcast'
+   * 
+   * @returns {Promise<string>} processingType 'queue'|'stream'
+   *
+   * prerequisites: metadata containing xml tag <upnp:class>
+   */
+  guessProcessingType: async (upnpClass) => {
+    debug('method:%s', 'guessProcessingType')
+
+    const UPNP_CLASSES_STREAM = ['object.item.audioItem.audioBroadcast']
+    const UPNP_CLASSES_QUEUE = [
+      'object.container.album.musicAlbum',
+      'object.container.playlistContainer',
+      'object.item.audioItem.musicTrack',
+      'object.container',
+      'object.container.playlistContainer#playlistItem',
+      'object.container.playlistContainer.#playlistItem',
+      'object.container.playlistContainer.#PlaylistView'
+    ]
+    // unsupported:
+    //   'object.container.podcast.#podcastContainer',
+    //   'object.container.albumlist'
+    
+    let processingType
+    if (UPNP_CLASSES_STREAM.includes(upnpClass)) {
+      debug('upnp class is of type stream ')
+      processingType = 'stream'
+    } else if (UPNP_CLASSES_QUEUE.includes(upnpClass)) {
+      debug('upnp class is of type queue ')
+      processingType = 'queue'
+    } else {
+      debug('upnp class is unsupported - we assume queue')
+      processingType = 'queue'
+    }
+
+    return processingType
+  },
+
+  /** Parse outcome of GetZoneGroupState and create an array of all groups in household. 
    * Each group consist of an array of players <playerGroupData>
    * Coordinator is always in position 0. Group array may have size 1 (standalone)
    * @param  {string} zoneGroupState the xml data from GetZoneGroupState
-   * @param  {string} packageName name of calling package  - used for throws
    * 
    * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
    *          First group member is coordinator.
    *
-   * @throws {error} 'response form parse xml is invalid'
+   * @throws {error} 'response form parse xml is invalid', 'parameter package name is missing',
+   * 'parameter zoneGroupState is missing`
    * @throws {error} all methods
    * 
    * CAUTION: to be on the safe side: playerName uses String (see parse*Value)
    * CAUTION: we use arrayMode false and do it manually
    */
-  parseZoneGroupToArray: async (zoneGroupState, packagePrefix) => { 
+  parseZoneGroupToArray: async (zoneGroupState) => { 
+    // validate method parameter
+    if (!isTruthyStringNotEmpty(zoneGroupState)) {
+      throw new Error('parameter zoneGroupState is missing')
+    }
+    
     const decoded = await decodeHtmlEntity(zoneGroupState)
     const groupState = await parser.parse(decoded, {
       'arrayMode': false,
@@ -551,26 +574,26 @@ module.exports = {
       'parseAttributeValue': false
     }) 
     if (!isTruthyProperty(groupState, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
-      throw new Error(`${packagePrefix} response form parse xml: properties missing.`)
+      throw new Error(`${PACKAGE_PREFIX} response form parse xml: properties missing.`)
     }
     
-    // The following section is because of parser.parse and 'arrayMode' = false
-    // if only ONE group convert to array with one member
-    let groupsArray
+    // The following section is because of fast-xml-parser with 'arrayMode' = false
+    // if only ONE group then convert it to array with one member
+    let groupsAlwaysArray
     if (Array.isArray(groupState.ZoneGroupState.ZoneGroups.ZoneGroup)) {
-      groupsArray = groupState.ZoneGroupState.ZoneGroups.ZoneGroup.slice()
+      groupsAlwaysArray = groupState.ZoneGroupState.ZoneGroups.ZoneGroup.slice()
     } else {
-      groupsArray = [groupState.ZoneGroupState.ZoneGroups.ZoneGroup] //convert to single item array
+      groupsAlwaysArray = [groupState.ZoneGroupState.ZoneGroups.ZoneGroup] 
     }
-    // if a group has only ONE member convert to array with one member
-    groupsArray = groupsArray.map(group => {
+    // if a group has only ONE member then convert it to array with one member
+    groupsAlwaysArray = groupsAlwaysArray.map(group => {
       if (!Array.isArray(group.ZoneGroupMember)) group.ZoneGroupMember = [group.ZoneGroupMember]
       return group
     })
     //result is groupsArray is array<groupDataRaw> and always arrays (not single item)
 
     // sort all groups that coordinator is in position 0 and select properties
-    // see typeDef playerGroupData
+    // see typeDef playerGroupData. 
     const groupsArraySorted = [] // result to be returned
     let groupSorted // keeps the group members, now sorted
     let coordinatorUuid = ''
@@ -580,22 +603,23 @@ module.exports = {
     let invisible = ''
     let channelMapSet = ''
     let urlObject // player JavaScript build-in URL
-    for (let iGroup = 0; iGroup < groupsArray.length; iGroup++) {
+    for (let iGroup = 0; iGroup < groupsAlwaysArray.length; iGroup++) {
       groupSorted = []
-      coordinatorUuid = groupsArray[iGroup]._Coordinator
-      groupId = groupsArray[iGroup]._ID
+      coordinatorUuid = groupsAlwaysArray[iGroup]._Coordinator
+      groupId = groupsAlwaysArray[iGroup]._ID
       // first push coordinator, other properties will be updated later!
       groupSorted.push({ groupId, 'uuid': coordinatorUuid })
       
-      for (let iMember = 0; iMember < groupsArray[iGroup].ZoneGroupMember.length; iMember++) {
-        urlObject = new URL(groupsArray[iGroup].ZoneGroupMember[iMember]._Location)
+      for (let iMember = 0; iMember < groupsAlwaysArray[iGroup].ZoneGroupMember.length; iMember++) {
+        urlObject = new URL(groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._Location)
         urlObject.pathname = '' // clean up
-        uuid = groupsArray[iGroup].ZoneGroupMember[iMember]._UUID  
+        uuid = groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._UUID  
         // my naming is playerName instead of the SONOS ZoneName
-        playerName = String(groupsArray[iGroup].ZoneGroupMember[iMember]._ZoneName) // safety
-        invisible = (groupsArray[iGroup].ZoneGroupMember[iMember]._Invisible === '1')
-        channelMapSet = groupsArray[iGroup].ZoneGroupMember[iMember]._ChannelMapSet || ''      
-        if (groupsArray[iGroup].ZoneGroupMember[iMember]._UUID !== coordinatorUuid) {
+        playerName = String(groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._ZoneName) // safety
+        invisible = (groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._Invisible === '1')
+        // eslint-disable-next-line max-len
+        channelMapSet = groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._ChannelMapSet || ''      
+        if (groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._UUID !== coordinatorUuid) {
           // push new except coordinator
           groupSorted.push({ urlObject, playerName, uuid, groupId, invisible, channelMapSet })
         } else {
@@ -624,7 +648,7 @@ module.exports = {
    * @throws {error} all methods
    */
   extractGroup: async function (playerUrlHost, allGroupsData, playerName) {
-    debug('method >>%s', 'extractGroup')
+    debug('method:%s', 'extractGroup')
     
     // this ensures that playerName overrules given playerUrlHostname
     const searchByPlayerName = isTruthyStringNotEmpty(playerName)
@@ -683,6 +707,62 @@ module.exports = {
   //
   //     NODE-RED STATUS & ERROR HANDLING 
   //     ................................
+
+  /**
+   *  Validates group properties msg.playerName, msg.volume, msg.sameVolume, msg.clearQueue
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = ''] playerName
+   * @param {string/number} [msg.volume = -1] volume. if not set don't touch original volume.
+   * @param {boolean} [msg.sameVolume = true] sameVolume
+   * @param {boolean} [msg.clearQueue = true] indicator for clear queue
+   * @param {string} pkgPrefix package identifier
+   *
+   * @returns {promise} object {playerName, volume, sameVolume, flushQueue}
+   * playerName is '' if missing.
+   * volume is -1 if missing. Otherwise number, integer in range 0 ... 100
+   * sameVolume is true if missing.
+   * clearQueue is true if missing.
+   *
+   * @throws {error} 'sameVolume (msg.sameVolume) is not boolean', 
+   * 'sameVolume (msg.sameVolume) is true but msg.volume is not specified', 
+   * 'clearQueue (msg.cleanQueue) is not boolean'
+   * @throws {error} all methods
+   */
+  validatedGroupProperties: async (msg, pkgPrefix) => {
+    // If missing set to ''.
+    const newPlayerName = validRegex(msg, 'playerName', REGEX_ANYCHAR, 'player name', '')
+
+    // If missing set to -1.
+    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', -1)
+
+    // If missing set to true - throws errors if invalid
+    let newSameVolume = true
+    if (isTruthyProperty(msg, ['sameVolume'])) {
+      if (typeof msg.sameVolume !== 'boolean') {
+        throw new Error(`${pkgPrefix}: sameVolume (msg.sameVolume) is not boolean`)
+      }
+      if (newVolume === -1 && msg.sameVolume === true) {
+        throw new Error(
+          `${pkgPrefix}: sameVolume (msg.sameVolume) is true but msg.volume is not specified`)
+      }
+      newSameVolume = msg.sameVolume
+    }
+
+    // If missing set to true - throws errors if invalid
+    let clearQueue = true
+    if (isTruthyProperty(msg, ['clearQueue'])) {
+      if (typeof msg.flushQueue !== 'boolean') {
+        throw new Error(`${pkgPrefix}: clearQueue (msg.cleanQueue) is not boolean`)
+      }
+      clearQueue = msg.clearQueue
+    }
+
+    return {
+      'playerName': newPlayerName,
+      'volume': newVolume,
+      'sameVolume': newSameVolume, clearQueue
+    }
+  },
 
   /** Show any error occurring during processing of messages in the node status 
    * and create node error.
@@ -800,13 +880,9 @@ module.exports = {
    * Everything OK if statusCode === 200 and body includes expected 
    * response value (set) or value (get)
    */
-  executeActionV6: async (playerUrl, endpoint, actionName, actionInArgs, packageName) => {
-    debug('entering method executeActionV6')
+  executeActionV6: async (playerUrl, endpoint, actionName, actionInArgs) => {
+    debug('method:%s', 'executeActionV6')
    
-    let throwName = ''
-    if (isTruthy(packageName)) {
-      throwName = packageName
-    }
     // get action in, out properties from json file 
     const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
     const { inArgs, outArgs } = endpointActions[actionName]
@@ -814,7 +890,7 @@ module.exports = {
     // actionInArgs must have all properties
     inArgs.forEach(property => {
       if (!isTruthyProperty(actionInArgs, [property])) {
-        throw new Error(`${throwName} property ${property} is missing}`)
+        throw new Error(`${PACKAGE_PREFIX} property ${property} is missing}`)
       }
     })
     
@@ -832,17 +908,17 @@ module.exports = {
     if (!isTruthyProperty(response, ['statusCode'])) {
       // This should never happen. Just to avoid unhandled exception.
       // eslint-disable-next-line max-len
-      throw new Error(`${throwName} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
+      throw new Error(`${PACKAGE_PREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
     }
     if (response.statusCode !== 200) {
       // This should not happen as long as axios is being used. Just to avoid unhandled exception.
       // eslint-disable-next-line max-len
-      throw new Error(`${throwName} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
+      throw new Error(`${PACKAGE_PREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
     }
     if (!isTruthyProperty(response, ['body'])) {
       // This should not happen. Just to avoid unhandled exception.
       // eslint-disable-next-line max-len
-      throw new Error(`${throwName} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
+      throw new Error(`${PACKAGE_PREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
 
     // Convert XML to JSON
@@ -867,15 +943,15 @@ module.exports = {
     // check body response
     if (!isTruthyProperty(bodyXml, key)) {
       // eslint-disable-next-line max-len
-      throw new Error(`${throwName} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
+      throw new Error(`${PACKAGE_PREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
     let result = getNestedProperty(bodyXml, key)
     if (!isTruthyProperty(result, ['xmlns:u'])) {
-      throw new Error(`${throwName} xmlns:u property is missing`)
+      throw new Error(`${PACKAGE_PREFIX} xmlns:u property is missing`)
     }
     const expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`  
     if (result['xmlns:u'] !== expectedResponseValue) {
-      throw new Error(`${throwName} unexpected player response: urn:schemas ... is missing `)
+      throw new Error(`${PACKAGE_PREFIX} unexpected player response: urn:schemas ... is missing `)
     }
     
     if (outArgs.length === 0) { // case 1 
@@ -884,7 +960,7 @@ module.exports = {
       // check whether all outArgs exist and return them as object!
       outArgs.forEach(property => { 
         if (!isTruthyProperty(result, [property])) {
-          throw new Error(`${throwName} response property ${property} is missing}`)
+          throw new Error(`${PACKAGE_PREFIX} response property ${property} is missing}`)
         }
       })
       delete result['xmlns:u'] // thats not needed
@@ -905,12 +981,8 @@ module.exports = {
    * @returns {promise} response header/body/error code from player
    */
   // eslint-disable-next-line max-len
-  sendSoapToPlayer: async (playerUrlOrigin, endpoint, serviceName, actionName, args, packageName) => {
-    debug('entering method sendSoapToPlayer')
-    let throwName = ''
-    if (isTruthy(packageName)) {
-      throwName = packageName
-    }
+  sendSoapToPlayer: async (playerUrlOrigin, endpoint, serviceName, actionName, args) => {
+    debug('method:%s', 'sendSoapToPlayer')
 
     // create action used in header - notice the " inside
     const soapAction = `"urn:schemas-upnp-org:service:${serviceName}:1#${actionName}"`
@@ -929,7 +1001,7 @@ module.exports = {
     httpBody = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">' 
       + '<s:Body>' + httpBody + '</s:Body>'
       + '</s:Envelope>'
-    debug('soa action >>%s', JSON.stringify(soapAction))
+    debug('soap action >>%s', JSON.stringify(soapAction))
     debug('soap body >>%s', JSON.stringify(httpBody))
     const response = await request({
       'method': 'post',
@@ -959,7 +1031,7 @@ module.exports = {
               // eslint-disable-next-line max-len
               const errorMessage = module.exports.getErrorMessageV1(errorCode, module.exports.SOAP_ERRORS.UPNP, serviceErrorList)
               // eslint-disable-next-line max-len
-              throw new Error(`${throwName} statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
+              throw new Error(`${PACKAGE_PREFIX} statusCode 500 & upnpErrorCode ${errorCode}. upnpErrorMessage >>${errorMessage}`)
             } else {
               // eslint-disable-next-line max-len
               throw new Error('error.message is not code 500' + JSON.stringify(error, Object.getOwnPropertyNames(error)))

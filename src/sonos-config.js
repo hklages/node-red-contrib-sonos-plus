@@ -31,7 +31,7 @@ module.exports = function (RED) {
   }
 
   RED.httpNode.get('/nrcsp/*', function (req, response) {
-    debug('httpNode - received get')
+    debug('method:%s', 'REDhttpNode.get')
 
     const NO_PLAYER_MESSAGE = 'No players found' // from sonos-ts
 

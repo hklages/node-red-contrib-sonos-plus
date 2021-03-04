@@ -38,7 +38,7 @@ module.exports = {
    *
    */
   discoverSonosPlayerBySerial: async (serialNumber, timeoutSeconds) => {
-    debug('method >>%s', 'discoverSonosPlayerBySerial')
+    debug('method:%s', 'discoverSonosPlayerBySerial')
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeoutSeconds)
     const tsFirstPlayer = new SonosDevice(firstPlayerData.host)
@@ -77,7 +77,7 @@ module.exports = {
    * Discovering 10 player or more might be time consuming in some networks.
    */
   discoverPlayersHost: async (timeout) => {
-    debug('method >>%s', 'discoverPlayersHost')
+    debug('method:%s', 'discoverPlayersHost')
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
@@ -109,7 +109,7 @@ module.exports = {
    * Discovering 10 player or more might be time consuming in some networks.
    */
   discoverPlayersSerialnumber: async (timeout) => {
-    debug('method >>%s', 'discoverPlayersSerialnumber')
+    debug('method:%s', 'discoverPlayersSerialnumber')
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')

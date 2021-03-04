@@ -11,18 +11,17 @@
 'use strict'
 
 const {
-  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, PACKAGE_PREFIX,
-  TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY,
-  REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_ML_DEFAULT,
-  REQUESTED_COUNT_MYSONOS_DEFAULT, REQUESTED_COUNT_MYSONOS_EXPORT
+  PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_SERIAL,
+  REQUESTED_COUNT_ML_DEFAULT, REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_MYSONOS_DEFAULT,
+  REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMySonos, getMusicLibraryItems }
+const { getMusicLibraryItems, getMySonos }
   = require('./Commands.js')
 
-const { isSonosPlayer, failure, success
+const { failure, isSonosPlayer, success
 } = require('./Extensions.js')
 
 const {
@@ -234,7 +233,7 @@ module.exports = function (RED) {
    */
   async function libraryExportAlbum (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
     
     const list
       = await getMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
@@ -259,7 +258,7 @@ module.exports = function (RED) {
    */
   async function libraryExportPlaylist (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
     const list = await getMusicLibraryItems(
       'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
@@ -283,7 +282,7 @@ module.exports = function (RED) {
    */
   async function libraryExportTrack (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
     const list
       = await getMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
@@ -310,12 +309,12 @@ module.exports = function (RED) {
   async function libraryGetAlbums (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, REQUESTED_COUNT_ML_DEFAULT)
+      msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
 
     // payload as title search string is optional.
     const validSearch
       // eslint-disable-next-line max-len
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     const list
       = await getMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
@@ -347,12 +346,12 @@ module.exports = function (RED) {
   async function libraryGetPlaylists (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, REQUESTED_COUNT_ML_DEFAULT)
+      msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
 
     // payload as title search string is optional.
     const validSearch
       // eslint-disable-next-line max-len
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     const list
       = await getMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
@@ -381,7 +380,7 @@ module.exports = function (RED) {
    */
   async function libraryQueuePlaylist (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
     const list = await getMusicLibraryItems(
       'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
@@ -407,10 +406,10 @@ module.exports = function (RED) {
    * Info:  content validation of mediaType, serviceName
    */
   async function mysonosExportItem (msg, tsPlayer) {
-    debug('entering method mysonosExportItem')
+    debug('method:%s', 'mysonosExportItem')
     // payload title search string is required.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
     const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
     if (!isTruthy(mySonosItems)) {
@@ -465,7 +464,7 @@ module.exports = function (RED) {
   async function mysonosQueueItem (msg, tsPlayer) {
     // payload title search string is required.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
     const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
     if (!isTruthy(mySonosItems)) {
@@ -504,7 +503,7 @@ module.exports = function (RED) {
   async function mysonosStreamItem (msg, tsPlayer) {
     // payload title search string is required.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
     const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
     if (!isTruthy(mySonosItems)) {
@@ -521,7 +520,7 @@ module.exports = function (RED) {
     await tsPlayer.SetAVTransportURI(mySonosItems[foundIndex].uri)
 
     // change volume if is provided
-    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', PACKAGE_PREFIX, -1)
+    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', -1)
     if (newVolume !== -1) {
       await tsPlayer.SetVolume(newVolume)
     }

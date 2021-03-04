@@ -25,7 +25,7 @@ payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty
 
 - household.get.groups: members, url renamed to urlObject
 
-- player.play.avtransport now based on sonos-ts and depreciated!
+- player.play.avtransport now based on sonos-ts but depreciated!
 
 #### Added
 

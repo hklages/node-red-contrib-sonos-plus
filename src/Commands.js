@@ -1,14 +1,14 @@
 /**
- * Collection of complex SONOS commands.
- * - notification and snapshopt
- * - group related
- * - content related 
+ * Collection of more complex SONOS commands.
+ * - notification and snapshot such as playGroupNotification
+ * - group related such as getGroupCurrent
+ * - content related such as getMySonos
  *
  * @module Sonos-Commands
  * 
  * @author Henning Klages
  * 
- * @since 2021-03-01
+ * @since 2021-03-03
  */ 
 
 'use strict'
@@ -16,12 +16,12 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  getMutestate, getPlaybackstate, getVolume, setMutestate, setVolume, getMediaInfo, getPositionInfo,
-  selectTrack, positionInTrack, parseBrowseToArray, getRadioId, getUpnpClassEncoded,
-  executeActionV6, parseZoneGroupToArray, extractGroup
+  executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
+  getRadioId, getUpnpClassEncoded, getVolume, guessProcessingType, parseBrowseToArray,
+  parseZoneGroupToArray, positionInTrack, selectTrack, setMutestate, setVolume
 } = require('./Extensions.js')
 
-const { isTruthyProperty, hhmmss2msec, isTruthy, encodeHtmlEntity
+const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyArray, isTruthyProperty
 } = require('./Helper.js')
 
 const { MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -29,23 +29,6 @@ const { MetaDataHelper } = require('@svrooij/sonos/lib')
 const debug = require('debug')(`${PACKAGE_PREFIX}commands`)
 
 module.exports = {
-
-  UPNP_CLASSES_STREAM: ['object.item.audioItem.audioBroadcast'],
-
-  UPNP_CLASSES_QUEUE: [
-    'object.container.album.musicAlbum',
-    'object.container.playlistContainer',
-    'object.item.audioItem.musicTrack',
-    'object.container',
-    'object.container.playlistContainer#playlistItem',
-    'object.container.playlistContainer.#playlistItem',
-    'object.container.playlistContainer.#PlaylistView'
-  ],
-
-  UNPN_CLASSES_UNSUPPORTED: [
-    'object.container.podcast.#podcastContainer',
-    'object.container.albumlist'
-  ],
 
   //
   //     NOTIFICATION & SNAPSHOT 
@@ -307,7 +290,7 @@ module.exports = {
    * @throws {error} all methods
   */
   createGroupSnapshot: async function (playersInGroup, options) {
-    debug('method >>%s', 'createGroupSnapshot')
+    debug('method:%s', 'createGroupSnapshot')
     const snapshot = {}
     snapshot.membersData = []
     let member
@@ -357,7 +340,7 @@ module.exports = {
  * @throws if invalid response from SONOS player
  */
   restoreGroupSnapshot: async function (snapshot) {
-    debug('method >>%s', 'restoreGroupSnapshot')
+    debug('method:%s', 'restoreGroupSnapshot')
     // restore content
     // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
@@ -428,7 +411,7 @@ module.exports = {
    * @throws {error} all methods
    */
   getGroupCurrent: async function (tsPlayer, playerName) {
-    debug('method >>%s', 'getGroupCurrent')
+    debug('method:%s', 'getGroupCurrent')
     const allGroups = await module.exports.getGroupsAll(tsPlayer)
     const thisGroup = await extractGroup(tsPlayer.urlObject.hostname, allGroups, playerName)
     return thisGroup
@@ -457,7 +440,7 @@ module.exports = {
    * @throws {error} all methods
    */
   getGroupsAll: async function (anyTsPlayer) {
-    debug('method >>%s', 'getGroupsAll')
+    debug('method:%s', 'getGroupsAll')
     
     // get all groups
     const householdGroups = await anyTsPlayer.ZoneGroupTopologyService.GetZoneGroupState({})   
@@ -465,7 +448,7 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} property ZoneGroupState is missing`)
     }
     
-    return await parseZoneGroupToArray(householdGroups.ZoneGroupState, PACKAGE_PREFIX) 
+    return await parseZoneGroupToArray(householdGroups.ZoneGroupState) 
   },
 
   //
@@ -479,6 +462,7 @@ module.exports = {
   * @property {string} title title 
   * @property {string} artist='' artist
   * @property {string} album='' album
+  * @property {string} description=''
   * @property {string} uri='' AVTransportation URI
   * @property {string} metadata='' metadata usually in DIDL Lite format
   * @property {string} artUri='' URI of cover, if available
@@ -497,13 +481,13 @@ module.exports = {
       * @throws {error} all methods
    */  
   getMySonos: async function (tsPlayer, requestedCount) { 
-    debug('method >>%s', 'getMySonos')
+    debug('method:%s', 'getMySonos')
     const favorites = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'FV:2', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
       'RequestedCount': requestedCount, 'SortCriteria': ''
     })
 
-    let transformedItems = await parseBrowseToArray(favorites, 'item', PACKAGE_PREFIX)
+    let transformedItems = await parseBrowseToArray(favorites, 'item')
     transformedItems = await Promise.all(transformedItems.map(async (item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
@@ -517,15 +501,7 @@ module.exports = {
       // metadata contains the relevant upnp class of the track, album, stream, ...
       if (isTruthyProperty(item, ['metadata'])) {
         item.upnpClass = await getUpnpClassEncoded(item['metadata'])
-    
-        if (module.exports.UPNP_CLASSES_STREAM.includes(item.upnpClass)) {
-          item.processingType = 'stream'
-        } else if (module.exports.UPNP_CLASSES_QUEUE.includes(item.upnpClass)) {
-          item.processingType = 'queue'
-        } else {
-          // default as it works in most case
-          item.processingType = 'queue'
-        }
+        item.processingType = await guessProcessingType(item.upnpClass)
         return item
       }
     }))
@@ -544,14 +520,14 @@ module.exports = {
    * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
    */  
   getSonosPlaylists: async function (tsPlayer, requestedCount) { 
-    debug('method >>%s', 'getSonosPlaylists')
+    debug('method:%s', 'getSonosPlaylists')
 
     const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'SQ:', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
       'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
-    let transformed = await parseBrowseToArray(browsePlaylist, 'container', PACKAGE_PREFIX)
+    let transformed = await parseBrowseToArray(browsePlaylist, 'container')
     transformed = transformed.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
@@ -561,6 +537,36 @@ module.exports = {
 
     return transformed
   }, 
+
+  /** Get array of all SONOS-Queue items.
+   * Adds processingType and player urlObject.origin to artUri.
+   * @param {object} tsPlayer sonos-ts player
+   * @param {number} requestedCount integer, 1 to ...
+   *
+   * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
+   *
+   * @throws {error} invalid return from Browse, parseBrowseToArray error
+   */
+  getSonosQueue: async (tsPlayer, requestedCount) => {
+    debug('method:%s', 'getSonosQueue')
+    const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
+    })
+    
+    let transformed = await module.exports.parseBrowseToArray(browseQueue, 'item')
+    if (!isTruthyArray(transformed)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
+    }
+    transformed = transformed.map((item) => {
+      if (item.artUri.startsWith('/getaa')) {
+        item.artUri = tsPlayer.urlObject.origin + item.artUri
+      }
+      return item
+    })
+
+    return transformed
+  },
 
   /** Get array of all Music Library items matching category and optional searchstring
    * @param {string} category such as 'Album:', 'Playlist:'
@@ -575,7 +581,7 @@ module.exports = {
    * @throws {error} all methods
    */  
   getMusicLibraryItems: async function (category, searchString, requestedCount, tsPlayer) { 
-    debug('method >>%s', 'getMusicLibraryItems')
+    debug('method:%s', 'getMusicLibraryItems')
 
     // validate parameter
     if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(category)) {
@@ -599,9 +605,9 @@ module.exports = {
 
     let list
     if (category === 'A:TRACKS:') {
-      list = await parseBrowseToArray(browseCategory, 'item', PACKAGE_PREFIX)    
+      list = await parseBrowseToArray(browseCategory, 'item')    
     } else {
-      list = await parseBrowseToArray(browseCategory, 'container', PACKAGE_PREFIX)  
+      list = await parseBrowseToArray(browseCategory, 'container')  
     }
     if (!isTruthy(list)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
