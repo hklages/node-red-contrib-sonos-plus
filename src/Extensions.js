@@ -232,7 +232,7 @@ module.exports = {
     debug('method:%s', 'getDeviceInfo')
     // error is thrown if not status code 200
     const response = await request.get(`${playerUrlObject.origin}/info`, {
-      'timeout': timeout, 
+      'timeout': timeout,
       'validateStatus': (status) => (status === 200) // Resolve only if the status code is 200
     })  
     if (!isTruthyProperty(response, ['data'])) {
@@ -784,7 +784,8 @@ module.exports = {
     return groupsArraySorted
   },
 
-  /** Extract group for a given player.
+  /** Extract group for a given player. playerName - if isTruthyStringNotEmpty- 
+   * is overruling playerUrlHost
    * @param {string} playerUrlHost (wikipedia) host such as 192.168.178.37
    * @param {object} allGroupsData from getGroupsAll
    * @param {string} [playerName] SONOS-Playername such as Kitchen 
@@ -820,8 +821,7 @@ module.exports = {
           }
         } else {
           // we compare by URL hostname such as '192.168.178.35'
-          if (allGroupsData[iGroup][iMember].urlObject.hostname
-            === playerUrlHost && visible) {
+          if (allGroupsData[iGroup][iMember].urlObject.hostname === playerUrlHost && visible) {
             foundGroupIndex = iGroup
             usedPlayerUrlHost = allGroupsData[iGroup][iMember].urlObject.hostname
             break // inner loop
@@ -841,8 +841,8 @@ module.exports = {
 
     // find our player index in that group. At this position because we did filter!
     // that helps to figure out role: coordinator, joiner, independent
-    // eslint-disable-next-line max-len
-    const playerIndex = members.findIndex((member) => (member.urlObject.hostname === usedPlayerUrlHost))
+    const playerIndex
+      = members.findIndex((member) => (member.urlObject.hostname === usedPlayerUrlHost))
 
     return {
       groupId,

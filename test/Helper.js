@@ -1,3 +1,8 @@
+// async/await syntax makes plugins such chai-as-promised obsolete 
+// Passing lambdas (or arrow functions) to Mocha is discouraged therefore we do: 
+// describe('xxxxx', function(){}) instead of describe('xxxxx', () => {})
+// That makes the this.timeout work!
+
 const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
   isOnOff, validToInteger, validRegex }
@@ -6,7 +11,7 @@ const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
 
-describe('decodeHtmlEntity function', () => {
+describe('decodeHtmlEntity function', function () {
 
   it('null throws error', async () => {
     const value = null
@@ -110,7 +115,7 @@ describe('decodeHtmlEntity function', () => {
 
 })
 
-describe('encodeHtmlEntity function', () => {
+describe('encodeHtmlEntity function', function () {
 
   it('null throws error', async () => {
     const value = null
@@ -214,7 +219,7 @@ describe('encodeHtmlEntity function', () => {
 
 })
 
-describe('hhmmss2msec function', () => {
+describe('hhmmss2msec function', function () {
   it('1 sec = 1000msec', ()  => {
     const value = '00:00:01'
     const result = hhmmss2msec(value)
@@ -240,7 +245,7 @@ describe('hhmmss2msec function', () => {
   })
 })
 
-describe('isOnOff function', () => {
+describe('isOnOff function', function () {
     
   it('on means true', () => {
     const msg = { 'payload': 'on' }
@@ -284,7 +289,7 @@ describe('isOnOff function', () => {
   
 })
 
-describe('validToInteger function', () => {
+describe('validToInteger function', function () {
     
   it('string 5 to integer 5', () => {
     const msg = { 'payload': '5' }
@@ -372,7 +377,7 @@ describe('validToInteger function', () => {
   
 })
 
-describe('validRegex function', () => {
+describe('validRegex function', function () {
     
   it('string 01:02:03 to string 01:02:03', () => {
     const msg = { 'payload': '01:02:03' }
@@ -402,7 +407,7 @@ describe('validRegex function', () => {
 
 })
 
-describe('isTruthyProperty function', () => {
+describe('isTruthyProperty function', function () {
   // the first 2 are coding errors and throw exceptions!
   it('0 parameter throws error', () => {
     expect(isTruthyProperty.bind(isTruthyProperty))
@@ -600,7 +605,7 @@ describe('isTruthyProperty function', () => {
   })
 })
 
-describe('isTruthyPropertyStringNotEmpty function', () => {
+describe('isTruthyPropertyStringNotEmpty function', function () {
   // the first 2 are coding errors and throw exceptions!
   it('0 parameter throws error', () => {
     expect(isTruthyPropertyStringNotEmpty.bind(isTruthyProperty))
@@ -677,7 +682,7 @@ describe('isTruthyPropertyStringNotEmpty function', () => {
   })
 })
 
-describe('isTruthy function', () => {
+describe('isTruthy function', function () {
   
   it('undefined returns false', () => {
     let value
@@ -792,7 +797,7 @@ describe('isTruthy function', () => {
 
 })
 
-describe('isTruthyStringNotEmpty function', () => {
+describe('isTruthyStringNotEmpty function', function () {
   
   it('undefined returns false', () => {
     let value
@@ -907,7 +912,7 @@ describe('isTruthyStringNotEmpty function', () => {
 
 })
 
-describe('isTruthyArray function', () => {
+describe('isTruthyArray function', function () {
   
   it('undefined returns false', () => {
     let value

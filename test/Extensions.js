@@ -1,16 +1,106 @@
+// async/await syntax makes plugins such chai-as-promised obsolete 
+// Passing lambdas (or arrow functions) to Mocha is discouraged therefore we do: 
+// describe('xxxxx', function(){}) instead of describe('xxxxx', () => {})
+// That makes the this.timeout work!
+
 // These tests only work in my specific envirionment
 // Using http://192.168.178.37:1400 a SONOS Play:5
 // using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
 // using http://192.168.178.15:1400 a Synology NAS 
 
-const { isSonosPlayer, getDeviceInfo, matchSerialUuid,
-  parseZoneGroupToArray, parseBrowseToArray, guessProcessingType, validatedGroupProperties
+const { isSonosPlayer, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
+  parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup
 } = require('../src/Extensions.js')
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
 
-describe('validatedGroupProperties function', () => {
+describe('extractGroup function', function () {
+  const TEST_DATA_ZONEGROUP = require('./testdata-parsezonegroup.json')
+  
+  it('playerName used and ok ', async () => {
+    let groupData = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
+    groupData = groupData.map(group => {
+      group = group.map(member => {
+        member.urlObject = new URL(member.urlObject)
+        return member
+      })
+      return group
+    })
+    const playerUrlHost = '192.168.178.1' // wrong but not used!
+    const playerName = 'Bad'
+    const result = await extractGroup(playerUrlHost, groupData, playerName)
+    expect(result)
+      .be.a('object')
+    expect(result.groupId)
+      .be.a('string')
+      .to.equal('RINCON_5CAAFD00223601400:514')
+    expect(result.coordinatorIndex)
+      .be.a('number')
+      .to.equal(0)
+    expect(result.playerIndex)
+      .be.a('number')
+      .to.equal(1)
+    expect(result.members)
+      .be.a('array')
+  })
+
+  it('playerUrlHost used and ok ', async () => {
+    let groupData = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
+    groupData = groupData.map(group => {
+      group = group.map(member => {
+        member.urlObject = new URL(member.urlObject)
+        return member
+      })
+      return group
+    })
+    const playerUrlHost = '192.168.178.36'
+    const playerName = '' // not used
+    const result = await extractGroup(playerUrlHost, groupData, playerName)
+    expect(result)
+      .be.a('object')
+    expect(result.groupId)
+      .be.a('string')
+      .to.equal('RINCON_5CAAFD00223601400:514')
+    expect(result.coordinatorIndex)
+      .be.a('number')
+      .to.equal(0)
+    expect(result.playerIndex)
+      .be.a('number')
+      .to.equal(2)
+    expect(result.members)
+      .be.a('array')
+  })
+  
+  it('playerName number throws error not found', async () => {
+    const GROUP_3PLAYER = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
+    const playerUrlHost = '192.168.178.1'
+    const groupData = GROUP_3PLAYER
+    const playerName = 'xxxxxx'
+    await extractGroup(playerUrlHost, groupData, playerName)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw('nrcsp: could not find given player in any group')
+      })
+  })
+
+  it('playerUrlHost throws error not found', async () => {
+    const GROUP_3PLAYER = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
+    const playerUrlHost = '192.168.178.1'
+    const groupData = GROUP_3PLAYER
+    const playerName = '' // not used
+    await extractGroup(playerUrlHost, groupData, playerName)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw('nrcsp: could not find given player in any group')
+      })
+  })
+
+})
+
+describe('validatedGroupProperties function', function () {
   it('all missing will use defaults', async () => {
     const msg = {}
     const result = await validatedGroupProperties(msg)
@@ -278,7 +368,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('volume (msg.volume) >>-1) is out of range')
       })
   })
@@ -293,7 +382,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('volume (msg.volume) >>101) is out of range')
       })
   })
@@ -308,7 +396,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('volume (msg.volume) >>-1) is out of range')
       })
   })
@@ -322,7 +409,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('volume (msg.volume) >>101) is out of range')
       })
   })
@@ -337,7 +423,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp: volume (msg.volume) is not integer')
       })
   })
@@ -373,7 +458,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: sameVolume (msg.sameVolume) is not boolean')
       })
   })
@@ -388,7 +472,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: sameVolume (msg.sameVolume) is not boolean')
       })
   })
@@ -403,7 +486,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: sameVolume (msg.sameVolume) is not boolean')
       })
   })
@@ -418,7 +500,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: sameVolume (msg.sameVolume) is true but msg.volume is not specified')
       })
   })
@@ -454,7 +535,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: clearQueue (msg.cleanQueue) is not boolean')
       })
   })
@@ -469,7 +549,6 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: clearQueue (msg.cleanQueue) is not boolean')
       })
   })
@@ -484,14 +563,13 @@ describe('validatedGroupProperties function', () => {
       .catch(function (err) {
         expect(function () {
           throw err 
-        // eslint-disable-next-line max-len
         }).to.throw('nrcsp:: clearQueue (msg.cleanQueue) is not boolean')
       })
   })
 
 })
 
-describe('isSonosPlayer function', () => {
+describe('isSonosPlayer function', function () {
   
   it('wrong syntax returns false', async () => {
     const playerUrl = new URL('http://192.168.17837:1400')
@@ -540,7 +618,8 @@ describe('isSonosPlayer function', () => {
 
 })
 
-describe('getDeviceInfo function', () => { 
+describe('getDeviceInfo function', function () { 
+  this.timeout(5000)
 
   it('kitchen returns id RINCON_5CAAFD00223601400', async () => {
     const playerUrl = new URL('http://192.168.178.37:1400')
@@ -555,8 +634,7 @@ describe('getDeviceInfo function', () => {
     const playerUrl = new URL('http://192.168.178.37:1400')
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
-    expect(result.device.capabilities)
-      .to.include('LINE_IN')
+    expect(result.device.capabilities).to.include('LINE_IN')
   })
 
   it('living returns id RINCON_949F3EC13B9901400', async () => {
@@ -580,16 +658,14 @@ describe('getDeviceInfo function', () => {
     const playerUrl = new URL('http://192.168.178.35:1400')
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
-    expect(result.device.capabilities)
-      .to.not.include('HT_PLAYBACK')
+    expect(result.device.capabilities).to.not.include('HT_PLAYBACK')
   })
 
   it('bath has no line in', async () => {
     const playerUrl = new URL('http://192.168.178.35:1400')
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
-    expect(result.device.capabilities)
-      .to.not.include('LINE_IN')
+    expect(result.device.capabilities).to.not.include('LINE_IN')
   })
 
   it('bath with too small time out throws error', async () => {
@@ -598,25 +674,25 @@ describe('getDeviceInfo function', () => {
     await getDeviceInfo(playerUrl, timeout)
       .catch(function (err) {
         expect(function () {
-          throw err 
+          throw err
         }).to.throw(Error, 'timeout of 50ms exceeded')
       })
   })
 
   it('fritzbox throws error', async () => {
     const playerUrl = new URL('http://192.168.178.1:1400')
-    const timeout = 2000
-    await getDeviceInfo(playerUrl, timeout)
-      .catch(function (err) {
-        expect(function () {
-          throw err 
-        }).to.throw(Error, 'timeout of 2000ms exceeded')
-      })
+    const timeout = 4000
+    try {
+      await getDeviceInfo(playerUrl, timeout)  
+    } catch (error) {
+      console.log(JSON.stringify(error, Object.getOwnPropertyNames(error)))
+      expect(error.message).equal('connect ECONNREFUSED 192.168.178.1:1400')
+    }
   })
 
 })
 
-describe('matchSerialUuid function', () => {
+describe('matchSerialUuid function', function () {
   
   it('equal provides true', async () => {
     const serial = '00-0E-58-FE-3A-EA:5'
@@ -637,7 +713,7 @@ describe('matchSerialUuid function', () => {
   })
 })
 
-describe('parseZoneGroupToArray function', () => { 
+describe('parseZoneGroupToArray function', function () { 
   
   const TEST_DATA_ZONEGROUP =  require('./testdata-parsezonegroup.json')
   
@@ -732,7 +808,7 @@ describe('parseZoneGroupToArray function', () => {
   })
 })
 
-describe('parseBrowseToArray function', () => {
+describe('parseBrowseToArray function', function () {
   
   const TEST_DATA_BROWSE = require('./testdata-parseBrowse.json')
 
@@ -917,8 +993,8 @@ describe('parseBrowseToArray function', () => {
   
 })
 
-describe('guessProcessingType function', () => {
-  
+describe('guessProcessingType function', function () {
+
   it('audiobroadcast means stream ', async () => {
     const upnpClass = 'object.item.audioItem.audioBroadcast'
     const result = await guessProcessingType(upnpClass)
