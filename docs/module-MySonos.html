@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.</div>
+            <div class="description">All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.My Sonos also holds SONOS playlists.</div>
         
 
         
@@ -64,7 +64,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2020-11-27</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>2021-02-18</li></ul></dd>
     
 
     
@@ -97,7 +97,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line15">line 15</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
@@ -154,7 +154,7 @@
     
 
     
-    <h4 class="name" id="~libraryExportAlbum"><span class="type-signature">(async, inner) </span>libraryExportAlbum<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryExportAlbum"><span class="type-signature">(async, inner) </span>libraryExportAlbum<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#exportedItem">exportedItem</a>>}</span></h4>
     
 
     
@@ -162,7 +162,7 @@
 
 
 <div class="description">
-    Exports first Music-Library album matching search string (is encoded) - maximum 100
+    Exports first Music-Library album matching search string (is encoded)
 </div>
 
 
@@ -188,41 +188,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">used for debug message</td>
-        </tr>
-
     
 
         <tr>
@@ -241,10 +212,6 @@
 
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">incoming message
@@ -273,7 +240,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -303,65 +270,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -376,12 +285,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -422,7 +327,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line198">line 198</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line236">line 236</a>
     </li></ul></dd>
     
 
@@ -446,13 +351,13 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        all functions
+        'no matching item found'
         </div>
     </dt>
     <dd></dd>
@@ -472,17 +377,40 @@
     <dd></dd>
 </dl>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
-</div>
-
 
 
 <dl>
@@ -491,7 +419,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#exportedItem">exportedItem</a>></span>
 
 
     </dd>
@@ -509,7 +437,7 @@
     
 
     
-    <h4 class="name" id="~libraryExportPlaylistV2"><span class="type-signature">(async, inner) </span>libraryExportPlaylistV2<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryExportPlaylist"><span class="type-signature">(async, inner) </span>libraryExportPlaylist<span class="signature">(msg, tsPlayer)</span><span class="type-signature"></span></h4>
     
 
     
@@ -517,7 +445,7 @@
 
 
 <div class="description">
-    Exports first Music-Library playlist matching search string (is encoded) - maximum 100
+    Exports first Music-Library playlist matching search string (is encoded)
 </div>
 
 
@@ -543,41 +471,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">used for debug message</td>
-        </tr>
-
     
 
         <tr>
@@ -596,10 +495,6 @@
 
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">incoming message
@@ -628,7 +523,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -658,65 +553,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -731,12 +568,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -777,7 +610,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line238">line 238</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line261">line 261</a>
     </li></ul></dd>
     
 
@@ -801,13 +634,13 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        all functions
+        'no matching item found'
         </div>
     </dt>
     <dd></dd>
@@ -827,15 +660,317 @@
     <dd></dd>
 </dl>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
+    {promise<exportedItem>
+</div>
+
+
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~libraryExportTrack"><span class="type-signature">(async, inner) </span>libraryExportTrack<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#exportedItem">exportedItem</a>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Exports first Music-Library track matching search string (is encoded)
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msg</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">incoming message
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>payload</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">search string</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tsPlayer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line285">line 285</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+<ul>
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        'no matching item found'
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    see def
 </div>
 
 
@@ -846,7 +981,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#exportedItem">exportedItem</a>></span>
 
 
     </dd>
@@ -864,7 +999,7 @@
     
 
     
-    <h4 class="name" id="~libraryGetAlbums"><span class="type-signature">(async, inner) </span>libraryGetAlbums<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryGetAlbums"><span class="type-signature">(async, inner) </span>libraryGetAlbums<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -898,41 +1033,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">used for debug message</td>
-        </tr>
-
     
 
         <tr>
@@ -952,10 +1058,6 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last">incoming message
                 <h6>Properties</h6>
@@ -971,7 +1073,11 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -983,7 +1089,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -996,7 +1102,21 @@
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">search string</td>
@@ -1019,33 +1139,26 @@
             </td>
 
             
-
-            
-
-            <td class="description last">optional, maximum number of found albums,                  0...999, default 100</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>searchTitle</code></td>
-            
-
-            <td class="type">
-            
+                <td class="attributes">
                 
-<span class="param-type">string</span>
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
 
             
-            </td>
-
+                <td class="default">
+                
+                    REQUESTED_COUNT_ML_DEFALUT
+                
+                </td>
             
 
-            
-
-            <td class="description last">search string, optional</td>
+            <td class="description last">maximum number of found albums</td>
         </tr>
 
     
@@ -1059,65 +1172,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -1132,12 +1187,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -1178,7 +1229,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line283">line 283</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line311">line 311</a>
     </li></ul></dd>
     
 
@@ -1205,11 +1256,28 @@
 
         
 
-    <div class="param-desc">
-    
-        all functionsTODO Notion libraryExportAlbum
-    
-    </div>
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
@@ -1219,7 +1287,7 @@
 
         
 <div class="param-desc">
-    {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
+    {payload: array of objects: uri metadata queue title artist} array may be empty
 </div>
 
 
@@ -1248,7 +1316,7 @@
     
 
     
-    <h4 class="name" id="~libraryGetPlaylistsV2"><span class="type-signature">(async, inner) </span>libraryGetPlaylistsV2<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryGetPlaylists"><span class="type-signature">(async, inner) </span>libraryGetPlaylists<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -1282,41 +1350,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">used for debug message</td>
-        </tr>
-
     
 
         <tr>
@@ -1336,10 +1375,6 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last">incoming message
                 <h6>Properties</h6>
@@ -1355,7 +1390,11 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
+        
+        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -1367,7 +1406,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -1380,7 +1419,19 @@
             </td>
 
             
+                <td class="attributes">
+                
 
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
             
 
             <td class="description last">search string</td>
@@ -1403,33 +1454,26 @@
             </td>
 
             
-
-            
-
-            <td class="description last">optional, maximum number of found albums,                 0...999, default 100</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>searchTitle</code></td>
-            
-
-            <td class="type">
-            
+                <td class="attributes">
                 
-<span class="param-type">string</span>
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
+            
 
             
-            </td>
-
+                <td class="default">
+                
+                    REQUESTED_COUNT_ML_DEFALUT
+                
+                </td>
             
 
-            
-
-            <td class="description last">search string, optional</td>
+            <td class="description last">maximum number of found albums</td>
         </tr>
 
     
@@ -1443,65 +1487,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -1516,12 +1502,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -1562,7 +1544,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line343">line 343</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line348">line 348</a>
     </li></ul></dd>
     
 
@@ -1589,11 +1571,28 @@
 
         
 
-    <div class="param-desc">
-    
-        all functions
-    
-    </div>
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
@@ -1603,7 +1602,7 @@
 
         
 <div class="param-desc">
-    {stateName: array of objects: uri metadata queue title artist} array may be empty  CAUTION: stateName!! not payload
+    {payload: array of objects: uri metadata queue title artist} array may be empty
 </div>
 
 
@@ -1632,7 +1631,7 @@
     
 
     
-    <h4 class="name" id="~libraryQueuePlaylistV2"><span class="type-signature">(async, inner) </span>libraryQueuePlaylistV2<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryQueuePlaylist"><span class="type-signature">(async, inner) </span>libraryQueuePlaylist<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -1666,41 +1665,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">used for debug message</td>
-        </tr>
-
     
 
         <tr>
@@ -1719,10 +1689,6 @@
 
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">incoming message
@@ -1751,7 +1717,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -1781,65 +1747,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -1854,12 +1762,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -1900,7 +1804,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line399">line 399</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line383">line 383</a>
     </li></ul></dd>
     
 
@@ -1924,13 +1828,13 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
 <dl>
     <dt>
         <div class="param-desc">
-        all functions
+        'no matching item found'
         </div>
     </dt>
     <dd></dd>
@@ -1950,15 +1854,42 @@
     <dd></dd>
 </dl>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    {stateName: uri metadata queue title artist}  CAUTION: stateName!! not payload
+    {payload: uri metadata queue title artist}
 </div>
 
 
@@ -1987,7 +1918,7 @@
     
 
     
-    <h4 class="name" id="~mysonosExportItem"><span class="type-signature">(async, inner) </span>mysonosExportItem<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~mysonosExportItem"><span class="type-signature">(async, inner) </span>mysonosExportItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#exportedItem">exportedItem</a>>}</span></h4>
     
 
     
@@ -2021,41 +1952,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">not used</td>
-        </tr>
-
     
 
         <tr>
@@ -2074,10 +1976,6 @@
 
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">incoming message
@@ -2106,7 +2004,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -2136,65 +2034,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -2209,12 +2049,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -2255,7 +2091,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line442">line 442</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line410">line 410</a>
     </li></ul></dd>
     
 
@@ -2279,26 +2115,49 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        all functions       if getMySonosV3 does not provide valuesInfo:  content validation of mediaType, serviceName
+        'could not find any My Sonos items', 'no title matching search string'
     
     </div>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methodsInfo:  content validation of mediaType, serviceName
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    see return   CAUTION: stateName!! not payload
-</div>
-
 
 
 <dl>
@@ -2307,7 +2166,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise</span>
+<span class="param-type">promise.&lt;<a href="global.html#exportedItem">exportedItem</a>></span>
 
 
     </dd>
@@ -2325,7 +2184,7 @@
     
 
     
-    <h4 class="name" id="~mysonosGetItems"><span class="type-signature">(async, inner) </span>mysonosGetItems<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;Array.&lt;mySonosItem>>}</span></h4>
+    <h4 class="name" id="~mysonosGetItems"><span class="type-signature">(async, inner) </span>mysonosGetItems<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise.&lt;Array.&lt;mySonosItem>>}</span></h4>
     
 
     
@@ -2359,41 +2218,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">not used</td>
-        </tr>
-
     
 
         <tr>
@@ -2413,10 +2243,6 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last">incoming message</td>
         </tr>
@@ -2425,65 +2251,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -2498,12 +2266,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -2544,7 +2308,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line482">line 482</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line446">line 446</a>
     </li></ul></dd>
     
 
@@ -2568,26 +2332,49 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        nrcsp error - all functions
+        'could not find any My Sonos items'
     
     </div>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
-<div class="param-desc">
-    payload  = array of my Sonos items {title, albumArt, uri, metadata, sid, upnpClass, processingType}uri, metadata, sid, upnpclass: empty string are allowed
-</div>
-
 
 
 <dl>
@@ -2614,7 +2401,7 @@
     
 
     
-    <h4 class="name" id="~mysonosQueueItem"><span class="type-signature">(async, inner) </span>mysonosQueueItem<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~mysonosQueueItem"><span class="type-signature">(async, inner) </span>mysonosQueueItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -2648,41 +2435,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">not used</td>
-        </tr>
-
     
 
         <tr>
@@ -2701,10 +2459,6 @@
 
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">incoming message
@@ -2733,7 +2487,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -2763,65 +2517,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>msg.filter</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -2836,39 +2532,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">optional, example: { processingType: "queue", mediaType: "playlist", serviceName: "all" }</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -2909,7 +2574,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line509">line 509</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line466">line 466</a>
     </li></ul></dd>
     
 
@@ -2933,17 +2598,44 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        nrcsp-error all functionsInfo:  msg.filter currently undocumented feature.
+        'could not find any My Sonos items', 'no title matching search string'
     
     </div>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
@@ -2979,7 +2671,7 @@
     
 
     
-    <h4 class="name" id="~mysonosStreamItem"><span class="type-signature">(async, inner) </span>mysonosStreamItem<span class="signature">(node, msg, stateName, cmdName, nodesonosPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~mysonosStreamItem"><span class="type-signature">(async, inner) </span>mysonosStreamItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -3013,41 +2705,12 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">not used</td>
-        </tr>
-
     
 
         <tr>
@@ -3066,10 +2729,6 @@
 
             
 
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last">incoming message
@@ -3098,7 +2757,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
+                <td class="name"><code>payload</code></td>
             
 
             <td class="type">
@@ -3118,6 +2777,29 @@
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>volume</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">new volume 0 ..100</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -3128,65 +2810,7 @@
 
         <tr>
             
-                <td class="name"><code>stateName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    payload
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: topic</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>cmdName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    topic
-                
-                </td>
-            
-
-            <td class="description last">in compatibility mode: payload</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -3201,12 +2825,8 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">player with url - as default</td>
+            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
         </tr>
 
     
@@ -3247,7 +2867,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line570">line 570</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line505">line 505</a>
     </li></ul></dd>
     
 
@@ -3271,17 +2891,44 @@
 
 
 <h5>Throws:</h5>
-
-        
+<ul>
+        <li>
 
     <div class="param-desc">
     
-        all functions
+        'could not find any My Sonos items', 'no title matching search string'
     
     </div>
 
-
+</li>
     
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
@@ -3317,7 +2964,7 @@
     
 
     
-    <h4 class="name" id="~processInputMsg"><span class="type-signature">(async, inner) </span>processInputMsg<span class="signature">(node, config, msg, ipaddress)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~processInputMsg"><span class="type-signature">(async, inner) </span>processInputMsg<span class="signature">(node, config, msg, urlHost)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -3377,7 +3024,7 @@
 
             
 
-            <td class="description last">current node for debug, warning, ...</td>
+            <td class="description last">current node</td>
         </tr>
 
     
@@ -3469,29 +3116,6 @@
         </tr>
 
     
-
-        <tr>
-            
-                <td class="name"><code>compatibilityMode</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">tic from node dialog</td>
-        </tr>
-
-    
     </tbody>
 </table>
 
@@ -3525,7 +3149,7 @@
 
         <tr>
             
-                <td class="name"><code>ipaddress</code></td>
+                <td class="name"><code>urlHost</code></td>
             
 
             <td class="type">
@@ -3541,7 +3165,7 @@
 
             
 
-            <td class="description last">IP address of sonos playerCreates also msg.nrcspCmd because in compatibility mode all get commands overwrite msg.payload (the command).</td>
+            <td class="description last">host of SONOS player such as 192.168.178.37Creates also msg.nrcspCmd with the used command in lower case.Modifies msg.payload if set in dialog or for output!</td>
         </tr>
 
     
@@ -3582,7 +3206,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line118">line 118</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line160">line 160</a>
     </li></ul></dd>
     
 
@@ -3611,7 +3235,7 @@
 
         
 <div class="param-desc">
-    All commands have to return a promise - objectexample: returning {} means message is not modifiedexample: returning { msg[stateName]: true} means the original msg.payload will be modified and set to true.
+    All commands have to return a promise - objectexample: returning {} means msg is not modified (except msg.nrcspCmd)example: returning { 'payload': true } means  the original msg.payload will be modified and set to true.
 </div>
 
 
@@ -3741,7 +3365,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line44">line 44</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line56">line 56</a>
     </li></ul></dd>
     
 
@@ -3787,13 +3411,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-CommandsTs.html">Sonos-CommandsTs</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Dec 16 2020 09:32:04 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Feb 25 2021 11:20:14 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

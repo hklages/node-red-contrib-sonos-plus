@@ -1,0 +1,173 @@
+{
+  "3Player_1Group_Coordinator_Kitchen": {
+    "ZoneGroupState": "&lt;ZoneGroupState&gt;&lt;ZoneGroups&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_5CAAFD00223601400&quot; ID=&quot;RINCON_5CAAFD00223601400:514&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_5CAAFD00223601400&quot; Location=&quot;http://192.168.178.37:1400/xml/device_description.xml&quot; ZoneName=&quot;Küche&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;136&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_000E58FE3AEA01400&quot; Location=&quot;http://192.168.178.35:1400/xml/device_description.xml&quot; ZoneName=&quot;Bad&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;200&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;0&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_949F3EC13B9901400&quot; Location=&quot;http://192.168.178.36:1400/xml/device_description.xml&quot; ZoneName=&quot;Wohnzimmer&quot; Icon=&quot;x-rincon-roomicon:living&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;80&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;1&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;2&quot; MicEnabled=&quot;1&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;/ZoneGroups&gt;&lt;VanishedDevices&gt;&lt;Device UUID=&quot;RINCON_B8E9375831C001400&quot; ZoneName=&quot;A E.r_k-er:1&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S1&quot; Mac=&quot;B8:E9:37:58:31:C0&quot; LastKnownIP=&quot;192.168.178.38&quot; LastSeenUTC=&quot;2021-03-01T14:45:55Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;/VanishedDevices&gt;&lt;/ZoneGroupState&gt;",
+    "result": [
+      [
+        {
+          "groupId": "RINCON_5CAAFD00223601400:514",
+          "uuid": "RINCON_5CAAFD00223601400",
+          "urlObject": "http://192.168.178.37:1400/",
+          "playerName": "Küche",
+          "invisible": false,
+          "channelMapSet": ""
+        },
+        {
+          "urlObject": "http://192.168.178.35:1400/",
+          "playerName": "Bad",
+          "uuid": "RINCON_000E58FE3AEA01400",
+          "groupId": "RINCON_5CAAFD00223601400:514",
+          "invisible": false,
+          "channelMapSet": ""
+        },
+        {
+          "urlObject": "http://192.168.178.36:1400/",
+          "playerName": "Wohnzimmer",
+          "uuid": "RINCON_949F3EC13B9901400",
+          "groupId": "RINCON_5CAAFD00223601400:514",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ]
+    ]
+  },
+  "3Player_1Group_Coordinator_Living": {
+    "ZoneGroupState": "&lt;ZoneGroupState&gt;&lt;ZoneGroups&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_949F3EC13B9901400&quot; ID=&quot;RINCON_949F3EC13B9901400:318748292&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_5CAAFD00223601400&quot; Location=&quot;http://192.168.178.37:1400/xml/device_description.xml&quot; ZoneName=&quot;Küche&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;136&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_000E58FE3AEA01400&quot; Location=&quot;http://192.168.178.35:1400/xml/device_description.xml&quot; ZoneName=&quot;Bad&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;200&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;0&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_949F3EC13B9901400&quot; Location=&quot;http://192.168.178.36:1400/xml/device_description.xml&quot; ZoneName=&quot;Wohnzimmer&quot; Icon=&quot;x-rincon-roomicon:living&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;80&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;1&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;2&quot; MicEnabled=&quot;1&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;/ZoneGroups&gt;&lt;VanishedDevices&gt;&lt;Device UUID=&quot;RINCON_B8E9375831C001400&quot; ZoneName=&quot;A E.r_k-er:1&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S1&quot; Mac=&quot;B8:E9:37:58:31:C0&quot; LastKnownIP=&quot;192.168.178.38&quot; LastSeenUTC=&quot;2021-03-01T14:45:55Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;/VanishedDevices&gt;&lt;/ZoneGroupState&gt;",
+    "result": [
+      [
+        {
+          "groupId": "RINCON_949F3EC13B9901400:318748292",
+          "uuid": "RINCON_949F3EC13B9901400",
+          "urlObject": "http://192.168.178.36:1400/",
+          "playerName": "Wohnzimmer",
+          "invisible": false,
+          "channelMapSet": ""
+        },
+        {
+          "urlObject": "http://192.168.178.37:1400/",
+          "playerName": "Küche",
+          "uuid": "RINCON_5CAAFD00223601400",
+          "groupId": "RINCON_949F3EC13B9901400:318748292",
+          "invisible": false,
+          "channelMapSet": ""
+        },
+        {
+          "urlObject": "http://192.168.178.35:1400/",
+          "playerName": "Bad",
+          "uuid": "RINCON_000E58FE3AEA01400",
+          "groupId": "RINCON_949F3EC13B9901400:318748292",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ]
+    ]
+  },
+  "3Player_3Groups": {
+    "ZoneGroupState": "&lt;ZoneGroupState&gt;&lt;ZoneGroups&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_5CAAFD00223601400&quot; ID=&quot;RINCON_5CAAFD00223601400:514&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_5CAAFD00223601400&quot; Location=&quot;http://192.168.178.37:1400/xml/device_description.xml&quot; ZoneName=&quot;Küche&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;136&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_000E58FE3AEA01400&quot; ID=&quot;RINCON_000E58FE3AEA01400:2528&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_000E58FE3AEA01400&quot; Location=&quot;http://192.168.178.35:1400/xml/device_description.xml&quot; ZoneName=&quot;Bad&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;200&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;0&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_949F3EC13B9901400&quot; ID=&quot;RINCON_949F3EC13B9901400:318748291&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_949F3EC13B9901400&quot; Location=&quot;http://192.168.178.36:1400/xml/device_description.xml&quot; ZoneName=&quot;Wohnzimmer&quot; Icon=&quot;x-rincon-roomicon:living&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;80&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;1&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;2&quot; MicEnabled=&quot;1&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;/ZoneGroups&gt;&lt;VanishedDevices&gt;&lt;Device UUID=&quot;RINCON_B8E9375831C001400&quot; ZoneName=&quot;A E.r_k-er:1&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S1&quot; Mac=&quot;B8:E9:37:58:31:C0&quot; LastKnownIP=&quot;192.168.178.38&quot; LastSeenUTC=&quot;2021-03-01T14:45:55Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;/VanishedDevices&gt;&lt;/ZoneGroupState&gt;",
+    "result": [
+      [
+        {
+          "uuid": "RINCON_949F3EC13B9901400",
+          "groupId": "",
+          "groupName": "Wohnzimmer",
+          "url": "http://192.168.178.36:1400/",
+          "playerName": "Wohnzimmer",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ],
+      [
+        {
+          "uuid": "RINCON_000E58FE3AEA01400",
+          "groupId": "",
+          "groupName": "Bad",
+          "url": "http://192.168.178.35:1400/",
+          "playerName": "Bad",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ],
+      [
+        {
+          "uuid": "RINCON_5CAAFD00223601400",
+          "groupId": "",
+          "groupName": "Küche",
+          "url": "http://192.168.178.37:1400/",
+          "playerName": "Küche",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ]
+    ]
+  },
+  "1Player": {
+    "ZoneGroupState": "&lt;ZoneGroupState&gt;&lt;ZoneGroups&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_5CAAFD00223601400&quot; ID=&quot;RINCON_5CAAFD00223601400:515&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_5CAAFD00223601400&quot; Location=&quot;http://192.168.178.37:1400/xml/device_description.xml&quot; ZoneName=&quot;Küche&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;136&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;/ZoneGroups&gt;&lt;VanishedDevices&gt;&lt;Device UUID=&quot;RINCON_949F3EC13B9901400&quot; ZoneName=&quot;Wohnzimmer&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S14&quot; Mac=&quot;94:9F:3E:C1:3B:99&quot; LastKnownIP=&quot;192.168.178.36&quot; LastSeenUTC=&quot;2021-03-01T16:27:30Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;Device UUID=&quot;RINCON_000E58FE3AEA01400&quot; ZoneName=&quot;Bad&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S3&quot; Mac=&quot;00:0E:58:FE:3A:EA&quot; LastKnownIP=&quot;192.168.178.35&quot; LastSeenUTC=&quot;2021-03-01T16:27:44Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;Device UUID=&quot;RINCON_B8E9375831C001400&quot; ZoneName=&quot;A E.r_k-er:1&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S1&quot; Mac=&quot;B8:E9:37:58:31:C0&quot; LastKnownIP=&quot;192.168.178.38&quot; LastSeenUTC=&quot;2021-03-01T16:27:52Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;/VanishedDevices&gt;&lt;/ZoneGroupState&gt;",
+    "result": [
+      [
+        {
+          "groupId": "RINCON_5CAAFD00223601400:515",
+          "uuid": "RINCON_5CAAFD00223601400",
+          "urlObject": "http://192.168.178.37:1400/",
+          "playerName": "Küche",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ]
+    ]
+  },
+  "1Player-name-39": {
+    "ZoneGroupState": "&lt;ZoneGroupState&gt;&lt;ZoneGroups&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_5CAAFD00223601400&quot; ID=&quot;RINCON_5CAAFD00223601400:515&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_5CAAFD00223601400&quot; Location=&quot;http://192.168.178.37:1400/xml/device_description.xml&quot; ZoneName=&quot;39&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;136&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;/ZoneGroups&gt;&lt;VanishedDevices&gt;&lt;Device UUID=&quot;RINCON_949F3EC13B9901400&quot; ZoneName=&quot;Wohnzimmer&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S14&quot; Mac=&quot;94:9F:3E:C1:3B:99&quot; LastKnownIP=&quot;192.168.178.36&quot; LastSeenUTC=&quot;2021-03-01T16:27:30Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;Device UUID=&quot;RINCON_000E58FE3AEA01400&quot; ZoneName=&quot;Bad&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S3&quot; Mac=&quot;00:0E:58:FE:3A:EA&quot; LastKnownIP=&quot;192.168.178.35&quot; LastSeenUTC=&quot;2021-03-01T16:27:44Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;Device UUID=&quot;RINCON_B8E9375831C001400&quot; ZoneName=&quot;A E.r_k-er:1&quot; Reason=&quot;UNKNOWN&quot; ModelInfo=&quot;S1&quot; Mac=&quot;B8:E9:37:58:31:C0&quot; LastKnownIP=&quot;192.168.178.38&quot; LastSeenUTC=&quot;2021-03-01T16:27:52Z&quot; MoreInfo=&quot;&quot; SWGen=&quot;2&quot;/&gt;&lt;/VanishedDevices&gt;&lt;/ZoneGroupState&gt;",
+    "result": [
+      [
+        {
+          "groupId": "RINCON_5CAAFD00223601400:515",
+          "uuid": "RINCON_5CAAFD00223601400",
+          "urlObject": "http://192.168.178.37:1400/",
+          "playerName": "39",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ]
+    ]
+  },
+  "4Player-2Group-CoKitchen-CoBath": {
+    "ZoneGroupState": "&lt;ZoneGroupState&gt;&lt;ZoneGroups&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_5CAAFD00223601400&quot; ID=&quot;RINCON_5CAAFD00223601400:515&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_5CAAFD00223601400&quot; Location=&quot;http://192.168.178.37:1400/xml/device_description.xml&quot; ZoneName=&quot;Küche&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;136&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_949F3EC13B9901400&quot; Location=&quot;http://192.168.178.36:1400/xml/device_description.xml&quot; ZoneName=&quot;Wohnzimmer&quot; Icon=&quot;x-rincon-roomicon:living&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;80&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;1&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;2&quot; MicEnabled=&quot;1&quot; AirPlayEnabled=&quot;1&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;ZoneGroup Coordinator=&quot;RINCON_000E58FE3AEA01400&quot; ID=&quot;RINCON_000E58FE3AEA01400:2529&quot;&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_000E58FE3AEA01400&quot; Location=&quot;http://192.168.178.35:1400/xml/device_description.xml&quot; ZoneName=&quot;Bad&quot; Icon=&quot;x-rincon-roomicon:kitchen&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;200&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;0&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;ZoneGroupMember UUID=&quot;RINCON_B8E9375831C001400&quot; Location=&quot;http://192.168.178.38:1400/xml/device_description.xml&quot; ZoneName=&quot;A E.r_k-er:1&quot; Icon=&quot;x-rincon-roomicon:bathroom&quot; Configuration=&quot;1&quot; SoftwareVersion=&quot;61.1-83220&quot; SWGen=&quot;2&quot; MinCompatibleVersion=&quot;60.0-00000&quot; LegacyCompatibleVersion=&quot;58.0-00000&quot; HTForwardEnabled=&quot;0&quot; BootSeq=&quot;643&quot; TVConfigurationError=&quot;0&quot; HdmiCecAvailable=&quot;0&quot; WirelessMode=&quot;1&quot; WirelessLeafOnly=&quot;0&quot; HasConfiguredSSID=&quot;1&quot; ChannelFreq=&quot;2412&quot; BehindWifiExtender=&quot;0&quot; WifiEnabled=&quot;1&quot; Orientation=&quot;0&quot; RoomCalibrationState=&quot;4&quot; SecureRegState=&quot;3&quot; VoiceConfigState=&quot;0&quot; MicEnabled=&quot;0&quot; AirPlayEnabled=&quot;0&quot; IdleState=&quot;0&quot; MoreInfo=&quot;&quot;/&gt;&lt;/ZoneGroup&gt;&lt;/ZoneGroups&gt;&lt;VanishedDevices&gt;&lt;/VanishedDevices&gt;&lt;/ZoneGroupState&gt;",
+    "result": [
+      [
+        {
+          "groupId": "RINCON_5CAAFD00223601400:515",
+          "uuid": "RINCON_5CAAFD00223601400",
+          "urlObject": "http://192.168.178.37:1400/",
+          "playerName": "Küche",
+          "invisible": false,
+          "channelMapSet": ""
+        },
+        {
+          "urlObject": "http://192.168.178.36:1400/",
+          "playerName": "Wohnzimmer",
+          "uuid": "RINCON_949F3EC13B9901400",
+          "groupId": "RINCON_5CAAFD00223601400:515",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ],
+      [
+        {
+          "groupId": "RINCON_000E58FE3AEA01400:2529",
+          "uuid": "RINCON_000E58FE3AEA01400",
+          "urlObject": "http://192.168.178.35:1400/",
+          "playerName": "Bad",
+          "invisible": false,
+          "channelMapSet": ""
+        },
+        {
+          "urlObject": "http://192.168.178.38:1400/",
+          "playerName": "A E.r_k-er:1",
+          "uuid": "RINCON_B8E9375831C001400",
+          "groupId": "RINCON_000E58FE3AEA01400:2529",
+          "invisible": false,
+          "channelMapSet": ""
+        }
+      ]
+    ]
+  }
+}

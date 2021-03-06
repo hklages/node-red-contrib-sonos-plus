@@ -2,6 +2,39 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.0.0] 2021-0x-xx
+
+#### Changed
+
+- Switched from node-sonos library to node-sonos-ts library because node-sonos is not being maintained for some months
+
+- no compatibility mode anymore
+
+- discovery of players should be much faster, especially in case of many players
+
+- changes library.get.albums/playlists now with payload instead of searchString
+
+- playback state is now paused_playback instead of paused, no_media_present instead of no_media
+
+- node status is now "ok:ready" when node is successfully deployed (before first msg arrived)
+
+- group member data url is renamed to urlObject 'http://192.168.178.37:1400/'
+
+- group.get.trackplus: property payload.trackData is now payload.positionData.TrackMetaData, some properties (such as NextUri) are now undefined instead of empty string,
+payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty string, payload.positionData.TrackMetaData is now object instead of string.
+
+- household.get.groups: members, url renamed to urlObject
+
+- player.play.avtransport now based on sonos-ts but depreciated!
+
+#### Added
+
+- config node: you can now use discovery for the ip address
+
+- My Sonos node: added library.export.track
+
+- Universal node: player.play.linein (if supported by player)
+
 ### [4.5.5] 2021-01-07
 
 #### Changed
@@ -311,6 +344,8 @@ All notable changes to this project are documented in this file.
 - "Universal node": play.track, seek, remove.track
 
 - "Universal node": household.get.groups
+
+- New Globals.js as central place for customizable parameter
 
 #### Changed
 

@@ -5,12 +5,11 @@
   /* eslint no-undef: "error" */
   RED.nodes.registerType('sonos-universal', {
     category: 'sonosplus',
-    defaults: {
+    defaults: { // the editable properties of this node
       confignode: {
         value: '',
         type: 'sonos-config'
       },
-      compatibilityMode: { value: false },
       command: { 
         value: 'message',
         required: true
@@ -28,9 +27,7 @@
     color: '#AAAAAA',
     label: function() {
       let found = universalCmdList.find(item => item.cmd === this.command);
-      // mark all nodes with depreciated compatibilityMode
       let nodeLabel = this.name || found.cmd || 'Universal'
-      nodeLabel = (this.compatibilityMode ? '!! ' : '') + nodeLabel
       return nodeLabel;
     },
     oneditprepare: function() {             
@@ -61,25 +58,37 @@
       <input type="text" id="node-input-confignode"/>
     </div>
 
-    <!-- Compatibility mode style -->
-    <div class="form-row">
-      <label for="node-input-compatibilityMode"> Compatibility</label>
-      <input type="checkbox" id="node-input-compatibilityMode" style="display: inline-block; width: auto; vertical-align: top;"/>
-        Caution: Compatibility mode is depreciated!
-    </div>
+    <div class="form-tips">
+      <b>Config node</b>: Please select a config node. Config node holds the IP address (and in some rare cases the serial number)
+      of a player. All commands will be send to this player/IP address.
+      <br><br>
+      Some commands accept msg.playerName. Providing msg.playerName overrules the confg node player.
+    </div><br>
 
-    <!-- Command selection -->
+    <!-- Topic (Command selection) -->
     <div class="form-row">
       <label for="node-input-command"><i class="fa fa-tasks"></i> Topic</label>
       <select id="node-input-command" style="width:70%"></select>
     </div>
 
-    <!-- input state -->
+    <div class="form-tips">
+      <b>Topic</b>: Please select a command or leave "message" to provide the command in msg.topic. A selected command overrules any 
+      command given in msg.topic.
+    </div><br>
+
+    <!-- payload (state) -->
     <div class="form-row">
       <label for="node-input-state"><i class="fa fa-envelope"></i> Payload</label>
-      <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank (type string) to use msg property"/>
+      <input type="text" id="node-input-state" style="width:70%" placeholder="Leave blank (type string) to use msg.payload"/>
       <input type="hidden" id="node-input-stateType"/>
     </div>
+
+    <div class="form-tips">
+      <b>Payload</b>: Some commands needs additional data such as on|off - 
+      <a href=https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.1-Universal-Node>see documentation.</a>
+      You can enter this data either here or provide it in msg.payload.<br>
+      Entered data overrules data given in msg.payload.
+    </div><br>
 
     <!-- Node name -->
     <div class="form-row">
@@ -87,24 +96,6 @@
       <input type="text" id="node-input-name" placeholder="This node name"/>
     </div>
     
-    <!-- Dialog help -->
-    <div class="text">        
-      <b>Config Node</b> provides the default SONOS player by ip address or serial number.<br>
-      For many commands <code>msg.playerName</code> may be used and should hold Sonos player name.<br>
-      <code>msg.playerName</code> overrules config node player.<br><br>
-    
-      The <b>input message usage</b> is:
-      <ul>
-        <li><code>msg.topic</code> holds the command</li>
-        <li><code>msg.payload</code> holds the "state/message" like on/off, uri, ...</li>
-      </ul>
-      Dialog values overrule msg properties.<br><br>
-
-      <b>Command</b> provides a pick up list of all available commands.<br><br>
-      
-      <b>State</b> free form field for additional data such as on/off.<br><br>
-      
-    </div>
   </div>
 </script>
 
@@ -180,6 +171,7 @@
     {cmd: "player.join.group"},
     {cmd: "player.leave.group"},
     {cmd: "player.play.avtransport"},
+    {cmd: "player.play.linein"},
     {cmd: "player.play.tv"},
     {cmd: "player.set.bass"},
     {cmd: "player.set.dialoglevel"},
@@ -189,8 +181,9 @@
     {cmd: "player.set.nightmode"},
     {cmd: "player.set.subgain"},
     {cmd: "player.set.treble"},
-    {cmd: "player.set.volume"}
-];
+    {cmd: "player.set.volume"},
+    {cmd: "player.test"}
+]
 </script>
 
 <!-- Help text (HTML) -->
