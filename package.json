@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-sonos-plus",
-  "version": "4.5.5",
+  "version": "5.0.0",
   "description": "A set of Node-RED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {
@@ -49,17 +49,17 @@
   "author": "hklages",
   "license": "MIT",
   "dependencies": {
+    "@svrooij/sonos": "v2.4.0-beta.4",
     "axios": "^0.21.1",
     "debug": "^4.3.1",
-    "xml2js": "^0.4.23",
     "fast-xml-parser": "^3.18.0",
-    "@svrooij/sonos": "v2.4.0-beta.4"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
     "chai": "^4.3.3",
     "eslint": "^7.21.0",
-    "mocha": "^8.3.0"
+    "mocha": "^8.3.1"
   }
 }

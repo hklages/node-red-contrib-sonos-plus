@@ -28,67 +28,28 @@
         <article>
             <pre class="prettyprint source linenums"><code>/**
  * Collection of general purpose methods to check variables/constants and object properties.
- * Can be used in other packages because it has no relation to SONOS or Node-RED
+ * - encode/decode html entities
+ * - convert to boolean, integer, miliseconds 
+ * - validate variables/constants and object properties
  *
- * @module Helpers
+ * Can be used in other packages - needs PACKAGE_PREFIX for throws.
+ * 
+ *
+ * @module Helper
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-19
+ * @since 2021-03-04
 */
 
 'use strict'
 
 const { PACKAGE_PREFIX, REGEX_3DIGITSSIGN } = require('./Globals.js')
 
-const debug = require('debug')(`${PACKAGE_PREFIX}helperTs`)
+const debug = require('debug')(`${PACKAGE_PREFIX}helper`)
 
 module.exports = {
 
-  /** Converts hh:mm:ss time to milliseconds. Does not check input!
-   * No validation: hh 0 to 23, mm 0 to 59 ss 0 59, : must exist
-   * Recommmendation: do a regex check before calling this!
-   * 
-   * @param  {string} hhmmss string in format hh:mm:ss
-   * 
-   * @returns {number} milliseconds as integer
-   * 
-   * @throws error if split does not find ':'
-   */
-  hhmmss2msec: (hhmmss) => {
-    const [hours, minutes, seconds] = (hhmmss).split(':')
-    return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
-  },
-
-  /** Encodes specific HTML special characters such as "&lt;"" and others. 
-   * Works with multiple occurrences.
-   * @param  {string} htmlData the string to be decode, maybe empty.
-   * 
-   * @returns {Promise&lt;string>} encoded string
-   * 
-   * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
-   * 
-   * @since 2021-01-25
-   */
-  encodeHtmlEntity: async (htmlData) => {
-    debug('method >>%s', 'encodeHtmlEntity')
-    if (!module.exports.isTruthy(htmlData)) {
-      throw new Error('htmlData invalid/missing')
-    }
-    if (typeof htmlData !== 'string') {
-      throw new Error('htmlData is not string')
-    }
-    return htmlData.replace(/[&lt;>"'&amp;]/g, singleChar => {
-      switch (singleChar) {
-      case '&lt;': return '&amp;lt;'
-      case '>': return '&amp;gt;'
-      case '"': return '&amp;quot;'
-      case '\'': return '&amp;apos;'
-      case '&amp;': return '&amp;amp;'
-      }
-    })
-  },
-  
   /** Decodes specific HTML special characters such as "&amp;lt;" and others. 
    * Works with multiple occurrences.
    * @param  {string} htmlData the string to be decode, maybe empty
@@ -96,11 +57,9 @@ module.exports = {
    * @returns {Promise&lt;string>} decoded string
    * 
    * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
-   * 
-   * @since 2021-01-25
    */
   decodeHtmlEntity: async (htmlData) => {
-    debug('method >>%s', 'decodeHtmlEntity')
+    debug('method:%s', 'decodeHtmlEntity')
     if (!module.exports.isTruthy(htmlData)) {
       throw new Error('htmlData invalid/missing')
     }
@@ -118,135 +77,46 @@ module.exports = {
     })
   },
 
-  /** Validates whether property is safely accessible and "truthy", any type.
-   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
-   * @param  {object} nestedObj object
-   * @param  {array&lt;string>} pathArray property chain- must not be empty
+  /** Encodes specific HTML special characters such as "&lt;"" and others.
+   * Works with multiple occurrences.
+   * @param  {string} htmlData the string to be decode, maybe empty.
    * 
-   * @returns {boolean} property is accessible
+   * @returns {Promise&lt;string>} encoded string
    * 
-   * @throws {error} all methods
+   * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
    */
-  isTruthyProperty: (nestedObj, pathArray) => {
-    debug('method >>%s', 'isTruthyProperty')
-    const property = pathArray.reduce(
-      (obj, key) => (obj &amp;&amp; obj[key] !== 'undefined' ? obj[key] : undefined),
-      nestedObj
-    )
-
-    return module.exports.isTruthy(property)
+  encodeHtmlEntity: async (htmlData) => {
+    debug('method:%s', 'encodeHtmlEntity')
+    if (!module.exports.isTruthy(htmlData)) {
+      throw new Error('htmlData invalid/missing')
+    }
+    if (typeof htmlData !== 'string') {
+      throw new Error('htmlData is not string')
+    }
+    return htmlData.replace(/[&lt;>"'&amp;]/g, singleChar => {
+      switch (singleChar) {
+      case '&lt;': return '&amp;lt;'
+      case '>': return '&amp;gt;'
+      case '"': return '&amp;quot;'
+      case '\'': return '&amp;apos;'
+      case '&amp;': return '&amp;amp;'
+      }
+    })
   },
-
-  /** Validates whether property is safely accessible and "truthy", type string, not empty
-   * Truthy means not undefined, null, NaN, infinite - see method isTruthy.
+  
+  /** Converts hh:mm:ss time to milliseconds. Does not check input!
+   * No validation: hh 0 to 23, mm 0 to 59 ss 0 59, : must exist
+   * Recommendation: do a regex check before calling this!
    * 
-   * @param  {object} nestedObj object
-   * @param  {string[]} path path property chain- must not be empty, type string
+   * @param  {string} hhmmss string in format hh:mm:ss
    * 
-   * @returns {boolean} property is accessible and not empty string
+   * @returns {number} milliseconds as integer
    * 
-   * @throws {error} all methods
+   * @throws error if split does not find ':'
    */
-  isTruthyPropertyStringNotEmpty: (nestedObj, pathArray) => {
-    debug('method >>%s', 'isTruthyPropertyStringNotEmpty')
-    const property = pathArray.reduce(
-      (obj, key) => (obj &amp;&amp; obj[key] !== 'undefined' ? obj[key] : undefined),
-      nestedObj
-    )
-
-    return module.exports.isTruthyStringNotEmpty(property)
-  },
-
-  /** Validates whether an const/variable is "truthy", any type
-   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
-   *  
-   * @param  {any} input const, variable
-   * 
-   * @returns {boolean} 
-   * false: let input; let input = null; let input = undefined; let input = NaN; 
-   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
-   * true: let input = {}, let input = {'a':1]}, let input = [], let input = ['a', 'b']
-   * true: let input = true; let input = 1, let input = 100.5
-   * true: let input = '', let input = 'Hello World'
-   * 
-   * @since 2021-01-25
-   * 
-   * @throws none
-   */
-  isTruthy: (input) => {
-    debug('method >>%s', 'isTruthy')
-    return !(typeof input === 'undefined' || input === null
-      //this avoids NaN, positive, negative Infinite
-      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input)))
-  },
-
-  /** Validates whether a constant/variable is "truthy", string, not empty.
-   * Not valid : undefined or null or NaN or Infinite, all types except string
-   * 
-   * @param {any} input const, variable
-   * 
-   * @returns {boolean} 
-   * false: let input; let input = null; let input = undefined; let input = NaN; 
-   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
-   * false: let input = {},let input = {'a':1]}, let input = [], let input = ['a', 'b']
-   * false: let input = true; let input = 1, let input = 100.5
-   * false: let input = ''
-   * true: non empty string
-   * 
-   * @throws none
-   * 
-   * @since 2021-01-25
-   */
-  isTruthyStringNotEmpty: (input) => {
-    debug('method >>%s', 'isTruthyStringNotEmpty')
-    return !(typeof input === 'undefined' || input === null
-      //this avoids NaN, positive, negative Infinite, not empty string
-      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input))
-      || typeof input !== 'string' || input === '')
-  },
-
-  /** Validates whether a constant/variable is "truthy" and array.
-   * Not valid : undefined or null or NaN or Infinite, all types except array
-   * 
-   * @param {any} input const, variable
-   * 
-   * @returns {boolean} 
-   * false: let input; let input = null; let input = undefined; let input = NaN; 
-   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
-   * false: let input = {},let input = {'a':1]}
-   * false: let input = true; let input = 1, let input = 100.5
-   * false: let input = '', let input = 'Hello World'
-   * true: let input = [], let input = ['a', 'b']
-   * 
-   * @throws none
-   * 
-   * @since 2021-01-25
-   */
-  isTruthyArray: (input) => {
-    debug('method >>%s', 'isTruthyArray')
-    return !(typeof input === 'undefined' || input === null
-      //this avoids NaN, positive, negative Infinite, not empty string
-      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input))
-      || !Array.isArray(input))
-  },
-
-  /** Gets the property value specified by path. Use isTruthyProperty before!
-   * 
-   * @param  {object} nestedObj object
-   * @param  {array&lt;string>} path path property chain- must not be empty
-   * 
-   * @returns {any} value of that property
-   * 
-   * @throws none
-   */
-  // Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
-  // pass in your object structure as array elements
-  // const name = getNestedProperty(user, ['personalInfo', 'name']);
-  // to access nested array, just pass in array index as an element the path array.
-  // const city = getNestedProperty(user, ['personalInfo', 'addresses', 0, 'city']);
-  // this will return the city from the first address item.
-  getNestedProperty: (nestedObj, pathArray) => {
-    return pathArray.reduce((obj, key) => obj[key], nestedObj)
+  hhmmss2msec: (hhmmss) => {
+    const [hours, minutes, seconds] = (hhmmss).split(':')
+    return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
   },
 
   /** Validates property and returns true|false if on|off (NOT case sensitive). 
@@ -255,7 +125,6 @@ module.exports = {
    * @param  {string} msg.propertyName item, to be validated
    * @param  {string} propertyName property name
    * @param  {string} propertyMeaning additional information, including in error message
-   * @param  {string} packageName package name, included in error message
    *
    * @returns {boolean} true/false if msg.property is "on/off" ! not case sensitive
    *
@@ -263,18 +132,19 @@ module.exports = {
    * '* ${propertyName}) is not on/off'
    * @throws {error} all methods
    */
-  isOnOff: (msg, propertyName, propertyMeaning, packageName) => {
+  isOnOff: (msg, propertyName, propertyMeaning) => {
+    debug('method:%s', 'validRegex')
     const path = []
     path.push(propertyName)
     if (!module.exports.isTruthyProperty(msg, path)) {
-      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
     }
     const value = msg[propertyName]
     if (typeof value !== 'string') {
-      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not string`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is not string`)
     }
     if (!(value.toLowerCase() === 'on' || value.toLowerCase() === 'off')) {
-      throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is not on/off`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is not on/off`)
     }
     return (value.toLowerCase() === 'on')
   },
@@ -293,7 +163,6 @@ module.exports = {
    * @param  {number} min minimum
    * @param  {number} max maximum, max > min
    * @param  {string} propertyMeaning additional information, including in error message
-   * @param  {string} packageName package name, included in error message
    * @param  {number} [defaultValue] integer, specifies the default value. 
    *
    * @returns {number} integer in range [min,max] or defaultValue
@@ -306,17 +175,17 @@ module.exports = {
    * '${value}) is not 3 signed digits only', '${value}) is out of range'
    * @throws {error} all methods
    */
-  validToInteger: (msg, propertyName, min, max, propertyMeaning,
-    packageName, defaultValue) => {
+  validToInteger: (msg, propertyName, min, max, propertyMeaning, defaultValue) => {
+    debug('method:%s', 'validToInteger')
     // validate min max
     if (typeof min !== 'number') {
-      throw new Error(`${packageName} ${propertyMeaning} min is not type number`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} min is not type number`)
     } 
     if (typeof max !== 'number') {
-      throw new Error(`${packageName} ${propertyMeaning} max is not type number`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max is not type number`)
     } 
     if (min >= max) {
-      throw new Error(`${packageName} ${propertyMeaning} max must be greater then min`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max must be greater then min`)
     }
     
     // if defaultValue is missing an error will be throw in case property is not defined or missing
@@ -325,21 +194,21 @@ module.exports = {
     path.push(propertyName)
     if (!module.exports.isTruthyProperty(msg, path)) {
       if (requiredProperty) {
-        throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
         // use defaultValue but check if valid
         if (typeof defaultValue !== 'number') {
-          throw new Error(`${packageName} ${propertyMeaning} defaultValue is not type number`)
+          throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not type number`)
         } 
         if (!Number.isInteger(defaultValue)) {
-          throw new Error(`${packageName} ${propertyMeaning} defaultValue is not integer`)
+          throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not integer`)
         }
         // no check in range to allow such as -1 to indicate no value given
         return defaultValue
       }
     }
     let value = msg[propertyName]
-    const txtPrefix = `${packageName} ${propertyMeaning} (msg.${propertyName})`
+    const txtPrefix = `${PACKAGE_PREFIX} ${propertyMeaning} (msg.${propertyName})`
 
     if (typeof value !== 'number' &amp;&amp; typeof value !== 'string') {
       throw new Error(`${txtPrefix} is not type string/number`)
@@ -374,7 +243,6 @@ module.exports = {
    * @param  {string} propertyName property name
    * @param  {string} regex expression to evaluate string
    * @param  {string} propertyMeaning additional information, including in error message
-   * @param  {string} packageName package name, included in error message
    * @param  {string} [defaultValue] specifies the default value. If missing property is required.
    *
    * @returns {string} if defaultValue is NOT given then msg[propertyName] is required. 
@@ -383,22 +251,22 @@ module.exports = {
    * @throws {error} msg[propertyName] is not of type string
    * @throws {error} if msg[propertyName] has invalid regex
    */
-  validRegex: (msg, propertyName, regex, propertyMeaning, packageName, defaultValue) => {
-    debug('entering method validRegex')
+  validRegex: (msg, propertyName, regex, propertyMeaning, defaultValue) => {
+    debug('method:%s', 'validRegex')
     // if defaultValue is missing and error will be throw in case property is not defined or missing
     const requiredProperty = (typeof defaultValue === 'undefined')
     const path = []
     path.push(propertyName)
     if (!module.exports.isTruthyProperty(msg, path)) {
       if (requiredProperty) {
-        throw new Error(`${packageName} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       } else {
         // set default
         return defaultValue
       }
     }
     const value = msg[propertyName]
-    const txtPrefix = `${packageName} ${propertyMeaning} (${propertyName})`
+    const txtPrefix = `${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName})`
     if (typeof value !== 'string') {
       throw new Error(`${txtPrefix} is not type string`)
     }
@@ -407,6 +275,152 @@ module.exports = {
     }
     return value
   },
+
+  /** Validates whether property is safely accessible and "truthy", any type.
+   * truthy means not undefined, null, NaN, infinite - see method isTruthy.
+   * @param  {object} nestedObj object
+   * @param  {array&lt;string>} pathArray property chain- must not be empty
+   * 
+   * @returns {boolean} property is accessible
+   * 
+   * @throws '2nd parameter is not array', '2nd parameter is empty array'
+   * @throws {error} all methods
+   */
+  isTruthyProperty: (nestedObj, pathArray) => {
+    debug('method:%s', 'isTruthyProperty')
+    if (!Array.isArray(pathArray)) {
+      throw new Error('2nd parameter is not array')
+    }
+    if (pathArray.length === 0) {
+      throw new Error('2nd parameter is empty array')
+    } 
+    const property = pathArray.reduce(
+      (obj, key) => (obj &amp;&amp; obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+
+    return module.exports.isTruthy(property)
+  },
+
+  /** Validates whether property is safely accessible and "truthy", type string, not empty
+   * Truthy means not undefined, null, NaN, infinite - see method isTruthy.
+   * 
+   * @param  {object} nestedObj object
+   * @param  {string[]} path path property chain- must not be empty, type string
+   * 
+   * @returns {boolean} property is accessible and not empty string
+   * 
+   * @throws '2nd parameter is not array', '2nd parameter is empty array'
+   * @throws {error} all methods
+   */
+  isTruthyPropertyStringNotEmpty: (nestedObj, pathArray) => {
+    debug('method:%s', 'isTruthyPropertyStringNotEmpty')
+    if (!Array.isArray(pathArray)) {
+      throw new Error('2nd parameter is not array')
+    }
+    if (pathArray.length === 0) {
+      throw new Error('2nd parameter is empty array')
+    } 
+    const property = pathArray.reduce(
+      (obj, key) => (obj &amp;&amp; obj[key] !== 'undefined' ? obj[key] : undefined),
+      nestedObj
+    )
+
+    return module.exports.isTruthyStringNotEmpty(property)
+  },
+
+  /** Validates whether an const/variable is "truthy", any type
+   * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
+   *  
+   * @param  {any} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
+   * true: let input = {}, let input = {'a':1]}, let input = [], let input = ['a', 'b']
+   * true: let input = true; let input = 1, let input = 100.5
+   * true: let input = '', let input = 'Hello World'
+   * 
+   * @since 2021-01-25
+   * 
+   * @throws none
+   */
+  isTruthy: (input) => {
+    debug('method:%s', 'isTruthy')
+    return !(typeof input === 'undefined' || input === null
+      //this avoids NaN, positive, negative Infinite
+      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input)))
+  },
+
+  /** Validates whether a constant/variable is "truthy", string, not empty.
+   * Not valid : undefined or null or NaN or Infinite, all types except string
+   * 
+   * @param {any} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
+   * false: let input = {},let input = {'a':1]}, let input = [], let input = ['a', 'b']
+   * false: let input = true; let input = 1, let input = 100.5
+   * false: let input = ''
+   * true: non empty string
+   * 
+   * @throws none
+   * 
+   * @since 2021-01-25
+   */
+  isTruthyStringNotEmpty: (input) => {
+    debug('method:%s', 'isTruthyStringNotEmpty')
+    return !(typeof input === 'undefined' || input === null
+      //this avoids NaN, positive, negative Infinite, not empty string
+      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input))
+      || typeof input !== 'string' || input === '')
+  },
+
+  /** Validates whether a constant/variable is "truthy" and array.
+   * Not valid : undefined or null or NaN or Infinite, all types except array
+   * 
+   * @param {any} input const, variable
+   * 
+   * @returns {boolean} 
+   * false: let input; let input = null; let input = undefined; let input = NaN; 
+   * false: let input = 1.0 divide by 0; let input = -1.0 divide 0 (Infinite)
+   * false: let input = {},let input = {'a':1]}
+   * false: let input = true; let input = 1, let input = 100.5
+   * false: let input = '', let input = 'Hello World'
+   * true: let input = [], let input = ['a', 'b']
+   * 
+   * @throws none
+   * 
+   * @since 2021-01-25
+   */
+  isTruthyArray: (input) => {
+    debug('method:%s', 'isTruthyArray')
+    return !(typeof input === 'undefined' || input === null
+      //this avoids NaN, positive, negative Infinite, not empty string
+      || (typeof input === 'number' &amp;&amp; !Number.isFinite(input))
+      || !Array.isArray(input))
+  },
+
+  /** Gets the property value specified by path. Use isTruthyProperty before!
+   * 
+   * @param  {object} nestedObj object
+   * @param  {array&lt;string>} path path property chain- must not be empty
+   * 
+   * @returns {any} value of that property
+   * 
+   * @throws none
+   * 
+   * Source: https://dev.to/flexdinesh/accessing-nested-objects-in-javascript--9m4
+   * pass in your object structure as array elements
+   * const name = getNestedProperty(user, ['personalInfo', 'name']);
+   * to access nested array, just pass in array index as an element the path array.
+   * const city = getNestedProperty(user, ['personalInfo', 'addresses', 0, 'city']);
+   * this will return the city from the first address item.
+   */
+  getNestedProperty: (nestedObj, pathArray) => {
+    return pathArray.reduce((obj, key) => obj[key], nestedObj)
+  }
 }
 </code></pre>
         </article>
@@ -418,13 +432,13 @@ module.exports = {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-CommandsTs.html">Sonos-CommandsTs</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Feb 25 2021 11:20:14 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Mar 06 2021 17:30:34 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

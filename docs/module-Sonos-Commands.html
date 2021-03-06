@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Collection of - special SONOS commands for group/My Sonos handling- the basic executeAction command and simple commands- helpers such as getRadioIdhandling the communication above SOAP level. SOAP Level communication is done in module Soap.</div>
+            <div class="description">Collection of more complex SONOS commands.- notification and snapshot such as playGroupNotification- group related such as getGroupCurrent- content related such as getMySonos</div>
         
 
         
@@ -64,7 +64,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2020-12-16</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>2021-03-03</li></ul></dd>
     
 
     
@@ -97,19 +97,12 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line3">line 3</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line1">line 1</a>
     </li></ul></dd>
     
 
     
 
-    
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki">Wiki</a> for overview.</li>
-        </ul>
-    </dd>
     
 
     
@@ -161,7 +154,7 @@
     
 
     
-    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(node, playersInGroup, player, options)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#Snapshot">Snapshot</a>>}</span></h4>
+    <h4 class="name" id=".createGroupSnapshot"><span class="type-signature">(static) </span>createGroupSnapshot<span class="signature">(playersInGroup, player, options)</span><span class="type-signature"> &rarr; {promise.&lt;<a href="global.html#Snapshot">Snapshot</a>>}</span></h4>
     
 
     
@@ -201,29 +194,6 @@
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">current node - for debugging</td>
-        </tr>
-
     
 
         <tr>
@@ -293,7 +263,7 @@
 
         <tr>
             
-                <td class="name"><code>url</code></td>
+                <td class="name"><code>urlObject</code></td>
             
 
             <td class="type">
@@ -309,7 +279,7 @@
 
             
 
-            <td class="description last">URL (JavaScript build in)</td>
+            <td class="description last">player JavaScript build-in URL</td>
         </tr>
 
     
@@ -511,7 +481,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line341">line 341</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line292">line 292</a>
     </li></ul></dd>
     
 
@@ -541,7 +511,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        if invalid response from SONOS player
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -598,7 +568,7 @@
     
 
     
-    <h4 class="name" id=".didlXmlToArray"><span class="type-signature">(static) </span>didlXmlToArray<span class="signature">(didlXml, itemName)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    <h4 class="name" id=".getGroupCurrent"><span class="type-signature">(static) </span>getGroupCurrent<span class="signature">(tsPlayer, playerName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {promise.&lt;object>}</span></h4>
     
 
     
@@ -606,7 +576,7 @@
 
 
 <div class="description">
-    Returns an array of items (DidlBrowseItem) extracted from action "Browse" output (didlXml).
+    Get group data for a given player.
 </div>
 
 
@@ -630,6 +600,8 @@
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -642,7 +614,7 @@
 
         <tr>
             
-                <td class="name"><code>didlXml</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -655,17 +627,25 @@
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last">Browse response property Result (DIDL-Light string in xml format)</td>
+            <td class="description last">sonos-ts player</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>itemName</code></td>
+                <td class="name"><code>playerName</code></td>
             
 
             <td class="type">
@@ -678,10 +658,20 @@
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last">property in DIDL lite holding the data such as "item" or "container"</td>
+            <td class="description last">SONOS-Playername such as Kitchen</td>
         </tr>
 
     
@@ -722,7 +712,195 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1077">line 1077</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line416">line 416</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    returns object: { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> }
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">promise.&lt;object></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".getGroupsAll"><span class="type-signature">(static) </span>getGroupsAll<span class="signature">(player)</span><span class="type-signature"> &rarr; {promise.&lt;Array.&lt;<a href="global.html#playerGroupData">playerGroupData</a>>>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get array of all groups. Each group consist of an array of players <playerGroupData>[]Coordinator is always in position 0. Group array may have size 1 (standalone)
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>player</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">sonos-ts player</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line445">line 445</a>
     </li></ul></dd>
     
 
@@ -752,7 +930,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        if any parameter is missing
+        'property ZoneGroupState is missing', 'response form parse xml is invalid'
         </div>
     </dt>
     <dd></dd>
@@ -779,7 +957,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        from method xml2js and invalid response (missing id, title)Browse provides the results (Result, ... ) in form of a DIDL-Lite xml format. The <DIDL-Lite> includes several attributes such as xmlns:dc" and entries all named "container" or "item". These include xml tags such as 'res'. The items in the container includes also xml tag content.The uri is a xml tag content of res, so we have to define tag = uriIdentifier.
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -807,7 +985,7 @@
 
         
 <div class="param-desc">
-    Promise, array of Sonos-Commands#DidlBrowseItem, maybe empty array.
+    array of arrays with playerGroupData         First group member is coordinator.
 </div>
 
 
@@ -818,7 +996,7 @@
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>></span>
+<span class="param-type">promise.&lt;Array.&lt;<a href="global.html#playerGroupData">playerGroupData</a>>></span>
 
 
     </dd>
@@ -836,7 +1014,7 @@
     
 
     
-    <h4 class="name" id=".encodeHtml"><span class="type-signature">(static) </span>encodeHtml<span class="signature">(htmlData)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".getMusicLibraryItems"><span class="type-signature">(static) </span>getMusicLibraryItems<span class="signature">(category, searchString<span class="signature-attributes">opt</span>, requestedCount, tsPlayer)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#exportedItem">exportedItem</a>>>}</span></h4>
     
 
     
@@ -844,450 +1022,7 @@
 
 
 <div class="description">
-    Encodes special HTML characters such as < to &lt;.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>htmlData</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">original HTML data</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1277">line 1277</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    data without any <, >, &, ', "
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".executeActionV6"><span class="type-signature">(static) </span>executeActionV6<span class="signature">(playerUrl, endpoint, actionName, actionInArgs)</span><span class="type-signature"> &rarr; {Promise.&lt;(object|boolean)>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Sends action with actionInArgs to endpoint at playerUrl.origin and returns result.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>playerUrl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">player URL (JavaScript build in) such as http://192.168.178.37:1400</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>endpoint</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">the endpoint name such as /MediaRenderer/AVTransport/Control</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>actionName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">the action name such as Seek</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>actionInArgs</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">all arguments - throws error if one argument is missing!</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line968">line 968</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        nrcsp: any inArgs property missing, http return invalid status or not 200, missing body, unexpected response
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        xml2js.parseStringPromise Everything OK if statusCode === 200 and body includes expected response value (set) or value (get)
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    </ul>
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    true or outArgs of that action
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;(object|boolean)></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getGroupCurrent"><span class="type-signature">(static) </span>getGroupCurrent<span class="signature">(nodesonosPlayer, playerName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {promise.&lt;Object>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get array of all SONOS player data in same group, index of player and groupIdCoordinator is first in array. Hidden players are ignored!
+    Get array of all Music Library items matching category and optional searchstring
 </div>
 
 
@@ -1327,13 +1062,13 @@
 
         <tr>
             
-                <td class="name"><code>nodesonosPlayer</code></td>
+                <td class="name"><code>category</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">object</span>
+<span class="param-type">string</span>
 
 
             
@@ -1355,14 +1090,14 @@
                 </td>
             
 
-            <td class="description last">node-sonos player with url</td>
+            <td class="description last">such as 'Album:', 'Playlist:'</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>playerName</code></td>
+                <td class="name"><code>searchString</code></td>
             
 
             <td class="type">
@@ -1389,12 +1124,82 @@
             
                 <td class="default">
                 
-                    use nodesonosPlayer
+                    ''
                 
                 </td>
             
 
-            <td class="description last">valid SONOS-Playername</td>
+            <td class="description last">any search string, being used in category</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>requestedCount</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">integer, 1 to 5000</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tsPlayer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">sonos-ts player</td>
         </tr>
 
     
@@ -1435,7 +1240,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line459">line 459</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line586">line 586</a>
     </li></ul></dd>
     
 
@@ -1465,7 +1270,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        from getGroupsAll and if invalid data
+        'category is unknown', 'searchString is not string', 'requestedCount is not number', 'response form parsing Browse Album is invalid'
         </div>
     </dt>
     <dd></dd>
@@ -1492,7 +1297,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        if sonosPlayer respectively playerName not found in any group
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -1520,7 +1325,7 @@
 
         
 <div class="param-desc">
-    returns { playerIndex, groupId, members[]<playerGroupData> }
+    all Music Library items maching criteria, could be emtpy
 </div>
 
 
@@ -1531,7 +1336,7 @@
     </dt>
     <dd>
         
-<span class="param-type">promise.&lt;Object></span>
+<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#exportedItem">exportedItem</a>>></span>
 
 
     </dd>
@@ -1549,7 +1354,7 @@
     
 
     
-    <h4 class="name" id=".getGroupsAll"><span class="type-signature">(static) </span>getGroupsAll<span class="signature">(playerUrl)</span><span class="type-signature"> &rarr; {promise.&lt;Array.&lt;<a href="global.html#playerGroupData">playerGroupData</a>>>}</span></h4>
+    <h4 class="name" id=".getMySonos"><span class="type-signature">(static) </span>getMySonos<span class="signature">(tsPlayer, requestedCount)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
     
 
     
@@ -1557,7 +1362,7 @@
 
 
 <div class="description">
-    Get array of all groups. Each group consist of an array of players<playerGroupData>  Coordinator is always in position 0. Group array may have size 1 (standalone)
+    Get array of all My Sonos Favorite items including SonosPlaylists
 </div>
 
 
@@ -1593,7 +1398,7 @@
 
         <tr>
             
-                <td class="name"><code>playerUrl</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -1609,198 +1414,20 @@
 
             
 
-            <td class="description last">URL (JavaScript build in datatype)</td>
+            <td class="description last">sonos-ts player</td>
         </tr>
 
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line561">line 561</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        from executeActionsV6, groupXmlToArray or if invalid response
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-    <div class="param-desc">
-    
-        
-<span class="param-type">error</span>
-
-
-    
-    </div>
-
-</li>
-    </ul>
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    array of arrays with playerGroupData         First group member is coordinator.
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise.&lt;Array.&lt;<a href="global.html#playerGroupData">playerGroupData</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getMusicServiceId"><span class="type-signature">(static) </span>getMusicServiceId<span class="signature">(xuri)</span><span class="type-signature"> &rarr; {string}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get music service id (sid) from Transport URI.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>xuri</code></td>
+                <td class="name"><code>requestedCount</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
             
@@ -1810,7 +1437,7 @@
 
             
 
-            <td class="description last">such as (masked)"x-rincon-cpcontainer:1004206ccatalog%2falbums%***%2f%23album_desc?sid=201&flags=8300&sn=14"</td>
+            <td class="description last">integer, 1 to ... (no validation)</td>
         </tr>
 
     
@@ -1851,325 +1478,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1203">line 1203</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    service id or if not found empty stringprerequisites: uri is string where the sid is in between "?sid=" and "&flags="
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getMusicServiceName"><span class="type-signature">(static) </span>getMusicServiceName<span class="signature">(sid)</span><span class="type-signature"> &rarr; {string}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get service name for given service id.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>sid</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">service id (integer) such as "201" or blank</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1222">line 1222</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    service name such as "Amazon Music" or empty string
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getMySonosV3"><span class="type-signature">(static) </span>getMySonosV3<span class="signature">(playerUrl)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get array of all My Sonos items - maximum 200. Includes SONOS-Playlists (maximum 999)
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>playerUrl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">URL  http://192.168.178.35:1400</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line646">line 646</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line486">line 486</a>
     </li></ul></dd>
     
 
@@ -2199,7 +1508,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        nrcsp: invalid return from Browse, didlXmlToArray errorRestriction: Maximum number of My-Sonos items: 200, maximum number of SONOS-Playlists 999.Restrictions: MusicLibrary/ Sonos playlists without service id.Restrictions: Audible Audio books are missing.Restrictions: Pocket Casts Podcasts without uri, only metadata
+        all methods
         </div>
     </dt>
     <dd></dd>
@@ -2227,7 +1536,7 @@
 
         
 <div class="param-desc">
-    all My-Sonos Items and SONOS-Playlists as array, could be empty
+    all My Sonos items as array (except SONOS Playlists)
 </div>
 
 
@@ -2256,7 +1565,7 @@
     
 
     
-    <h4 class="name" id=".getRadioId"><span class="type-signature">(static) </span>getRadioId<span class="signature">(xuri)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".getSonosPlaylists"><span class="type-signature">(static) </span>getSonosPlaylists<span class="signature">(tsPlayer, requestedCount)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
     
 
     
@@ -2264,7 +1573,7 @@
 
 
 <div class="description">
-    Get TuneIn radioId from Transport URI - only for Music Service TuneIn
+    Get array of all SONOS-Playlists
 </div>
 
 
@@ -2300,166 +1609,7 @@
 
         <tr>
             
-                <td class="name"><code>xuri</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">uri such as x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1243">line 1243</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    TuneIn radio id or if not found emptyprerequisite: xuri with radio id is in between "x-sonosapi-stream:" and "?sid=254"
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".getSonosPlaylistsV2"><span class="type-signature">(static) </span>getSonosPlaylistsV2<span class="signature">(playerUrl)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get array of all SONOS-Playlists - maximum 999. Adds playerUrl.origin to artUri and processingType
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>playerUrl</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -2475,7 +1625,30 @@
 
             
 
-            <td class="description last">player URL http://192.168.178.35:1400</td>
+            <td class="description last">sonos-ts player</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>requestedCount</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">integer, 1 to ...</td>
         </tr>
 
     
@@ -2516,7 +1689,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line711">line 711</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line525">line 525</a>
     </li></ul></dd>
     
 
@@ -2546,7 +1719,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        nrcsp: invalid return from Browse, didlXmlToArray error
+        invalid return from Browse, decodeHtmlEntityTs, parser.parse
         </div>
     </dt>
     <dd></dd>
@@ -2603,7 +1776,7 @@
     
 
     
-    <h4 class="name" id=".getSonosQueue"><span class="type-signature">(static) </span>getSonosQueue<span class="signature">(playerUrl)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
+    <h4 class="name" id=".getSonosQueue"><span class="type-signature">(static) </span>getSonosQueue<span class="signature">(tsPlayer, requestedCount)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#DidlBrowseItem">DidlBrowseItem</a>>>}</span></h4>
     
 
     
@@ -2611,7 +1784,7 @@
 
 
 <div class="description">
-    Get array of all SONOS-Queue items - maximum 200. Adds processingType and playerUrlOrigin to artUri.
+    Get array of all SONOS-Queue items.Adds processingType and player urlObject.origin to artUri.
 </div>
 
 
@@ -2647,7 +1820,7 @@
 
         <tr>
             
-                <td class="name"><code>playerUrl</code></td>
+                <td class="name"><code>tsPlayer</code></td>
             
 
             <td class="type">
@@ -2663,7 +1836,30 @@
 
             
 
-            <td class="description last">player URL origin http://192.168.178.35:1400</td>
+            <td class="description last">sonos-ts player</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>requestedCount</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">integer, 1 to ...</td>
         </tr>
 
     
@@ -2704,7 +1900,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line758">line 758</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line553">line 553</a>
     </li></ul></dd>
     
 
@@ -2734,7 +1930,7 @@
 <dl>
     <dt>
         <div class="param-desc">
-        nrcsp: invalid return from Browse, didlXmlToArray error
+        invalid return from Browse, parseBrowseToArray error
         </div>
     </dt>
     <dd></dd>
@@ -2791,7 +1987,7 @@
     
 
     
-    <h4 class="name" id=".getUpnpClass"><span class="type-signature">(static) </span>getUpnpClass<span class="signature">(metadata)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id=".playGroupNotification"><span class="type-signature">(static) </span>playGroupNotification<span class="signature">(tsPlayerArray, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -2799,7 +1995,7 @@
 
 
 <div class="description">
-    Get UpnP class from string metadata.
+    Play notification on a group. Coordinator is index 0 in tsPlayerArray
 </div>
 
 
@@ -2835,13 +2031,13 @@
 
         <tr>
             
-                <td class="name"><code>metadata</code></td>
+                <td class="name"><code>tsPlayerArray</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">Array.&lt;tsPlayer></span>
 
 
             
@@ -2851,404 +2047,7 @@
 
             
 
-            <td class="description last">DIDL-Lite metadata</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1260">line 1260</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Upnp class such as "object.container.album.musicAlbum"prerequisites: metadata containing xml tag <upnp:class>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".groupXmlToArray"><span class="type-signature">(static) </span>groupXmlToArray<span class="signature">(groupXml)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;groups>>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Returns an array of groups extracted from action "GetZoneGroupState" output.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>groupXml</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Browse response property Result (DIDL-Light string in xml format)</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line1176">line 1176</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        if any parameter is missing
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        from method xml2js and invalid response (missing id, title)
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    </ul>
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Promise, array of groups, should not be empty array.
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;groups>></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id=".playGroupNotification"><span class="type-signature">(static) </span>playGroupNotification<span class="signature">(node, nodesonosPlayerArray, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Play notification on a group. Coordinator is index 0 in nodesonosPlayerArray
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">current node - for debugging</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosPlayerArray</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;nodesonosPlayer></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">array of node-sonos player with url,                  coordinator has index 0.                  length = 1 is allowed if independent</td>
+            <td class="description last">sonos-ts player array with JavaScript build-in URL urlObject                  coordinator has index 0. Length = 1 is allowed</td>
         </tr>
 
     
@@ -3528,7 +2327,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line92">line 92</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line54">line 54</a>
     </li></ul></dd>
     
 
@@ -3555,11 +2354,28 @@
 
         
 
-    <div class="param-desc">
-    
-        if invalid response from setAVTransportURI, play,
-    
-    </div>
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methods
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
@@ -3598,7 +2414,7 @@
     
 
     
-    <h4 class="name" id=".playJoinerNotification"><span class="type-signature">(static) </span>playJoinerNotification<span class="signature">(node, nodesonosCoordinator, nodesonosJoiner, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".playJoinerNotification"><span class="type-signature">(static) </span>playJoinerNotification<span class="signature">(tsCoordinator, tsJoiner, options)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -3642,7 +2458,7 @@
 
         <tr>
             
-                <td class="name"><code>node</code></td>
+                <td class="name"><code>tsCoordinator</code></td>
             
 
             <td class="type">
@@ -3658,37 +2474,14 @@
 
             
 
-            <td class="description last">current node - for debugging</td>
+            <td class="description last">sonos-ts coordinator in group with url</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>nodesonosCoordinator</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">node-sonos coordinator in group with url</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nodesonosJoiner</code></td>
+                <td class="name"><code>tsJoiner</code></td>
             
 
             <td class="type">
@@ -3843,7 +2636,7 @@
 
             
 
-            <td class="description last">volume during notification:                  - 1 means don't touch. integer 1 .. 99</td>
+            <td class="description last">volume during notification: 1 means don't use, reage 1 .. 99</td>
         </tr>
 
     
@@ -3953,7 +2746,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line232">line 232</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line187">line 187</a>
     </li></ul></dd>
     
 
@@ -3980,11 +2773,28 @@
 
         
 
-    <div class="param-desc">
-    
-        all from setAVTransportURI(), avTransportService()*, play, setPlayerVolumeHint: joiner will leave group, play notification and rejoin the group. State will be imported from group.
-    
-    </div>
+<dl>
+    <dt>
+        <div class="param-desc">
+        all methodsHint: joiner will leave group, play notification and rejoin the group. State will be imported from group.
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
 
 
     
@@ -4023,7 +2833,7 @@
     
 
     
-    <h4 class="name" id=".restoreGroupSnapshot"><span class="type-signature">(static) </span>restoreGroupSnapshot<span class="signature">(node, snapshot)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id=".restoreGroupSnapshot"><span class="type-signature">(static) </span>restoreGroupSnapshot<span class="signature">(snapshot)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -4031,7 +2841,7 @@
 
 
 <div class="description">
-    Restore snapshot of group. Group topology must be the same!
+    Restore snapshot of group. Group topology must be the same! Does NOT play!
 </div>
 
 
@@ -4063,29 +2873,6 @@
     </thead>
 
     <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>node</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">current node - for debugging</td>
-        </tr>
-
     
 
         <tr>
@@ -4147,7 +2934,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line391">line 391</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line342">line 342</a>
     </li></ul></dd>
     
 
@@ -4212,316 +2999,6 @@
 
 
         
-            
-
-    
-
-    
-    <h4 class="name" id=".setPlayerAVTransport"><span class="type-signature">(static) </span>setPlayerAVTransport<span class="signature">(playerUrl, inArgs)</span><span class="type-signature"> &rarr; {promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Set the AVTransport stream for given player. Adds InstanceID. Encodes html.CAUTION: a joiner may leave groupCAUTION: Does not play - only sets content. Needs a play afterwardsCAUTION: No Metadata generation - must be provided!CAUTION: Allows to set all to empty - means no content, will not playThats done for the createSnapshot, restoreSnapshot!
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>playerUrl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">player URL (build in object)</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>inArgs</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">action arguments (except InstanceID)
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>CurrentURI</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">such as "x-sonosapi-stream:s119032?sid=254&flags=8224&sn=0"</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>CurrentURIMetaData</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">uri as DIDL-Lite xml</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Sonos-Commands.js.html">Sonos-Commands.js</a>, <a href="Sonos-Commands.js.html#line814">line 814</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        from executeActionV6
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        if any inArgs, playerUrl is missing/invalid
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    </ul>
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    true
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
     
 
     
@@ -4537,13 +3014,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Soap.html">Soap</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed Dec 16 2020 09:32:04 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Mar 06 2021 17:30:34 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

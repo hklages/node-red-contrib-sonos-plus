@@ -2,15 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
-### [5.0.0] 2021-0x-xx
+### [5.0.0] 2021-03-13
 
 #### Changed
 
-- Switched from node-sonos library to node-sonos-ts library because node-sonos is not being maintained for some months
+- Switched from node-sonos library to svrooij node-sonos-ts library because node-sonos has not been maintained for some months.
 
 - no compatibility mode anymore
 
-- discovery of players should be much faster, especially in case of many players
+- discovery of players revised and should be much faster, especially in case of many players
 
 - changes library.get.albums/playlists now with payload instead of searchString
 

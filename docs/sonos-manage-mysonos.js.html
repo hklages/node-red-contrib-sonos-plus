@@ -39,23 +39,21 @@
 'use strict'
 
 const {
-  REGEX_SERIAL, REGEX_IP, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, PACKAGE_PREFIX,
-  TIMEOUT_HTTP_REQUEST, TIMEOUT_DISCOVERY,
-  REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_ML_DEFAULT,
-  REQUESTED_COUNT_MYSONOS_DEFAULT, REQUESTED_COUNT_MYSONOS_EXPORT
+  PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_SERIAL,
+  REQUESTED_COUNT_ML_DEFAULT, REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_MYSONOS_DEFAULT,
+  REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMySonos: xGetMySonos, getMusicLibraryItems: xGetMusicLibraryItems }
+const { getMusicLibraryItems, getMySonos }
   = require('./Commands.js')
 
-const { isSonosPlayer: xIsSonosPlayer, failure, success
+const { failure, isSonosPlayer, success
 } = require('./Extensions.js')
 
 const {
-  isTruthy: xIsTruthy, isTruthyProperty: xIsTruthyProperty,
-  isTruthyPropertyStringNotEmpty: xIsTruthyPropertyStringNotEmpty, validRegex, validToInteger,
+  isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, validToInteger
 } = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
@@ -89,13 +87,13 @@ module.exports = function (RED) {
 
     // Ip address overruling serial number - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
-    if (xIsTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
+    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
       &amp;&amp; REGEX_IP.test(configNode.ipaddress)) {
       // Using config ip address to define the default SONOS player
       // and check whether that IP address is reachable (http request)
       const port = 1400 // assuming this port
       const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
-      xIsSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
+      isSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
         .then((isSonos) => {
           if (isSonos) {
             
@@ -124,10 +122,10 @@ module.exports = function (RED) {
         })
         .catch((err) => {
           debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          node.status({ fill: 'red', shape: 'dot', text: 'error: xIsSonos went wrong' })
+          node.status({ fill: 'red', shape: 'dot', text: 'error: isSonos went wrong' })
         })
       
-    } else if (xIsTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
+    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
       &amp;&amp; REGEX_SERIAL.test(configNode.serialnum)) {
       // start discovery
       discoverSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
@@ -188,11 +186,11 @@ module.exports = function (RED) {
   async function processInputMsg (node, config, msg, urlHost) {
     
     const tsPlayer = new SonosDevice(urlHost)
-    if (!xIsTruthy(tsPlayer)) {
+    if (!isTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
     }
-    if (!(xIsTruthyPropertyStringNotEmpty(tsPlayer, ['host'])
-      &amp;&amp; xIsTruthyProperty(tsPlayer, ['port']))) {
+    if (!(isTruthyPropertyStringNotEmpty(tsPlayer, ['host'])
+      &amp;&amp; isTruthyProperty(tsPlayer, ['port']))) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer ip address or port is missing `)
     }
     // needed for my extension in Extensions
@@ -203,7 +201,7 @@ module.exports = function (RED) {
     if (config.command !== 'message') { // command specified in node dialog
       command = config.command
     } else {
-      if (!xIsTruthyPropertyStringNotEmpty(msg, ['topic'])) {
+      if (!isTruthyPropertyStringNotEmpty(msg, ['topic'])) {
         throw new Error(`${PACKAGE_PREFIX} command is undefined/invalid`)
       }
       command = String(msg.topic).toLowerCase()
@@ -263,10 +261,10 @@ module.exports = function (RED) {
    */
   async function libraryExportAlbum (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
     
     const list
-      = await xGetMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+      = await getMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
@@ -288,9 +286,9 @@ module.exports = function (RED) {
    */
   async function libraryExportPlaylist (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
-    const list = await xGetMusicLibraryItems(
+    const list = await getMusicLibraryItems(
       'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
@@ -312,10 +310,10 @@ module.exports = function (RED) {
    */
   async function libraryExportTrack (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
     const list
-      = await xGetMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+      = await getMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
@@ -339,15 +337,15 @@ module.exports = function (RED) {
   async function libraryGetAlbums (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, REQUESTED_COUNT_ML_DEFAULT)
+      msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
 
     // payload as title search string is optional.
     const validSearch
       // eslint-disable-next-line max-len
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     const list
-      = await xGetMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
+      = await getMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
     
     // add ip address to albumUri
     const payload = list.map(element => {
@@ -376,15 +374,15 @@ module.exports = function (RED) {
   async function libraryGetPlaylists (msg, tsPlayer) {
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', PACKAGE_PREFIX, REQUESTED_COUNT_ML_DEFAULT)
+      msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
 
     // payload as title search string is optional.
     const validSearch
       // eslint-disable-next-line max-len
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', PACKAGE_PREFIX, '')
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     const list
-      = await xGetMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
+      = await getMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
     
     // add ip address to albumUri
     const payload = list.map(element => {
@@ -410,9 +408,9 @@ module.exports = function (RED) {
    */
   async function libraryQueuePlaylist (msg, tsPlayer) {
     // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
-    const list = await xGetMusicLibraryItems(
+    const list = await getMusicLibraryItems(
       'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
@@ -436,13 +434,13 @@ module.exports = function (RED) {
    * Info:  content validation of mediaType, serviceName
    */
   async function mysonosExportItem (msg, tsPlayer) {
-    debug('entering method mysonosExportItem')
+    debug('method:%s', 'mysonosExportItem')
     // payload title search string is required.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
-    if (!xIsTruthy(mySonosItems)) {
+    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
+    if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     
@@ -472,8 +470,8 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function mysonosGetItems (msg, tsPlayer) {
-    const payload = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
-    if (!xIsTruthy(payload)) {
+    const payload = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    if (!isTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
 
@@ -494,10 +492,10 @@ module.exports = function (RED) {
   async function mysonosQueueItem (msg, tsPlayer) {
     // payload title search string is required.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
-    if (!xIsTruthy(mySonosItems)) {
+    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title, findIndex returns -1 if not found
@@ -533,10 +531,10 @@ module.exports = function (RED) {
   async function mysonosStreamItem (msg, tsPlayer) {
     // payload title search string is required.
     const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string', PACKAGE_PREFIX)
+      = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await xGetMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
-    if (!xIsTruthy(mySonosItems)) {
+    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
     // find in title, findIndex returns -1 if not found
@@ -550,7 +548,7 @@ module.exports = function (RED) {
     await tsPlayer.SetAVTransportURI(mySonosItems[foundIndex].uri)
 
     // change volume if is provided
-    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', PACKAGE_PREFIX, -1)
+    const newVolume = validToInteger(msg, 'volume', 0, 100, 'volume', -1)
     if (newVolume !== -1) {
       await tsPlayer.SetVolume(newVolume)
     }
@@ -571,13 +569,13 @@ module.exports = function (RED) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helpers.html">Helpers</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-CommandsTs.html">Sonos-CommandsTs</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Thu Feb 25 2021 11:20:14 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sat Mar 06 2021 17:30:34 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
