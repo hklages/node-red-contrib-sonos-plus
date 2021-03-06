@@ -344,11 +344,14 @@ module.exports = {
     // restore content
     // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
-    const metadata = snapshot.CurrentURIMetadata
+    
+    // html encode for the &
+    const metadata = await encodeHtmlEntity(snapshot.CurrentURIMetadata)
+    const uri = await encodeHtmlEntity(snapshot.CurrentURI)
     await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
         'InstanceID': 0,
-        'CurrentURI': snapshot.CurrentURI,
+        'CurrentURI': uri,
         'CurrentURIMetaData': metadata
       })
 
@@ -364,7 +367,7 @@ module.exports = {
       debug('Setting track to >>%s', snapshot.Track)
       // we need to wait until track is selected
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500)
-      selectTrack(coordinatorUrlObject, track)
+      await selectTrack(coordinatorUrlObject, track)
         .catch(() => {
           debug('Reverting back track failed, happens for some music services.')
         })
@@ -554,7 +557,7 @@ module.exports = {
       'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
-    let transformed = await module.exports.parseBrowseToArray(browseQueue, 'item')
+    let transformed = await parseBrowseToArray(browseQueue, 'item')
     if (!isTruthyArray(transformed)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
     }
