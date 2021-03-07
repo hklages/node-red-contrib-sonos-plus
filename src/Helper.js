@@ -1,7 +1,7 @@
 /**
  * Collection of general purpose methods to check variables/constants and object properties.
  * - encode/decode html entities
- * - convert to boolean, integer, miliseconds 
+ * - convert to boolean, integer, milliseconds 
  * - validate variables/constants and object properties
  *
  * Can be used in other packages - needs PACKAGE_PREFIX for throws.
@@ -24,7 +24,7 @@ module.exports = {
 
   /** Decodes specific HTML special characters such as "&lt;" and others. 
    * Works with multiple occurrences.
-   * @param  {string} htmlData the string to be decode, maybe empty
+   * @param {string} htmlData the string to be decode, maybe empty
    * 
    * @returns {Promise<string>} decoded string
    * 
@@ -51,7 +51,7 @@ module.exports = {
 
   /** Encodes specific HTML special characters such as "<"" and others.
    * Works with multiple occurrences.
-   * @param  {string} htmlData the string to be decode, maybe empty.
+   * @param {string} htmlData the string to be decode, maybe empty.
    * 
    * @returns {Promise<string>} encoded string
    * 
@@ -80,7 +80,7 @@ module.exports = {
    * No validation: hh 0 to 23, mm 0 to 59 ss 0 59, : must exist
    * Recommendation: do a regex check before calling this!
    * 
-   * @param  {string} hhmmss string in format hh:mm:ss
+   * @param {string} hhmmss string in format hh:mm:ss
    * 
    * @returns {number} milliseconds as integer
    * 
@@ -93,10 +93,10 @@ module.exports = {
 
   /** Validates property and returns true|false if on|off (NOT case sensitive). 
    * 
-   * @param  {object} msg Node-RED message
-   * @param  {string} msg.propertyName item, to be validated
-   * @param  {string} propertyName property name
-   * @param  {string} propertyMeaning additional information, including in error message
+   * @param {object} msg Node-RED message
+   * @param {string} msg.propertyName item, to be validated
+   * @param {string} propertyName property name
+   * @param {string} propertyMeaning additional information, including in error message
    *
    * @returns {boolean} true/false if msg.property is "on/off" ! not case sensitive
    *
@@ -129,13 +129,13 @@ module.exports = {
    * The defaultValue is not used in case of wrong type, not in range.
    * defaultValue should be in range min max (not checked). 
    * 
-   * @param  {object} msg Node-RED message
-   * @param  {(string|number)} msg.propertyName item, to be validated, converted
-   * @param  {string} propertyName property name
-   * @param  {number} min minimum
-   * @param  {number} max maximum, max > min
-   * @param  {string} propertyMeaning additional information, including in error message
-   * @param  {number} [defaultValue] integer, specifies the default value. 
+   * @param {object} msg Node-RED message
+   * @param {(string|number)} msg.propertyName item, to be validated, converted
+   * @param {string} propertyName property name
+   * @param {number} min minimum
+   * @param {number} max maximum, max > min
+   * @param {string} propertyMeaning additional information, including in error message
+   * @param {number} [defaultValue] integer, specifies the default value. 
    *
    * @returns {number} integer in range [min,max] or defaultValue
    *
@@ -210,12 +210,12 @@ module.exports = {
    * The defaultValue is not used in case of wrong type, not in range.
    * defaultValue should be in range min max (not checked). 
    * 
-   * @param  {object} msg Node-RED message
-   * @param  {string} msg.propertyName item, to be validated - maximum 3 digits
-   * @param  {string} propertyName property name
-   * @param  {string} regex expression to evaluate string
-   * @param  {string} propertyMeaning additional information, including in error message
-   * @param  {string} [defaultValue] specifies the default value. If missing property is required.
+   * @param {object} msg Node-RED message
+   * @param {string} msg.propertyName item, to be validated - maximum 3 digits
+   * @param {string} propertyName property name
+   * @param {string} regex expression to evaluate string
+   * @param {string} propertyMeaning additional information, including in error message
+   * @param {string} [defaultValue] specifies the default value. If missing property is required.
    *
    * @returns {string} if defaultValue is NOT given then msg[propertyName] is required. 
    *
@@ -250,8 +250,8 @@ module.exports = {
 
   /** Validates whether property is safely accessible and "truthy", any type.
    * truthy means not undefined, null, NaN, infinite - see method isTruthy.
-   * @param  {object} nestedObj object
-   * @param  {array<string>} pathArray property chain- must not be empty
+   * @param {object} nestedObj object
+   * @param {array<string>} pathArray property chain- must not be empty
    * 
    * @returns {boolean} property is accessible
    * 
@@ -277,8 +277,8 @@ module.exports = {
   /** Validates whether property is safely accessible and "truthy", type string, not empty
    * Truthy means not undefined, null, NaN, infinite - see method isTruthy.
    * 
-   * @param  {object} nestedObj object
-   * @param  {string[]} path path property chain- must not be empty, type string
+   * @param {object} nestedObj object
+   * @param {string[]} path path property chain- must not be empty, type string
    * 
    * @returns {boolean} property is accessible and not empty string
    * 
@@ -303,8 +303,8 @@ module.exports = {
 
   /** Validates whether an const/variable is "truthy", any type
    * Empty object/array allowed. NOT allowed: undefined or null or NaN or Infinite.
-   *  
-   * @param  {any} input const, variable
+   *
+   * @param {any} input const, variable
    * 
    * @returns {boolean} 
    * false: let input; let input = null; let input = undefined; let input = NaN; 
@@ -376,8 +376,8 @@ module.exports = {
 
   /** Gets the property value specified by path. Use isTruthyProperty before!
    * 
-   * @param  {object} nestedObj object
-   * @param  {array<string>} path path property chain- must not be empty
+   * @param {object} nestedObj object
+   * @param {array<string>} path path property chain- must not be empty
    * 
    * @returns {any} value of that property
    * 

@@ -23,14 +23,14 @@
     },
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
-    icon: 'sonos.png', // saved in  icons/myicon.png
+    icon: 'sonos.png', // saved in icons/myicon.png
     color: '#AAAAAA',
     label: function() {
       let found = universalCmdList.find(item => item.cmd === this.command);
       let nodeLabel = this.name || found.cmd || 'Universal'
       return nodeLabel;
     },
-    oneditprepare: function() {             
+    oneditprepare: function() {
       // set up list for command 
       for (var i = 0; i < universalCmdList.length; i++) {
         $('#node-input-command').append($('<option></option>').attr('value', universalCmdList[i].cmd).text(universalCmdList[i].cmd));

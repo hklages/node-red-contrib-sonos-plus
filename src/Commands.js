@@ -21,7 +21,7 @@ const {
   parseZoneGroupToArray, positionInTrack, selectTrack, setMutestate, setVolume
 } = require('./Extensions.js')
 
-const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyArray, isTruthyProperty
+const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
 } = require('./Helper.js')
 
 const { MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -35,15 +35,15 @@ module.exports = {
   //     .......................
 
   /**  Play notification on a group. Coordinator is index 0 in tsPlayerArray
-   * @param  {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
-   *                   coordinator has index 0. Length = 1 is allowed
-   * @param  {object}  options options
-   * @param  {string}  options.uri  uri
-   * @param  {string}  [options.metadata]  metadata - will be generated if missing
-   * @param  {string}  options.volume volume during notification - if -1 don't use, range 1 .. 99
-   * @param  {boolean} options.sameVolume all player in group play at same volume level
-   * @param  {boolean} options.automaticDuration duration will be received from player
-   * @param  {string}  options.duration format hh:mm:ss
+   * @param {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
+   *               coordinator has index 0. Length = 1 is allowed
+   * @param {object} options options
+   * @param {string} options.uri uri
+   * @param {string} [options.metadata] metadata - will be generated if missing
+   * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
+   * @param {boolean} options.sameVolume all player in group play at same volume level
+   * @param {boolean} options.automaticDuration duration will be received from player
+   * @param {string} options.duration format hh:mm:ss
    * 
    * @returns {promise} true
    * 
@@ -167,14 +167,14 @@ module.exports = {
   },
 
   /**  Play notification on a single joiner but must not be coordinator.
-   * @param  {object}  tsCoordinator sonos-ts coordinator in group with url
-   * @param  {object}  tsJoiner node-sonos player in group with url
-   * @param  {object}  options options
-   * @param  {string}  options.uri  uri
-   * @param  {string}  [options.metadata]  metadata - will be generated if missing
-   * @param  {string}  options.volume volume during notification: 1 means don't use, reage 1 .. 99
-   * @param  {boolean} options.automaticDuration
-   * @param  {string}  options.duration format hh:mm:ss
+   * @param {object} tsCoordinator sonos-ts coordinator in group with url
+   * @param {object} tsJoiner node-sonos player in group with url
+   * @param {object} options options
+   * @param {string} options.uri uri
+   * @param {string} [options.metadata] metadata - will be generated if missing
+   * @param {string} options.volume volume during notification: 1 means don't use, range 1 .. 99
+   * @param {boolean} options.automaticDuration
+   * @param {string} options.duration format hh:mm:ss
    * @returns {promise} true
    *
    * @throws {error} all methods
@@ -277,13 +277,13 @@ module.exports = {
    */
 
   /**  Creates snapshot of a current group.
-   * @param  {player[]} playersInGroup player data in group, coordinator at 0 
-   * @param  {object} player player 
-   * @param  {object} player.urlObject  player JavaScript build-in URL
-   * @param  {string} player.playerName SONOS-Playername
-   * @param  {object} options
-   * @param  {boolean} [options.snapVolumes = false] capture all players volume
-   * @param  {boolean} [options.snapMutestates = false] capture all players mute state
+   * @param {player[]} playersInGroup player data in group, coordinator at 0 
+   * @param {object} player player 
+   * @param {object} player.urlObject player JavaScript build-in URL
+   * @param {string} player.playerName SONOS-Playername
+   * @param {object} options
+   * @param {boolean} [options.snapVolumes = false] capture all players volume
+   * @param {boolean} [options.snapMutestates = false] capture all players mute state
    *
    * @returns {promise<Snapshot>} group snapshot object
    * 
@@ -306,7 +306,7 @@ module.exports = {
         member.volume = await getVolume(playersInGroup[index].urlObject)
       }
       if (options.snapMutestates) {
-        member.mutestate =  await getMutestate(playersInGroup[index].urlObject)
+        member.mutestate = await getMutestate(playersInGroup[index].urlObject)
       }
       snapshot.membersData.push(member)
     }
@@ -333,7 +333,7 @@ module.exports = {
   },
 
   /**  Restore snapshot of group. Group topology must be the same! Does NOT play!
- * @param  {object<Snapshot>}  snapshot - see typedef
+ * @param {object<Snapshot>} snapshot - see typedef
  
  * @returns {promise} true
  *
@@ -387,7 +387,7 @@ module.exports = {
     let urlObject // JavaScript build-in URL
     for (let index = 0; index < snapshot.membersData.length; index++) {
       volume = snapshot.membersData[index].volume
-      urlObject  = new URL(snapshot.membersData[index].urlSchemeAuthority)
+      urlObject = new URL(snapshot.membersData[index].urlSchemeAuthority)
       if (volume !== '-1') { // volume is of type string
         await setVolume(urlObject, parseInt(volume))
       }
@@ -404,12 +404,12 @@ module.exports = {
   //     GROUP RELATED
   //     .............
 
-  /** Get group data for a given player.   
+  /** Get group data for a given player.
    * @param {string} tsPlayer sonos-ts player
    * @param {string} [playerName] SONOS-Playername such as Kitchen 
    * 
-   * @returns {promise<object>}  returns object:
-   *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
+   * @returns {promise<object>} returns object:
+   * { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
    *
    * @throws {error} all methods
    */
@@ -434,7 +434,7 @@ module.exports = {
 
   /** Get array of all groups. Each group consist of an array of players <playerGroupData>[]
    * Coordinator is always in position 0. Group array may have size 1 (standalone)
-   * @param  {object} player sonos-ts player
+   * @param {object} player sonos-ts player
    * 
    * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
    *          First group member is coordinator.
@@ -481,17 +481,19 @@ module.exports = {
    *
    * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS Playlists)
    *
-      * @throws {error} all methods
-   */  
+   * @throws {error} all methods
+   */ 
   getMySonos: async function (tsPlayer, requestedCount) { 
     debug('method:%s', 'getMySonos')
+    // FV:2 = Favorites 
     const favorites = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'FV:2', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
       'RequestedCount': requestedCount, 'SortCriteria': ''
     })
 
-    let transformedItems = await parseBrowseToArray(favorites, 'item')
-    transformedItems = await Promise.all(transformedItems.map(async (item) => {
+    const itemArray = await parseBrowseToArray(favorites, 'item')
+    // add several properties
+    const transformedItems = await Promise.all(itemArray.map(async (item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
@@ -521,17 +523,19 @@ module.exports = {
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
    *
    * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
-   */  
+   */
   getSonosPlaylists: async function (tsPlayer, requestedCount) { 
     debug('method:%s', 'getSonosPlaylists')
 
+    // SQ = SONOS-Playlists (saved queue) 
     const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'SQ:', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
       'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
-    let transformed = await parseBrowseToArray(browsePlaylist, 'container')
-    transformed = transformed.map((item) => {
+    // caution: container not items
+    const itemArray = await parseBrowseToArray(browsePlaylist, 'container')
+    const transformed = itemArray.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
@@ -552,16 +556,15 @@ module.exports = {
    */
   getSonosQueue: async (tsPlayer, requestedCount) => {
     debug('method:%s', 'getSonosQueue')
+    
+    // Q:0 = SONOS-Queue
     const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
       'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
     })
     
-    let transformed = await parseBrowseToArray(browseQueue, 'item')
-    if (!isTruthyArray(transformed)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Q:0 is invalid.`)
-    }
-    transformed = transformed.map((item) => {
+    const itemArray = await parseBrowseToArray(browseQueue, 'item')
+    const transformed = itemArray.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
@@ -571,18 +574,18 @@ module.exports = {
     return transformed
   },
 
-  /** Get array of all Music Library items matching category and optional searchstring
+  /** Get array of all Music Library items matching category and optional search string
    * @param {string} category such as 'Album:', 'Playlist:'
    * @param {string} [searchString=''] any search string, being used in category
    * @param {number} requestedCount integer, 1 to 5000
    * @param {object} tsPlayer sonos-ts player
    * 
-   * @returns {Promise<exportedItem[]>} all Music Library items maching criteria, could be emtpy
+   * @returns {Promise<exportedItem[]>} all Music Library items matching criteria, could be empty
    *
    * @throws {error} 'category is unknown', 'searchString is not string', 
    * 'requestedCount is not number', 'response form parsing Browse Album is invalid'
    * @throws {error} all methods
-   */  
+   */
   getMusicLibraryItems: async function (category, searchString, requestedCount, tsPlayer) { 
     debug('method:%s', 'getMusicLibraryItems')
 
@@ -597,14 +600,12 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} requestedCount is not number`)
     }
     
+    // The search string must be encoded- but not the category (:)
     const objectId = category + encodeURIComponent(searchString)
-    const browseCategory = await executeActionV6(tsPlayer.urlObject,
-      '/MediaServer/ContentDirectory/Control', 'Browse',
-      { 
-        'ObjectID': objectId,
-        'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
-        'RequestedCount': requestedCount, 'SortCriteria': ''
-      })
+    const browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
+      'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
+    })
 
     let list
     if (category === 'A:TRACKS:') {

@@ -21,7 +21,7 @@ const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger, 
 } = require('./Helper.js')
 
-const  request   = require('axios').default
+const request = require('axios').default
 const xml2js = require('xml2js')
 const parser = require('fast-xml-parser')
 
@@ -92,10 +92,10 @@ module.exports = {
   /** Show any error occurring during processing of messages in the node status 
    * and create node error.
    * 
-   * @param  {object} node current node
-   * @param  {object} msg current msg
-   * @param  {object} error  standard node.js or created with new Error ('')
-   * @param  {string} [functionName] name of calling function
+   * @param {object} node current node
+   * @param {object} msg current msg
+   * @param {object} error standard node.js or created with new Error ('')
+   * @param {string} [functionName] name of calling function
    * 
    * @throws nothing
    * 
@@ -174,9 +174,9 @@ module.exports = {
   
   /** Set node status and send message.
      * 
-     * @param  {object} node current node
-     * @param  {object} msg current msg (maybe null)
-     * @param  {string} functionName name of calling function
+     * @param {object} node current node
+     * @param {object} msg current msg (maybe null)
+     * @param {string} functionName name of calling function
      */
   success: (node, msg, functionName) => {
     node.send(msg)
@@ -185,7 +185,7 @@ module.exports = {
   },
 
   //
-  //     SPECIAL COMMANDS - SIMPLE HTML REQUEST  
+  //     SPECIAL COMMANDS - SIMPLE HTML REQUEST
   //     ......................................
 
   /** Validate that given ip belongs to a SONOS player.
@@ -407,9 +407,9 @@ module.exports = {
   //     ....................
 
   /** Comparing player UUID and serial number. Returns true if matching.
-   * @param  {string} serial the string such as 00-0E-58-FE-3A-EA:5
-   * @param  {string} uuid the string such as RINCON_000E58FE3AEA01400
-   * RINCONG_xxxxxxxxxxxx01400  (01400 is port)
+   * @param {string} serial the string such as 00-0E-58-FE-3A-EA:5
+   * @param {string} uuid the string such as RINCON_000E58FE3AEA01400
+   * RINCONG_xxxxxxxxxxxx01400 (01400 is port)
    * 
    * @returns {Promise<boolean>} true if matching
    * 
@@ -432,16 +432,17 @@ module.exports = {
   },
 
   /** 
-   * Returns an array of items (DidlBrowseItem) extracted from action "Browse" output.
-   * @param  {object} browseOutcome Browse outcome
-   * @param  {number} browseOutcome.NumberReturned amount returned items
-   * @param  {number} browseOutcome.TotalMatches amount of total item
-   * @param  {string} browseOutcome.Result Didl-Light format, xml 
-   * @param  {string} itemName DIDL-Light property holding the data. Such as "item" or "container"
+   * Returns an array (always) of items (DidlBrowseItem) extracted from action "Browse" output. 
+   * title, id, artist, album are html decoded. uri, r:resMD (string) arent! 
+   * @param {object} browseOutcome Browse outcome
+   * @param {number} browseOutcome.NumberReturned amount returned items
+   * @param {number} browseOutcome.TotalMatches amount of total item
+   * @param {string} browseOutcome.Result Didl-Light format, xml 
+   * @param {string} itemName DIDL-Light property holding the data. Such as "item" or "container"
    * 
    * @returns {Promise<DidlBrowseItem[]>} Promise, array of {@link Sonos-CommandsTs#DidlBrowseItem},
-   *  maybe empty array.
-   *                   
+   * maybe empty array.
+   * 
    * @throws {error} if any parameter is missing
    * @throws {error} from method xml2js and invalid response (missing id, title)
    * 
@@ -497,7 +498,7 @@ module.exports = {
       } else { // single item  - convert to array
         itemsAlwaysArray = [itemsOrOne]
       }
-    } 
+    }
 
     // transform properties
     const transformedItems = await Promise.all(itemsAlwaysArray.map(async (item) => {
@@ -512,7 +513,7 @@ module.exports = {
         'metadata': '',
         'sid': '',
         'serviceName': '',
-        'upnpClass': '',  // might be overwritten
+        'upnpClass': '', // might be overwritten
         'processingType': 'queue' // has to be updated in calling program
       }
 
@@ -572,7 +573,7 @@ module.exports = {
   },
 
   /**  Get music service id (sid) from HTML ENTITY DECODED Transport URI.
-   * @param  {string} uri such as (masked)
+   * @param {string} uri such as (masked)
    * 'x-rincon-cpcontainer:1004206ccatalog%2falbums%***%2f%23album_desc?sid=201&flags=8300&sn=14'
    * ''
    *
@@ -595,7 +596,7 @@ module.exports = {
   },
 
   /**  Get service name for given service id.
-   * @param  {string} sid service id (integer) such as "201" or blank 
+   * @param {string} sid service id (integer) such as "201" or blank 
    * 
    * @returns {string} service name such as "Amazon Music" or empty string
    *
@@ -615,7 +616,7 @@ module.exports = {
   }, 
 
   /**  Get TuneIn radioId from Transport URI - only for Music Service TuneIn 
-   * @param  {string} uri uri such as x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
+   * @param {string} uri uri such as x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
    * 
    * @returns {string} TuneIn radio id or if not found empty
    *
@@ -632,7 +633,7 @@ module.exports = {
   },
 
   /**  Get UpnP class from string metadata. 
-   * @param  {string} metadataEncoded DIDL-Lite metadata, encoded
+   * @param {string} metadataEncoded DIDL-Lite metadata, encoded
    * 
    * @returns {Promise<string>} Upnp class such as "object.container.album.musicAlbum"
    *
@@ -654,7 +655,7 @@ module.exports = {
   },
 
   /**  guessProcessingType from UPnP string
-   * @param  {string} upnpClass the UPNP class such as 'object.item.audioItem.audioBroadcast'
+   * @param {string} upnpClass the UPNP class such as 'object.item.audioItem.audioBroadcast'
    * 
    * @returns {Promise<string>} processingType 'queue'|'stream'
    *
@@ -674,8 +675,8 @@ module.exports = {
       'object.container.playlistContainer.#PlaylistView'
     ]
     // unsupported:
-    //   'object.container.podcast.#podcastContainer',
-    //   'object.container.albumlist'
+    // 'object.container.podcast.#podcastContainer',
+    // 'object.container.albumlist'
     
     let processingType
     if (UPNP_CLASSES_STREAM.includes(upnpClass)) {
@@ -695,7 +696,7 @@ module.exports = {
   /** Parse outcome of GetZoneGroupState and create an array of all groups in household. 
    * Each group consist of an array of players <playerGroupData>
    * Coordinator is always in position 0. Group array may have size 1 (standalone)
-   * @param  {string} zoneGroupState the xml data from GetZoneGroupState
+   * @param {string} zoneGroupState the xml data from GetZoneGroupState
    * 
    * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
    *          First group member is coordinator.
@@ -790,8 +791,8 @@ module.exports = {
    * @param {object} allGroupsData from getGroupsAll
    * @param {string} [playerName] SONOS-Playername such as Kitchen 
    * 
-   * @returns {promise<object>}  returns object:
-   *  { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
+   * @returns {promise<object>} returns object:
+   * { groupId, playerIndex, coordinatorIndex, members[]<playerGroupData> } 
    *
    * @throws {error} 'could not find given player in any group'
    * @throws {error} all methods
@@ -857,15 +858,15 @@ module.exports = {
   //    ..................................................
 
   /**  Sends action with actionInArgs to endpoint at playerUrl.origin and returns result.
-   * @param  {object} playerUrl player URL (JavaScript build in) such as http://192.168.178.37:1400
-   * @param  {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
-   * @param  {string} actionName the action name such as Seek
-   * @param  {object} actionInArgs all arguments - throws error if one argument is missing!
+   * @param {object} playerUrl player URL (JavaScript build in) such as http://192.168.178.37:1400
+   * @param {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
+   * @param {string} actionName the action name such as Seek
+   * @param {object} actionInArgs all arguments - throws error if one argument is missing!
    *
    * @uses ACTIONS_TEMPLATESV6 to get required inArgs and outArgs. 
    * 
    * @returns {Promise<(object|boolean)>} true or outArgs of that action
-   *  
+   * 
    * @throws {error} nrcsp: any inArgs property missing, http return invalid status or not 200, 
    * missing body, unexpected response
    * @throws {error} xml2js.parseStringPromise 
@@ -922,14 +923,14 @@ module.exports = {
     // RESPONSE
     // The key to the core data is ['s:Envelope','s:Body',`u:${actionName}Response`]
     // There are 2 cases: 
-    //   1.   no output argument thats typically in a "set" action: 
-    //            expected response is just an envelope with
-    //            .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1`  
-    //   2.   one or more values typically in a "get" action: in addition 
-    //            the values outArgs are included.
-    //            .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1` 
-    //            and in addition the properties from outArgs
-    //   
+    //   1. no output argument thats typically in a "set" action: 
+    //      expected response is just an envelope with
+    //      .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1`  
+    //   2. one or more values typically in a "get" action: in addition 
+    //       the values outArgs are included.
+    //       .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1` 
+    //       and in addition the properties from outArgs
+    // 
     const key = ['s:Envelope', 's:Body']
     key.push(`u:${actionName}Response`)
 
@@ -1049,7 +1050,7 @@ module.exports = {
 
   /**  Get error code or empty string.
    * 
-   * @param  {string} data  upnp error response as envelope with <errorCode>xxx</errorCode>
+   * @param {string} data upnp error response as envelope with <errorCode>xxx</errorCode>
    *
    * @returns {string} error code
    * 
@@ -1069,9 +1070,9 @@ module.exports = {
 
   /**  Get error message from error code. If not found provide 'unknown error'.
    * 
-   * @param  {string} errorCode
-   * @param  {JSON} upnpErrorList - simple mapping .code .message
-   * @param  {JSON} [serviceErrorList] - simple mapping .code .message
+   * @param {string} errorCode
+   * @param {JSON} upnpErrorList - simple mapping .code .message
+   * @param {JSON} [serviceErrorList] - simple mapping .code .message
    *
    * @returns {string} error text (from mapping code -  text)
    * 

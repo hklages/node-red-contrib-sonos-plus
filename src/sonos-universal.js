@@ -400,7 +400,7 @@ module.exports = function (RED) {
    * @param {string} [msg.playerName = using tssPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise} {payload: snap} snap see createGroupSnapshot
+   * @returns {promise} {payload: snap snap see createGroupSnapshot
    *
    * @throws {error} 'snapVolumes (msg.snapVolumes) is not boolean', 
    * 'snapMutestates (msg.snapMutestates) is not boolean'
@@ -593,7 +593,7 @@ module.exports = function (RED) {
     // eslint-disable-next-line max-len
     const payload = (sleep.RemainingSleepTimerDuration === '' ? 'none' : sleep.RemainingSleepTimerDuration) 
     
-    return { payload }    
+    return { payload }
   }
 
   /**
@@ -671,7 +671,7 @@ module.exports = function (RED) {
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: media: {object}, trackInfo: {object}, 
-   *  positionInfo: {object}, queueActivated: true/false
+   * positionInfo: {object}, queueActivated: true/false
    *
    * @throws {error} 'current position data is invalid', 
    * @throws {error} all methods
@@ -908,19 +908,14 @@ module.exports = function (RED) {
         await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
       }
       await tsCoordinator.AVTransportService.AddURIToQueue({
-        InstanceID: 0,
-        EnqueuedURI: exportData.uri,
-        EnqueuedURIMetaData: exportData.metadata,
-        DesiredFirstTrackNumberEnqueued: 0,
-        EnqueueAsNext: true
+        InstanceID: 0, EnqueuedURI: exportData.uri, EnqueuedURIMetaData: exportData.metadata,
+        DesiredFirstTrackNumberEnqueued: 0, EnqueueAsNext: true
       })
       await tsCoordinator.SwitchToQueue()
       
     } else {
       await tsCoordinator.AVTransportService.SetAVTransportURI({
-        InstanceID: 0,
-        CurrentURI: exportData.uri,
-        CurrentURIMetaData: exportData.metadata
+        InstanceID: 0, CurrentURI: exportData.uri, CurrentURIMetaData: exportData.metadata
       })
     }
 
@@ -945,7 +940,7 @@ module.exports = function (RED) {
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level. 
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
-   *  - default is calculation, if that fails then 00:00:05
+   * - default is calculation, if that fails then 00:00:05
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
@@ -955,8 +950,8 @@ module.exports = function (RED) {
    * @throws {error} all methods
    *
    * Hint:
-   *  While playing a notification (start .. to end + 2 seconds)
-   *     there should not be send another request to this group.
+   * While playing a notification (start .. to end + 2 seconds)
+   * there should not be send another request to this group.
    */
   async function groupPlayNotification (msg, tsPlayer) {
     // Payload uri is required.
@@ -1148,7 +1143,7 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string/number} msg.payload position of track in queue. 1 ... queue length.
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
-   * @param {boolean} [msg.sameVolume  =true] shall all players play at same volume level.
+   * @param {boolean} [msg.sameVolume =true] shall all players play at same volume level.
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -2393,7 +2388,7 @@ module.exports = function (RED) {
    * @returns {promise} {}
    *
    * Details: if coordinator => will leave group (stop playing), 
-   *  another will take over coordinator role
+   * another will take over coordinator role
    * if standalone - no change
    *
    * @throws {error} all methods
@@ -2423,7 +2418,6 @@ module.exports = function (RED) {
    * 
    * why depriciated: for some streams metadata are needed and have to be "guessed". For some 
    * such as Tunein it works fine but many are still open. Using My Sonos is much better!
-   *  
    *
    * @throws {error} all methods
    *

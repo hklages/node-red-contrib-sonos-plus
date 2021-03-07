@@ -24,8 +24,8 @@ module.exports = {
 
   /** Does an async discovery of SONOS player, compares with given serial number 
    * and returns ip address if success - otherwise throws error.
-   * @param  {string} serialNumber player serial number
-   * @param  {number} timeoutSeconds in seconds
+   * @param {string} serialNumber player serial number
+   * @param {number} timeoutSeconds in seconds
    * 
    * @returns {Promise<object>} {'uuid', urlHost} su
    * 
@@ -66,7 +66,7 @@ module.exports = {
   /** Does an async discovery of SONOS player and returns list of objects
    * with properties label and value including the IP address = host.
    * 
-   * @param  {number} timeoutSeconds in seconds
+   * @param {number} timeoutSeconds in seconds
    * 
    * @returns {Promise<object>} {'label', value}
    * 
@@ -98,7 +98,7 @@ module.exports = {
   /** Does an async discovery of SONOS player and returns list of objects
    * with properties label and value including the serial number.
    * 
-   * @param  {number} timeoutSeconds in seconds
+   * @param {number} timeoutSeconds in seconds
    * 
    * @returns {Promise<object>} {'label', value}
    * 

@@ -1,7 +1,7 @@
 <!-- Sonos My Sonos Node -->
 <!-- Registering Node (JavaScript) -->
 <script type="text/javascript">
-  /* global  RED */
+  /* global RED */
   /* eslint no-undef: "error" */
   RED.nodes.registerType('sonos-manage-mysonos', {
     category: 'sonosplus',
@@ -23,14 +23,14 @@
     },
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
-    icon: 'sonos.png', // saved in  icons/myicon.png
+    icon: 'sonos.png', // saved in icons/myicon.png
     color: '#95c292',
     label: function() {
       let found = mySonosCmdList.find(item => item.cmd === this.command);
       let nodeLabel = this.name || found.cmd || 'My Sonos'
       return nodeLabel;
     },
-    oneditprepare: function() {             
+    oneditprepare: function() {
       // set up list for command 
       for (var i = 0; i < mySonosCmdList.length; i++) {
        $('#node-input-command').append($('<option></option>').attr('value', mySonosCmdList[i].cmd).text(mySonosCmdList[i].cmd));
@@ -121,10 +121,10 @@
 <p>This node provides all commands related to My Sonos and the Music Library.<p>
 
 Command and state can be provided in the dialog or with incoming message - see dialog.<br><br>
-  
+
 <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki">Introduction</a><br>
 <a href="https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.2-My-Sonos-Node">Details My Sonos node</a>
-  
+
 <h1>Input</h1>
 
 Each command has specific input and output properties.<br><br>
@@ -147,8 +147,8 @@ The most important properties are:
 All "get/export" commands outputs to msg.payload. 
 
 <dl class="message-properties">
-    <dt>payload <span class="property-type">depend on command</span> </dt>
-    <dd>In case of <b>get/export</b> the requested data is being provided. </dd>
+  <dt>payload <span class="property-type">depend on command</span> </dt>
+  <dd>In case of <b>get/export</b> the requested data is being provided. </dd>
 </dl>
-  
+
 </script>

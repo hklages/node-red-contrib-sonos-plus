@@ -685,7 +685,6 @@ describe('getDeviceInfo function', function () {
     try {
       await getDeviceInfo(playerUrl, timeout)  
     } catch (error) {
-      console.log(JSON.stringify(error, Object.getOwnPropertyNames(error)))
       expect(error.message).equal('connect ECONNREFUSED 192.168.178.1:1400')
     }
   })

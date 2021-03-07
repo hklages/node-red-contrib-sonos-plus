@@ -21,9 +21,9 @@
     "TEST-rdply-mypackage-dependencies": "cd C:/Users/hekla/.node-red && npm install C:/Users/hekla/Development/node-red-contrib-sonos-plus",
     "TEST-rdply-mypackge-code": "not necessary as that is linked to development directory",
     "TEST-strt-server": "NODE-RED",
-    "TEST-all": "./node_modules/.bin/mocha",
-    "TEST-Helper": "./node_modules/.bin/mocha ./test/Helper.js",
-    "TEST-Extensions": "./node_modules/.bin/mocha ./test/Extensions.js"
+    "TEST-all": "mocha",
+    "TEST-Helper": "mocha ./test/Helper.js",
+    "TEST-Extensions": "mocha ./test/Extensions.js"
   },
   "keywords": [
     "sonos",

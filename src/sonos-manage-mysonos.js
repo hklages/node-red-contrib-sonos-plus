@@ -18,14 +18,13 @@ const {
 
 const { discoverSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMusicLibraryItems, getMySonos }
-  = require('./Commands.js')
+const { getMusicLibraryItems, getMySonos
+} = require('./Commands.js')
 
 const { failure, isSonosPlayer, success
 } = require('./Extensions.js')
 
-const {
-  isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, validToInteger
+const { isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, validToInteger
 } = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
@@ -49,7 +48,7 @@ module.exports = function (RED) {
   }
 
   /**  Create My Sonos node, get valid ip address, store nodeDialog and subscribe to messages.
-   * @param  {object} config current node configuration data
+   * @param {object} config current node configuration data
    */
   function SonosManageMySonosNode (config) {
     const thisFunctionName = 'create and subscribe'
@@ -140,12 +139,12 @@ module.exports = function (RED) {
   }
 
   /** Validate sonos player object, command and dispatch further.
-   * @param  {object}  node current node
-   * @param  {object}  config current node configuration
-   * @param  {string}  config.command the command from node dialog
-   * @param  {string}  config.state the state from node dialog
-   * @param  {object}  msg incoming message
-   * @param  {string}  urlHost host of SONOS player such as 192.168.178.37
+   * @param {object} node current node
+   * @param {object} config current node configuration
+   * @param {string} config.command the command from node dialog
+   * @param {string} config.state the state from node dialog
+   * @param {object} msg incoming message
+   * @param {string} urlHost host of SONOS player such as 192.168.178.37
    *
    * Creates also msg.nrcspCmd with the used command in lower case.
    * Modifies msg.payload if set in dialog or for output!
@@ -153,7 +152,7 @@ module.exports = function (RED) {
    * @returns {promise} All commands have to return a promise - object
    * example: returning {} means msg is not modified (except msg.nrcspCmd)
    * example: returning { 'payload': true } means 
-   *  the original msg.payload will be modified and set to true.
+   * the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
     
@@ -226,7 +225,7 @@ module.exports = function (RED) {
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<exportedItem>}  
+   * @returns {promise<exportedItem>}
    * 
    * @throws {error} 'no matching item found'
    * @throws {error} all methods
@@ -250,7 +249,7 @@ module.exports = function (RED) {
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<exportedItem>  
+   * @returns {promise<exportedItem>
    *
    * @throws {error} 'no matching item found'
    * @throws {error} all methods
@@ -275,7 +274,7 @@ module.exports = function (RED) {
    * @param {string} msg.payload search string
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<exportedItem>}  see def
+   * @returns {promise<exportedItem>} see def
    *
    * @throws {error} 'no matching item found'
    * @throws {error} all methods
@@ -302,7 +301,7 @@ module.exports = function (RED) {
    * @param {object} tsPlayer sonos-ts player with urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
-   * array may be empty  
+   * array may be empty
    *
    * @throws {error} all methods
    */
@@ -339,7 +338,7 @@ module.exports = function (RED) {
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
-   * array may be empty  
+   * array may be empty
    *
    * @throws {error} all methods
    */
@@ -403,7 +402,7 @@ module.exports = function (RED) {
    * @throws 'could not find any My Sonos items', 'no title matching search string'
    * @throws {error} all methods
    *
-   * Info:  content validation of mediaType, serviceName
+   * Info: content validation of mediaType, serviceName
    */
   async function mysonosExportItem (msg, tsPlayer) {
     debug('method:%s', 'mysonosExportItem')
