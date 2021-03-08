@@ -797,7 +797,7 @@ module.exports = {
    * @throws {error} 'could not find given player in any group'
    * @throws {error} all methods
    */
-  extractGroup: async function (playerUrlHost, allGroupsData, playerName) {
+  extractGroup: async (playerUrlHost, allGroupsData, playerName) => {
     debug('method:%s', 'extractGroup')
     
     // this ensures that playerName overrules given playerUrlHostname

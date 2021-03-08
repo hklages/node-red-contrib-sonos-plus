@@ -51,7 +51,7 @@ module.exports = {
    */
 
   // TODO optimize 
-  playGroupNotification: async function (tsPlayerArray, options) {
+  playGroupNotification: async (tsPlayerArray, options) => {
     const WAIT_ADJUSTMENT = 2000
 
     // generate metadata if not provided and uri as URL
@@ -184,7 +184,7 @@ module.exports = {
    */
 
   // TODO see playGroupNotification
-  playJoinerNotification: async function (tsCoordinator, tsJoiner, options) {
+  playJoinerNotification: async (tsCoordinator, tsJoiner, options) => {
     const WAIT_ADJUSTMENT = 2000
 
     // generate metadata if not provided and uri as URL
@@ -289,7 +289,7 @@ module.exports = {
    * 
    * @throws {error} all methods
   */
-  createGroupSnapshot: async function (playersInGroup, options) {
+  createGroupSnapshot: async (playersInGroup, options) => {
     debug('method:%s', 'createGroupSnapshot')
     const snapshot = {}
     snapshot.membersData = []
@@ -339,7 +339,7 @@ module.exports = {
  *
  * @throws if invalid response from SONOS player
  */
-  restoreGroupSnapshot: async function (snapshot) {
+  restoreGroupSnapshot: async (snapshot) => {
     debug('method:%s', 'restoreGroupSnapshot')
     // restore content
     // urlSchemeAuthority because we do create/restore
@@ -413,7 +413,7 @@ module.exports = {
    *
    * @throws {error} all methods
    */
-  getGroupCurrent: async function (tsPlayer, playerName) {
+  getGroupCurrent: async (tsPlayer, playerName) => {
     debug('method:%s', 'getGroupCurrent')
     const allGroups = await module.exports.getGroupsAll(tsPlayer)
     const thisGroup = await extractGroup(tsPlayer.urlObject.hostname, allGroups, playerName)
@@ -442,7 +442,7 @@ module.exports = {
    * @throws {error} 'property ZoneGroupState is missing', 'response form parse xml is invalid'
    * @throws {error} all methods
    */
-  getGroupsAll: async function (anyTsPlayer) {
+  getGroupsAll: async (anyTsPlayer) => {
     debug('method:%s', 'getGroupsAll')
     
     // get all groups
@@ -483,7 +483,7 @@ module.exports = {
    *
    * @throws {error} all methods
    */ 
-  getMySonos: async function (tsPlayer, requestedCount) { 
+  getMySonos: async (tsPlayer, requestedCount) =>  { 
     debug('method:%s', 'getMySonos')
     // FV:2 = Favorites 
     const favorites = await tsPlayer.ContentDirectoryService.Browse({
@@ -524,7 +524,7 @@ module.exports = {
    *
    * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
    */
-  getSonosPlaylists: async function (tsPlayer, requestedCount) { 
+  getSonosPlaylists: async (tsPlayer, requestedCount) => { 
     debug('method:%s', 'getSonosPlaylists')
 
     // SQ = SONOS-Playlists (saved queue) 
@@ -586,7 +586,7 @@ module.exports = {
    * 'requestedCount is not number', 'response form parsing Browse Album is invalid'
    * @throws {error} all methods
    */
-  getMusicLibraryItems: async function (category, searchString, requestedCount, tsPlayer) { 
+  getMusicLibraryItems: async (category, searchString, requestedCount, tsPlayer) => { 
     debug('method:%s', 'getMusicLibraryItems')
 
     // validate parameter
