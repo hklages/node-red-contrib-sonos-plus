@@ -144,7 +144,6 @@ module.exports = {
             const uppnText = error.message.substring(module.exports.NODE_SONOS_UPNP500.length)
             const upnpEc = module.exports.getErrorCodeFromEnvelope(uppnText)
             msgShort = `statusCode 500 & upnpError ${upnpEc}`
-            // TODO Notion Helper-Service
             msgDet = module.exports.getErrorMessageV1(upnpEc, module.exports.SOAP_ERRORS.UPNP, '')
           } else {
             // unlikely as all UPNP errors throw 500
@@ -272,7 +271,6 @@ module.exports = {
     if (!isTruthy(response)) {
       throw new Error(`${PACKAGE_PREFIX} invalid response from player - response`)
     }
-    // TODO Test ECON ....
     let properties = {}
     if (!isTruthyPropertyStringNotEmpty(response, ['data'])) {
       throw new Error(`${PACKAGE_PREFIX} response from player is invalid - data missing`)
@@ -641,7 +639,6 @@ module.exports = {
    */
   getUpnpClassEncoded: async (metadataEncoded) => {
     debug('method:%s', 'getUpnpClassEncoded')
-    // TODO has to be parsed - check with event and kidsplayer!
     const decoded = await decodeHtmlEntity(metadataEncoded)
     let upnpClass = '' // default
     if (isTruthyStringNotEmpty(decoded)) {

@@ -1336,16 +1336,17 @@ module.exports = function (RED) {
     // Payload track position is required.
     const validatedPosition = validToInteger(msg, 'payload', 1, lastTrackInQueue,
       'position in queue')
-    // TODO it should be the difference!
     const validatedNumberOfTracks = validToInteger(msg, 'numberOfTracks', 1,
       lastTrackInQueue, 'number of tracks', 1)
-    const args = {
+    if ((validatedNumberOfTracks + validatedPosition) >= lastTrackInQueue) {
+      throw new Error(`${PACKAGE_PREFIX} position + amount of tracks is out of range`)
+    }
+    await tsCoordinator.AVTransportService.RemoveTrackRangeFromQueue({
       'InstanceID': 0,
       'StartingIndex': validatedPosition,
       'NumberOfTracks': validatedNumberOfTracks,
       'UpdateID': ''
-    }
-    await tsCoordinator.AVTransportService.RemoveTrackRangeFromQueue(args)
+    })
     
     return {}
   }

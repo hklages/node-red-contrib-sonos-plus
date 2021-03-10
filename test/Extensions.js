@@ -162,7 +162,7 @@ describe('validatedGroupProperties function', function () {
   })
 
   it('all Infinite will use defaults', async () => {
-    // TODO NaN should throw error in the future
+    // TODO infinite should throw error in the future
     const msg = {}
     msg.playerName = Infinity
     msg.volume = Infinity

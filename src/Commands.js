@@ -510,7 +510,6 @@ module.exports = {
         return item
       }
     }))
-    // TODO requested Count different for MySonos and SONOS Playlists
     const sonosPlaylists = await module.exports.getSonosPlaylists(tsPlayer, requestedCount)    
 
     return transformedItems.concat(sonosPlaylists)
