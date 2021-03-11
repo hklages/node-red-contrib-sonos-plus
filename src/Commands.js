@@ -475,13 +475,19 @@ module.exports = {
   * @property {string} processingType='' can be 'queue', 'stream', 'unsupported' or empty
   */
 
-  /** Get array of all My Sonos Favorite items including SonosPlaylists
+  /** Get array of all My Sonos Favorite items including SonosPlaylists - special imported playlists
    * @param {object} tsPlayer sonos-ts player
    * @param {number} requestedCount integer, 1 to ... (no validation)
    *
    * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS Playlists)
    *
    * @throws {error} all methods
+   * 
+   * In the SONOS app you can "import all Music Library Playlists" 
+   * (Browse,  MusicLibrary, Imported playlists, dot-menu, add to my sonos). These then show up 
+   * under My Sonos own category "Imported Playlist". These are currently not supported and choosing
+   * "Imported" as search string will show error - undefined uri. Items are result fo A:PLAYLISTS
+   * But you can add these single items to My Sonos category Playlists. Then it works.
    */ 
   getMySonos: async (tsPlayer, requestedCount) =>  { 
     debug('method:%s', 'getMySonos')

@@ -661,7 +661,9 @@ module.exports = {
   guessProcessingType: async (upnpClass) => {
     debug('method:%s', 'guessProcessingType')
 
-    const UPNP_CLASSES_STREAM = ['object.item.audioItem.audioBroadcast']
+    // startsWith because object.item.audioItem.audioBroadcast#swimlane-genre for Sonos Radio
+    const UPNP_CLASSES_STREAM = 'object.item.audioItem.audioBroadcast'
+
     const UPNP_CLASSES_QUEUE = [
       'object.container.album.musicAlbum',
       'object.container.playlistContainer',
@@ -676,7 +678,7 @@ module.exports = {
     // 'object.container.albumlist'
     
     let processingType
-    if (UPNP_CLASSES_STREAM.includes(upnpClass)) {
+    if (upnpClass.startsWith(UPNP_CLASSES_STREAM)) {
       debug('upnp class is of type stream ')
       processingType = 'stream'
     } else if (UPNP_CLASSES_QUEUE.includes(upnpClass)) {
