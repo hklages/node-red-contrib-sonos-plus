@@ -9,15 +9,27 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network.
 
-Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md). This package is in no way connected to or supported by Sonos Incorporation.
+Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
-Add your playlist, album, station from Spotify, Napster, Amazon, ... to "My Sonos" using the original SONOS app. Play any of these items by using the "My Sonos" node (command mysonos.export.item) in combination with "Universal node" (command group.play.export). Music-Library and SONOS-Playlists are supported. Group players by using their SONOS-Playernames.
+This package is in no way connected to or supported by Sonos Incorporation.
 
-Read the Quickstart and explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
+Highlights
+
+- Play your track, album, playlist, station from Spotify, Napster, Amazon, Deezer and more. My Sonos, Music-Library, SONOS-Playlists and SONOS-Queue are supported.
+
+- Control your player: play, stop, pause - modify the SONOS queue.
+
+- Change player setting such as volume, mute state, loudness, treble, bass, the LED and more.
+
+- Group players by using their SONOS-Playernames
+
+Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
 ### SUPPORT
 
-Either open a github issue (preferred method) or send an email to nrcsplus@gmail.com
+There is a Quickstart in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
+
+Open a GitHub issue (preferred method) or send an email to nrcsplus@gmail.com (German/English).
 
 ### NEWS
 

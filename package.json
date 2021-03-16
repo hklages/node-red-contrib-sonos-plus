@@ -52,14 +52,14 @@
     "@svrooij/sonos": "v2.4.0",
     "axios": "^0.21.1",
     "debug": "^4.3.1",
-    "fast-xml-parser": "^3.18.0",
+    "fast-xml-parser": "^3.19.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
-    "chai": "^4.3.3",
-    "eslint": "^7.21.0",
-    "mocha": "^8.3.1"
+    "chai": "^4.3.4",
+    "eslint": "^7.22.0",
+    "mocha": "^8.3.2"
   }
 }
