@@ -52,6 +52,7 @@ module.exports = {
 
   // TODO optimize 
   playGroupNotification: async (tsPlayerArray, options) => {
+    debug('method:%s', 'playGroupNotification')
     const WAIT_ADJUSTMENT = 2000
 
     // generate metadata if not provided and uri as URL
@@ -185,6 +186,7 @@ module.exports = {
 
   // TODO see playGroupNotification
   playJoinerNotification: async (tsCoordinator, tsJoiner, options) => {
+    debug('method:%s', 'playJoinerNotification')
     const WAIT_ADJUSTMENT = 2000
 
     // generate metadata if not provided and uri as URL

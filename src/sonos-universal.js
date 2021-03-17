@@ -16,7 +16,7 @@ const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_QU
   REQUESTED_COUNT_QUEUE, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
-const { discoverSonosPlayerBySerial } = require('./Discovery.js')
+const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueue,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot
@@ -127,6 +127,7 @@ module.exports = function (RED) {
    * @param {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
+    debug('method:%s', 'SonosUniversalNode')
     const thisFunctionName = 'create and subscribe'
     RED.nodes.createNode(this, config)
     const node = this
@@ -146,7 +147,7 @@ module.exports = function (RED) {
 
             // subscribe and set processing function
             node.on('input', (msg) => {
-              node.debug('node - msg received')
+              debug('msg received >>%s', 'universal node')
               processInputMsg(node, config, msg, playerUrlObject.hostname)
                 // processInputMsg sets msg.nrcspCmd to current command
                 .then((msgUpdate) => {
@@ -161,10 +162,11 @@ module.exports = function (RED) {
                   failure(node, msg, error, lastFunction)
                 })
             })
+            debug('successfully subscribed - node.on')
             node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })    
-            
           } else {
-            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })      
+            debug('ip address not reachable')
+            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })
           }
         })
         .catch((err) => {
@@ -175,14 +177,14 @@ module.exports = function (RED) {
     } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
       && REGEX_SERIAL.test(configNode.serialnum)) {
       // start discovery
-      discoverSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
+      discoverSpecificSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
         .then((discoveredHost) => {
           debug('found ip address >>%s', discoveredHost)
           const validHost = discoveredHost
           
           // subscribe and set processing function
           node.on('input', (msg) => {
-            node.debug('node - msg received')
+            debug('msg received >>%s', 'universal node')
             processInputMsg(node, config, msg, validHost)
               // processInputMsg sets msg.nrcspCmd to current command
               .then((msgUpdate) => {
@@ -197,6 +199,7 @@ module.exports = function (RED) {
                 failure(node, msg, error, lastFunction)
               })
           })
+          debug('successfully subscribed - node.on')
           node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
 
         })
@@ -232,7 +235,7 @@ module.exports = function (RED) {
    *  the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
-    
+    debug('method:%s', 'processInputMsg')
     const tsPlayer = new SonosDevice(urlHost)
     if (!isTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
@@ -304,6 +307,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function coordinatorDelegateCoordination (msg, tsPlayer) {
+    debug('method:%s', 'coordinatorDelegateCoordination')
     // Payload new player name is required.
     const validPlayerName = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name')
     const validated = await validatedGroupProperties(msg)
@@ -343,6 +347,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupAdjustVolume (msg, tsPlayer) {
+    debug('method:%s', 'groupAdjustVolume')
     // Payload adjusted volume is required
     const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
     const validated = await validatedGroupProperties(msg)
@@ -614,6 +619,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetState (msg, tsPlayer) {
+    debug('method:%s', 'groupGetState')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -680,6 +686,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetTrackPlus (msg, tsPlayer) {
+    debug('method:%s', 'groupGetTrackPlus')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -843,6 +850,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlay (msg, tsPlayer) {
+    debug('method:%s', 'groupPlay')
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -886,8 +894,8 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayExport (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayExport')
     // Simple validation of export and activation
-
     const exportData = msg.payload
     if (!isTruthyPropertyStringNotEmpty(exportData, ['uri'])) {
       throw new Error(`${PACKAGE_PREFIX} uri is missing`)
@@ -957,6 +965,7 @@ module.exports = function (RED) {
    * there should not be send another request to this group.
    */
   async function groupPlayNotification (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayNotification')
     // Payload uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
 
@@ -1010,6 +1019,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayQueue (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayQueue')
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1059,6 +1069,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlaySnapshot (msg, tsPlayer) {
+    debug('method:%s', 'groupPlaySnapshot')
     if (isTruthyProperty(msg, ['payload'])) {
       if (typeof msg.payload !== 'object') {
         throw new Error(`${PACKAGE_PREFIX}: snapshot (msg.payload) is not object`)
@@ -1110,6 +1121,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayStreamHttp (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayStreamHttp')
     // Payload uri is required.
     let validatedUri = validRegex(msg, 'payload', REGEX_HTTP, 'uri')
 
@@ -1156,6 +1168,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayTrack (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayTrack')
     // Get the playerName
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1204,6 +1217,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayTuneIn (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayTuneIn')
     // Payload radio id is required
     const validatedRadioId = validRegex(msg, 'payload', REGEX_RADIO_ID, 'radio id')
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown

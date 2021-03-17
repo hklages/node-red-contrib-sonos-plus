@@ -11,23 +11,27 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
-This package is in no way connected to or supported by Sonos Incorporation.
+This package is in no way connected to or supported by [Sonos Inc.](https://www.sonos.com/de-de/impressum).
 
-Highlights
+**Highlights**
 
-- Play your track, album, playlist, station from Spotify, Napster, Amazon, Deezer and more. My Sonos, Music-Library, SONOS-Playlists and SONOS-Queue are supported.
+- Play your track, album, playlist, station from Spotify, Napster, Amazon, Deezer and other music content provider.
+
+- My Sonos, Music-Library (NAS shares), SONOS-Playlists and SONOS-Queue are supported.
 
 - Control your player: play, stop, pause - modify the SONOS queue.
 
 - Change player setting such as volume, mute state, loudness, treble, bass, the LED and more.
 
-- Group players by using their SONOS-Playernames
+- Group players by using their SONOS-Playernames.
 
 Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
-### SUPPORT
+### QUICKSTART - DEGUG - SUPPORT
 
-There is a Quickstart in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
+There is a Quickstart guide in the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki) and example flows in Node-RED `Import - Examples`.
+
+Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery|`).
 
 Open a GitHub issue (preferred method) or send an email to nrcsplus@gmail.com (German/English).
 
@@ -36,8 +40,7 @@ Open a GitHub issue (preferred method) or send an email to nrcsplus@gmail.com (G
 This package is now based on [svrooij node-sonos-ts](https://www.npmjs.com/package/@svrooij/sonos) and keeps the focus on SONOS commands.
 The discovery of player and the node dialogs are improved. For details see the change log.
 
-It works well together with the sister package [node-red-contrib-sonos-events](https://www.npmjs.com/package/node-red-contrib-sonos-events), which
-handles events / subscriptions.
+It works well together with the sister package [node-red-contrib-sonos-events](https://www.npmjs.com/package/node-red-contrib-sonos-events), handling SONOS events / subscriptions.
 
 ### Installation
 
@@ -47,4 +50,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### Credentials
 
-[sonos-ts](https://github.com/svrooij/node-sonos-ts#readme) for the excellent API.
+[svrooij node-sonos-ts](https://www.npmjs.com/package/@svrooij/sonos) for the excellent API.

@@ -31,7 +31,7 @@
         $('#node-lookup-ipaddress-icon').removeClass('fa-search')
         $('#node-lookup-ipaddress-icon').addClass('spinner')
         $('#node-lookup-ipaddress').addClass('disabled')
-        $.getJSON('nrcsp/discoverPlayersHost', function(sonosPlayer) {
+        $.getJSON('nrcsp/discoverAllPlayerWithHost', function(sonosPlayer) {
           $('#node-lookup-ipaddress-icon').addClass('fa-search')
           $('#node-lookup-ipaddress-icon').removeClass('spinner')
           $('#node-lookup-ipaddress').removeClass('disabled')
@@ -59,7 +59,7 @@
         $('#node-config-lookup-serialnum-icon').removeClass('fa-search')
         $('#node-config-lookup-serialnum-icon').addClass('spinner')
         $('#node-config-lookup-serialnum').addClass('disabled')
-        $.getJSON('nrcsp/discoverPlayersSerialNumber', function(sonosPlayer) {
+        $.getJSON('nrcsp/discoverAllPlayerWithSerialnumber', function(sonosPlayer) {
           $('#node-config-lookup-serialnum-icon').addClass('fa-search')
           $('#node-config-lookup-serialnum-icon').removeClass('spinner')
           $('#node-config-lookup-serialnum').removeClass('disabled')

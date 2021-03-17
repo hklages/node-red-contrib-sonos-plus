@@ -37,19 +37,25 @@ module.exports = {
    * Discovering 10 player or more might be time consuming in some networks.
    *
    */
-  discoverSonosPlayerBySerial: async (serialNumber, timeoutSeconds) => {
-    debug('method:%s', 'discoverSonosPlayerBySerial')
+  discoverSpecificSonosPlayerBySerial: async (serialNumber, timeoutSeconds) => {
+    debug('method:%s', 'discoverSpecificSonosPlayerBySerial')
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeoutSeconds)
+    debug('first player found')
     const tsFirstPlayer = new SonosDevice(firstPlayerData.host)
     const allGroups = await getGroupsAll(tsFirstPlayer)
     const flatList = [].concat.apply([], allGroups) // merge array of array in array
+    debug('got more players, in total >>%s', flatList.length)
+
     const reducedList = flatList.map((item) => { // only some properties
       return {
         'uuid': item.uuid,
         'urlHost': item.urlObject.hostname
       }
     })
+    
+    // Do avoid sending n getDeviceProperties we uses stripped mac address
+    // uuid and serial number both include the mac address
     let foundIndex = -1 // not found as default
     for (let index = 0; index < reducedList.length; index++) {
       if (matchSerialUuid(serialNumber, reducedList[index].uuid)) {
@@ -76,8 +82,8 @@ module.exports = {
    * Thats very reliable -deterministic. 
    * Discovering 10 player or more might be time consuming in some networks.
    */
-  discoverPlayersHost: async (timeout) => {
-    debug('method:%s', 'discoverPlayersHost')
+  discoverAllPlayerWithHost: async (timeout) => {
+    debug('method:%s', 'discoverAllPlayerWithHost')
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
@@ -108,8 +114,8 @@ module.exports = {
    * Thats very reliable -deterministic. 
    * Discovering 10 player or more might be time consuming in some networks.
    */
-  discoverPlayersSerialnumber: async (timeout) => {
-    debug('method:%s', 'discoverPlayersSerialnumber')
+  discoverAllPlayerWithSerialnumber: async (timeout) => {
+    debug('method:%s', 'discoverAllPlayerWithSerialnumber')
     const deviceDiscovery = new SonosDeviceDiscovery()
     const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
     debug('first player found')
@@ -118,10 +124,9 @@ module.exports = {
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)
 
-    debug('get the serial number for every player')
     for (let index = 0; index < flatList.length; index++) {
       const deviceProperties = await getDeviceProperties(flatList[index].urlObject)
-      // we assume existns of that property
+      // we assume existence of that property
       flatList[index].serialNumber = deviceProperties.serialNum
     }
 

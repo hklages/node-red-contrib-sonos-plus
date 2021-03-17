@@ -180,7 +180,7 @@ module.exports = {
   success: (node, msg, functionName) => {
     node.send(msg)
     node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${functionName}` })
-    node.debug(`OK: ${functionName}`)
+    debug('OK: %s', functionName)
   },
 
   //

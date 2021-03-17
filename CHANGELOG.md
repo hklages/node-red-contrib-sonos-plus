@@ -8,6 +8,12 @@ All notable changes to this project are documented in this file.
 
 - Update Dev dependencies
 
+- more debug statements
+
+#### Added
+
+- univesal node: player.get.buttonlockstate, player.set.buttonlockstate
+
 ### [5.0.0] 2021-03-13
 
 #### Changed

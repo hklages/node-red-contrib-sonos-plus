@@ -16,7 +16,7 @@ const {
   REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
-const { discoverSonosPlayerBySerial } = require('./Discovery.js')
+const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { getMusicLibraryItems, getMySonos
 } = require('./Commands.js')
@@ -51,6 +51,7 @@ module.exports = function (RED) {
    * @param {object} config current node configuration data
    */
   function SonosManageMySonosNode (config) {
+    debug('method:%s', 'SonosManageMySonosNode')
     const thisFunctionName = 'create and subscribe'
     RED.nodes.createNode(this, config)
     const node = this
@@ -70,7 +71,7 @@ module.exports = function (RED) {
             
             // subscribe and set processing function
             node.on('input', (msg) => {
-              node.debug('node - msg received')
+              debug('msg received >>%s', 'universal node')
               processInputMsg(node, config, msg, playerUrlObject.hostname)
                 // processInputMsg sets msg.nrcspCmd to current command
                 .then((msgUpdate) => {
@@ -85,10 +86,11 @@ module.exports = function (RED) {
                   failure(node, msg, error, lastFunction)
                 })
             })
-            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })  
-            
+            debug('successfully subscribed - node.on')
+            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
           } else {
-            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })      
+            debug('ip address not reachable')
+            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })
           }
         })
         .catch((err) => {
@@ -99,14 +101,14 @@ module.exports = function (RED) {
     } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
       && REGEX_SERIAL.test(configNode.serialnum)) {
       // start discovery
-      discoverSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
+      discoverSpecificSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
         .then((discoveredHost) => {
           debug('found ip address >>%s', discoveredHost)
           const validHost = discoveredHost
           
           // subscribe and set processing function
           node.on('input', (msg) => {
-            node.debug('node - msg received')
+            debug('msg received >>%s', 'universal node')
             processInputMsg(node, config, msg, validHost)
             // processInputMsg sets msg.nrcspCmd to current command
               .then((msgUpdate) => {
@@ -121,6 +123,7 @@ module.exports = function (RED) {
                 failure(node, msg, error, lastFunction)
               })
           })
+          debug('successfully subscribed - node.on')
           node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
 
         })
@@ -155,7 +158,7 @@ module.exports = function (RED) {
    * the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
-    
+    debug('method:%s', 'processInputMsg')
     const tsPlayer = new SonosDevice(urlHost)
     if (!isTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
@@ -231,6 +234,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryExportAlbum (msg, tsPlayer) {
+    debug('method:%s', 'libraryExportAlbum')
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
     
@@ -256,6 +260,7 @@ module.exports = function (RED) {
    * 
    */
   async function libraryExportPlaylist (msg, tsPlayer) {
+    debug('method:%s', 'libraryExportPlaylist')
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
@@ -280,6 +285,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryExportTrack (msg, tsPlayer) {
+    debug('method:%s', 'libraryExportTrack')
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
@@ -306,6 +312,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryGetAlbums (msg, tsPlayer) {
+    debug('method:%s', 'libraryGetAlbums')
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
       msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
@@ -343,6 +350,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryGetPlaylists (msg, tsPlayer) {
+    debug('method:%s', 'libraryGetPlaylists')
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
       msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
@@ -378,6 +386,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryQueuePlaylist (msg, tsPlayer) {
+    debug('method:%s', 'libraryQueuePlaylist')
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
   
@@ -441,6 +450,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function mysonosGetItems (msg, tsPlayer) {
+    debug('method:%s', 'mysonosGetItems')
     const payload = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
     if (!isTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
@@ -461,6 +471,7 @@ module.exports = function (RED) {
    * 
    */
   async function mysonosQueueItem (msg, tsPlayer) {
+    debug('method:%s', 'mysonosQueueItem')
     // payload title search string is required.
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -500,6 +511,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function mysonosStreamItem (msg, tsPlayer) {
+    debug('method:%s', 'mysonosStreamItem')
     // payload title search string is required.
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
