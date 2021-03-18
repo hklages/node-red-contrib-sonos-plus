@@ -28,10 +28,10 @@ const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicSe
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger
+  validToInteger, encodeHtmlEntity
 } = require('./Helper.js')
 
-const { SonosDevice } = require('@svrooij/sonos/lib')
+const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}universal`)
 
@@ -1110,6 +1110,8 @@ module.exports = function (RED) {
    *  Play stream using http such as http://www.fritz.de/live.m3u, https://live.radioarabella.de
    * @param {object} msg incoming message
    * @param {string} msg.payload uri start with http(s):// 
+   * @param {string} [msg.info = ''] text be used as title of URI
+   *  @param {string} [msg.artUri = ''] uri to art, used as cover logo
    * @param {(number|string)} [msg.volume = unchanged] new volume
    * @param {boolean} [msg.sameVolume = true] force all players to play at same volume level.
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
@@ -1122,8 +1124,18 @@ module.exports = function (RED) {
    */
   async function groupPlayStreamHttp (msg, tsPlayer) {
     debug('method:%s', 'groupPlayStreamHttp')
-    // Payload uri is required.
+    // msg.payload uri is required.
     let validatedUri = validRegex(msg, 'payload', REGEX_HTTP, 'uri')
+
+    //validate optional msg.info, msg.artUri
+    const track = { 'Title': '', 'AlbumArtUri': '' }
+    if (isTruthyPropertyStringNotEmpty(msg, ['info'])) {
+      track.Title = msg.info
+    }
+    if (isTruthyPropertyStringNotEmpty(msg, ['artUri'])) {
+      track.AlbumArtUri = msg.artUri
+    }
+    const metadata =  await encodeHtmlEntity(await MetaDataHelper.TrackToMetaData(track, false))
 
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg)
@@ -1136,7 +1148,7 @@ module.exports = function (RED) {
     const coordinatorUrlObject = groupData.members[0].urlObject
     await executeActionV6(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
-      { 'InstanceID': 0, 'CurrentURI': validatedUri, 'CurrentURIMetaData': '' })
+      { 'InstanceID': 0, 'CurrentURI': validatedUri, 'CurrentURIMetaData': metadata })
     
     await play(coordinatorUrlObject)
 
