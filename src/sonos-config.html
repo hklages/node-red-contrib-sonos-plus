@@ -31,7 +31,7 @@
         $('#node-lookup-ipaddress-icon').removeClass('fa-search')
         $('#node-lookup-ipaddress-icon').addClass('spinner')
         $('#node-lookup-ipaddress').addClass('disabled')
-        $.getJSON('nrcsp/discoverPlayersHost', function(sonosPlayer) {
+        $.getJSON('nrcsp/discoverAllPlayerWithHost', function(sonosPlayer) {
           $('#node-lookup-ipaddress-icon').addClass('fa-search')
           $('#node-lookup-ipaddress-icon').removeClass('spinner')
           $('#node-lookup-ipaddress').removeClass('disabled')
@@ -59,7 +59,7 @@
         $('#node-config-lookup-serialnum-icon').removeClass('fa-search')
         $('#node-config-lookup-serialnum-icon').addClass('spinner')
         $('#node-config-lookup-serialnum').addClass('disabled')
-        $.getJSON('nrcsp/discoverPlayersSerialNumber', function(sonosPlayer) {
+        $.getJSON('nrcsp/discoverAllPlayerWithSerialnumber', function(sonosPlayer) {
           $('#node-config-lookup-serialnum-icon').addClass('fa-search')
           $('#node-config-lookup-serialnum-icon').removeClass('spinner')
           $('#node-config-lookup-serialnum').removeClass('disabled')
@@ -87,38 +87,42 @@
 
 <!-- node name -->
 <div class="form-row">
-  <label for="node-config-input-name" style="width: 30%;"><i class="fa fa-tag"></i> Name</label>
-  <input type="text" id="node-config-input-name" style="width: auto;" placeholder="This Node Name" />
+<label for="node-config-input-name" style="width: 30%;"><i class="fa fa-tag"></i> Name</label>
+<input type="text" id="node-config-input-name" style="width: auto;" placeholder="This Node Name" />
 </div>
 
 <!-- IP address such as 192.168.178.37 -->
 <div class="form-row">
-  <label for="node-config-input-ipaddress" style="width: 30%;"><i class="fa fa-globe"></i> IP address</label>
-  <input type="text" id="node-config-input-ipaddress" style="width: auto;" placeholder="e.g. 192.168.178.37">
-  <button id="node-lookup-ipaddress" class="red-ui-button"><i id="node-lookup-ipaddress-icon" class="fa fa-search"></i></button>
+<label for="node-config-input-ipaddress" style="width: 30%;"><i class="fa fa-globe"></i> IP address</label>
+<input type="text" id="node-config-input-ipaddress" style="width: auto;" placeholder="e.g. 192.168.178.37">
+<button id="node-lookup-ipaddress" class="red-ui-button"><i id="node-lookup-ipaddress-icon" class="fa fa-search"></i></button>
 </div>
 
 <div class="form-tips">
 <b>IP address</b>: Please enter - or search and select from list - a STATIC(!) SONOS-Player IP address. It must be a valid private address in your local network. 
 This address will be used as default. Some commands allow usage of msg.playerName property to overrule the default.<br><br>
 A given <b>IP address always overrules serial number</b> 
+<br><br>
+Search requires open port 1900.
 </div><br>
 
 <!-- serial number such as 5C-AA-FD-00-22-36:1 -->
 <div class="form-row">
-  <label for="node-config-input-serialnum" style="width: 30%;" ><i class="fa fa-barcode" aria-hidden="true"></i> Serial Number</label>
-  <input type="text" id="node-config-input-serialnum" style="width: auto;" placeholder="e.g. 5C-AA-FD-00-22-36:1">
-  <button id="node-config-lookup-serialnum" class="red-ui-button"><i id="node-config-lookup-serialnum-icon" class="fa fa-search"></i></button>
+<label for="node-config-input-serialnum" style="width: 30%;" ><i class="fa fa-barcode" aria-hidden="true"></i> Serial Number</label>
+<input type="text" id="node-config-input-serialnum" style="width: auto;" placeholder="e.g. 5C-AA-FD-00-22-36:1">
+<button id="node-config-lookup-serialnum" class="red-ui-button"><i id="node-config-lookup-serialnum-icon" class="fa fa-search"></i></button>
 </div>
 
 <div class="form-tips">
-  <b>Serial number</b>: Please leave this field empty. Only enter data - or search and select from list - in such cases, where it is not possible to use a (STATIC) IP address.
-  Providing a serial number causes a discovery during deployment. This discovery attempts to find a corresponding IP address, which is then being used. 
+<b>Serial number</b>: Please leave this field empty. Only enter data - or search and select from list - in such cases, where it is not possible to use a (STATIC) IP address.
+Providing a serial number causes a discovery during deployment. This discovery attempts to find a corresponding IP address, which is then being used. 
 <br><br>
-  If you use serial numbers for many nodes, it may happen that some players can not be discovered due to network traffic / SONOS player overload. The node status for those 
-  nodes will be marked with red dot. 
+If you use serial numbers for many nodes, it may happen that some players can not be discovered due to network traffic / SONOS player overload. The node status for those 
+nodes will be marked with red dot. 
 <br><br>
-  You must provide <b>either an IP address (recommended) or a serial number!</b>
+You must provide <b>either an IP address (recommended) or a serial number!</b>
+<br><br>
+Search requires open port 1900.
 </div><br>
 
 </script>

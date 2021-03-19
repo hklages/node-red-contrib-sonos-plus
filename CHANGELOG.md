@@ -2,7 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
-### [5.0.0] 2021-03-15
+### [5.0.1] 2021-03-19
+
+#### Changed
+
+- Update Dev dependencies
+
+- more debug statements
+
+#### Added
+
+- universal node: player.get.buttonlockstate, player.set.buttonlockstate
+
+- universal node: group.play.httpstream may use msg.info, msg.artUri to display title, use cover
+
+### [5.0.0] 2021-03-13
 
 #### Changed
 

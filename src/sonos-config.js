@@ -12,7 +12,7 @@
 
 const { PACKAGE_PREFIX, TIMEOUT_DISCOVERY } = require('./Globals.js')
 
-const { discoverPlayersHost, discoverPlayersSerialnumber } = require('./Discovery.js')
+const { discoverAllPlayerWithHost, discoverAllPlayerWithSerialnumber } = require('./Discovery.js')
 
 const { isTruthyProperty } = require('./Helper.js')
 
@@ -36,9 +36,9 @@ module.exports = function (RED) {
     const NO_PLAYER_MESSAGE = 'No players found' // from sonos-ts
 
     switch (req.params[0]) {
-    case 'discoverPlayersHost':
+    case 'discoverAllPlayerWithHost':
       debug('starting discovery')
-      discoverPlayersHost(TIMEOUT_DISCOVERY)
+      discoverAllPlayerWithHost(TIMEOUT_DISCOVERY)
         .then((playerList) => {
           debug('found player during discovery')
           response.json(playerList)
@@ -55,9 +55,9 @@ module.exports = function (RED) {
         })
       break
     
-    case 'discoverPlayersSerialNumber':
+    case 'discoverAllPlayerWithSerialnumber':
       debug('starting discovery')
-      discoverPlayersSerialnumber(TIMEOUT_DISCOVERY)
+      discoverAllPlayerWithSerialnumber(TIMEOUT_DISCOVERY)
         .then((playerList) => {
           debug('found player during discovery')
           response.json(playerList)
@@ -75,7 +75,7 @@ module.exports = function (RED) {
       break
 
     default:
-      response.json('available endpoints: discoverPlayersSerialNumber, discoverPlayersHost')
+      response.json('available endpoints: discoverAllPlayerWithSerialnumber, discoverAllPlayerWithHost')
     }   
   })
 
