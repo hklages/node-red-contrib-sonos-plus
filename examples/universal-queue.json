@@ -1,0 +1,1213 @@
+[
+    {
+        "id": "1fd013d2.e490cc",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1437,
+        "wires": [
+            [
+                "f8f5397c.9fc5c8"
+            ]
+        ]
+    },
+    {
+        "id": "d4a540c7.a1c3c",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "2",
+        "payloadType": "str",
+        "x": 89,
+        "y": 1668,
+        "wires": [
+            [
+                "1c01ab2d.2b9625"
+            ]
+        ]
+    },
+    {
+        "id": "bdd441f4.2d4c4",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "NORMAL",
+        "payloadType": "str",
+        "x": 100,
+        "y": 1502,
+        "wires": [
+            [
+                "55f515e0.9b980c"
+            ]
+        ]
+    },
+    {
+        "id": "a8467182.c641d",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "SHUFFLE",
+        "payloadType": "str",
+        "x": 100,
+        "y": 1470,
+        "wires": [
+            [
+                "55f515e0.9b980c"
+            ]
+        ]
+    },
+    {
+        "id": "d5ff679b.6505d8",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload",
+                "v": "2",
+                "vt": "str"
+            },
+            {
+                "p": "topic",
+                "v": "",
+                "vt": "string"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "2",
+        "payloadType": "str",
+        "x": 90,
+        "y": 1635,
+        "wires": [
+            [
+                "91b068f2.a67c68"
+            ]
+        ]
+    },
+    {
+        "id": "91b068f2.a67c68",
+        "type": "change",
+        "z": "fcb24b59.997048",
+        "name": "6 tracks",
+        "rules": [
+            {
+                "t": "set",
+                "p": "numberOfTracks",
+                "pt": "msg",
+                "to": "6",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 221,
+        "y": 1649,
+        "wires": [
+            [
+                "1c01ab2d.2b9625"
+            ]
+        ]
+    },
+    {
+        "id": "cda28de9.4a0b3",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "foghorn",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "http://soundbible.com/mp3/foghorn-daniel_simon.mp3",
+        "payloadType": "str",
+        "x": 632,
+        "y": 1810,
+        "wires": [
+            [
+                "51d49a82.887694"
+            ]
+        ]
+    },
+    {
+        "id": "51d49a82.887694",
+        "type": "change",
+        "z": "fcb24b59.997048",
+        "name": "with volume",
+        "rules": [
+            {
+                "t": "set",
+                "p": "volume",
+                "pt": "msg",
+                "to": "70",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 770,
+        "y": 1810,
+        "wires": [
+            [
+                "efdd2e17.e1fbd"
+            ]
+        ]
+    },
+    {
+        "id": "9ed33604.0215c8",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "TuneIn",
+        "info": "",
+        "x": 632,
+        "y": 1358,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "ca286753.49c978",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "foghorn",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "http://soundbible.com/mp3/foghorn-daniel_simon.mp3",
+        "payloadType": "str",
+        "x": 632,
+        "y": 1856,
+        "wires": [
+            [
+                "659dbc63.67f134"
+            ]
+        ]
+    },
+    {
+        "id": "659dbc63.67f134",
+        "type": "change",
+        "z": "fcb24b59.997048",
+        "name": "with volume",
+        "rules": [
+            {
+                "t": "set",
+                "p": "volume",
+                "pt": "msg",
+                "to": "70",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 770,
+        "y": 1856,
+        "wires": [
+            [
+                "45bb3557.49866c"
+            ]
+        ]
+    },
+    {
+        "id": "fd346001.a9815",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1392,
+        "wires": [
+            [
+                "603bf096.7b10b"
+            ]
+        ]
+    },
+    {
+        "id": "7db7aaf1.98c324",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "SONOS-Queue",
+        "info": "",
+        "x": 120,
+        "y": 1359,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "934b482e.555ef8",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "Notification",
+        "info": "",
+        "x": 640,
+        "y": 1778,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "45bb3557.49866c",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "32a98882.56e1c8",
+        "command": "joiner.play.notification",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 959,
+        "y": 1856,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "75e67db3.22e244",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1603,
+        "wires": [
+            [
+                "4ea01c39.6d2854"
+            ]
+        ]
+    },
+    {
+        "id": "681fa2a0.83a75c",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1558,
+        "wires": [
+            [
+                "2f53d9b2.e67ad6"
+            ]
+        ]
+    },
+    {
+        "id": "72b9bcc7.b4a994",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 642,
+        "y": 1391,
+        "wires": [
+            [
+                "f033e838.6a1a98"
+            ]
+        ]
+    },
+    {
+        "id": "e1f18d37.a5009",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 642,
+        "y": 1725,
+        "wires": [
+            [
+                "19ce25f4.1e1b5a"
+            ]
+        ]
+    },
+    {
+        "id": "19ce25f4.1e1b5a",
+        "type": "change",
+        "z": "fcb24b59.997048",
+        "name": "volume",
+        "rules": [
+            {
+                "t": "set",
+                "p": "volume",
+                "pt": "msg",
+                "to": "30",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 784,
+        "y": 1725,
+        "wires": [
+            [
+                "11575ece.7d3eb1"
+            ]
+        ]
+    },
+    {
+        "id": "4303e3be.2f40ac",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 642,
+        "y": 1680,
+        "wires": [
+            [
+                "11575ece.7d3eb1"
+            ]
+        ]
+    },
+    {
+        "id": "6a56315a.d7e13",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "Line In and TV",
+        "info": "",
+        "x": 660,
+        "y": 1647,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "11575ece.7d3eb1",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "player.play.linein",
+        "state": "x-rincon-stream:RINCON_000E58FE3AEA01400",
+        "stateType": "str",
+        "name": "",
+        "x": 817,
+        "y": 1680,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f033e838.6a1a98",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.tunein",
+        "state": "s14991",
+        "stateType": "str",
+        "name": "",
+        "x": 814,
+        "y": 1391,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1c01ab2d.2b9625",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.remove.tracks",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 393,
+        "y": 1669,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4ea01c39.6d2854",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.clear.queue",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 293,
+        "y": 1603,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2f53d9b2.e67ad6",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.save.queue",
+        "state": "Backup",
+        "stateType": "str",
+        "name": "",
+        "x": 291,
+        "y": 1558,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "55f515e0.9b980c",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.set.queuemode",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 300,
+        "y": 1483,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f8f5397c.9fc5c8",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.track",
+        "state": "2",
+        "stateType": "num",
+        "name": "",
+        "x": 281,
+        "y": 1437,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "603bf096.7b10b",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.queue",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 291,
+        "y": 1392,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "efdd2e17.e1fbd",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.notification",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 960,
+        "y": 1810,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5052113f.0e8e5",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "insert_spotify_uri Track",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "spotify:track:5AdoS3gS47x40nBNlNmPQ8",
+        "payloadType": "str",
+        "x": 1061,
+        "y": 1393,
+        "wires": [
+            [
+                "634d07c2.0a4e08"
+            ]
+        ]
+    },
+    {
+        "id": "2c0f1d3a.1fce12",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "insert_spotify_uri TopTrack",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d",
+        "payloadType": "str",
+        "x": 1071,
+        "y": 1425,
+        "wires": [
+            [
+                "634d07c2.0a4e08"
+            ]
+        ]
+    },
+    {
+        "id": "bb67878e.ba03c8",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "insert_spotify_uri Album",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "spotify:album:1TSZDcvlPtAnekTaItI3qO",
+        "payloadType": "str",
+        "x": 1061,
+        "y": 1457,
+        "wires": [
+            [
+                "634d07c2.0a4e08"
+            ]
+        ]
+    },
+    {
+        "id": "533f7189.5c01d",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "insert_spotify_uri Playlist",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF",
+        "payloadType": "str",
+        "x": 1071,
+        "y": 1492,
+        "wires": [
+            [
+                "634d07c2.0a4e08"
+            ]
+        ]
+    },
+    {
+        "id": "a1883693.ffe118",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "SONOS-Queue Spotify",
+        "info": "",
+        "x": 1061,
+        "y": 1360,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "634d07c2.0a4e08",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.queue.urispotify",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 1321,
+        "y": 1457,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fd4cdf12.5c66c",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "SONOS-Queue  URI",
+        "info": "",
+        "x": 130,
+        "y": 1771,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "7655fe08.7b50e",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "Library Song Rihanny",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "x-file-cifs://nas2019/Multimedia/Music/MyMusic/Rihanna/Diamonds/Rihanna%20-%20Diamonds.mp3",
+        "payloadType": "str",
+        "x": 140,
+        "y": 1888,
+        "wires": [
+            [
+                "cfad7644.d60bc8"
+            ]
+        ]
+    },
+    {
+        "id": "2617f4e8.f78eac",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "testmp3",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "https://archive.org/download/testmp3testfile/mpthreetest.mp3",
+        "payloadType": "str",
+        "x": 90,
+        "y": 1808,
+        "wires": [
+            [
+                "cfad7644.d60bc8"
+            ]
+        ]
+    },
+    {
+        "id": "cfad7644.d60bc8",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.queue.uri",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 280,
+        "y": 1808,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cb42319f.8fcb8",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "s24896",
+        "payloadType": "str",
+        "x": 632,
+        "y": 1437,
+        "wires": [
+            [
+                "ea3ee8f6.81f858"
+            ]
+        ]
+    },
+    {
+        "id": "ea3ee8f6.81f858",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.tunein",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 815,
+        "y": 1437,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9fca3f35.52cdb",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "UNIVERSAL NODE - QUEUE / STREAM",
+        "info": "",
+        "x": 165,
+        "y": 1326,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "82c7dc83.7c455",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "Music-Library track",
+        "info": "",
+        "x": 130,
+        "y": 1848,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "cfa822f.74e21e",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.queue.uri",
+        "state": "x-file-cifs://hkNas/Multimedia/Music/MyMusic/The%20Rolling%20Stones/Kuschelrock%2004/The%20Rolling%20Stones%20-%20Angie.mp3",
+        "stateType": "str",
+        "name": "",
+        "x": 260,
+        "y": 1928,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5125c513.ca6c4c",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1928,
+        "wires": [
+            [
+                "cfa822f.74e21e"
+            ]
+        ]
+    },
+    {
+        "id": "aed6718a.7a55e",
+        "type": "comment",
+        "z": "fcb24b59.997048",
+        "name": "http stream",
+        "info": "",
+        "x": 641,
+        "y": 1493,
+        "wires": [],
+        "icon": "node-red/alert.svg"
+    },
+    {
+        "id": "c95823b7.e6866",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.streamhttp",
+        "state": "http://www.fritz.de/live.m3u",
+        "stateType": "str",
+        "name": "",
+        "x": 830,
+        "y": 1533,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fbad7dfb.f92f9",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.play.streamhttp",
+        "state": "https://live.radioarabella.de",
+        "stateType": "str",
+        "name": "",
+        "x": 830,
+        "y": 1579,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "25b08358.52191c",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "88e9fa70.4a53e8",
+        "command": "group.get.queue",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 267,
+        "y": 1716,
+        "wires": [
+            [
+                "8a475eb8.0a9be"
+            ]
+        ]
+    },
+    {
+        "id": "bc3cb8a7.b28128",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 1716,
+        "wires": [
+            [
+                "25b08358.52191c"
+            ]
+        ]
+    },
+    {
+        "id": "8a475eb8.0a9be",
+        "type": "debug",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 439,
+        "y": 1716,
+        "wires": []
+    },
+    {
+        "id": "a6039ba1.57ae58",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1061,
+        "y": 1681,
+        "wires": [
+            [
+                "b84326cf.dadde8"
+            ]
+        ]
+    },
+    {
+        "id": "b84326cf.dadde8",
+        "type": "sonos-universal",
+        "z": "fcb24b59.997048",
+        "confignode": "8d44022c.adb65",
+        "command": "player.play.tv",
+        "state": "",
+        "stateType": "str",
+        "name": "",
+        "x": 1216,
+        "y": 1681,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "22771de6.cce9d2",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "Fritzzz",
+        "props": [
+            {
+                "p": "info",
+                "v": "Fritzzzz",
+                "vt": "str"
+            },
+            {
+                "p": "artUri",
+                "v": "https://sanitaer-fritz.de/wp-content/uploads/2020/01/Fritz-GmbH-Logo.png",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payloadType": "str",
+        "x": 632,
+        "y": 1533,
+        "wires": [
+            [
+                "c95823b7.e6866"
+            ]
+        ]
+    },
+    {
+        "id": "1eb0ccf2.6722c3",
+        "type": "inject",
+        "z": "fcb24b59.997048",
+        "name": "Arabella",
+        "props": [
+            {
+                "p": "info",
+                "v": "Arabella",
+                "vt": "str"
+            },
+            {
+                "p": "artUri",
+                "v": "https://myonlineradio.at/public/uploads/radio_img/radio-arabella/play_250_250.png",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 640,
+        "y": 1579,
+        "wires": [
+            [
+                "fbad7dfb.f92f9"
+            ]
+        ]
+    },
+    {
+        "id": "32a98882.56e1c8",
+        "type": "sonos-config",
+        "name": "bath",
+        "serialnum": "00-0E-58-FE-3A-EA:5",
+        "ipaddress": "192.168.178.35"
+    },
+    {
+        "id": "88e9fa70.4a53e8",
+        "type": "sonos-config",
+        "name": "kitchen",
+        "serialnum": "",
+        "ipaddress": "192.168.178.37"
+    },
+    {
+        "id": "8d44022c.adb65",
+        "type": "sonos-config",
+        "name": "living",
+        "serialnum": "",
+        "ipaddress": "192.168.178.36"
+    }
+]
