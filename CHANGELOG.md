@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.0.3] 2021-03-23
+
+#### Changed
+
+- bug fix group.play.notificaion
+
+- Update Dev dependencies
+
 ### [5.0.1/2] 2021-03-19
 
 #### Changed

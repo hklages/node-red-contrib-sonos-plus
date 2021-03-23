@@ -38,8 +38,7 @@ module.exports = {
    * @param {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
    *               coordinator has index 0. Length = 1 is allowed
    * @param {object} options options
-   * @param {string} options.uri uri
-   * @param {string} [options.metadata] metadata - will be generated if missing
+   * @param {string} options.uri uri requried!
    * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
    * @param {boolean} options.sameVolume all player in group play at same volume level
    * @param {boolean} options.automaticDuration duration will be received from player
@@ -55,14 +54,12 @@ module.exports = {
     debug('method:%s', 'playGroupNotification')
     const WAIT_ADJUSTMENT = 2000
 
-    // generate metadata if not provided and uri as URL
-    let metadata
-    if (!isTruthyProperty(options, ['metadata'])) {
-      metadata = await MetaDataHelper.GuessMetaDataAndTrackUri(options.uri).metadata
-      // metadata = GenerateMetadata(options.uri).metadata
-    } else {
-      metadata = options.metadata
+    // generate metadata if not provided
+    if (!isTruthyProperty(options, ['uri'])) {
+      throw new Error(`${PACKAGE_PREFIX} uri is missing`)
     }
+    const track = await MetaDataHelper.GuessTrack(options.uri)
+    let metadata = await MetaDataHelper.TrackToMetaData(track)
     if (metadata !== '') {
       metadata = await encodeHtmlEntity(metadata) // html not url encoding!
     }

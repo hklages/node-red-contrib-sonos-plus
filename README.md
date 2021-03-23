@@ -11,7 +11,7 @@ A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.s
 
 Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
 
-This package is in no way connected to or supported by [Sonos Inc.](https://www.sonos.com/de-de/impressum).
+This package is in no way connected to or supported by [Sonos Inc.](https://www.sonos.com/de-de/impressum)
 
 **Highlights**
 
@@ -29,7 +29,7 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### QUICKSTART - DEGUG - SUPPORT
 
-There is a Quickstart guide in the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki) and example flows in Node-RED `Import - Examples`.
+There is a Quickstart guide in the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki#quickstart) and example flows in Node-RED `Import - Examples`.
 
 Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery|`).
 
