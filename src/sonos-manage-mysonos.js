@@ -21,7 +21,7 @@ const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 const { getMusicLibraryItems, getMySonos
 } = require('./Commands.js')
 
-const { failure, isSonosPlayer, success
+const { failure, decideCreateNodeOn, success
 } = require('./Extensions.js')
 
 const { isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, validToInteger
@@ -65,7 +65,7 @@ module.exports = function (RED) {
       // and check whether that IP address is reachable (http request)
       const port = 1400 // assuming this port
       const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
-      isSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
+      decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST, config.avoidCheckPlayerAvailability)
         .then((isSonos) => {
           if (isSonos) {
             

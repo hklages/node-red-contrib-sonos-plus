@@ -23,7 +23,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 } = require('./Commands.js')
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
-  getMusicServiceName, getMutestate, getPlaybackstate, getRadioId, getVolume, isSonosPlayer,
+  getMusicServiceName, getMutestate, getPlaybackstate, getRadioId, getVolume, decideCreateNodeOn,
   play, setMutestate, setVolume, success, validatedGroupProperties
 } = require('./Extensions.js')
 
@@ -141,9 +141,9 @@ module.exports = function (RED) {
       // and check whether that IP address is reachable (http request)
       const port = 1400 // assuming this port
       const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
-      isSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
-        .then((isSonos) => {
-          if (isSonos) {
+      decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST, config.avoidCheckPlayerAvailability)
+        .then((createNodeOn) => {
+          if (createNodeOn) {
 
             // subscribe and set processing function
             node.on('input', (msg) => {
@@ -1310,7 +1310,7 @@ module.exports = function (RED) {
    * spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d
    * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
    *
-   * Caution: Currently only support European region '2311' (US = 3079?)
+   * Caution: Currently only support European region '2311' (US = 3079)
    *
    * @returns {promise<object>} {}
    *

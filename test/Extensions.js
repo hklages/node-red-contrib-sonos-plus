@@ -8,7 +8,7 @@
 // using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
 // using http://192.168.178.15:1400 a Synology NAS 
 
-const { isSonosPlayer, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
+const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup
 } = require('../src/Extensions.js')
 
@@ -569,12 +569,12 @@ describe('validatedGroupProperties function', function () {
 
 })
 
-describe('isSonosPlayer function', function () {
+describe('decideCreateNodeOn function', function () {
   
   it('wrong syntax returns false', async () => {
     const playerUrl = new URL('http://192.168.17837:1400')
     const timeout = 500
-    const result = await isSonosPlayer(playerUrl, timeout)
+    const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
       .be.a('boolean')
       .equal(false)
@@ -583,7 +583,7 @@ describe('isSonosPlayer function', function () {
   it('fritzbox returns false', async () => {
     const playerUrl = new URL('http://192.168.178.1:1400')
     const timeout = 500
-    const result = await isSonosPlayer(playerUrl, timeout)
+    const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
       .be.a('boolean')
       .equal(false)
@@ -592,7 +592,7 @@ describe('isSonosPlayer function', function () {
   it('Play:5 returns true', async () => {
     const playerUrl = new URL('http://192.168.178.37:1400')
     const timeout = 500
-    const result = await isSonosPlayer(playerUrl, timeout)
+    const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
       .be.a('boolean')
       .equal(true)
@@ -601,7 +601,7 @@ describe('isSonosPlayer function', function () {
   it('NAS returns false', async () => {
     const playerUrl = new URL('http://192.168.178.15:1400')
     const timeout = 500
-    const result = await isSonosPlayer(playerUrl, timeout)
+    const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
       .be.a('boolean')
       .equal(false)
@@ -610,10 +610,19 @@ describe('isSonosPlayer function', function () {
   it('Play:1 returns false if switched off', async () => {
     const playerUrl = new URL('http://192.168.178.38:1400')
     const timeout = 500
-    const result = await isSonosPlayer(playerUrl, timeout)
+    const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
       .be.a('boolean')
       .equal(false)
+  })
+
+  it('Play:1 returns false but that is ignored by option', async () => {
+    const playerUrl = new URL('http://192.168.178.38:1400')
+    const timeout = 500
+    const result = await decideCreateNodeOn(playerUrl, timeout, true)
+    expect(result)
+      .be.a('boolean')
+      .equal(true)
   })
 
 })

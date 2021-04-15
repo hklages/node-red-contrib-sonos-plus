@@ -38,7 +38,7 @@ module.exports = {
    * @param {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
    *               coordinator has index 0. Length = 1 is allowed
    * @param {object} options options
-   * @param {string} options.uri uri requried!
+   * @param {string} options.uri uri required!
    * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
    * @param {boolean} options.sameVolume all player in group play at same volume level
    * @param {boolean} options.automaticDuration duration will be received from player
@@ -49,7 +49,6 @@ module.exports = {
    * @throws {error} all methods
    */
 
-  // TODO optimize 
   playGroupNotification: async (tsPlayerArray, options) => {
     debug('method:%s', 'playGroupNotification')
     const WAIT_ADJUSTMENT = 2000
@@ -67,26 +66,14 @@ module.exports = {
 
     // create snapshot state/volume/content
     // getCurrentState will return playing for a non-coordinator player even if group is playing
-    const iCoord = 0
-    const snapshot = {}
-    const state = await getPlaybackstate(tsPlayerArray[iCoord].urlObject)
-    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
-    debug('wasPlaying >>%s', snapshot.wasPlaying)
-    snapshot.mediaInfo
-      = await tsPlayerArray[iCoord].AVTransportService.GetMediaInfo()
-    snapshot.positionInfo = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
-    snapshot.memberVolumes = []
-    if (options.volume !== -1) {
-      snapshot.memberVolumes[0] = await getVolume(tsPlayerArray[iCoord].urlObject)
-    }
-    if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < tsPlayerArray.length; index++) {
-        snapshot.memberVolumes[index] = await getVolume(tsPlayerArray[index].urlObject)
-      }
-    }
+    const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
+      snapVolumes: true,
+      snapMutes: false
+    })
     debug('Snapshot created - now start playing notification')
     
-    // set AVTransport
+    // set AVTransport and if requested the volume
+    const iCoord = 0
     await executeActionV6(tsPlayerArray[iCoord].urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
         'InstanceID': 0,
@@ -125,39 +112,10 @@ module.exports = {
     debug('notification finished - now starting to restore')
 
     // return to previous state = restore snapshot
-    if (options.volume !== -1) {
-      await setVolume(tsPlayerArray[iCoord].urlObject,
-        snapshot.memberVolumes[iCoord])
-    }
-    if (options.sameVolume) { // all other members, starting at 1
-      for (let index = 1; index < tsPlayerArray.length; index++) {
-        await setVolume(tsPlayerArray[index].urlObject,
-          snapshot.memberVolumes[index])
-      }
-    }
-    if (!options.uri.includes('x-sonos-vli')) {
-      // can not recover initiated by Spotify or Amazon Alexa
-      await tsPlayerArray[iCoord].AVTransportService.SetAVTransportURI({
-        'InstanceID': 0,
-        'CurrentURI': snapshot.mediaInfo.CurrentURI,
-        'CurrentURIMetaData': snapshot.mediaInfo.CurrentURIMetaData
-      })
-    }
-    if (snapshot.positionInfo.Track && snapshot.positionInfo.Track > 1
-      && snapshot.mediaInfo.NrTracks > 1) {
-      await tsPlayerArray[iCoord].SeekTrack(Number(snapshot.positionInfo.Track))
-        .catch(() => {
-          debug('Reverting back track failed, happens for some music services.')
-        })
-    }
-    if (snapshot.positionInfo.RelTime && snapshot.positionInfo.TrackDuration !== '0:00:00') {
-      debug('Setting back time to >>%s', JSON.stringify(snapshot.positionInfo.RelTime))
-      await tsPlayerArray[iCoord].SeekPosition(snapshot.positionInfo.RelTime)
-        .catch(() => {
-          debug('Reverting back track time failed, happens for some music services.')
-        })
-    }
-    if (snapshot.wasPlaying) {
+    await module.exports.restoreGroupSnapshot(snapShot)
+
+    // vli can not be recovered
+    if (snapShot.wasPlaying) {
       if (!options.uri.includes('x-sonos-vli')) {
         await tsPlayerArray[iCoord].Play()
       }
@@ -347,13 +305,15 @@ module.exports = {
     // html encode for the &
     const metadata = await encodeHtmlEntity(snapshot.CurrentURIMetadata)
     const uri = await encodeHtmlEntity(snapshot.CurrentURI)
-    await executeActionV6(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
-        'InstanceID': 0,
-        'CurrentURI': uri,
-        'CurrentURIMetaData': metadata
-      })
-
+    if (!uri.includes('x-sonos-vli')) {
+      await executeActionV6(coordinatorUrlObject,
+        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
+          'InstanceID': 0,
+          'CurrentURI': uri,
+          'CurrentURIMetaData': metadata
+        })
+    }
+    
     let track
     if (isTruthyProperty(snapshot, ['Track'])) {
       track = parseInt(snapshot['Track'])

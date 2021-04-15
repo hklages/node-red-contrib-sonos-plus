@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.0.4] 2021-04-16
+
+#### Changed
+
+- group.play.notification now uses group.create.snap, group.play.snap
+
+- Update Dev dependencies
+
+#### Added
+
+- universal and my sonos node: You can not avoid the SONOS-Player availability check at deployment time.
+
 ### [5.0.3] 2021-03-23
 
 #### Changed

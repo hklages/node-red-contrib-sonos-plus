@@ -37,6 +37,8 @@ Open a GitHub issue (preferred method) or send an email to nrcsplus@gmail.com (G
 
 ### NEWS
 
+You can not disable the SONOS-Player - availability - check at deployment time. That makes sense for those player being offline during deployment.
+
 This package is now based on [svrooij node-sonos-ts](https://www.npmjs.com/package/@svrooij/sonos) and keeps the focus on SONOS commands.
 The discovery of player and the node dialogs are improved. For details see the change log.
 

@@ -18,7 +18,8 @@
 const { PACKAGE_PREFIX, REGEX_ANYCHAR } = require('./Globals.js')
 
 const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
-  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger, 
+  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger,
+  encodeHtmlEntity
 } = require('./Helper.js')
 
 const request = require('axios').default
@@ -172,11 +173,11 @@ module.exports = {
   },
   
   /** Set node status and send message.
-     * 
-     * @param {object} node current node
-     * @param {object} msg current msg (maybe null)
-     * @param {string} functionName name of calling function
-     */
+    * 
+    * @param {object} node current node
+    * @param {object} msg current msg (maybe null)
+    * @param {string} functionName name of calling function
+    */
   success: (node, msg, functionName) => {
     node.send(msg)
     node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${functionName}` })
@@ -187,21 +188,31 @@ module.exports = {
   //     SPECIAL COMMANDS - SIMPLE HTML REQUEST
   //     ......................................
 
-  /** Validate that given ip belongs to a SONOS player.
-   * @param {object} playerUrlObject player JavaScript build-in URL 
+  /** Decide whether node.on should created. 
+    * @param {object} playerUrlObject player JavaScript build-in URL 
    * @param {number} timeout in milliseconds
-   * 
+   * @param {boolean} [avoidCheckPlayerAvailability = false]  if true just return true
    * @returns {Promise<boolean>} true if typical SONOS player response
    *
    * Does not validate parameter!
+   * 
+   * Better understanding: This function is called during deployment time of the Node-RED
+   * node. It has to be decided wether the node should
+   * - throw an error message if the player is not reachable at deployment time
+   * - dont throw an error and handle error during run time (time out, etc)
+   * The last one can be enforced with avoidCheckPlayerAvailability = true
    * 
    * Method: Every SONOS player will answer to http request with 
    * end point /info and provide the household id. 
    * 
    * @throws none - they are caught insight
    */
-  isSonosPlayer: async (playerUrlObject, timeout) => {
-    debug('method:%s', 'isSonosPlayer')
+  decideCreateNodeOn: async (playerUrlObject, timeout, avoidCheckPlayerAvailability) => {
+    debug('method:%s', 'decideCreateNodeOn')
+    
+    // if no check, then true is returned
+    if (avoidCheckPlayerAvailability) return true
+
     let response = null
     try {
       response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
@@ -850,6 +861,33 @@ module.exports = {
       'coordinatorIndex': 0,
       members
     }
+  },
+
+  /** Extract group for a given player. playerName - if isTruthyStringNotEmpty- 
+   * is overruling playerUrlHost
+   * @param {string} uri such as x-sonosapi-radio:xxxx?sid=201&flags=8300&sn=19
+   * 
+   * @returns {promise<string>} returns cleaned uri 
+   *
+   * @throws {error} 'could not split into parts'
+   */
+  cleanUpUri: async (uri) => {
+    debug('method:%s', 'cleanUpUri')
+    // split into parts
+    let position = uri.indexOf(':')
+    if (position < 0) {
+      throw new Error(`${PACKAGE_PREFIX} could not split into parts :`)
+    }
+    const part1 = uri.substr(0, position + 1) // includes the :
+    const rest = uri.substr(position + 1) // does not incude the :
+    position = rest.indexOf('?')
+    if (position < 0) {
+      throw new Error(`${PACKAGE_PREFIX} could not split into parts ?`)
+    }
+    const part2 = rest.substr(0, position) // does not include the ?
+    const part3 = rest.substr(position) // does include the ?
+
+    return part1 + await encodeURIComponent(part2) + await encodeHtmlEntity(part3)
   },
 
   //

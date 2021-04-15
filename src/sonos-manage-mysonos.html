@@ -19,6 +19,7 @@
         validate: RED.validators.typedInput('stateType') 
       },
       stateType: { value: 'str'},
+      avoidCheckPlayerAvailability: { value: false },
       name: {value: ''}
     },
     inputs: 1, // set the number of inputs - only 0 or 1
@@ -86,6 +87,17 @@
       <a href=https://github.com/hklages/node-red-contrib-sonos-plus/wiki/A.2-My-Sonos-Node>see documentation.</a>
       You can enter this data either here or provide it in msg.payload.<br>
       Entered data overrules data given in msg.payload.
+    </div><br>
+
+    <!-- SONOS player Availabilty Check -->
+    <div class="form-row">
+      <label for="node-input-avoidCheckPlayerAvailability"> Reachability</label>
+      <input type="checkbox" id="node-input-avoidCheckPlayerAvailability" style="display: inline-block; vertical-align: top; width:auto;"/> Do NOT check the availability of Sonos-Player.
+    </div>
+
+    <div class="form-tips">
+      <b>Reachability</b>:  By default the reachability of the SONOS player is checked at deployment time. Tik the box to avoid this check. That makes sense for SONOS-player being not always "On". <br><br>
+      This option does NOT work for config nodes, where the IP address is missing.
     </div><br>
 
     <!-- Node name -->
