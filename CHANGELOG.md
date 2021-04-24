@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.0.6] 2021-04-24T1512
+
+#### Changed
+
+- getGroupAll now can handle very old SONOS firmware where ZoneGroupState tag is missing
+
 ### [5.0.5] 2021-04-24
 
 #### Changed
