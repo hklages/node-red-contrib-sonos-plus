@@ -2801,23 +2801,20 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Test
+   *  Test without getGroupCurrent
+   * @param {object} msg incoming message
+   * @param {string} msg.endpoint 
+   * @param {string} msg.action
+   * @param {object} msg.inArgs
+   * @param {object} tsPlayer sonos-ts player 
    *
    * @returns {promise<object>} {}
    *
    * @throws {error} all methods
    */
   async function playerTest (msg, tsPlayer) {
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const endpoint = '/MediaRenderer/AVTransport/Control'
-    const action = 'SetAVTransportURI'
-    const inArgs = {
-      'InstanceID': 0, 
-      'CurrentURI': msg.payload,
-      'CurrentURIMetaData': ''
-    }
-    const payload = await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
+    const { endpoint, action, inArgs } = msg.payload
+    const payload = await executeActionV6(tsPlayer.urlObject,
       endpoint, action, inArgs)
     
     return { payload }

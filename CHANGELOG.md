@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.0.5] 2021-04-24
+
+#### Changed
+
+- improved debugging possibilities
+
+- Update Dev dependencies
+
+- "renamed" package owner
+
+#### Added
+
+- info for Home Assistant user in config node
+
 ### [5.0.4] 2021-04-16
 
 #### Changed

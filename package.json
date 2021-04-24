@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-sonos-plus",
-  "version": "5.0.4",
+  "version": "5.0.5",
   "description": "A set of Node-RED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {
@@ -59,7 +59,7 @@
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
     "chai": "^4.3.4",
-    "eslint": "^7.24.0",
+    "eslint": "^7.25.0",
     "mocha": "^8.3.2"
   }
 }
