@@ -65,14 +65,13 @@ module.exports = {
     debug('metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content
-    // getCurrentState will return playing for a non-coordinator player even if group is playing
     const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
       snapVolumes: true,
       snapMutes: false
     })
     debug('Snapshot created - now start playing notification')
     
-    // set AVTransport and if requested the volume
+    // set AVTransport on coordinator and if requested the volume
     const iCoord = 0
     await executeActionV6(tsPlayerArray[iCoord].urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
@@ -81,6 +80,7 @@ module.exports = {
         'CurrentURIMetaData': metadata
       })
 
+    // set volume and play notification everywhere
     if (options.volume !== -1) {
       await setVolume(tsPlayerArray[iCoord].urlObject, options.volume)
       debug('same Volume >>%s', options.sameVolume)
@@ -90,12 +90,10 @@ module.exports = {
         }
       }
     }
-    // no check - always returns true
     await tsPlayerArray[iCoord].Play()
-   
     debug('Playing notification started - now figuring out the end')
 
-    // waiting either based on SONOS estimation, per default or user specified
+    // Coordinator waiting either based on SONOS estimation, per default or user specified
     let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
       const positionInfo
@@ -139,36 +137,34 @@ module.exports = {
    * State will be imported from group.
    */
 
-  // TODO see playGroupNotification
   playJoinerNotification: async (tsCoordinator, tsJoiner, options) => {
     debug('method:%s', 'playJoinerNotification')
     const WAIT_ADJUSTMENT = 2000
 
-    // generate metadata if not provided and uri as URL
-    let metadata
-    if (!isTruthyProperty(options, ['metadata'])) {
-      metadata = await MetaDataHelper.GuessMetaDataAndTrackUri(options.uri).metadata
-      // metadata = GenerateMetadata(options.uri).metadata
-    } else {
-      metadata = options.metadata
+    // generate metadata if not provided
+    if (!isTruthyProperty(options, ['uri'])) {
+      throw new Error(`${PACKAGE_PREFIX} uri is missing`)
     }
+    const track = await MetaDataHelper.GuessTrack(options.uri)
+    let metadata = await MetaDataHelper.TrackToMetaData(track)
     if (metadata !== '') {
       metadata = await encodeHtmlEntity(metadata) // html not url encoding!
     }
     debug('metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content
-    // getCurrentState will return playing for a non-coordinator player even if group is playing
+    // coordinator playback state is relevant - not joiner
     const snapshot = {}
-    const state = await getPlaybackstate(tsCoordinator.urlObject) 
+
+    // Do we need that? 
+    const state = await getPlaybackstate(tsCoordinator.urlObject)
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
-    snapshot.mediaInfo = await tsJoiner.AVTransportService.GetMediaInfo()
     if (options.volume !== -1) {
       snapshot.joinerVolume = await getVolume(tsJoiner.urlObject)
     }
     debug('Snapshot created - now start playing notification')
 
-    // set the joiner to notification - joiner will leave group!
+    // set AVTransport on joiner - joiner will leave group!
     await executeActionV6(tsJoiner.urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
         'InstanceID': 0,
@@ -176,15 +172,14 @@ module.exports = {
         'CurrentURIMetaData': metadata
       })
 
-    // no check - always returns true
-    await tsJoiner.Play()
-
+    // set volume and play notification on joiner
     if (options.volume !== -1) {
       await setVolume(tsJoiner.urlObject, options.volume)
     }
+    await tsJoiner.Play()
     debug('Playing notification started - now figuring out the end')
 
-    // waiting either based on SONOS estimation, per default or user specified
+    // Joiner: waiting either based on SONOS estimation, per default or user specified
     let waitInMilliseconds = hhmmss2msec(options.duration)
     if (options.automaticDuration) {
       const positionInfo = await tsJoiner.AVTransportService.GetPositionInfo()
@@ -203,15 +198,11 @@ module.exports = {
     if (options.volume !== -1) {
       await setVolume(tsJoiner.urlObject, snapshot.joinerVolume)
     }
+    const coordinatorRincon = `x-rincon:${tsCoordinator.myUuid}`
+    await executeActionV6(tsJoiner.urlObject,
+      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+      { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
 
-    await tsJoiner.AVTransportService.SetAVTransportURI({
-      'InstanceID': 0,
-      'CurrentURI': snapshot.mediaInfo.CurrentURI,
-      'CurrentURIMetaData': snapshot.mediaInfo.CurrentURIMetaData
-    })
-    if (snapshot.wasPlaying) {
-      await tsJoiner.Play()
-    }
   },
 
   /**

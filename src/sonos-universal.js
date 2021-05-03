@@ -2073,8 +2073,10 @@ module.exports = function (RED) {
     // The coordinator is being used to capture group status (playing, content, ...)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
+    tsCoordinator.myUuid = groupData.members[0].uuid
     const tsJoiner = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     tsJoiner.urlObject = groupData.members[groupData.playerIndex].urlObject
+    
     await playJoinerNotification(tsCoordinator, tsJoiner, options)
 
     return {}
