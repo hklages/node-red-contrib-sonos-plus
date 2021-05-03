@@ -24,7 +24,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
   getMusicServiceName, getMutestate, getPlaybackstate, getRadioId, getVolume, decideCreateNodeOn,
-  play, setMutestate, setVolume, success, validatedGroupProperties
+  play, setMutestate, setVolume, success, validatedGroupProperties, parseAlarmsToArray
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -81,6 +81,7 @@ module.exports = function (RED) {
     'group.toggle.playback': groupTogglePlayback,
     'household.create.group': householdCreateGroup,
     'household.create.stereopair': householdCreateStereoPair,
+    'household.get.alarms': householdGetAlarms,
     'household.get.groups': householdGetGroups,
     'household.get.sonosplaylists': householdGetSonosPlaylists,
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
@@ -1811,6 +1812,32 @@ module.exports = function (RED) {
       { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
 
     return {}
+  }
+
+  /**
+   *  Get household alarms.
+
+   * @param {object} msg incoming message
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} property payload is array of all group array of members
+   *
+   * @throws {error} all methods
+   */
+  async function householdGetAlarms (msg, tsPlayer) {
+    const result = await tsPlayer.AlarmClockService.ListAlarms({})
+    if (!isTruthyProperty(result, ['CurrentAlarmList'])) {
+      throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarm - CurrentAlarmList`)
+    }
+    if (!isTruthyProperty(result, ['CurrentAlarmListVersion'])) {
+      throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarm - CurrentAlarmListVersion`)
+    }
+    const alarms = await parseAlarmsToArray(result.CurrentAlarmList)
+    const payload = {
+      alarms,
+      'currentAlarmListVersion': result.CurrentAlarmListVersion
+    }
+    return { payload }
   }
 
   /**
