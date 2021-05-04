@@ -18,7 +18,7 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
   getRadioId, getUpnpClassEncoded, getVolume, guessProcessingType, parseBrowseToArray,
-  parseZoneGroupToArray, positionInTrack, selectTrack, setMutestate, setVolume
+  parseZoneGroupToArray, positionInTrack, selectTrack, setMutestate, setVolume, parseAlarmsToArray
 } = require('./Extensions.js')
 
 const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
@@ -411,6 +411,37 @@ module.exports = {
     }
     
     return await parseZoneGroupToArray(householdGroups.ZoneGroupState) 
+  },
+
+  //
+  //     ALARMS RELATED
+  //     ...............
+  /**
+  /** Get alarm list version and array of all alarms. 
+   * @param {object} player sonos-ts player
+   * 
+   * @returns {promise<object>} Alarms object: {}
+   *
+   * @throws {error} all methods
+   * @throws {error} illegal response from ListAlarm - CurrentAlarmList|CurrentAlarmListVersion
+   */
+  getAlarmsAll: async (anyTsPlayer) => {
+    debug('method:%s', 'getAlarmsAll')
+    
+    const result = await anyTsPlayer.AlarmClockService.ListAlarms({})
+    if (!isTruthyProperty(result, ['CurrentAlarmList'])) {
+      throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarm - CurrentAlarmList`)
+    }
+    if (!isTruthyProperty(result, ['CurrentAlarmListVersion'])) {
+      throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarm - CurrentAlarmListVersion`)
+    }
+    const alarms = await parseAlarmsToArray(result.CurrentAlarmList)
+    const alarmsObject = {
+      'currentAlarmListVersion': result.CurrentAlarmListVersion,
+      alarms
+    }
+
+    return alarmsObject
   },
 
   //

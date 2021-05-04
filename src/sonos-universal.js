@@ -19,12 +19,12 @@ const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_QU
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueue,
-  playGroupNotification, playJoinerNotification, restoreGroupSnapshot
+  playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll
 } = require('./Commands.js')
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
   getMusicServiceName, getMutestate, getPlaybackstate, getRadioId, getVolume, decideCreateNodeOn,
-  play, setMutestate, setVolume, success, validatedGroupProperties, parseAlarmsToArray
+  play, setMutestate, setVolume, success, validatedGroupProperties
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -81,6 +81,8 @@ module.exports = function (RED) {
     'group.toggle.playback': groupTogglePlayback,
     'household.create.group': householdCreateGroup,
     'household.create.stereopair': householdCreateStereoPair,
+    'household.disable.alarm': householdDisableAlarm,
+    'household.enable.alarm': householdEnableAlarm,
     'household.get.alarms': householdGetAlarms,
     'household.get.groups': householdGetGroups,
     'household.get.sonosplaylists': householdGetSonosPlaylists,
@@ -1815,6 +1817,42 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Disable alarm in household.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdDisableAlarm (msg, tsPlayer) {
+    // Payload alarm id is required.
+    const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
+    await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })   
+    
+    return {}
+  }
+
+  /**
+   *  Enable alarm in household.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdEnableAlarm (msg, tsPlayer) {
+    // Payload alarm id is required.
+    const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
+    await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })   
+    
+    return {}
+  }
+
+  /**
    *  Get household alarms.
 
    * @param {object} msg incoming message
@@ -1825,18 +1863,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetAlarms (msg, tsPlayer) {
-    const result = await tsPlayer.AlarmClockService.ListAlarms({})
-    if (!isTruthyProperty(result, ['CurrentAlarmList'])) {
-      throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarm - CurrentAlarmList`)
-    }
-    if (!isTruthyProperty(result, ['CurrentAlarmListVersion'])) {
-      throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarm - CurrentAlarmListVersion`)
-    }
-    const alarms = await parseAlarmsToArray(result.CurrentAlarmList)
-    const payload = {
-      alarms,
-      'currentAlarmListVersion': result.CurrentAlarmListVersion
-    }
+    const payload = await getAlarmsAll(tsPlayer)
     return { payload }
   }
 
