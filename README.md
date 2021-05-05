@@ -31,11 +31,9 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 The new commands group.play.mysonos, group.play.library.album|playlist|track simplify flows as they replace the combination *.export and group.play.export.
 
-There is now a limited support for SONOS alarms (alarm list, enable, disable).
+There is now a limited support for SONOS alarms with commands household.enable|disable.alarm, household.get.alarms
 
-Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery|`.
-
-You can not disable the SONOS-Player - availability - check at deployment time. That makes sense for those player being offline during deployment.
+You can not disable the SONOS-Player availability check at deployment time. That makes sense for those player being offline during deployment.
 
 ### QUICKSTART - DEGUG - SUPPORT
 
