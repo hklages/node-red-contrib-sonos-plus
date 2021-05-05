@@ -30,8 +30,8 @@ module.exports = function (RED) {
     node.ipaddress = config.ipaddress
   }
 
-  RED.httpNode.get('/nrcsp/*', function (req, response) {
-    debug('method:%s', 'REDhttpNode.get')
+  RED.httpAdmin.get('/nrcsp/*', function (req, response) {
+    debug('method:%s', 'REDhttpAdmin.get')
 
     const NO_PLAYER_MESSAGE = 'No players found' // from sonos-ts
 
@@ -75,6 +75,7 @@ module.exports = function (RED) {
       break
 
     default:
+      // eslint-disable-next-line max-len
       response.json('available endpoints: discoverAllPlayerWithSerialnumber, discoverAllPlayerWithHost')
     }   
   })
