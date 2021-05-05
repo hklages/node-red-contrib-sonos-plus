@@ -703,6 +703,56 @@ module.exports = {
     return processingType
   },
 
+  /** 
+   * Returns an array (always) of alarms from ListAlarms 
+   * @param {object} currentAlarmList property CurrentAlarmList from ListAlarm
+   * 
+   * @returns {Promise<Alarms[]>} Promise, array of alarms, can be empty.
+   * 
+   * @throws {error} if any parameter is missing, illegal response from ListAlarms
+   * * @throws {error} if decodeHtmlEntity, parser.parse
+   * 
+   * currentAlarmList provides html-decoded xml data containing the alarms. All alamr properties
+   * are attributes- therefor attribute prefix is set to ''
+   */
+  parseAlarmsToArray: async (currentAlarmList) => {
+    // validate method parameter
+    if (!isTruthy(PACKAGE_PREFIX)) {
+      throw new Error('parameter package name is missing')
+    }
+    if (!isTruthy(currentAlarmList)) {
+      throw new Error(`${PACKAGE_PREFIX} parameter alarmList input is missing`)
+    }
+   
+    const decodedAlarmXml = await decodeHtmlEntity(currentAlarmList)
+    let alarmsAlwaysArray
+    if (decodedAlarmXml === '<Alarms></Alarms>') {
+      // no alarms
+      alarmsAlwaysArray = []
+    } else {
+      const alarmsJson = await parser.parse(decodedAlarmXml, {
+        'arrayMode': false, // watch fields of type array!
+        'ignoreAttributes': false,
+        'attributeNamePrefix': '', 
+        'parseNodeValue': false, // is default - example Title 49 will otherwise be converted
+        'parseAttributeValue': false,  // is default
+        'textNodeName': '#text'  //is default, just to remember
+      })
+      // convert single object to array
+      if (isTruthyProperty(alarmsJson, ['Alarms', 'Alarm'])) {
+        if (Array.isArray(alarmsJson.Alarms.Alarm)) {
+          alarmsAlwaysArray = alarmsJson.Alarms.Alarm.slice()
+        } else {
+          alarmsAlwaysArray = [alarmsJson.Alarms.Alarm] 
+        }
+      } else {
+        throw new Error(`${PACKAGE_PREFIX} illegal response from ListAlarms`)
+      }
+    }
+    
+    return alarmsAlwaysArray
+  },
+
   /** Parse outcome of GetZoneGroupState and create an array of all groups in household. 
    * Each group consist of an array of players <playerGroupData>
    * Coordinator is always in position 0. Group array may have size 1 (standalone)

@@ -33,6 +33,8 @@ The new commands group.play.mysonos, group.play.library.album|playlist|track sim
 
 There is now a limited support for SONOS alarms (alarm list, enable, disable).
 
+Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery|`.
+
 You can not disable the SONOS-Player - availability - check at deployment time. That makes sense for those player being offline during deployment.
 
 ### QUICKSTART - DEGUG - SUPPORT
