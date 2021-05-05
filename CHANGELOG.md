@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.1.0] 2021-05-05
+
+#### Added
+
+- universal node: added new commands group.play.mysonos, group.play.library.album|playlist|track
+
+- universal node: added new command household.get.alarms|disable.alarm|enable.alarm
+
+#### Changed
+
+- config node: discovery now uses httpAdmin - should now work in Home Assistante
+
+- universal node: joiner.play.notification some modification
+
+- dependencies debug update
+
 ### [5.0.6] 2021-04-24T1512
 
 #### Changed

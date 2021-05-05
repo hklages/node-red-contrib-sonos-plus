@@ -9,11 +9,11 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network.
 
-Works well with [RedMatic](https://github.com/rdmtc/RedMatic/blob/master/README.en.md).
+Works well with [Home Assistant](https://www.home-assistant.io/) and with its sister package [node-red-contrib-sonos-events](https://www.npmjs.com/package/node-red-contrib-sonos-events), handling SONOS events / subscriptions.
 
 This package is in no way connected to or supported by [Sonos Inc.](https://www.sonos.com/de-de/impressum)
 
-**Highlights**
+### Highlights
 
 - Play your track, album, playlist, station from Spotify, Napster, Amazon, Deezer and other music content provider.
 
@@ -21,28 +21,27 @@ This package is in no way connected to or supported by [Sonos Inc.](https://www.
 
 - Control your player: play, stop, pause - modify the SONOS queue.
 
-- Change player setting such as volume, mute state, loudness, treble, bass, the LED and more.
+- Change player setting such as volume, mute state, alarms, loudness, treble, bass, the LED and more.
 
 - Group players by using their SONOS-Playernames.
 
 Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
+### NEWS
+
+The new commands group.play.mysonos, group.play.library.album|playlist|track simplify flows as they replace the combination *.export and group.play.export.
+
+There is now a limited support for SONOS alarms (alarm list, enable, disable).
+
+You can not disable the SONOS-Player - availability - check at deployment time. That makes sense for those player being offline during deployment.
+
 ### QUICKSTART - DEGUG - SUPPORT
 
 There is a Quickstart guide in the [Wiki](https://github.com/hklages/node-red-contrib-sonos-plus/wiki#quickstart) and example flows in Node-RED `Import - Examples`.
 
-Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery|`).
+Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery`.
 
 Open a GitHub issue (preferred method) or send an email to nrcsplus@gmail.com (German/English).
-
-### NEWS
-
-You can not disable the SONOS-Player - availability - check at deployment time. That makes sense for those player being offline during deployment.
-
-This package is now based on [svrooij node-sonos-ts](https://www.npmjs.com/package/@svrooij/sonos) and keeps the focus on SONOS commands.
-The discovery of player and the node dialogs are improved. For details see the change log.
-
-It works well together with the sister package [node-red-contrib-sonos-events](https://www.npmjs.com/package/node-red-contrib-sonos-events), handling SONOS events / subscriptions.
 
 ### Installation
 
