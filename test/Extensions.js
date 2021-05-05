@@ -9,7 +9,8 @@
 // using http://192.168.178.15:1400 a Synology NAS 
 
 const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
-  parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup
+  parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
+  parseAlarmsToArray
 } = require('../src/Extensions.js')
 
 const { describe, it } = require('mocha')
@@ -1026,4 +1027,44 @@ describe('guessProcessingType function', function () {
       .be.a('string')
       .equal('queue')
   })
+})
+
+describe('parseAlarmsToArray function', function () {
+  
+  it('no alarms means empty array ', async () => {
+    // eslint-disable-next-line max-len
+    const xmlIn = '&lt;Alarms&gt;&lt;/Alarms&gt;'
+    const result = await parseAlarmsToArray(xmlIn)
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .equal(0)
+  })
+
+  it('1 alarms means array of lenght 1 ', async () => {
+    // eslint-disable-next-line max-len
+    const xmlIn = '&lt;Alarms&gt;&lt;Alarm ID=&quot;20&quot; StartTime=&quot;07:00:00&quot; Duration=&quot;02:00:00&quot; Recurrence=&quot;DAILY&quot; Enabled=&quot;1&quot; RoomUUID=&quot;RINCON_949F3EC13B9901400&quot; ProgramURI=&quot;x-rincon-buzzer:0&quot; ProgramMetaData=&quot;&quot; PlayMode=&quot;SHUFFLE&quot; Volume=&quot;25&quot; IncludeLinkedZones=&quot;0&quot;/&gt;&lt;/Alarms&gt;'
+    const result = await parseAlarmsToArray(xmlIn)
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .equal(1)
+  })
+
+  it('2 alarms means array of 2 ', async () => {
+    // eslint-disable-next-line max-len
+    const xmlIn = '&lt;Alarms&gt;&lt;Alarm ID=&quot;20&quot; StartTime=&quot;07:00:00&quot; Duration=&quot;02:00:00&quot; Recurrence=&quot;DAILY&quot; Enabled=&quot;1&quot; RoomUUID=&quot;RINCON_949F3EC13B9901400&quot; ProgramURI=&quot;x-rincon-buzzer:0&quot; ProgramMetaData=&quot;&quot; PlayMode=&quot;SHUFFLE&quot; Volume=&quot;25&quot; IncludeLinkedZones=&quot;0&quot;/&gt;&lt;Alarm ID=&quot;21&quot; StartTime=&quot;07:00:00&quot; Duration=&quot;02:00:00&quot; Recurrence=&quot;DAILY&quot; Enabled=&quot;1&quot; RoomUUID=&quot;RINCON_000E58FE3AEA01400&quot; ProgramURI=&quot;x-rincon-buzzer:0&quot; ProgramMetaData=&quot;&quot; PlayMode=&quot;SHUFFLE&quot; Volume=&quot;25&quot; IncludeLinkedZones=&quot;1&quot;/&gt;&lt;/Alarms&gt;'
+    const result = await parseAlarmsToArray(xmlIn)
+    expect(result)
+      .be.a('array')
+    expect(result.length) // number of items
+      .equal(2)
+    expect(result[0].ID)
+      .be.a('string')
+      .equal('20')
+    expect(result[1].ID)
+      .be.a('string')
+      .equal('21')
+  })
+
 })

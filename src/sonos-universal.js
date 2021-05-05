@@ -19,7 +19,7 @@ const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_QU
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueue,
-  playGroupNotification, playJoinerNotification, restoreGroupSnapshot
+  playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll
 } = require('./Commands.js')
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
@@ -81,6 +81,9 @@ module.exports = function (RED) {
     'group.toggle.playback': groupTogglePlayback,
     'household.create.group': householdCreateGroup,
     'household.create.stereopair': householdCreateStereoPair,
+    'household.disable.alarm': householdDisableAlarm,
+    'household.enable.alarm': householdEnableAlarm,
+    'household.get.alarms': householdGetAlarms,
     'household.get.groups': householdGetGroups,
     'household.get.sonosplaylists': householdGetSonosPlaylists,
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
@@ -1811,6 +1814,57 @@ module.exports = function (RED) {
       { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
 
     return {}
+  }
+
+  /**
+   *  Disable alarm in household.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdDisableAlarm (msg, tsPlayer) {
+    // Payload alarm id is required.
+    const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
+    await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })   
+    
+    return {}
+  }
+
+  /**
+   *  Enable alarm in household.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdEnableAlarm (msg, tsPlayer) {
+    // Payload alarm id is required.
+    const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
+    await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })   
+    
+    return {}
+  }
+
+  /**
+   *  Get household alarms.
+
+   * @param {object} msg incoming message
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} property payload is array of all group array of members
+   *
+   * @throws {error} all methods
+   */
+  async function householdGetAlarms (msg, tsPlayer) {
+    const payload = await getAlarmsAll(tsPlayer)
+    return { payload }
   }
 
   /**
