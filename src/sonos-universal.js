@@ -20,7 +20,8 @@ const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_QU
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueue,
-  playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,   getMusicLibraryItems
+  playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
+  getMusicLibraryItems
 } = require('./Commands.js')
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
@@ -62,6 +63,7 @@ module.exports = function (RED) {
     'group.play.export': groupPlayExport,
     'group.play.library.playlist': groupPlayLibrary,
     'group.play.library.album': groupPlayLibrary,
+    'group.play.library.artist': groupPlayLibrary,
     'group.play.library.track': groupPlayLibrary,
     'group.play.mysonos': groupPlayMySonos,
     'group.play.notification': groupPlayNotification,
@@ -908,6 +910,8 @@ module.exports = function (RED) {
       type = 'A:PLAYLISTS:'
     } else if (msg.nrcspCmd === 'group.play.library.album') {
       type = 'A:ALBUM:'
+    } else if (msg.nrcspCmd === 'group.play.library.artist') {
+      type = 'A:ARTIST:'
     } else if (msg.nrcspCmd === 'group.play.library.track') {
       type = 'A:TRACKS:'
     } else {
@@ -1476,7 +1480,7 @@ module.exports = function (RED) {
    * spotify:track:5AdoS3gS47x40nBNlNmPQ8
    * spotify:album:1TSZDcvlPtAnekTaItI3qO
    * spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d
-   * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
+   * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF
    *
    * Caution: Currently only support European region '2311' (US = 3079)
    *
@@ -1491,6 +1495,7 @@ module.exports = function (RED) {
     if (!(validatedUri.startsWith('spotify:track:')
       || validatedUri.startsWith('spotify:album:')
       || validatedUri.startsWith('spotify:artistTopTracks:')
+      || validatedUri.startsWith('spotify:playlist:')
       || validatedUri.startsWith('spotify:user:spotify:playlist:'))) {
       throw new Error(`${PACKAGE_PREFIX} not supported type of spotify uri`)
     }
