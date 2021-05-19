@@ -29,7 +29,7 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS
 
-The new commands group.play.mysonos, group.play.library.album|playlist|track simplify flows as they replace the combination *.export and group.play.export.
+The new commands group.play.mysonos, group.play.library.album|playlist|track|artist simplify flows as they replace the combination *.export and group.play.export.
 
 There is now a limited support for SONOS alarms with commands household.enable|disable.alarm, household.get.alarms
 
