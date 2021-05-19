@@ -1480,7 +1480,7 @@ module.exports = function (RED) {
    * spotify:track:5AdoS3gS47x40nBNlNmPQ8
    * spotify:album:1TSZDcvlPtAnekTaItI3qO
    * spotify:artistTopTracks:1dfeR4HaWDbWqFHLkxsg1d
-   * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF'
+   * spotify:user:spotify:playlist:37i9dQZEVXbMDoHDwVN2tF
    *
    * Caution: Currently only support European region '2311' (US = 3079)
    *
@@ -1495,6 +1495,7 @@ module.exports = function (RED) {
     if (!(validatedUri.startsWith('spotify:track:')
       || validatedUri.startsWith('spotify:album:')
       || validatedUri.startsWith('spotify:artistTopTracks:')
+      || validatedUri.startsWith('spotify:playlist:')
       || validatedUri.startsWith('spotify:user:spotify:playlist:'))) {
       throw new Error(`${PACKAGE_PREFIX} not supported type of spotify uri`)
     }
