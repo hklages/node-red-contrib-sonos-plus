@@ -2,7 +2,6 @@
 
 All notable changes to this project are documented in this file.
 
-
 ### [5.1.1] 2021-05-19
 
 #### Added
