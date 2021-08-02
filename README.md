@@ -9,7 +9,7 @@
 
 A set of [Node-RED](https://nodered.org/) nodes to control [SONOS](https://www.sonos.com/) player in your local network.
 
-Works well with [Home Assistant](https://www.home-assistant.io/) and with its sister package [node-red-contrib-sonos-events](https://www.npmjs.com/package/node-red-contrib-sonos-events), handling SONOS events / subscriptions.
+Works well with [Home Assistant](https://www.home-assistant.io/) (see example) and with its sister package [node-red-contrib-sonos-events](https://www.npmjs.com/package/node-red-contrib-sonos-events), handling SONOS events / subscriptions.
 
 This package is in no way connected to or supported by [Sonos Inc.](https://www.sonos.com/de-de/impressum)
 

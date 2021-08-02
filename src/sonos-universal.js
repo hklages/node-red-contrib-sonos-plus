@@ -1029,7 +1029,7 @@ module.exports = function (RED) {
       await tsCoordinator.SwitchToQueue()
       
     } else {
-      await tsCoordinator.AVTransportService.SetAVTransportURI({
+      let x = await tsCoordinator.AVTransportService.SetAVTransportURI({
         InstanceID: 0, CurrentURI: exportData.uri, CurrentURIMetaData: exportData.metadata
       })
     }
