@@ -1502,7 +1502,7 @@ module.exports = function (RED) {
     }
     await tsCoordinator.AVTransportService.AddURIToQueue({
       InstanceID: 0, EnqueuedURI: firstItem.uri, EnqueuedURIMetaData: firstItem.metadata,
-      DesiredFirstTrackNumberEnqueued: 10, EnqueueAsNext: true
+      DesiredFirstTrackNumberEnqueued: 0, EnqueueAsNext: true
     })
       
     return {}
