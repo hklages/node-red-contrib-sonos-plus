@@ -1198,5 +1198,19 @@ module.exports = {
       }
     }
     return errorText
+  },
+
+  /**  Replace &apos; with %27.
+   * 
+   * @param {string} uri uri from Music library query
+   * 
+   * @returns {string} uri without &apos; instead %27
+   * 
+   * Example: x-rincon-playlist:RINCON_5CAAFD00223601400#A:ALBUM/A%20Hard%20Day&apos;s%20Night
+   * @throws nothing
+   */
+  replaceAposColon: (uri) => {
+    const newUri = uri.replace(/&apos;/g, '%27')
+    return newUri
   }
 }
