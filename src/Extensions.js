@@ -395,14 +395,6 @@ module.exports = {
       { 'InstanceID': 0, 'Target': track, 'Unit': 'TRACK_NR' })
   },
 
-  // Set new mute state at given player. newMutestate string must be on|off
-  setMutestate: async (playerUrlObject, newMutestate) => {
-    debug('method:%s', 'setMutestate')
-    return await module.exports.executeActionV6(playerUrlObject,
-      '/MediaRenderer/RenderingControl/Control', 'SetMute',
-      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': newMutestate })
-  },
-
   // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
   setVolume: async (playerUrlObject, newVolume) => {
     debug('method:%s', 'setVolume')
