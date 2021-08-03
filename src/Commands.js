@@ -18,13 +18,13 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
   getRadioId, getUpnpClassEncoded, getVolume, guessProcessingType, parseBrowseToArray,
-  parseZoneGroupToArray, positionInTrack, selectTrack, setMutestate, setVolume, parseAlarmsToArray
+  parseZoneGroupToArray, positionInTrack, selectTrack, setVolume, parseAlarmsToArray
 } = require('./Extensions.js')
 
 const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
 } = require('./Helper.js')
 
-const { MetaDataHelper } = require('@svrooij/sonos/lib')
+const { MetaDataHelper, SonosDevice } = require('@svrooij/sonos/lib')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}commands`)
 
@@ -335,15 +335,20 @@ module.exports = {
     let volume
     let mutestate
     let urlObject // JavaScript build-in URL
-    for (let index = 0; index < snapshot.membersData.length; index++) {
-      volume = snapshot.membersData[index].volume
-      urlObject = new URL(snapshot.membersData[index].urlSchemeAuthority)
+    let url // url for player
+    let ts1Player // ts player object
+    for (let i = 0; i < snapshot.membersData.length; i++) {
+      volume = snapshot.membersData[i].volume
+      urlObject = new URL(snapshot.membersData[i].urlSchemeAuthority)
       if (volume !== '-1') { // volume is of type string
         await setVolume(urlObject, parseInt(volume))
       }
-      mutestate = snapshot.membersData[index].mutestate
-      if (mutestate != null) {
-        await setMutestate(urlObject, mutestate)
+      mutestate = snapshot.membersData[i].mutestate
+      if (mutestate !== null) {
+        url = new URL(snapshot.membersData[i].urlSchemeAuthority)
+        ts1Player = new SonosDevice(url.hostname)
+        await ts1Player.RenderingControlService.SetMute(
+          { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': (mutestate === 'on') }) 
       }
     }
   
