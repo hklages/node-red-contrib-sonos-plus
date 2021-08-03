@@ -26,7 +26,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
   getMusicServiceName, getMutestate, getPlaybackstate, getRadioId, getVolume, decideCreateNodeOn,
-  play, setVolume, success, validatedGroupProperties
+  play, setVolume, success, validatedGroupProperties, replaceAposColon
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -61,10 +61,10 @@ module.exports = function (RED) {
     'group.pause': groupPause,
     'group.play': groupPlay,
     'group.play.export': groupPlayExport,
-    'group.play.library.playlist': groupPlayLibrary,
-    'group.play.library.album': groupPlayLibrary,
-    'group.play.library.artist': groupPlayLibrary,
-    'group.play.library.track': groupPlayLibrary,
+    'group.play.library.playlist': groupPlayLibraryItem,
+    'group.play.library.album': groupPlayLibraryItem,
+    'group.play.library.artist': groupPlayLibraryItem,
+    'group.play.library.track': groupPlayLibraryItem,
     'group.play.mysonos': groupPlayMySonos,
     'group.play.notification': groupPlayNotification,
     'group.play.queue': groupPlayQueue,
@@ -73,6 +73,10 @@ module.exports = function (RED) {
     'group.play.track': groupPlayTrack,
     'group.play.tunein': groupPlayTuneIn,
     'group.previous.track': groupPreviousTrack,
+    'group.queue.library.playlist': groupQueueLibraryItem,
+    'group.queue.library.album': groupQueueLibraryItem,
+    'group.queue.library.artist': groupQueueLibraryItem,
+    'group.queue.library.track': groupQueueLibraryItem,
     'group.queue.uri': groupQueueUri,
     'group.queue.urispotify': groupQueueUriFromSpotify,
     'group.remove.tracks': groupRemoveTracks,
@@ -276,7 +280,7 @@ module.exports = function (RED) {
       command)) {
       throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
     }
-    msg.nrcspCmd = command // Store command, is used in playerSetEQ, playerGetEQ, groupPlayLibrary
+    msg.nrcspCmd = command // Store command, is used in playerSetEQ, playerGetEQ, groupPlayLibrary*
     
     // State: node dialog overrules msg.
     let state
@@ -885,7 +889,8 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Play playlist from Music Library on group (combination of export.playlist, play.export)
+   *  Play playlist, album, artist, track from Music Library on 
+   *  group (combination of export, play.export)
    * @param {object} msg incoming message
    * @param {string} msg.payload search string, part of playlist title
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
@@ -899,8 +904,8 @@ module.exports = function (RED) {
    * @throws {error} 'msg.sameVolume is nonsense: player is standalone'
    * @throws {error} all methods
    */
-  async function groupPlayLibrary (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayMySonos')
+  async function groupPlayLibraryItem (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayLibraryItem')
 
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -924,7 +929,7 @@ module.exports = function (RED) {
     }
     const exportData = {
       'uri': list[0].uri,
-      'metadata': list[0].metadata,
+      'metadata': replaceAposColon(list[0].uri), 
       'queue': true
     }
     // hand over to play.export
@@ -939,22 +944,15 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
 
-    if (exportData.queue) {
-      if (validated.clearQueue) {
-        await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
-      }
-      await tsCoordinator.AVTransportService.AddURIToQueue({
-        InstanceID: 0, EnqueuedURI: exportData.uri, EnqueuedURIMetaData: exportData.metadata,
-        DesiredFirstTrackNumberEnqueued: 0, EnqueueAsNext: true
-      })
-      await tsCoordinator.SwitchToQueue()
-      
-    } else {
-      await tsCoordinator.AVTransportService.SetAVTransportURI({
-        InstanceID: 0, CurrentURI: exportData.uri, CurrentURIMetaData: exportData.metadata
-      })
+    if (validated.clearQueue) {
+      await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
     }
-
+    await tsCoordinator.AVTransportService.AddURIToQueue({
+      InstanceID: 0, EnqueuedURI: exportData.uri, EnqueuedURIMetaData: exportData.metadata,
+      DesiredFirstTrackNumberEnqueued: 0, EnqueueAsNext: true
+    })
+    await tsCoordinator.SwitchToQueue()
+      
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
@@ -1444,6 +1442,69 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     await tsCoordinator.Previous()
 
+    return {}
+  }
+
+  /**
+   *  Queue first matching playlist, album, artist, track from Music Library 
+   * @param {object} msg incoming message
+   * @param {string} msg.payload search string, part of item title
+   * @param {string} msg.nrcspCmd identify the item type
+   * @param {boolean} [msg.clearQueue=true] if true and export.queue = true the queue is cleared.
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer node-sonos player with urlObject - as default
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} 'msg.sameVolume is nonsense: player is standalone'
+   * @throws {error} 'no matching item found'
+   * @throws {error} all methods
+   */
+  async function groupQueueLibraryItem (msg, tsPlayer) {
+    debug('method:%s', 'groupQueueLibraryItem')
+
+    // payload title search string is required.
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
+
+    let type = ''
+    if (msg.nrcspCmd === 'group.queue.library.playlist') {
+      type = 'A:PLAYLISTS:'
+    } else if (msg.nrcspCmd === 'group.queue.library.album') {
+      type = 'A:ALBUM:'
+    } else if (msg.nrcspCmd === 'group.queue.library.artist') {
+      type = 'A:ARTIST:'
+    } else if (msg.nrcspCmd === 'group.queue.library.track') {
+      type = 'A:TRACKS:'
+    } else {
+      // Can not happen
+    }
+    
+    const list = await getMusicLibraryItems(type, validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    // select the first item returned
+    if (list.length === 0) {
+      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
+    }
+    const firstItem = {
+      'uri': replaceAposColon(list[0].uri), 
+      'metadata': list[0].metadata
+    }
+
+    // Validate msg.playerName -error are thrown
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+
+    // Queue
+    if (validated.clearQueue) {
+      await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
+    }
+    await tsCoordinator.AVTransportService.AddURIToQueue({
+      InstanceID: 0, EnqueuedURI: firstItem.uri, EnqueuedURIMetaData: firstItem.metadata,
+      DesiredFirstTrackNumberEnqueued: 10, EnqueueAsNext: true
+    })
+      
     return {}
   }
 

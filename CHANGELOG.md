@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.0] 2021-08-xx
+
+#### Added
+
+- mysonos node: added library.export.artist
+
+#### Removed
+
+- mysonos library.queue.playlist: use universal node, group.queue.library.playlist
+
+#### Changes
+
+- update dependencies
+
+- removed stream part from group.play.library.*
+
+- libraryQueuePlaylist, libraryExportItem similar to groupQueueLibraryItem
+
 ### [5.1.1] 2021-05-19
 
 #### Added
