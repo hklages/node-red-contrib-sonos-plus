@@ -26,7 +26,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
   getMusicServiceName, getMutestate, getPlaybackstate, getRadioId, getVolume, decideCreateNodeOn,
-  play, setMutestate, setVolume, success, validatedGroupProperties
+  play, setVolume, success, validatedGroupProperties
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -2850,10 +2850,9 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     
-    // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
      
-    await tsSinglePlayer.DevicePropertiesService.SetButtonLockState({
+    await ts1Player.DevicePropertiesService.SetButtonLockState({
       'DesiredButtonLockState': newState
     })
     return {}
@@ -2975,7 +2974,10 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await setMutestate(groupData.members[groupData.playerIndex].urlObject, newState)
+
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    await ts1Player.RenderingControlService.SetMute(
+      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': newState })
 
     return {}
   }

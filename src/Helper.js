@@ -98,7 +98,7 @@ module.exports = {
    * @param {string} propertyName property name
    * @param {string} propertyMeaning additional information, including in error message
    *
-   * @returns {boolean} true/false if msg.property is "on/off" ! not case sensitive
+   * @returns {boolean} true if msg.property == on, false if msg.property == off -not case sensitive
    *
    * @throws {error} '* ${propertyName}) is missing/invalid', '* ${propertyName}) is not string',
    * '* ${propertyName}) is not on/off'
