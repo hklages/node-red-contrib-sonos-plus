@@ -29,11 +29,15 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS
 
-The new commands group.play.mysonos, group.play.library.album|playlist|track|artist simplify flows as they replace the combination *.export and group.play.export.
+- universal node: new commands group.queue.library.*
 
-There is now a limited support for SONOS alarms with commands household.enable|disable.alarm, household.get.alarms
+- my sonos node: new command library.export.artist
 
-You can not disable the SONOS-Player availability check at deployment time. That makes sense for those player being offline during deployment.
+- my sonos node: removed library.queue.playlist
+
+- bug fixing restore snapshot - muting player
+
+- bug fixing library item may now include apostrophe in title
 
 ### QUICKSTART - DEGUG - SUPPORT
 

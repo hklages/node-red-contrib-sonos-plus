@@ -2,11 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
-### [5.2.0] 2021-08-xx
+### [5.2.0] 2021-08-04
 
 #### Added
 
 - mysonos node: added library.export.artist
+
+- universal node: added group.queue.library.*
 
 #### Removed
 
@@ -14,11 +16,17 @@ All notable changes to this project are documented in this file.
 
 #### Changes
 
-- update dependencies
+- bug fix for all library programs - apostrophe in title now allowed
 
-- removed stream part from group.play.library.*
+- bug fix restore snapshot - player mute state now restored
 
-- libraryQueuePlaylist, libraryExportItem similar to groupQueueLibraryItem
+- internal: update dependencies
+
+- internal: removed stream part from group.play.library.*
+
+- internal: libraryQueuePlaylist, libraryExportItem similar to groupQueueLibraryItem
+
+- internal: function setMuteState removed
 
 ### [5.1.1] 2021-05-19
 
@@ -44,7 +52,7 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
-- config node: discovery now uses httpAdmin - should now work in Home Assistante
+- config node: discovery now uses httpAdmin - should now work in Home Assistant
 
 - universal node: joiner.play.notification some modification
 
