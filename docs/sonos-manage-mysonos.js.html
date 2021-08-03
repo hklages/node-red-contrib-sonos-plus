@@ -49,7 +49,7 @@ const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 const { getMusicLibraryItems, getMySonos
 } = require('./Commands.js')
 
-const { failure, decideCreateNodeOn, success
+const { failure, decideCreateNodeOn, success, replaceAposColon
 } = require('./Extensions.js')
 
 const { isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, validToInteger
@@ -63,12 +63,12 @@ module.exports = function (RED) {
 
   // function lexical order, ascending
   const COMMAND_TABLE_MYSONOS = {
-    'library.export.album': libraryExportAlbum,
-    'library.export.playlist': libraryExportPlaylist,
-    'library.export.track': libraryExportTrack,
+    'library.export.album': libraryExportItem,
+    'library.export.artist': libraryExportItem,
+    'library.export.playlist': libraryExportItem,
+    'library.export.track': libraryExportItem,
     'library.get.albums': libraryGetAlbums,
     'library.get.playlists': libraryGetPlaylists,
-    'library.queue.playlist': libraryQueuePlaylist,
     'mysonos.export.item': mysonosExportItem,
     'mysonos.get.items': mysonosGetItems,
     'mysonos.queue.item': mysonosQueueItem,
@@ -217,7 +217,7 @@ module.exports = function (RED) {
     if (!Object.prototype.hasOwnProperty.call(COMMAND_TABLE_MYSONOS, command)) {
       throw new Error(`${PACKAGE_PREFIX} command is invalid >>${command} `)
     }
-    msg.nrcspCmd = command // store command
+    msg.nrcspCmd = command // Store command, used in exportLibrary*
 
     // state: node dialog overrules msg.
     let state
@@ -251,80 +251,48 @@ module.exports = function (RED) {
    * @property {boolean} queue true means use AddURI otherwise SetAVTransport
    */
 
-  /**  Exports first Music-Library album matching search string (is encoded)
+  /**  Exports  first matching playlist, album, artist, track from Music Library 
    * @param {object} msg incoming message
-   * @param {string} msg.payload search string
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   * @param {string} msg.payload search string, part of item title
+   * @param {string} msg.nrcspCmd identify the item type
+   * @param {object} tsPlayer node-sonos player with urlObject - as default
    *
    * @returns {promise&lt;exportedItem>}
    * 
    * @throws {error} 'no matching item found'
    * @throws {error} all methods
    */
-  async function libraryExportAlbum (msg, tsPlayer) {
-    debug('method:%s', 'libraryExportAlbum')
+  async function libraryExportItem (msg, tsPlayer) {
+    debug('method:%s', 'libraryExportItem')
+
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
+
+    let type = ''
+    if (msg.nrcspCmd === 'library.export.playlist') {
+      type = 'A:PLAYLISTS:'
+    } else if (msg.nrcspCmd === 'library.export.album') {
+      type = 'A:ALBUM:'
+    } else if (msg.nrcspCmd === 'library.export.artist') {
+      type = 'A:ARTIST:'
+    } else if (msg.nrcspCmd === 'library.export.track') {
+      type = 'A:TRACKS:'
+    } else {
+      // Can not happen
+    }
     
-    const list
-      = await getMusicLibraryItems('A:ALBUM:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    const list = await getMusicLibraryItems(type, validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    // select the first item returned
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
-
-    // the first matching is being used
-    return { 'payload': { 'uri': list[0].uri, 'metadata': list[0].metadata, 'queue': true } }
-  }
-
-  /**  Exports first Music-Library playlist matching search string (is encoded)
-   * @param {object} msg incoming message
-   * @param {string} msg.payload search string
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise&lt;exportedItem>
-   *
-   * @throws {error} 'no matching item found'
-   * @throws {error} all methods
-   * 
-   */
-  async function libraryExportPlaylist (msg, tsPlayer) {
-    debug('method:%s', 'libraryExportPlaylist')
-    // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
-  
-    const list = await getMusicLibraryItems(
-      'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
-    if (list.length === 0) {
-      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
+    // 2021-08-03 there might be an apos; in uri - to be replaced!
+    const firstItem = {
+      'uri': replaceAposColon(list[0].uri), 
+      'metadata': list[0].metadata
     }
-  
-    // the first matching is being used
-    return { 'payload': { 'uri': list[0].uri, 'metadata': list[0].metadata, 'queue': true } }
-  }
 
-  /**  Exports first Music-Library track matching search string (is encoded)
-   * @param {object} msg incoming message
-   * @param {string} msg.payload search string
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise&lt;exportedItem>} see def
-   *
-   * @throws {error} 'no matching item found'
-   * @throws {error} all methods
-   */
-  async function libraryExportTrack (msg, tsPlayer) {
-    debug('method:%s', 'libraryExportTrack')
-    // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
-  
-    const list
-      = await getMusicLibraryItems('A:TRACKS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
-    if (list.length === 0) {
-      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
-    }
-  
-    // the first matching is being used
-    return { 'payload': { 'uri': list[0].uri, 'metadata': list[0].metadata, 'queue': true } }
+    return { 'payload': { 'uri': firstItem.uri, 'metadata': firstItem.metadata, 'queue': true } }
   }
 
   /**  Outputs array Music-Library albums - search string is optional
@@ -347,7 +315,6 @@ module.exports = function (RED) {
 
     // payload as title search string is optional.
     const validSearch
-      // eslint-disable-next-line max-len
       = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     const list
@@ -401,32 +368,6 @@ module.exports = function (RED) {
     })
 
     return { payload }
-  }
-
-  /**  Queue first Music-Library playlist matching search string (is encoded) - maximum 100
-   * @param {object} msg incoming message
-   * @param {string} msg.payload search string
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise} {payload: uri metadata queue title artist}  
-   *
-   * @throws {error} 'no matching item found'
-   * @throws {error} all methods
-   */
-  async function libraryQueuePlaylist (msg, tsPlayer) {
-    debug('method:%s', 'libraryQueuePlaylist')
-    // payload title search string is required.
-    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
-  
-    const list = await getMusicLibraryItems(
-      'A:PLAYLISTS:', validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
-    if (list.length === 0) {
-      throw new Error(`${PACKAGE_PREFIX} no matching item found`)
-    }
-
-    await tsPlayer.AddUriToQueue(list[0].uri)
-    
-    return {}
   }
 
   /**  Export first My-Sonos item matching search string.
@@ -586,7 +527,7 @@ module.exports = function (RED) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Wed May 19 2021 13:00:42 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Tue Aug 03 2021 20:09:31 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>

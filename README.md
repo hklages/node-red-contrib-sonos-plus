@@ -35,7 +35,7 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 - my sonos node: removed library.queue.playlist
 
-- bug fixing restore snapshot - muting player
+- bug fixing restore snapshot - restore muting player
 
 - bug fixing library item may now include apostrophe in title
 
