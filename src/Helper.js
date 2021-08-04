@@ -131,6 +131,7 @@ module.exports = {
    * min, max should be in range VALIDATION_INTEGER_MINIMUM to VALIDATION_INTEGER_MAXIMUM
    * as that correspondent to REGEX check 4 signed digits
    * defaultValue and msg[propertyName] must be in range [min, max]
+   * Execption: defaultValue may also be -1 - used for volume control
    *  
    * @param {object} msg Node-RED message
    * @param {(string|number)} msg.propertyName item, to be validated, converted
@@ -172,7 +173,7 @@ module.exports = {
       if (!Number.isInteger(defaultValue)) {
         throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not integer`)
       }
-      if (!(defaultValue >= min && defaultValue <= max)) {
+      if (!((defaultValue >= min && defaultValue <= max) || defaultValue === -1)) {
         throw new Error(`${txtPrefix} >>${defaultValue} is out of range`)
       }
     }
