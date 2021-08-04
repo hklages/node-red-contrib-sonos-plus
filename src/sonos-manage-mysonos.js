@@ -283,7 +283,7 @@ module.exports = function (RED) {
     debug('method:%s', 'libraryGetAlbums')
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
+      msg, 'requestedCount', 1, 9999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
 
     // payload as title search string is optional.
     const validSearch
@@ -320,7 +320,7 @@ module.exports = function (RED) {
     debug('method:%s', 'libraryGetPlaylists')
     // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
     const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
+      msg, 'requestedCount', 1, 9999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
 
     // payload as title search string is optional.
     const validSearch

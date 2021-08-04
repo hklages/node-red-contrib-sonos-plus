@@ -23,6 +23,8 @@ module.exports = {
   REQUESTED_COUNT_ML_DEFAULT: 1000,
   REQUESTED_COUNT_MYSONOS_DEFAULT: 200,
   REQUESTED_COUNT_MYSONOS_EXPORT: 200, // because no filter
+  VALIDATION_INTEGER_MAXIMUM: 9999, // because of validToInteger, REGEX_4DIGITSSIGN
+  VALIDATION_INTEGER_MINIMUM: -9999, // because of validToInteger, REGEX_4DIGITSSIGN
 
   REGEX_TIME: /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only hh:mm:ss and hours from 0 to 19
   REGEX_TIME_DELTA: /^([-+]?([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only +/- REGEX_TIME
@@ -33,7 +35,8 @@ module.exports = {
   REGEX_2DIGITS: /^\d{1,2}$/, // up to 2 digits but at least 1
   REGEX_3DIGITS: /^\d{1,3}$/, // up to 3 digits but at least 1
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
-  REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,  
+  REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,
+  REGEX_4DIGITSSIGN: /^[-+]?\d{1,4}$/,
   REGEX_ANYCHAR: /.+/,  // any character but at least 1
 
   REGEX_ANYCHAR_BLANK: /.*/, //any character or blank

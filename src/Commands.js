@@ -568,7 +568,7 @@ module.exports = {
   /** Get array of all Music Library items matching category and optional search string
    * @param {string} category such as 'Album:', 'Playlist:'
    * @param {string} [searchString=''] any search string, being used in category
-   * @param {number} requestedCount integer, 1 to 5000
+   * @param {number} requestedCount integer, 1 to 9999 - checked in calling procedure
    * @param {object} tsPlayer sonos-ts player
    * 
    * @returns {Promise<exportedItem[]>} all Music Library items matching criteria, could be empty

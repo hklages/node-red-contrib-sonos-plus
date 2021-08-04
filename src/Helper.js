@@ -16,7 +16,8 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, REGEX_3DIGITSSIGN } = require('./Globals.js')
+const { PACKAGE_PREFIX, REGEX_4DIGITSSIGN, VALIDATION_INTEGER_MAXIMUM, VALIDATION_INTEGER_MINIMUM
+} = require('./Globals.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}helper`)
 
@@ -127,41 +128,47 @@ module.exports = {
    * If defaultValue is given then msg[propertyName] is not required and default value is only used
    * in case msg[propertyName] is not "isValidProperty" (undefined, null, NaN). 
    * The defaultValue is not used in case of wrong type, not in range.
-   * defaultValue should be in range min max (not checked). 
+   * defaultValue should be in range min max (not checked).
+   * 
+   * min, max should be in range -9999 to REQUESTED_COUNT_ML_MAXIMUM
+   *  as that correspondent to REGEX check 4 signed digits
    * 
    * @param {object} msg Node-RED message
    * @param {(string|number)} msg.propertyName item, to be validated, converted
    * @param {string} propertyName property name
-   * @param {number} min minimum
-   * @param {number} max maximum, max > min
+   * @param {number} min minimum, not greater 9999
+   * @param {number} max maximum, not less -9999, max > min
    * @param {string} propertyMeaning additional information, including in error message
    * @param {number} [defaultValue] integer, specifies the default value. 
    *
    * @returns {number} integer in range [min,max] or defaultValue
    *
-   * @throws {error} '${propertyMeaning} min is not type number', 
-   * '${propertyMeaning} max is not type number', 
-   * '${propertyMeaning} max must be greater then min', '*${propertyName}) is missing/invalid', 
-   * 'defaultValue is not type number', 'defaultValue is not integer', 
-   * '${txtPrefix} is not type string/number', '${txtPrefix} is not integer',
-   * '${value}) is not 3 signed digits only', '${value}) is out of range'
+   * @throws {error} see code
    * @throws {error} all methods
    */
   validToInteger: (msg, propertyName, min, max, propertyMeaning, defaultValue) => {
     debug('method:%s', 'validToInteger')
     // validate min max
-    if (typeof min !== 'number') {
-      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} min is not type number`)
+    if (typeof min !== 'number' || min < VALIDATION_INTEGER_MINIMUM) {
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} min is not type number or less -9999`)
     } 
-    if (typeof max !== 'number') {
-      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max is not type number`)
+    if (typeof max !== 'number' || max > VALIDATION_INTEGER_MAXIMUM) {
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max is not type number or bigger 9999`)
     } 
     if (min >= max) {
-      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max must be greater then min`)
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max is not greater then min`)
     }
     
-    // if defaultValue is missing an error will be throw in case property is not defined or missing
+    // if defaultValue exists, check value 
     const requiredProperty = (typeof defaultValue === 'undefined')
+    if (!requiredProperty) {
+      if (typeof defaultValue !== 'number' || defaultValue > VALIDATION_INTEGER_MAXIMUM
+        || defaultValue < VALIDATION_INTEGER_MINIMUM) {
+        // eslint-disable-next-line max-len
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not type number or out of range`)
+      } 
+    }
+    // if defaultValue is missing an error will be throw in case property is not defined or missing
     const path = []
     path.push(propertyName)
     if (!module.exports.isTruthyProperty(msg, path)) {
@@ -191,8 +198,8 @@ module.exports = {
       }
     } else {
       // it is a string - allow signed/unsigned
-      if (!REGEX_3DIGITSSIGN.test(value)) {
-        throw new Error(`${txtPrefix} >>${value}) is not 3 signed digits only`)
+      if (!REGEX_4DIGITSSIGN.test(value)) {
+        throw new Error(`${txtPrefix} >>${value}) is not 4 signed digits only`)
       }
       value = parseInt(value)
     }

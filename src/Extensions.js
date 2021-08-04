@@ -1,6 +1,6 @@
 /**
  * Collection of 
- * - Node-RED related such as failure, success, validRegex, validToInteger
+ * - Node-RED related such as failure, success
  * - simple HTML commands
  * - simple SOAP commands based on executeAction and sendSoapToPlayer
  * - SONOS related helper for parsing xml data

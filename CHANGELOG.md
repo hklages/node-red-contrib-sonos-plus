@@ -2,7 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
-### [5.2.0] 2021-08-04
+### [5.2.2/1] 2021-08-04
+
+#### Changed
+
+- helper: validToInteger with new limits -9999 to 9999 enabling getLibrary with up to 9999 items
+
+- universal node: typo in DesiredFirstTrackNumberEnqueued
+
+### [5.2.0] 2021-08-03
 
 #### Added
 
