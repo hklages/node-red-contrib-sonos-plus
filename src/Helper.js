@@ -124,21 +124,20 @@ module.exports = {
 
   /** Validates and converts msg[propertyName] to number (integer). 
    * 
-   * If defaultValue is NOT given then msg[propertyName] is required! Throws error if missing.
-   * If defaultValue is given then msg[propertyName] is not required and default value is only used
-   * in case msg[propertyName] is not "isValidProperty" (undefined, null, NaN). 
-   * The defaultValue is not used in case of wrong type, not in range.
-   * defaultValue should be in range min max (not checked).
+   * Exactly in that case, when the msg[propertyName] is optional, the defaultValue must be given! 
+   * - No defaultValue (= msg[propertyName] required): msg[propertyName] is returned (if valid)
+   * - defaultValue exist: if msg[propertyName] exist it is used, otherwise defaultValue 
    * 
-   * min, max should be in range -9999 to REQUESTED_COUNT_ML_MAXIMUM
-   *  as that correspondent to REGEX check 4 signed digits
-   * 
+   * min, max should be in range VALIDATION_INTEGER_MINIMUM to VALIDATION_INTEGER_MAXIMUM
+   * as that correspondent to REGEX check 4 signed digits
+   * defaultValue and msg[propertyName] must be in range [min, max]
+   *  
    * @param {object} msg Node-RED message
    * @param {(string|number)} msg.propertyName item, to be validated, converted
    * @param {string} propertyName property name
    * @param {number} min minimum, not greater 9999
    * @param {number} max maximum, not less -9999, max > min
-   * @param {string} propertyMeaning additional information, including in error message
+   * @param {string} propertyMeaning additional information, being included in error message
    * @param {number} [defaultValue] integer, specifies the default value. 
    *
    * @returns {number} integer in range [min,max] or defaultValue
@@ -159,54 +158,66 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} max is not greater then min`)
     }
     
-    // if defaultValue exists, check value 
-    const requiredProperty = (typeof defaultValue === 'undefined')
-    if (!requiredProperty) {
-      if (typeof defaultValue !== 'number' || defaultValue > VALIDATION_INTEGER_MAXIMUM
-        || defaultValue < VALIDATION_INTEGER_MINIMUM) {
-        // eslint-disable-next-line max-len
-        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not type number or out of range`)
+    // if defaultValue is not given then msg[propertyName] is required and being used
+    //   else if msg[propertyName] exist then it is being used
+    //     else default is being used
+    const txtPrefix = `${PACKAGE_PREFIX} ${propertyMeaning} (msg.${propertyName})`
+    
+    // does defaultValue exist? if yes validate
+    const isPropertyRequired = (typeof defaultValue === 'undefined')
+    if (!isPropertyRequired) {
+      if (typeof defaultValue !== 'number') {
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not type number`)
       } 
+      if (!Number.isInteger(defaultValue)) {
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not integer`)
+      }
+      if (!(defaultValue >= min && defaultValue <= max)) {
+        throw new Error(`${txtPrefix} >>${defaultValue} is out of range`)
+      }
     }
-    // if defaultValue is missing an error will be throw in case property is not defined or missing
+    
+    // does propertyName exist? if yes validate and store in integerValue
     const path = []
     path.push(propertyName)
-    if (!module.exports.isTruthyProperty(msg, path)) {
-      if (requiredProperty) {
-        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
-      } else {
-        // use defaultValue but check if valid
-        if (typeof defaultValue !== 'number') {
-          throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not type number`)
-        } 
-        if (!Number.isInteger(defaultValue)) {
-          throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} defaultValue is not integer`)
-        }
-        // no check in range to allow such as -1 to indicate no value given
-        return defaultValue
+    const propertyNameExists = module.exports.isTruthyProperty(msg, path)
+    let validValue
+    if (propertyNameExists) {
+      const value = msg[propertyName]
+      if (typeof value !== 'string' && typeof value !== 'number') {
+        throw new Error(`${txtPrefix} is not type string/number`)
       }
-    }
-    let value = msg[propertyName]
-    const txtPrefix = `${PACKAGE_PREFIX} ${propertyMeaning} (msg.${propertyName})`
-
-    if (typeof value !== 'number' && typeof value !== 'string') {
-      throw new Error(`${txtPrefix} is not type string/number`)
-    }
-    if (typeof value === 'number') {
-      if (!Number.isInteger(value)) {
+      if (typeof value === 'string') {
+        if (!REGEX_4DIGITSSIGN.test(value)) {
+          throw new Error(`${txtPrefix} >>${value}) is not 4 signed digits only`)
+        }
+        validValue = parseInt(value)
+      } else { // must be number
+        validValue = value
+      }
+      if (!Number.isInteger(validValue)) {
         throw new Error(`${txtPrefix} is not integer`)
       }
-    } else {
-      // it is a string - allow signed/unsigned
-      if (!REGEX_4DIGITSSIGN.test(value)) {
-        throw new Error(`${txtPrefix} >>${value}) is not 4 signed digits only`)
+      if (!(validValue >= min && validValue <= max)) {
+        throw new Error(`${txtPrefix} >>${value} is out of range`)
       }
-      value = parseInt(value)
     }
-    if (!(value >= min && value <= max)) {
-      throw new Error(`${txtPrefix} >>${value}) is out of range`)
+    // if exist then integerValue is valid integer (otherwise errors have been thrown)
+    
+    if (isPropertyRequired) {
+      if (propertyNameExists) {
+        return validValue  
+      } else {
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+      }
+    } else {
+      if (propertyNameExists) {
+        return validValue  
+      } else {
+        return defaultValue // is valid because errors are thrown
+      }
     }
-    return value
+    
   },
 
   /** Validates msg[propertyName] against regex and returns that value or a default value.

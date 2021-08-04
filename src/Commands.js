@@ -566,7 +566,7 @@ module.exports = {
   },
 
   /** Get array of all Music Library items matching category and optional search string
-   * @param {string} category such as 'Album:', 'Playlist:'
+   * @param {string} type such as 'Album:', 'Playlist:'
    * @param {string} [searchString=''] any search string, being used in category
    * @param {number} requestedCount integer, 1 to 9999 - checked in calling procedure
    * @param {object} tsPlayer sonos-ts player
@@ -577,11 +577,11 @@ module.exports = {
    * 'requestedCount is not number', 'response form parsing Browse Album is invalid'
    * @throws {error} all methods
    */
-  getMusicLibraryItems: async (category, searchString, requestedCount, tsPlayer) => { 
+  getMusicLibraryItems: async (type, searchString, requestedCount, tsPlayer) => { 
     debug('method:%s', 'getMusicLibraryItems')
 
     // validate parameter
-    if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(category)) {
+    if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(type)) {
       throw new Error(`${PACKAGE_PREFIX} category is unknown`)
     }
     if (typeof searchString !== 'string') {
@@ -592,14 +592,14 @@ module.exports = {
     }
     
     // The search string must be encoded- but not the category (:)
-    const objectId = category + encodeURIComponent(searchString)
+    const objectId = type + encodeURIComponent(searchString)
     const browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
       'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
       'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
     })
 
     let list
-    if (category === 'A:TRACKS:') {
+    if (type === 'A:TRACKS:') {
       list = await parseBrowseToArray(browseCategory, 'item')    
     } else {
       list = await parseBrowseToArray(browseCategory, 'container')  

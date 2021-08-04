@@ -348,10 +348,10 @@ describe('validToInteger function', function () {
     const defaultValue = '10'
     expect(validToInteger.bind(validToInteger,
       msg, propertyName, min, max, propertyMeaning, defaultValue))
-      .to.throw('nrcsp: just a test defaultValue is not type number or out of range')
+      .to.throw('nrcsp: just a test defaultValue is not type number')
   })
 
-  it('defaultValue is not out of range throw error', () => {
+  it('defaultValue is out of range throw error', () => {
     const msg = { 'payload': 10 }
     const propertyName = 'payload'
     const propertyMeaning = 'just a test'
@@ -360,10 +360,10 @@ describe('validToInteger function', function () {
     const defaultValue = 10000
     expect(validToInteger.bind(validToInteger,
       msg, propertyName, min, max, propertyMeaning, defaultValue))
-      .to.throw('nrcsp: just a test defaultValue is not type number or out of range')
+      .to.throw('just a test (msg.payload) >>10000 is out of range')
   })
 
-  it('defaultValue is not out of range throw error', () => {
+  it('defaultValue is out of range throw error', () => {
     const msg = { 'payload': 10 }
     const propertyName = 'payload'
     const propertyMeaning = 'just a test'
@@ -372,7 +372,7 @@ describe('validToInteger function', function () {
     const defaultValue = -10000
     expect(validToInteger.bind(validToInteger,
       msg, propertyName, min, max, propertyMeaning, defaultValue))
-      .to.throw('nrcsp: just a test defaultValue is not type number or out of range')
+      .to.throw('nrcsp: just a test (msg.payload) >>-10000 is out of range')
   })
 
   it('defaultValue and payload missing', () => {
@@ -392,12 +392,12 @@ describe('validToInteger function', function () {
     const propertyMeaning = 'just a test'
     const min = 0
     const max = 20
-    const defaultValue = 111
+    const defaultValue = 15
     const result
       = validToInteger(msg, propertyName, min, max, propertyMeaning, defaultValue)
     expect(result)
       .be.a('number')
-      .equal(111)
+      .equal(15)
   })
 
   it('string 25 out of range 10 to 20', () => {
@@ -409,7 +409,7 @@ describe('validToInteger function', function () {
     const defaultValue = 10
     expect(validToInteger.bind(validToInteger,
       msg, propertyName, min, max, propertyMeaning, defaultValue))
-      .to.throw('nrcsp: just a test (msg.payload) >>25) is out of range')
+      .to.throw('nrcsp: just a test (msg.payload) >>25 is out of range')
   })
 
   it('string 5 to integer 5', () => {
