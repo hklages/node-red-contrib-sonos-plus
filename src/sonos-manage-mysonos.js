@@ -40,7 +40,7 @@ module.exports = function (RED) {
     'library.export.playlist': libraryExportItem,
     'library.export.track': libraryExportItem,
     'library.get.albums': libraryGetAlbums,
-    'library.get.artist': libraryGetArtists,
+    'library.get.artists': libraryGetArtists,
     'library.get.playlists': libraryGetPlaylists,
     'mysonos.export.item': mysonosExportItem,
     'mysonos.get.items': mysonosGetItems,
