@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.3] 2021-08-04
+
+#### Changed
+
+- my sonos node: library.get.artists added
+
 ### [5.2.2/1] 2021-08-04
 
 #### Changed

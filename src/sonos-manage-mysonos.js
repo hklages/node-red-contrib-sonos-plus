@@ -40,6 +40,7 @@ module.exports = function (RED) {
     'library.export.playlist': libraryExportItem,
     'library.export.track': libraryExportItem,
     'library.get.albums': libraryGetAlbums,
+    'library.get.artist': libraryGetArtists,
     'library.get.playlists': libraryGetPlaylists,
     'mysonos.export.item': mysonosExportItem,
     'mysonos.get.items': mysonosGetItems,
@@ -291,6 +292,43 @@ module.exports = function (RED) {
     
     const list
       = await getMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
+    
+    // add ip address to albumUri
+    const payload = list.map(element => {
+      if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
+        element.artUri = tsPlayer.urlObject.origin + element.artUri
+      }  
+      element.processingType = 'queue'
+      return element
+    })
+
+    return { payload }
+  }
+
+  /**  Outputs array Music-Library artists - search string is optional
+   * @param {object} msg incoming message
+   * @param {string} [msg.payload] search string
+   * @param {string} [msg.requestedCount= REQUESTED_COUNT_ML_DEFALUT] 
+   *                  maximum number of found albums
+   * @param {object} tsPlayer sonos-ts player with urlObject as Javascript build-in URL
+   *
+   * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
+   * array may be empty
+   *
+   * @throws {error} all methods
+   */
+  async function libraryGetArtists (msg, tsPlayer) {
+    debug('method:%s', 'libraryGetArtist')
+    // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
+    const requestedCount = validToInteger(
+      msg, 'requestedCount', 1, 9999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
+
+    // payload as title search string is optional.
+    const validSearch
+      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
+    
+    const list
+      = await getMusicLibraryItems('A:ARTIST:', validSearch, requestedCount, tsPlayer)
     
     // add ip address to albumUri
     const payload = list.map(element => {
