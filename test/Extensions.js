@@ -369,7 +369,7 @@ describe('validatedGroupProperties function', function () {
       .catch(function (err) {
         expect(function () {
           throw err 
-        }).to.throw('volume (msg.volume) >>-1) is out of range')
+        }).to.throw('volume (msg.volume) >>-1 is out of range')
       })
   })
 
@@ -383,7 +383,7 @@ describe('validatedGroupProperties function', function () {
       .catch(function (err) {
         expect(function () {
           throw err 
-        }).to.throw('volume (msg.volume) >>101) is out of range')
+        }).to.throw('volume (msg.volume) >>101 is out of range')
       })
   })
 
@@ -397,7 +397,7 @@ describe('validatedGroupProperties function', function () {
       .catch(function (err) {
         expect(function () {
           throw err 
-        }).to.throw('volume (msg.volume) >>-1) is out of range')
+        }).to.throw('volume (msg.volume) >>-1 is out of range')
       })
   })
   it('playerName ok, volume string 101 throws error', async () => {
@@ -410,7 +410,7 @@ describe('validatedGroupProperties function', function () {
       .catch(function (err) {
         expect(function () {
           throw err 
-        }).to.throw('volume (msg.volume) >>101) is out of range')
+        }).to.throw('volume (msg.volume) >>101 is out of range')
       })
   })
 

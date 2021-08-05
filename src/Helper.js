@@ -124,14 +124,14 @@ module.exports = {
 
   /** Validates and converts msg[propertyName] to number (integer). 
    * 
-   * Exactly in that case, when the msg[propertyName] is optional, the defaultValue must be given! 
+   * Exactly in that case, when the msg[propertyName] is optional, the defaultValue must be given:
    * - No defaultValue (= msg[propertyName] required): msg[propertyName] is returned (if valid)
    * - defaultValue exist: if msg[propertyName] exist it is used, otherwise defaultValue 
    * 
    * min, max should be in range VALIDATION_INTEGER_MINIMUM to VALIDATION_INTEGER_MAXIMUM
    * as that correspondent to REGEX check 4 signed digits
    * defaultValue and msg[propertyName] must be in range [min, max]
-   * Execption: defaultValue may also be -1 - used for volume control
+   * Exeception: defaultValue may also be -1 and out of range: used for volume control
    *  
    * @param {object} msg Node-RED message
    * @param {(string|number)} msg.propertyName item, to be validated, converted

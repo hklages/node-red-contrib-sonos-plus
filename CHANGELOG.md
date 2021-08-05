@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 
 - universal node: typo in DesiredFirstTrackNumberEnqueued
 
+- internal: player.* replaced executeActionV6 with ts node sonos direct commands
+
 ### [5.2.0] 2021-08-03
 
 #### Added
