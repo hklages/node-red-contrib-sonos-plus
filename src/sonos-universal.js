@@ -2387,7 +2387,7 @@ module.exports = function (RED) {
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     await ts1Player.RenderingControlService.SetRelativeVolume(
-      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': adjustVolume })
+      { 'InstanceID': 0, 'Channel': 'Master', 'Adjustment': adjustVolume })
 
     return {}
   }
@@ -2428,8 +2428,9 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const payload = await ts1Player.RenderingControlService.GetBass(
+    const result = await ts1Player.RenderingControlService.GetBass(
       { 'InstanceID': 0 })
+    const payload = result.CurrentBass
 
     return { payload }
   }
@@ -2450,8 +2451,8 @@ module.exports = function (RED) {
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     const result = await ts1Player.DevicePropertiesService.GetButtonLockState()
-    const payload = result.CurrentButtonLockState
     
+    const payload = result.CurrentButtonLockState.toLowerCase()
     return { payload }
   }
 
@@ -2498,13 +2499,15 @@ module.exports = function (RED) {
     }
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    let payload = await ts1Player.RenderingControlService.GetEQ(args)
+    const result = await ts1Player.RenderingControlService.GetEQ(args)
+    let payload = result.CurrentValue
     if (!isTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} player response is undefined`)
     }
     if (args.EQType !== 'SubGain') {
-      payload = (payload === '1' ? 'on' : 'off')
+      payload = (payload === 1 ? 'on' : 'off')
     }
+    // else SubGain is value
 
     return { payload }
   }
@@ -2524,9 +2527,10 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     // returns On or Off
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const state = await ts1Player.DevicePropertiesService.GetLEDState({})
+    const result = await ts1Player.DevicePropertiesService.GetLEDState({})
     
-    return { 'payload': state.toLowerCase() }
+    const payload = result.CurrentLEDState.toLowerCase()
+    return { payload }
   }
 
   /**
@@ -2544,10 +2548,11 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const loudness = await ts1Player.RenderingControlService.GetLoudness(
+    const result = await ts1Player.RenderingControlService.GetLoudness(
       { 'InstanceID': 0, 'Channel': 'Master' })
-
-    return { 'payload': (loudness === '1' ? 'on' : 'off') }
+    
+    const payload = (result.CurrentLoudness ? 'on' : 'off')
+    return { payload }
   }
 
   /**
@@ -2565,10 +2570,11 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const mutestate = await ts1Player.RenderingControlService.GetMute(
+    const result = await ts1Player.RenderingControlService.GetMute(
       { 'InstanceID': 0, 'Channel': 'Master' })
-
-    return { 'payload': (mutestate === '1' ? 'on' : 'off') }
+    
+    const payload = (result.CurrentMute ? 'on' : 'off')
+    return { payload }
   }
 
   /**
@@ -2656,9 +2662,10 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const payload = await ts1Player.RenderingControlService.GetTreble(
+    const result = await ts1Player.RenderingControlService.GetTreble(
       { 'InstanceID': 0 })
 
+    const payload = result.CurrentTreble
     return { payload }
   }
 
@@ -2677,9 +2684,10 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const payload = await ts1Player.RenderingControlService.GetVolume(
+    const result = await ts1Player.RenderingControlService.GetVolume(
       { 'InstanceID': 0, 'Channel': 'Master' })
-
+    const payload = result.CurrentVolume
+    
     return { payload }
   }
 

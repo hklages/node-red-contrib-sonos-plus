@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
+- universal node: player.get.buttonlockstate now in small letter (as all othhers)
+
 - helper: validToInteger with new limits -9999 to 9999 enabling getLibrary with up to 9999 items
 
 - universal node: typo in DesiredFirstTrackNumberEnqueued
