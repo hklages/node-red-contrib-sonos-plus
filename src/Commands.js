@@ -13,7 +13,7 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, ML_REQUESTED_COUNT, ML_REQUESTS_MAXIMUM } = require('./Globals.js')
+const { PACKAGE_PREFIX, ML_REQUESTED_COUNT } = require('./Globals.js')
 
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
@@ -642,7 +642,7 @@ module.exports = {
     const objectId = type + encodeURIComponent(searchString)
     let browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
       'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-      'StartingIndex': 0, 'RequestedCount': ML_REQUESTS_MAXIMUM, 'SortCriteria': ''
+      'StartingIndex': 0, 'RequestedCount': ML_REQUESTED_COUNT, 'SortCriteria': ''
     })
     const totalMatches = browseCategory.TotalMatches
     let totalList = [] // concatanation of all http requests
