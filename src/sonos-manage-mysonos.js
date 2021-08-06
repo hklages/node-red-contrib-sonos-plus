@@ -269,7 +269,8 @@ module.exports = function (RED) {
     return { 'payload': { 'uri': firstItem.uri, 'metadata': firstItem.metadata, 'queue': true } }
   }
 
-  /**  Outputs Music-Library item (album, artist, playlist, tarck) as array - search string is optional
+  /**  Outputs Music-Library item (album, artist, playlist, tarck) as array - 
+   * search string is optional
    * @param {object} msg incoming message
    * @param {string} [msg.payload] search string, part of title
    * @param {string} msg.nrcspCmd identify the item type
@@ -280,10 +281,11 @@ module.exports = function (RED) {
    *
    * @throws {error} all methods
    */
-   async function libraryGetItem (msg, tsPlayer) {
+  async function libraryGetItem (msg, tsPlayer) {
     debug('method:%s', 'libraryGetItem')
     
     // payload as title search string is optional.
+    // eslint-disable-next-line max-len
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     let type = ''
@@ -297,7 +299,7 @@ module.exports = function (RED) {
       type = 'A:TRACKS:'
     } else {
       // Can not happen
-     }
+    }
      
     // ML_REQUESTS_MAXIMUM limits the overall number of items
     const list = await getMusicLibraryItemsV2(type, validSearch, ML_REQUESTS_MAXIMUM, tsPlayer)
@@ -315,7 +317,6 @@ module.exports = function (RED) {
     return { payload }
   }
   
-
   /**  Export first My-Sonos item matching search string.
    * @param {object} msg incoming message
    * @param {string} msg.payload search string

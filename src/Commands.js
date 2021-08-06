@@ -13,7 +13,7 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, REQUESTED_COUNT_ML, ML_REQUESTS_MAXIMUM } = require('./Globals.js')
+const { PACKAGE_PREFIX, ML_REQUESTED_COUNT, ML_REQUESTS_MAXIMUM } = require('./Globals.js')
 
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
@@ -625,7 +625,7 @@ module.exports = {
    * @throws {error} all methods
    */
   getMusicLibraryItemsV2: async (type, searchString, requestLimit, tsPlayer) => { 
-    debug('method:%s', 'getMusicLibraryItems')
+    debug('method:%s', 'getMusicLibraryItemsV2')
 
     // validate parameter
     if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(type)) {
@@ -657,14 +657,14 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
     }
     totalList = totalList.concat(list)
-    if (totalMatches > REQUESTED_COUNT_ML) {
+    if (totalMatches > ML_REQUESTED_COUNT) {
       // we need to fetch the rest: 0..999 no additional request/ 1000..1999 1 add request, ...
-      const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / REQUESTED_COUNT_ML)) 
+      const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / ML_REQUESTED_COUNT)) 
       for (let i = 1; i < iterations + 1 ; i++) { // we start at 1
         browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
           'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-          'StartingIndex': i * REQUESTED_COUNT_ML,
-          'RequestedCount': REQUESTED_COUNT_ML, 'SortCriteria': ''
+          'StartingIndex': i * ML_REQUESTED_COUNT,
+          'RequestedCount': ML_REQUESTED_COUNT, 'SortCriteria': ''
         })
         if (type === 'A:TRACKS:') {
           list = await parseBrowseToArray(browseCategory, 'item')    
