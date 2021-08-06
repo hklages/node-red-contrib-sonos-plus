@@ -892,7 +892,8 @@ module.exports = function (RED) {
    *  Play playlist, album, artist, track from Music Library on 
    *  group (combination of export, play.export)
    * @param {object} msg incoming message
-   * @param {string} msg.payload search string, part of playlist title
+   * @param {string} msg.payload search string, part of item title
+   * @param {string} msg.nrcspCmd identify the item type
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level.
    * @param {boolean} [msg.clearQueue=true] if true and export.queue = true the queue is cleared.
@@ -928,8 +929,8 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
     const exportData = {
-      'uri': list[0].uri,
-      'metadata': replaceAposColon(list[0].uri), 
+      'uri': replaceAposColon(list[0].uri),
+      'metadata': list[0].uri, 
       'queue': true
     }
     // hand over to play.export

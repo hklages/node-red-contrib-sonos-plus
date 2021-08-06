@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.4] 2021-08-06
+
+#### Changed
+
+- my sonos node: library.get.* now fetches up to 10,000 items - no need anymore for "requestedCount" property.
+
+- internal node: code sharing of library.get.*
+
 ### [5.2.3] 2021-08-04
 
 #### Changed

@@ -13,7 +13,7 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX } = require('./Globals.js')
+const { PACKAGE_PREFIX, REQUESTED_COUNT_ML, ML_REQUESTS_MAXIMUM } = require('./Globals.js')
 
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
@@ -607,7 +607,78 @@ module.exports = {
     if (!isTruthy(list)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
     }
-    
+
     return list
+  },
+
+  /** Version 2: Get array of all Music Library items matching category and optional search string
+   * Submitts several requests if necessary
+   * @param {string} type such as 'Album:', 'Playlist:'
+   * @param {string} [searchString=''] any search string, being used in category
+   * @param {number} requestLimit maxmimum number of calls, must be >=1
+   * @param {object} tsPlayer sonos-ts player
+   * 
+   * @returns {Promise<exportedItem[]>} all Music Library items matching criteria, could be empty
+   *
+   * @throws {error} 'category is unknown', 'searchString is not string', 
+   * 'requestedLimit is not number', 'response form parsing Browse is invalid'
+   * @throws {error} all methods
+   */
+  getMusicLibraryItemsV2: async (type, searchString, requestLimit, tsPlayer) => { 
+    debug('method:%s', 'getMusicLibraryItems')
+
+    // validate parameter
+    if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(type)) {
+      throw new Error(`${PACKAGE_PREFIX} category is unknown`)
+    }
+    if (typeof searchString !== 'string') {
+      throw new Error(`${PACKAGE_PREFIX} searchString is not string`)
+    }
+    if (typeof requestLimit !== 'number') {
+      throw new Error(`${PACKAGE_PREFIX} requestLimit is not number`)
+    }
+    
+    // The search string must be encoded- but not the category (:)
+    const objectId = type + encodeURIComponent(searchString)
+    let browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
+      'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': ML_REQUESTS_MAXIMUM, 'SortCriteria': ''
+    })
+    const totalMatches = browseCategory.TotalMatches
+    let totalList = [] // concatanation of all http requests
+
+    let list // single list from one http request
+    if (type === 'A:TRACKS:') {
+      list = await parseBrowseToArray(browseCategory, 'item')    
+    } else {
+      list = await parseBrowseToArray(browseCategory, 'container')  
+    }
+    if (!isTruthy(list)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
+    }
+    totalList = totalList.concat(list)
+    if (totalMatches > REQUESTED_COUNT_ML) {
+      // we need to fetch the rest: 0..999 no additional request/ 1000..1999 1 add request, ...
+      const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / REQUESTED_COUNT_ML)) 
+      for (let i = 1; i < iterations + 1 ; i++) { // we start at 1
+        browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
+          'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+          'StartingIndex': i * REQUESTED_COUNT_ML,
+          'RequestedCount': REQUESTED_COUNT_ML, 'SortCriteria': ''
+        })
+        if (type === 'A:TRACKS:') {
+          list = await parseBrowseToArray(browseCategory, 'item')    
+        } else {
+          list = await parseBrowseToArray(browseCategory, 'container')  
+        }
+        if (!isTruthy(list)) {
+          throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
+        }
+        totalList = totalList.concat(list)
+      }
+    }
+    
+    return totalList
   }
+
 }

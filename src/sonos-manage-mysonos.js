@@ -12,13 +12,13 @@
 
 const {
   PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_SERIAL,
-  REQUESTED_COUNT_ML_DEFAULT, REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_MYSONOS_DEFAULT,
+  ML_REQUESTS_MAXIMUM, REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_MYSONOS_DEFAULT,
   REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMusicLibraryItems, getMySonos
+const { getMusicLibraryItems, getMusicLibraryItemsV2, getMySonos
 } = require('./Commands.js')
 
 const { failure, decideCreateNodeOn, success, replaceAposColon
@@ -39,9 +39,10 @@ module.exports = function (RED) {
     'library.export.artist': libraryExportItem,
     'library.export.playlist': libraryExportItem,
     'library.export.track': libraryExportItem,
-    'library.get.albums': libraryGetAlbums,
-    'library.get.artists': libraryGetArtists,
-    'library.get.playlists': libraryGetPlaylists,
+    'library.get.albums': libraryGetItem,
+    'library.get.artists': libraryGetItem,
+    'library.get.playlists': libraryGetItem,
+    'library.get.tracks': libraryGetItem,
     'mysonos.export.item': mysonosExportItem,
     'mysonos.get.items': mysonosGetItems,
     'mysonos.queue.item': mysonosQueueItem,
@@ -268,117 +269,52 @@ module.exports = function (RED) {
     return { 'payload': { 'uri': firstItem.uri, 'metadata': firstItem.metadata, 'queue': true } }
   }
 
-  /**  Outputs array Music-Library albums - search string is optional
+  /**  Outputs Music-Library item (album, artist, playlist, tarck) as array - search string is optional
    * @param {object} msg incoming message
-   * @param {string} [msg.payload] search string
-   * @param {string} [msg.requestedCount= REQUESTED_COUNT_ML_DEFALUT] 
-   *                  maximum number of found albums
-   * @param {object} tsPlayer sonos-ts player with urlObject as Javascript build-in URL
+   * @param {string} [msg.payload] search string, part of title
+   * @param {string} msg.nrcspCmd identify the item type
+   * @param {object} tsPlayer node-sonos player with urlObject - as default
    *
    * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
    * array may be empty
    *
    * @throws {error} all methods
    */
-  async function libraryGetAlbums (msg, tsPlayer) {
-    debug('method:%s', 'libraryGetAlbums')
-    // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
-    const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 9999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
-
+   async function libraryGetItem (msg, tsPlayer) {
+    debug('method:%s', 'libraryGetItem')
+    
     // payload as title search string is optional.
-    const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
+    const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
-    const list
-      = await getMusicLibraryItems('A:ALBUM:', validSearch, requestedCount, tsPlayer)
+    let type = ''
+    if (msg.nrcspCmd === 'library.get.playlists') {
+      type = 'A:PLAYLISTS:'
+    } else if (msg.nrcspCmd === 'library.get.albums') {
+      type = 'A:ALBUM:'
+    } else if (msg.nrcspCmd === 'library.get.artists') {
+      type = 'A:ARTIST:'
+    } else if (msg.nrcspCmd === 'library.get.tracks') {
+      type = 'A:TRACKS:'
+    } else {
+      // Can not happen
+     }
+     
+    // ML_REQUESTS_MAXIMUM limits the overall number of items
+    const list = await getMusicLibraryItemsV2(type, validSearch, ML_REQUESTS_MAXIMUM, tsPlayer)
     
-    // add ip address to albumUri
+    // add ip address to albumUri, processingType, modify uri (apos;)
     const payload = list.map(element => {
       if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
         element.artUri = tsPlayer.urlObject.origin + element.artUri
       }  
       element.processingType = 'queue'
+      element.uri = replaceAposColon(element.uri)
       return element
     })
 
     return { payload }
   }
-
-  /**  Outputs array Music-Library artists - search string is optional
-   * @param {object} msg incoming message
-   * @param {string} [msg.payload] search string
-   * @param {string} [msg.requestedCount= REQUESTED_COUNT_ML_DEFALUT] 
-   *                  maximum number of found albums
-   * @param {object} tsPlayer sonos-ts player with urlObject as Javascript build-in URL
-   *
-   * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
-   * array may be empty
-   *
-   * @throws {error} all methods
-   */
-  async function libraryGetArtists (msg, tsPlayer) {
-    debug('method:%s', 'libraryGetArtist')
-    // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
-    const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 9999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
-
-    // payload as title search string is optional.
-    const validSearch
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
-    
-    const list
-      = await getMusicLibraryItems('A:ARTIST:', validSearch, requestedCount, tsPlayer)
-    
-    // add ip address to albumUri
-    const payload = list.map(element => {
-      if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
-        element.artUri = tsPlayer.urlObject.origin + element.artUri
-      }  
-      element.processingType = 'queue'
-      return element
-    })
-
-    return { payload }
-  }
-
-  /**  Outputs array Music-Library playlists - search string is optional
-   * @param {object} msg incoming message
-   * @param {string} msg.payload search string
-   * @param {string} [msg.requestedCount= REQUESTED_COUNT_ML_DEFALUT] 
-   *                  maximum number of found albums
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise} {payload: array of objects: uri metadata queue title artist} 
-   * array may be empty
-   *
-   * @throws {error} all methods
-   */
-  async function libraryGetPlaylists (msg, tsPlayer) {
-    debug('method:%s', 'libraryGetPlaylists')
-    // msg.requestedCount is optional - if missing default is REQUESTED_COUNT_ML_DEFAULT
-    const requestedCount = validToInteger(
-      msg, 'requestedCount', 1, 9999, 'requested count', REQUESTED_COUNT_ML_DEFAULT)
-
-    // payload as title search string is optional.
-    const validSearch
-      // eslint-disable-next-line max-len
-      = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
-    
-    const list
-      = await getMusicLibraryItems('A:PLAYLISTS:', validSearch, requestedCount, tsPlayer)
-    
-    // add ip address to albumUri
-    const payload = list.map(element => {
-      if (typeof element.artUri === 'string' && element.artUri.startsWith('/getaa')) {
-        element.artUri = tsPlayer.urlObject.origin + element.artUri
-      }  
-      element.processingType = 'queue'
-      return element
-    })
-
-    return { payload }
-  }
+  
 
   /**  Export first My-Sonos item matching search string.
    * @param {object} msg incoming message

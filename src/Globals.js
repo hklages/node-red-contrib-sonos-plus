@@ -17,10 +17,9 @@ module.exports = {
   TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
   TIMEOUT_DISCOVERY: 4, //in seconds
 
-  REQUESTED_COUNT_PLAYLISTS: 200,
-  REQUESTED_COUNT_QUEUE: 500,
   REQUESTED_COUNT_ML_EXPORT: 1,
-  REQUESTED_COUNT_ML_DEFAULT: 1000,
+  ML_REQUESTS_MAXIMUM: 10, // Music library: maximum number of http requests submitted
+  ML_REQUESTED_COUNT: 1000,  // Music library: Should always be 1000, the allowed maximum
   REQUESTED_COUNT_MYSONOS_DEFAULT: 200,
   REQUESTED_COUNT_MYSONOS_EXPORT: 200, // because no filter
   VALIDATION_INTEGER_MAXIMUM: 9999, // because of validToInteger, REGEX_4DIGITSSIGN

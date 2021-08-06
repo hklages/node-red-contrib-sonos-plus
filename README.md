@@ -28,6 +28,9 @@ This package is in no way connected to or supported by [Sonos Inc.](https://www.
 Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
 ### NEWS
+
+- my sonos node: library.get.* now fetches up to 10,000 items (multiple calls) - no need anymore for "requestedCount" property.
+
 - universal node: player.get.buttonlockstate now in small letter (as all othhers)
 
 - universal node: new commands group.queue.library.*

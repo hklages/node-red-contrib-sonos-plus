@@ -350,7 +350,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line237">line 237</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line239">line 239</a>
     </li></ul></dd>
     
 
@@ -460,7 +460,7 @@
     
 
     
-    <h4 class="name" id="~libraryGetAlbums"><span class="type-signature">(async, inner) </span>libraryGetAlbums<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
+    <h4 class="name" id="~libraryGetItem"><span class="type-signature">(async, inner) </span>libraryGetItem<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
     
 
     
@@ -468,7 +468,7 @@
 
 
 <div class="description">
-    Outputs array Music-Library albums - search string is optional
+    Outputs Music-Library item (album, artist, playlist, tarck) as array - search string is optional
 </div>
 
 
@@ -538,8 +538,6 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -575,19 +573,15 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
-            <td class="description last">search string</td>
+            <td class="description last">search string, part of title</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>requestedCount</code></td>
+                <td class="name"><code>nrcspCmd</code></td>
             
 
             <td class="type">
@@ -602,8 +596,6 @@
             
                 <td class="attributes">
                 
-                    &lt;optional><br>
-                
 
                 
 
@@ -612,14 +604,8 @@
             
 
             
-                <td class="default">
-                
-                    REQUESTED_COUNT_ML_DEFALUT
-                
-                </td>
-            
 
-            <td class="description last">maximum number of found albums</td>
+            <td class="description last">identify the item type</td>
         </tr>
 
     
@@ -649,7 +635,7 @@
 
             
 
-            <td class="description last">sonos-ts player with urlObject as Javascript build-in URL</td>
+            <td class="description last">node-sonos player with urlObject - as default</td>
         </tr>
 
     
@@ -690,322 +676,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line282">line 282</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        all methods
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    {payload: array of objects: uri metadata queue title artist} array may be empty
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">promise</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="~libraryGetPlaylists"><span class="type-signature">(async, inner) </span>libraryGetPlaylists<span class="signature">(msg, tsPlayer)</span><span class="type-signature"> &rarr; {promise}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Outputs array Music-Library playlists - search string is optional
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>msg</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">incoming message
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>payload</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">search string</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>requestedCount</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    REQUESTED_COUNT_ML_DEFALUT
-                
-                </td>
-            
-
-            <td class="description last">maximum number of found albums</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>tsPlayer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">sonos-ts player with .urlObject as Javascript build-in URL</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line319">line 319</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line283">line 283</a>
     </li></ul></dd>
     
 
@@ -1265,7 +936,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line357">line 357</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line331">line 331</a>
     </li></ul></dd>
     
 
@@ -1482,7 +1153,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line393">line 393</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line367">line 367</a>
     </li></ul></dd>
     
 
@@ -1748,7 +1419,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line414">line 414</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line388">line 388</a>
     </li></ul></dd>
     
 
@@ -2041,7 +1712,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line454">line 454</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line428">line 428</a>
     </li></ul></dd>
     
 
@@ -2380,7 +2051,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line160">line 160</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line162">line 162</a>
     </li></ul></dd>
     
 
@@ -2539,7 +2210,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line53">line 53</a>
+        <a href="sonos-manage-mysonos.js.html">sonos-manage-mysonos.js</a>, <a href="sonos-manage-mysonos.js.html#line55">line 55</a>
     </li></ul></dd>
     
 
@@ -2591,7 +2262,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Aug 05 2021 12:05:09 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Fri Aug 06 2021 14:40:07 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
