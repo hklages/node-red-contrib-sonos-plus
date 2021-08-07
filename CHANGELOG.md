@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 
 - internal: replacing executeAction for many group.* commands
 
+- player.adjust.volume now outputs the new volume
+
 ### [5.2.4] 2021-08-06
 
 #### Changed

@@ -2383,28 +2383,28 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Adjust player volume.
+   *  Adjust player volume and outputs new volume.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload -100 to +100 integer.
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<object>} {}
+   * @returns {promise<object>} property newVolume as string, range 0 ... 100
    *
    * @throws {error} all methods
    */
   async function playerAdjustVolume (msg, tsPlayer) {
     // msg.payload volume is required.
     const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
-
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.RenderingControlService.SetRelativeVolume(
+    const result = await ts1Player.RenderingControlService.SetRelativeVolume(
       { 'InstanceID': 0, 'Channel': 'Master', 'Adjustment': adjustVolume })
 
-    return {}
+    const newVolume = result.NewVolume
+    return { newVolume } // caution newVolume property!
   }
 
   /**
