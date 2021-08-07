@@ -340,10 +340,9 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} New coordinator must be different from current`)
     }
 
-    await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
-      '/MediaRenderer/AVTransport/Control', 'DelegateGroupCoordinationTo',
-      { 'InstanceID': 0,
-        'NewCoordinator': groupData.members[indexNewCoordinator].uuid,
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    await ts1Player.AVTransportService.DelegateGroupCoordinationTo(
+      { 'InstanceID': 0, 'NewCoordinator': groupData.members[indexNewCoordinator].uuid,
         'RejoinGroup': true })
 
     return {}
@@ -366,10 +365,12 @@ module.exports = function (RED) {
     const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const newVolume = await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'SetRelativeGroupVolume',
-      { 'InstanceID': 0, 'Adjustment': adjustVolume })
 
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    const result = await tsCoordinator.GroupRenderingControlService.SetRelativeGroupVolume(
+      { 'InstanceID': 0, 'Adjustment': adjustVolume })
+    
+    const newVolume = result.NewVolume
     return { newVolume } // caution newVolume property!
   }
 
@@ -386,8 +387,9 @@ module.exports = function (RED) {
   async function groupCancelSleeptimer (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'ConfigureSleepTimer',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.AVTransportService.groupCancelSleeptimer(
       { 'InstanceID': 0, 'NewSleepTimerDuration': '' })
     
     return {}
@@ -465,8 +467,9 @@ module.exports = function (RED) {
   async function groupCreateVolumeSnapshot (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'SnapshotGroupVolume',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.GroupRenderingControlService.SnapshotGroupVolume(
       { 'InstanceID': 0 }) 
 
     return {}
@@ -486,10 +489,12 @@ module.exports = function (RED) {
   async function groupGetTransportActions (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const payload = await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'GetCurrentTransportActions',
-      { 'InstanceID': 0 })
 
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    const result = await tsCoordinator.AVTransportService.GetCurrentTransportActions(
+      { 'InstanceID': 0 })
+    
+    const payload = result.Actions
     return { payload }
   }
 
@@ -506,11 +511,13 @@ module.exports = function (RED) {
   async function groupGetCrossfadeMode (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const state = await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'GetCrossfadeMode',
-      { 'InstanceID': 0 })
 
-    return { 'payload': (state === '1' ? 'on' : 'off') }
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    const result = await tsCoordinator.AVTransportService.GetCrossfadeMode(
+      { 'InstanceID': 0 })
+    
+    const payload = (result.CrossfadeMode === '1' ? 'on' : 'off')
+    return { payload }
   }
 
   /**
@@ -543,11 +550,13 @@ module.exports = function (RED) {
   async function groupGetMute (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const state = await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupMute',
-      { 'InstanceID': 0 })
 
-    return { 'payload': state === '1' ? 'on' : 'off' }
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    const result = await tsCoordinator.GroupRenderingControlService.GetGroupMute(
+      { 'InstanceID': 0 })
+    
+    const payload = (result.CurrentMute ? 'on' : 'off')
+    return { payload }
   }
 
   /**
@@ -604,15 +613,16 @@ module.exports = function (RED) {
   async function groupGetSleeptimer (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const sleep = await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'GetRemainingSleepTimerDuration',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    const result = await tsCoordinator.AVTransportService.GetRemainingSleepTimerDuration(
       { 'InstanceID': 0 })
 
-    if (!isTruthyProperty(sleep, ['RemainingSleepTimerDuration'])) {
+    if (!isTruthyProperty(result, ['RemainingSleepTimerDuration'])) {
       throw new Error(`${PACKAGE_PREFIX}: RemainingSleepTimerDuration is invalid`)
     }
     // eslint-disable-next-line max-len
-    const payload = (sleep.RemainingSleepTimerDuration === '' ? 'none' : sleep.RemainingSleepTimerDuration) 
+    const payload = (result.RemainingSleepTimerDuration === '' ? 'none' : result.RemainingSleepTimerDuration) 
     
     return { payload }
   }
@@ -640,16 +650,16 @@ module.exports = function (RED) {
     tsCoordinator.urlObject = groupData.members[0].urlObject
   
     const playbackstate = await getPlaybackstate(tsCoordinator.urlObject)
+    
+    let result
+    result = tsCoordinator.GroupRenderingControlService.GetGroupMute(
+      { 'InstanceID': 0 })
+    const muteState = (result.CurrentMute === '1' ? 'on' : 'off')
+    
+    result = await tsCoordinator.GroupRenderingControlService.GetGroupVolume(
+      { 'InstanceID': 0 })
+    const volume = result.CurrentVolume
 
-    const state = await executeActionV6(groupData.members[0].urlObject,
-      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupMute',
-      { 'InstanceID': 0 })
-    const muteState = (state === '1' ? 'on' : 'off')
-    
-    const volume = await executeActionV6(groupData.members[0].urlObject,
-      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupVolume',
-      { 'InstanceID': 0 })
-    
     // Get current media data and extract queueActivated
     const mediaData = await tsCoordinator.AVTransportService.GetMediaInfo()
     if (!isTruthy(mediaData)) {
@@ -663,13 +673,12 @@ module.exports = function (RED) {
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
     // Queue mode is in parameter PlayMode
-    const transportSettings = await executeActionV6(tsCoordinator.urlObject,
-      '/MediaRenderer/AVTransport/Control', 'GetTransportSettings',
+    result = tsCoordinator.AVTransportService.GetTransportSettings(
       { 'InstanceID': 0 })
-    if (!isTruthyPropertyStringNotEmpty(transportSettings, ['PlayMode'])) {
+    if (!isTruthyPropertyStringNotEmpty(result, ['PlayMode'])) {
       throw new Error(`${PACKAGE_PREFIX}: PlayMode is invalid/missing/not string`)
     }
-    const queueMode = transportSettings.PlayMode
+    const queueMode = result.PlayMode
 
     return {
       'payload': {
@@ -805,10 +814,12 @@ module.exports = function (RED) {
   async function groupGetVolume (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const payload = await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'GetGroupVolume',
-      { 'InstanceID': 0 })
 
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    const result = await tsCoordinator.GroupRenderingControlService.GetGroupVolume(
+      { 'InstanceID': 0 })
+    
+    const payload = result.CurrentVolume
     return { payload }
   }
 
@@ -1317,8 +1328,9 @@ module.exports = function (RED) {
 
     validatedUri = `x-rincon-mp3radio://${validatedUri}`
     const coordinatorUrlObject = groupData.members[0].urlObject
-    await executeActionV6(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.AVTransportService.SetAVTransportURI(
       { 'InstanceID': 0, 'CurrentURI': validatedUri, 'CurrentURIMetaData': metadata })
     
     await play(coordinatorUrlObject)
@@ -1642,8 +1654,7 @@ module.exports = function (RED) {
     if (queueItems.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
-    await executeActionV6(groupData.members[coordinatorIndex].urlObject, 
-      '/MediaRenderer/AVTransport/Control', 'SaveQueue',
+    await tsCoordinator.AVTransportService.SaveQueue(
       { 'InstanceID': 0, 'Title': validatedTitle, 'ObjectID': '' }) 
     
     return {}
@@ -1665,8 +1676,9 @@ module.exports = function (RED) {
     const validTime = validRegex(msg, 'payload', REGEX_TIME, 'seek time')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'Seek',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.AVTransportService.Seek(
       { 'InstanceID': 0, 'Target': validTime, 'Unit': 'REL_TIME' })
     
     return {}
@@ -1689,8 +1701,9 @@ module.exports = function (RED) {
     const validTime = validRegex(msg, 'payload', REGEX_TIME_DELTA, 'relative seek time')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'Seek',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.AVTransportService.Seek(
       { 'InstanceID': 0, 'Target': validTime, 'Unit': 'TIME_DELTA' })
 
     return {}
@@ -1712,8 +1725,9 @@ module.exports = function (RED) {
     const newState = isOnOff(msg, 'payload', 'crosssfade state')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/AVTransport/Control', 'SetCrossfadeMode',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.AVTransportService.SetCrossfadeMode(
       { 'InstanceID': 0, 'CrossfadeMode': newState })
 
     return {}
@@ -1735,8 +1749,9 @@ module.exports = function (RED) {
     const newState = isOnOff(msg, 'payload', 'mute state')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject, // coordinator at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'SetGroupMute',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.GroupRenderingControlService.SetGroupMute(
       { 'InstanceID': 0, 'DesiredMute': newState })
 
     return {}
@@ -1784,8 +1799,7 @@ module.exports = function (RED) {
     }
 
     // SONOS only accepts uppercase!
-    await executeActionV6(groupData.members[0].urlObject,  // coordinator is at 0
-      '/MediaRenderer/AVTransport/Control', 'SetPlayMode',
+    await tsCoordinator.AVTransportService.SetPlayMode(
       { 'InstanceID': 0, 'NewPlayMode': newState.toUpperCase() })
 
     return {}
@@ -1808,8 +1822,9 @@ module.exports = function (RED) {
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject,  // coordinator is at 0
-      '/MediaRenderer/AVTransport/Control', 'ConfigureSleepTimer',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.AVTransportService.ConfigureSleepTimer(
       { 'InstanceID': 0, 'NewSleepTimerDuration': validTime })
 
     return {}
@@ -1830,8 +1845,9 @@ module.exports = function (RED) {
     const newVolume = validToInteger(msg, 'payload', -100, +100, 'new volume')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[0].urlObject,  // coordinator is at 0
-      '/MediaRenderer/GroupRenderingControl/Control', 'SetGroupVolume',
+
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    await tsCoordinator.GroupRenderingControlService.SetGroupVolume(
       { 'InstanceID': 0, 'DesiredVolume': newVolume })
 
     return {}
@@ -1851,7 +1867,6 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[0].urlObject
     await tsCoordinator.Stop()
     
     return {}
@@ -1871,7 +1886,6 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[0].urlObject
     await tsCoordinator.TogglePlayback()
 
     return {}
@@ -2477,11 +2491,11 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
 
     // Verify that player has a TV mode
-    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const deviceInfo = await getDeviceInfo(ts1Player.urlObject, TIMEOUT_HTTP_REQUEST)
     const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'HT_PLAYBACK'))
     if (found === -1) {
       throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
@@ -2499,7 +2513,6 @@ module.exports = function (RED) {
       // Can not happen
     }
 
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     const result = await ts1Player.RenderingControlService.GetEQ(args)
     let payload = result.CurrentValue
     if (!isTruthy(payload)) {
@@ -2591,10 +2604,9 @@ module.exports = function (RED) {
   async function playerGetProperties (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
-    const properties = await getDeviceProperties(tsSinglePlayer.urlObject)
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const properties = await getDeviceProperties(ts1Player.urlObject)
     const payload = Object.assign({}, properties)
     payload.uuid = payload.UDN.substring('uuid:'.length)
     payload.playerName = payload.roomName
@@ -2615,10 +2627,9 @@ module.exports = function (RED) {
   async function playerGetQueue (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
-    const payload = await getSonosQueue(tsSinglePlayer, REQUESTED_COUNT_QUEUE)
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const payload = await getSonosQueue(ts1Player, REQUESTED_COUNT_QUEUE)
 
     return { payload }
   }
@@ -2687,8 +2698,8 @@ module.exports = function (RED) {
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     const result = await ts1Player.RenderingControlService.GetVolume(
       { 'InstanceID': 0, 'Channel': 'Master' })
-    const payload = result.CurrentVolume
     
+    const payload = result.CurrentVolume
     return { payload }
   }
 
@@ -2723,6 +2734,7 @@ module.exports = function (RED) {
       groupDataJoiner.members[groupDataJoiner.playerIndex].playerName
       !== groupDataToJoin.members[0].playerName) {
       // No check - always returns true. We use SetAVTransport as AddMember does not work
+
       await executeActionV6(groupDataJoiner.members[groupDataJoiner.playerIndex].urlObject,
         '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
         { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
@@ -2748,8 +2760,9 @@ module.exports = function (RED) {
   async function playerLeaveGroup (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
-      '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    await ts1Player.AVTransportService.BecomeCoordinatorOfStandaloneGroup(
       { 'InstanceID': 0 })
 
     return {}
@@ -2783,15 +2796,15 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     // eslint-disable-next-line max-len   
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
     
-    await tsSinglePlayer.SetAVTransportURI(validatedUri)
+    await ts1Player.SetAVTransportURI(validatedUri)
 
     if (validated.volume !== -1) {
-      await tsSinglePlayer.SetVolume(validated.volume)
+      await ts1Player.SetVolume(validated.volume)
     }
-    await tsSinglePlayer.Play()
+    await ts1Player.Play()
   
     return {}
   }
@@ -2814,22 +2827,21 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
     // Get the device info, check whether line in is supported and get uuid
-    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const deviceInfo = await getDeviceInfo(ts1Player.urlObject, TIMEOUT_HTTP_REQUEST)
     const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'LINE_IN'))
     if (found >= 0) {
       // get uuid
       const uuid = deviceInfo.device.id
       // No check - always returns true - will play automatically
-      await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
-        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+      await ts1Player.AVTransportService.SetAVTransportURI(
         {
           'InstanceID': 0, 'CurrentURI': `x-rincon-stream:${uuid}`, 'CurrentURIMetaData': ''
         })
       if (validated.volume !== -1) {
-        await tsSinglePlayer.SetVolume(validated.volume)
+        await ts1Player.SetVolume(validated.volume)
       }
     } else {
       throw new Error(`${PACKAGE_PREFIX} player does not support line in`)
@@ -2856,24 +2868,23 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
     // Get the device info, check whether TV is supported and get uuid
-    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const deviceInfo = await getDeviceInfo(ts1Player.urlObject, TIMEOUT_HTTP_REQUEST)
     const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'HT_PLAYBACK'))
     if (found >= 0) {
       // get uuid
       const uuid = deviceInfo.device.id
       // No check - always returns true - will play automatically
-      await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
-        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+      await ts1Player.AVTransportService.SetAVTransportURI(
         {
           'InstanceID': 0, 'CurrentURI': `x-sonos-htastream:${uuid}:spdif`,
           'CurrentURIMetaData': ''
         })
       
       if (validated.volume !== -1) {
-        await tsSinglePlayer.SetVolume(validated.volume)
+        await ts1Player.SetVolume(validated.volume)
       }
     } else {
       throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
@@ -2946,12 +2957,11 @@ module.exports = function (RED) {
   async function playerSetEQ (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
-    const tsSinglePlayer = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    tsSinglePlayer.urlObject = groupData.members[groupData.playerIndex].urlObject
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
 
     // Verify that player has a TV mode
-    const deviceInfo = await getDeviceInfo(tsSinglePlayer.urlObject, TIMEOUT_HTTP_REQUEST)
+    const deviceInfo = await getDeviceInfo(ts1Player.urlObject, TIMEOUT_HTTP_REQUEST)
     const found = deviceInfo.device.capabilities.findIndex((cap) => (cap === 'HT_PLAYBACK'))
     if (found === -1) {
       throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
@@ -2974,7 +2984,6 @@ module.exports = function (RED) {
     } else {
       // Can not happen
     }
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     await ts1Player.RenderingControlService.SetEQ(
       { 'InstanceID': 0, 'EQType': eqType, 'DesiredValue': eqValue })
 

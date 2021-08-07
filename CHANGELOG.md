@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.5] 2021-08-08
+
+#### Changed
+
+- internal: replacing executeAction for many group.* commands
+
 ### [5.2.4] 2021-08-06
 
 #### Changed
