@@ -8,7 +8,6 @@
  * 
  * @author Henning Klages
  * 
- * @since 2021-03-03
  */ 
 
 'use strict'
@@ -565,54 +564,8 @@ module.exports = {
     return transformed
   },
 
-  /** Get array of all Music Library items matching category and optional search string
-   * @param {string} type such as 'Album:', 'Playlist:'
-   * @param {string} [searchString=''] any search string, being used in category
-   * @param {number} requestedCount integer, 1 to 9999 - checked in calling procedure
-   * @param {object} tsPlayer sonos-ts player
-   * 
-   * @returns {Promise<exportedItem[]>} all Music Library items matching criteria, could be empty
-   *
-   * @throws {error} 'category is unknown', 'searchString is not string', 
-   * 'requestedCount is not number', 'response form parsing Browse Album is invalid'
-   * @throws {error} all methods
-   */
-  getMusicLibraryItems: async (type, searchString, requestedCount, tsPlayer) => { 
-    debug('method:%s', 'getMusicLibraryItems')
-
-    // validate parameter
-    if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(type)) {
-      throw new Error(`${PACKAGE_PREFIX} category is unknown`)
-    }
-    if (typeof searchString !== 'string') {
-      throw new Error(`${PACKAGE_PREFIX} searchString is not string`)
-    }
-    if (typeof requestedCount !== 'number') {
-      throw new Error(`${PACKAGE_PREFIX} requestedCount is not number`)
-    }
-    
-    // The search string must be encoded- but not the category (:)
-    const objectId = type + encodeURIComponent(searchString)
-    const browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
-      'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-      'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
-    })
-
-    let list
-    if (type === 'A:TRACKS:') {
-      list = await parseBrowseToArray(browseCategory, 'item')    
-    } else {
-      list = await parseBrowseToArray(browseCategory, 'container')  
-    }
-    if (!isTruthy(list)) {
-      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
-    }
-
-    return list
-  },
-
   /** Version 2: Get array of all Music Library items matching category and optional search string
-   * Submitts several requests if necessary
+   * Submits several requests if necessary
    * @param {string} type such as 'Album:', 'Playlist:'
    * @param {string} [searchString=''] any search string, being used in category
    * @param {number} requestLimit maxmimum number of calls, must be >=1

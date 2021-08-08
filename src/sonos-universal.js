@@ -6,7 +6,6 @@
  *
  * @author Henning Klages
  *
- * @since 2021-03-04
  */
 
 'use strict'
@@ -14,14 +13,14 @@
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_QUEUEMODES,
   REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_TIME_DELTA, REQUESTED_COUNT_PLAYLISTS,
   REQUESTED_COUNT_QUEUE, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
-  REQUESTED_COUNT_MYSONOS_EXPORT, REQUESTED_COUNT_ML_EXPORT
+  REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueue,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
-  getMusicLibraryItems
+  getMusicLibraryItemsV2
 } = require('./Commands.js')
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
@@ -389,7 +388,7 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    await tsCoordinator.AVTransportService.groupCancelSleeptimer(
+    await tsCoordinator.AVTransportService.ConfigureSleepTimer(
       { 'InstanceID': 0, 'NewSleepTimerDuration': '' })
     
     return {}
@@ -516,7 +515,7 @@ module.exports = function (RED) {
     const result = await tsCoordinator.AVTransportService.GetCrossfadeMode(
       { 'InstanceID': 0 })
     
-    const payload = (result.CrossfadeMode === '1' ? 'on' : 'off')
+    const payload = (result.CrossfadeMode ? 'on' : 'off')
     return { payload }
   }
 
@@ -618,11 +617,10 @@ module.exports = function (RED) {
     const result = await tsCoordinator.AVTransportService.GetRemainingSleepTimerDuration(
       { 'InstanceID': 0 })
 
-    if (!isTruthyProperty(result, ['RemainingSleepTimerDuration'])) {
-      throw new Error(`${PACKAGE_PREFIX}: RemainingSleepTimerDuration is invalid`)
-    }
-    // eslint-disable-next-line max-len
-    const payload = (result.RemainingSleepTimerDuration === '' ? 'none' : result.RemainingSleepTimerDuration) 
+    let payload = 'none'
+    if (isTruthyProperty(result, ['RemainingSleepTimerDuration'])) {
+      payload = result.RemainingSleepTimerDuration
+    } 
     
     return { payload }
   }
@@ -652,9 +650,9 @@ module.exports = function (RED) {
     const playbackstate = await getPlaybackstate(tsCoordinator.urlObject)
     
     let result
-    result = tsCoordinator.GroupRenderingControlService.GetGroupMute(
+    result = await tsCoordinator.GroupRenderingControlService.GetGroupMute(
       { 'InstanceID': 0 })
-    const muteState = (result.CurrentMute === '1' ? 'on' : 'off')
+    const muteState = (result.CurrentMute ? 'on' : 'off')
     
     result = await tsCoordinator.GroupRenderingControlService.GetGroupVolume(
       { 'InstanceID': 0 })
@@ -673,7 +671,7 @@ module.exports = function (RED) {
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
     // Queue mode is in parameter PlayMode
-    result = tsCoordinator.AVTransportService.GetTransportSettings(
+    result = await tsCoordinator.AVTransportService.GetTransportSettings(
       { 'InstanceID': 0 })
     if (!isTruthyPropertyStringNotEmpty(result, ['PlayMode'])) {
       throw new Error(`${PACKAGE_PREFIX}: PlayMode is invalid/missing/not string`)
@@ -935,7 +933,7 @@ module.exports = function (RED) {
       // Can not happen
     }
     
-    const list = await getMusicLibraryItems(type, validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    const list = await getMusicLibraryItemsV2(type, validSearch, ML_REQUESTS_MAXIMUM, tsPlayer)
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)
     }
@@ -1492,7 +1490,7 @@ module.exports = function (RED) {
       // Can not happen
     }
     
-    const list = await getMusicLibraryItems(type, validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    const list = await getMusicLibraryItemsV2(type, validSearch, ML_REQUESTS_MAXIMUM, tsPlayer)
     // select the first item returned
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)

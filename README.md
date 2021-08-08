@@ -31,7 +31,7 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 - my sonos node: library.get.* now fetches up to 10,000 items (multiple calls) - no need anymore for "requestedCount" property.
 
-- universal node: player.get.buttonlockstate now in small letter (as all othhers)
+- universal node: player.get.buttonlockstate now in small letter (as all others)
 
 - universal node: new commands group.queue.library.*
 

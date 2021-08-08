@@ -5,20 +5,18 @@
  * @module MySonos
  * 
  * @author Henning Klages
- * 
- * @since 2021-02-18
 */
 'use strict'
 
 const {
   PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_SERIAL,
-  ML_REQUESTS_MAXIMUM, REQUESTED_COUNT_ML_EXPORT, REQUESTED_COUNT_MYSONOS_DEFAULT,
+  ML_REQUESTS_MAXIMUM, REQUESTED_COUNT_MYSONOS_DEFAULT,
   REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
-const { getMusicLibraryItems, getMusicLibraryItemsV2, getMySonos
+const { getMusicLibraryItemsV2, getMySonos
 } = require('./Commands.js')
 
 const { failure, decideCreateNodeOn, success, replaceAposColon
@@ -255,7 +253,7 @@ module.exports = function (RED) {
       // Can not happen
     }
     
-    const list = await getMusicLibraryItems(type, validSearch, REQUESTED_COUNT_ML_EXPORT, tsPlayer)
+    const list = await getMusicLibraryItemsV2(type, validSearch, ML_REQUESTS_MAXIMUM, tsPlayer)
     // select the first item returned
     if (list.length === 0) {
       throw new Error(`${PACKAGE_PREFIX} no matching item found`)

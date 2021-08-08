@@ -5,7 +5,6 @@
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-13
 */
 
 'use strict'
@@ -17,7 +16,6 @@ module.exports = {
   TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
   TIMEOUT_DISCOVERY: 4, //in seconds
 
-  REQUESTED_COUNT_ML_EXPORT: 1,
   ML_REQUESTS_MAXIMUM: 10, // Music library: maximum number of http requests submitted
   ML_REQUESTED_COUNT: 1000,  // Music library: Should always be 1000, the allowed maximum
   REQUESTED_COUNT_MYSONOS_DEFAULT: 200,

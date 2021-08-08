@@ -63,9 +63,6 @@
     
 
     
-    <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2021-03-03</li></ul></dd>
-    
 
     
 
@@ -481,7 +478,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line240">line 240</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line239">line 239</a>
     </li></ul></dd>
     
 
@@ -669,7 +666,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line424">line 424</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line423">line 423</a>
     </li></ul></dd>
     
 
@@ -927,7 +924,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line371">line 371</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line370">line 370</a>
     </li></ul></dd>
     
 
@@ -1115,7 +1112,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line400">line 400</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line399">line 399</a>
     </li></ul></dd>
     
 
@@ -1229,346 +1226,6 @@
     
 
     
-    <h4 class="name" id=".getMusicLibraryItems"><span class="type-signature">(static) </span>getMusicLibraryItems<span class="signature">(type, searchString<span class="signature-attributes">opt</span>, requestedCount, tsPlayer)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#exportedItem">exportedItem</a>>>}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Get array of all Music Library items matching category and optional search string
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>type</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">such as 'Album:', 'Playlist:'</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>searchString</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    ''
-                
-                </td>
-            
-
-            <td class="description last">any search string, being used in category</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>requestedCount</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">integer, 1 to 9999 - checked in calling procedure</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>tsPlayer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">sonos-ts player</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line580">line 580</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-<ul>
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        'category is unknown', 'searchString is not string', 'requestedCount is not number', 'response form parsing Browse Album is invalid'
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    
-        <li>
-
-<dl>
-    <dt>
-        <div class="param-desc">
-        all methods
-        </div>
-    </dt>
-    <dd></dd>
-    <dt>
-        <dl>
-            <dt>
-                Type
-            </dt>
-            <dd>
-                
-<span class="param-type">error</span>
-
-
-            </dd>
-        </dl>
-    </dt>
-    <dd></dd>
-</dl>
-
-</li>
-    </ul>
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    all Music Library items matching criteria, could be empty
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#exportedItem">exportedItem</a>>></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
     <h4 class="name" id=".getMusicLibraryItemsV2"><span class="type-signature">(static) </span>getMusicLibraryItemsV2<span class="signature">(type, searchString<span class="signature-attributes">opt</span>, requestLimit, tsPlayer)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#exportedItem">exportedItem</a>>>}</span></h4>
     
 
@@ -1577,7 +1234,7 @@
 
 
 <div class="description">
-    Version 2: Get array of all Music Library items matching category and optional search stringSubmitts several requests if necessary
+    Version 2: Get array of all Music Library items matching category and optional search stringSubmits several requests if necessary
 </div>
 
 
@@ -1795,7 +1452,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line627">line 627</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line580">line 580</a>
     </li></ul></dd>
     
 
@@ -2033,7 +1690,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line478">line 478</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line477">line 477</a>
     </li></ul></dd>
     
 
@@ -2244,7 +1901,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line518">line 518</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line517">line 517</a>
     </li></ul></dd>
     
 
@@ -2455,7 +2112,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line548">line 548</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line547">line 547</a>
     </li></ul></dd>
     
 
@@ -2807,7 +2464,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line52">line 52</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line51">line 51</a>
     </li></ul></dd>
     
 
@@ -3226,7 +2883,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line140">line 140</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line139">line 139</a>
     </li></ul></dd>
     
 
@@ -3414,7 +3071,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line290">line 290</a>
+        <a href="Commands.js.html">Commands.js</a>, <a href="Commands.js.html#line289">line 289</a>
     </li></ul></dd>
     
 
@@ -3500,7 +3157,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sat Aug 07 2021 22:07:07 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Aug 08 2021 09:24:25 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
