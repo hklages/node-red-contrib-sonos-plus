@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.6] 2021-09-20
+
+#### Changed
+
+- update dependencies
+
 ### [5.2.5] 2021-08-08
 
 #### Changed

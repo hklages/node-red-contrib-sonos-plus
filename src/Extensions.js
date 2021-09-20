@@ -984,13 +984,15 @@ module.exports = {
     })
     
     // generate serviceName from endpoint - its always the second last
-    // SONOS endpoint is either /<device>/<serviceName>/Control or /<serviceName>/Control
+    // SONOS endpoint is either /<component>/<serviceName>/Control or /<serviceName>/Control
+    // component MediaRenderer or MediaServer
     const tmp = endpoint.split('/')  
     const serviceName = tmp[tmp.length - 2]
   
     const response
       // eslint-disable-next-line max-len
       = await module.exports.sendSoapToPlayer(playerUrl.origin, endpoint, serviceName, actionName, actionInArgs)
+    debug('xml response body as string >>%s', response.body)
 
     // Everything OK if statusCode === 200 
     // && body includes expected response value or requested value
@@ -1014,6 +1016,7 @@ module.exports = {
     const parseXMLArgs = { 'mergeAttrs': true, 'explicitArray': false, 'charkey': '' } 
     // documentation: https://www.npmjs.com/package/xml2js#options  -- don't change option!
     const bodyXml = await xml2js.parseStringPromise(response.body, parseXMLArgs)
+    debug('parsed JSON response body >>%s', JSON.stringify(bodyXml))
 
     // RESPONSE
     // The key to the core data is ['s:Envelope','s:Body',`u:${actionName}Response`]
