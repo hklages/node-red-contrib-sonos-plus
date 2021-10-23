@@ -1537,8 +1537,8 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
-    await tsCoordinator.AddUriToQueue(validatedUri)
-    return {}
+    const payload = await tsCoordinator.AddUriToQueue(validatedUri)
+    return { payload }
   }
 
   /**
