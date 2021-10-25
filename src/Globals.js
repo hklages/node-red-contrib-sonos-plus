@@ -18,6 +18,8 @@ module.exports = {
 
   ML_REQUESTS_MAXIMUM: 10, // Music library: maximum number of http requests submitted
   ML_REQUESTED_COUNT: 1000,  // Music library: Should always be 1000, the allowed maximum
+  QUEUE_REQUESTS_MAXIMUM: 10, // SONOS Queue: maximum number of http requests submitted
+  QUEUE_REQUESTED_COUNT: 1000,  // SONOS Queue: Should always be 1000, the allowed maximum
   REQUESTED_COUNT_MYSONOS_DEFAULT: 200,
   REQUESTED_COUNT_MYSONOS_EXPORT: 200, // because no filter
   VALIDATION_INTEGER_MAXIMUM: 9999, // because of validToInteger, REGEX_4DIGITSSIGN

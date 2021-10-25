@@ -12,13 +12,13 @@
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_QUEUEMODES,
   REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_TIME_DELTA, REQUESTED_COUNT_PLAYLISTS,
-  REQUESTED_COUNT_QUEUE, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
-  REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM
+  TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
+  REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
-const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueue,
+const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
   getMusicLibraryItemsV2
 } = require('./Commands.js')
@@ -52,6 +52,7 @@ module.exports = function (RED) {
     'group.get.mutestate': groupGetMute,
     'group.get.playbackstate': groupGetPlaybackstate,
     'group.get.queue': groupGetQueue,
+    'group.get.queue.length': groupGetQueueLength,
     'group.get.sleeptimer': groupGetSleeptimer,
     'group.get.state': groupGetState,
     'group.get.trackplus': groupGetTrackPlus,
@@ -594,7 +595,33 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
     tsCoordinator.urlObject = groupData.members[0].urlObject
-    const payload = await getSonosQueue(tsCoordinator, REQUESTED_COUNT_QUEUE) 
+    const payload = await getSonosQueueV2(tsCoordinator, QUEUE_REQUESTS_MAXIMUM) 
+    
+    return { payload }
+  }
+
+  /**
+   *  Get group SONOS queue length - the SONOS queue of the coordinator.
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} property payload is array of queue items as object.
+   *
+   * @throws {error} all methods
+   */
+  async function groupGetQueueLength (msg, tsPlayer) {
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+
+    // Get queue length, Q:0 = SONOS-Queue // browseQueue.TotalMatches
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    const payload = browseQueue.TotalMatches
     
     return { payload }
   }
@@ -1210,8 +1237,13 @@ module.exports = function (RED) {
     const coordinatorIndex = 0
     const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
-    const queueItems = await getSonosQueue(tsCoordinator, 10)
-    if (queueItems.length === 0) {
+
+    // Is queue empty? Q:0 = SONOS-Queue // browseQueue.TotalMatches
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    if (browseQueue.TotalMatches === 0) {
       // Queue is empty
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
@@ -1370,8 +1402,17 @@ module.exports = function (RED) {
     const coordinatorIndex = 0
     const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
-    const queueItems = await getSonosQueue(tsCoordinator, REQUESTED_COUNT_QUEUE)
-    const lastTrackInQueue = queueItems.length
+
+    // Queue sie empty? Q:0 = SONOS-Queue // browseQueue.TotalMatches
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    if (browseQueue.TotalMatches === 0) {
+      // Queue is empty
+      throw new Error(`${PACKAGE_PREFIX} queue is empty`)
+    }
+    const lastTrackInQueue = browseQueue.TotalMatches
     if (lastTrackInQueue === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
@@ -1511,12 +1552,15 @@ module.exports = function (RED) {
     if (validated.clearQueue) {
       await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
     }
-    await tsCoordinator.AVTransportService.AddURIToQueue({
+    const result = await tsCoordinator.AVTransportService.AddURIToQueue({
       InstanceID: 0, EnqueuedURI: firstItem.uri, EnqueuedURIMetaData: firstItem.metadata,
       DesiredFirstTrackNumberEnqueued: 0, EnqueueAsNext: true
     })
       
-    return {}
+    return {
+      'newQueueLength': result.NewQueueLength,
+      'firstTrackNumberEnqueued': result.FirstTrackNumberEnqueued
+    }
   }
 
   /**
@@ -1537,8 +1581,13 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
-    const payload = await tsCoordinator.AddUriToQueue(validatedUri)
-    return { payload }
+    // position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
+    const result = await tsCoordinator.AddUriToQueue(validatedUri, 0, true)
+
+    return {
+      'newQueueLength': result.NewQueueLength,
+      'firstTrackNumberEnqueued': result.FirstTrackNumberEnqueued
+    }
   }
 
   /**
@@ -1576,8 +1625,13 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
-    await tsCoordinator.AddUriToQueue(validatedUri)
-    return {}
+    // position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
+    const result = await tsCoordinator.AddUriToQueue(validatedUri, 0, true)
+
+    return {
+      'newQueueLength': result.NewQueueLength,
+      'firstTrackNumberEnqueued': result.FirstTrackNumberEnqueued
+    }
   }
 
   /**
@@ -1601,8 +1655,13 @@ module.exports = function (RED) {
     const coordinatorIndex = 0
     const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
-    const queueItems = await getSonosQueue(tsCoordinator, REQUESTED_COUNT_QUEUE)
-    const lastTrackInQueue = queueItems.length
+
+    // Get size of queue. Q:0 = SONOS-Queue // browseQueue.TotalMatches
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    const lastTrackInQueue = browseQueue.TotalMatches
     if (lastTrackInQueue === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
@@ -1648,8 +1707,18 @@ module.exports = function (RED) {
     const coordinatorIndex = 0
     const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
-    const queueItems = await getSonosQueue(tsCoordinator, REQUESTED_COUNT_QUEUE)
-    if (queueItems.length === 0) {
+
+    // Is queue empty? Q:0 = SONOS-Queue // browseQueue.TotalMatches
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    if (browseQueue.TotalMatches === 0) {
+      // Queue is empty
+      throw new Error(`${PACKAGE_PREFIX} queue is empty`)
+    }
+
+    if (browseQueue.TotalMatches === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
     await tsCoordinator.AVTransportService.SaveQueue(
@@ -1778,8 +1847,17 @@ module.exports = function (RED) {
     const coordinatorIndex = 0
     const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
-    const queueItems = await getSonosQueue(tsCoordinator, REQUESTED_COUNT_QUEUE)
-    if (queueItems.length === 0) {
+
+    // Is queue empty? Q:0 = SONOS-Queue // browseQueue.TotalMatches
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    if (browseQueue.TotalMatches === 0) {
+      // Queue is empty
+      throw new Error(`${PACKAGE_PREFIX} queue is empty`)
+    }
+    if (browseQueue.TotalMatches === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
 
@@ -2627,7 +2705,7 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
-    const payload = await getSonosQueue(ts1Player, REQUESTED_COUNT_QUEUE)
+    const payload = await getSonosQueueV2(ts1Player, QUEUE_REQUESTS_MAXIMUM) 
 
     return { payload }
   }
