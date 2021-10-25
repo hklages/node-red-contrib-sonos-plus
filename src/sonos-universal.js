@@ -25,7 +25,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 
 const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
   getMusicServiceName, getPlaybackstate, getRadioId, decideCreateNodeOn,
-  play, setVolume, success, validatedGroupProperties, replaceAposColon
+  play, setVolume, success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -105,6 +105,7 @@ module.exports = function (RED) {
     'player.adjust.volume': playerAdjustVolume,
     'player.become.standalone': playerBecomeStandalone,
     'player.get.bass': playerGetBass,
+    'player.get.batterylevel': playerGetBatteryLevel,
     'player.get.buttonlockstate': playerGetButtonLockState,
     'player.get.dialoglevel': playerGetEq,
     'player.get.led': playerGetLed,
@@ -2527,6 +2528,26 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Get player battery level
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} battery level 0 100
+   *
+   * @throws {error} all methods
+   */
+  async function playerGetBatteryLevel (msg, tsPlayer) {
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+
+    const payload = await getDeviceBatteryLevel(
+      groupData.members[groupData.playerIndex].urlObject, 1000)
+
+    return { payload }
+  }
+
+  /**
    *  Get player button lock state.
    * @param {object} msg incoming message
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
@@ -2554,7 +2575,7 @@ module.exports = function (RED) {
    * @param {string} msg.nrcspCmd command
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<object>} propoerty payload either nightmode (on|off), 
+   * @returns {promise<object>} property payload either nightmode (on|off), 
    * subgain(nubmer), dialogLevel(on|off)
    *
    * @throws {error} 'Sonos player model name undefined', 'Selected player does not support TV',
@@ -2857,7 +2878,7 @@ module.exports = function (RED) {
    * @deprecated recommendation is to use group.play.queue, player.play.linein, player.play.tv
    * or the group.play.* commands. 
    * 
-   * why depriciated: for some streams metadata are needed and have to be "guessed". For some 
+   * why depreciated: for some streams metadata are needed and have to be "guessed". For some 
    * such as Tunein it works fine but many are still open. Using My Sonos is much better!
    *
    * @throws {error} all methods

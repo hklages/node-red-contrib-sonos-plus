@@ -258,6 +258,29 @@ module.exports = {
     return response.data
   },
 
+  /** Get battery info for new roam device
+   * @param {object} playerUrlObject player JavaScript build-in URL
+   * @param {number} timeout in milliseconds
+   *
+   * @returns {Promise<object>} battery level as integer 0 .. 100
+   *
+   * @throws {error} response from player is invalid - data missing|id missing|capabilities missing
+   * @throws {error} all methods especially a timeout
+   */
+  getDeviceBatteryLevel: async (playerUrlObject, timeout) => {
+    debug('method:%s', 'getDeviceBatteryLevel')
+    // error is thrown if not status code 200
+    const response = await request.get(`${playerUrlObject.origin}/status/batterystatus`, {
+      'timeout': timeout,
+      'validateStatus': (status) => (status === 200) // Resolve only if the status code is 200
+    })  
+    if (!isTruthyProperty(response, ['data'])) {
+      throw new Error(`${PACKAGE_PREFIX} response from player is invalid - data missing`)
+    }
+
+    return response.data
+  },
+
   /** Get device properties.
    * @param {object} playerUrlObject player JavaScript build-in URL
    *

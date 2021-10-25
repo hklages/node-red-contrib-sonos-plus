@@ -131,7 +131,7 @@ module.exports = {
    * min, max should be in range VALIDATION_INTEGER_MINIMUM to VALIDATION_INTEGER_MAXIMUM
    * as that correspondent to REGEX check 4 signed digits
    * defaultValue and msg[propertyName] must be in range [min, max]
-   * Exeception: defaultValue may also be -1 and out of range: used for volume control
+   * Exception: defaultValue may also be -1 and out of range: used for volume control
    *  
    * @param {object} msg Node-RED message
    * @param {(string|number)} msg.propertyName item, to be validated, converted
