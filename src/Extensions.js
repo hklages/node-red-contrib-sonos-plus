@@ -270,7 +270,14 @@ module.exports = {
   getDeviceBatteryLevel: async (playerUrlObject, timeout) => {
     debug('method:%s', 'getDeviceBatteryLevel')
     // error is thrown if not status code 200
-    const response = await request.get(`${playerUrlObject.origin}/status/batterystatus`, {
+    const endpoint = '/status/batterystatus'
+    const response = await request({
+      'method': 'get',
+      'baseURL': playerUrlObject.origin,
+      'url': endpoint,
+      'headers': {
+        'Content-type': 'text/xml; charset=utf8',
+      },
       'timeout': timeout,
       'validateStatus': (status) => (status === 200) // Resolve only if the status code is 200
     })  
@@ -278,7 +285,23 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} response from player is invalid - data missing`)
     }
 
-    return response.data
+    // Test data
+    // eslint-disable-next-line max-len
+    // response.data = '<?xml version="1.0" ?><?xml-stylesheet type="text/xsl" href="/xml/review.xsl"?><ZPSupportInfo><LocalBatteryStatus><Data name="Health">GREEN</Data><Data name="Level">89</Data><Data name="Temperature">NORMAL</Data><Data name="PowerSource">BATTERY</Data></LocalBatteryStatus><!-- SDT: 0 ms --></ZPSupportInfo>'
+    let clean = response.data.replace('<?xml', '<xml')
+    clean = clean.replace('?>', '>') // strange but necessary
+    const parsed = await parser.parse(clean, {
+      // 'ignoreAttributes': false,
+      // 'attributeNamePrefix': '_',
+      'parseNodeValue': false
+    }) 
+
+    if (!isTruthyProperty(parsed, ['xml', 'ZPSupportInfo', 'LocalBatteryStatus'])) {
+      throw new Error(`${PACKAGE_PREFIX} SONOS player did not provide battery level status!`)
+    }    
+
+    const payload = Number(parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[1])
+    return payload
   },
 
   /** Get device properties.
