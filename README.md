@@ -27,21 +27,19 @@ This package is in no way connected to or supported by [Sonos Inc.](https://www.
 
 Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
-### NEWS
+### NEWS (cumulative, recent)
+
+- universal node: new command group.get.queue.length
+
+- universal node: new command player.get.batterylevel provides the battery for SONOS Roam player
+
+- universal node: group.queue.* now outputs firstTrackNumberEnqueued, newQueueLength
+
+- universal node: group.get.queue now fetches up to 10,000 items (multiple calls)
 
 - my sonos node: library.get.* now fetches up to 10,000 items (multiple calls) - no need anymore for "requestedCount" property.
 
-- universal node: player.get.buttonlockstate now in small letter (as all others)
-
 - universal node: new commands group.queue.library.*
-
-- my sonos node: new command library.export.artist
-
-- my sonos node: removed library.queue.playlist
-
-- bug fixing restore snapshot - restore muting player
-
-- bug fixing library item may now include apostrophe in title
 
 ### QUICKSTART - DEGUG - SUPPORT
 

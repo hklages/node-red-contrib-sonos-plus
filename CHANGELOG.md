@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.7] 2021-10-26
+
+### Added
+
+- universal node: new command group.get.queue.length provides the length of the SONOS queue
+
+- universal node: new command player.get.batterylevel provides the battery for SONOS Roam player
+
+#### Changed
+
+- universal node: group.get.queue now fetches up to 10,000 items (multiple calls)
+
+- universal node: group.queue.* now outputs firstTrackNumberEnqueued, newQueueLength
+
+- internal: direct check empty queue by reading TotalMatches
+
+- update dependencies
+
 ### [5.2.6] 2021-09-20
 
 #### Changed
