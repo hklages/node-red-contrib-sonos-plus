@@ -12,7 +12,7 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, ML_REQUESTED_COUNT } = require('./Globals.js')
+const { PACKAGE_PREFIX, ML_REQUESTED_COUNT, QUEUE_REQUESTED_COUNT } = require('./Globals.js')
 
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
@@ -564,11 +564,77 @@ module.exports = {
     return transformed
   },
 
+  /** Get array of all SONOS-Queue items - Version 2 for more then 1000 items
+   * Adds processingType and player urlObject.origin to artUri.
+   * @param {object} tsPlayer sonos-ts player
+    * @param {number} requestLimit maximum number of calls, must be >=1
+   *
+   * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
+   *
+   * @throws {error} invalid return from Browse, parseBrowseToArray error
+   */
+  getSonosQueueV2: async (tsPlayer, requestLimit) => {
+    debug('method:%s', 'getSonosQueueV2')
+    
+    // validate parameter
+    if (typeof requestLimit !== 'number') {
+      throw new Error(`${PACKAGE_PREFIX} requestLimit is not number`)
+    }
+
+    // Q:0 = SONOS-Queue
+    let browseQueue = await tsPlayer.ContentDirectoryService.Browse({
+      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': QUEUE_REQUESTED_COUNT, 'SortCriteria': ''
+    })
+    
+    let list // list from single http request
+    let itemArray = await parseBrowseToArray(browseQueue, 'item')
+    list = itemArray.map((item) => {
+      if (item.artUri.startsWith('/getaa')) {
+        item.artUri = tsPlayer.urlObject.origin + item.artUri
+      }
+      return item
+    })
+    if (!isTruthy(list)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
+    }
+
+    // if there are more items, then get them
+    const totalMatches = browseQueue.TotalMatches
+    let totalList = [] // concatenation of all http requests, parsed, transformed
+    totalList = totalList.concat(list)
+
+    if (totalMatches > QUEUE_REQUESTED_COUNT) {
+      // we need to fetch the rest: 0..999 no additional request/ 1000..1999 1 add request, ...
+      const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / QUEUE_REQUESTED_COUNT)) 
+      for (let i = 1; i < iterations + 1 ; i++) { // we start at 1
+        browseQueue = await tsPlayer.ContentDirectoryService.Browse({
+          'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+          'StartingIndex': i * QUEUE_REQUESTED_COUNT, 'RequestedCount': QUEUE_REQUESTED_COUNT,
+          'SortCriteria': ''
+        })        
+        itemArray = await parseBrowseToArray(browseQueue, 'item')
+        list = itemArray.map((item) => {
+          if (item.artUri.startsWith('/getaa')) {
+            item.artUri = tsPlayer.urlObject.origin + item.artUri
+          }
+          return item
+        })
+        if (!isTruthy(list)) {
+          throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
+        }
+        totalList = totalList.concat(list)
+      }
+    }
+
+    return totalList
+  },
+
   /** Version 2: Get array of all Music Library items matching category and optional search string
    * Submits several requests if necessary
    * @param {string} type such as 'Album:', 'Playlist:'
    * @param {string} [searchString=''] any search string, being used in category
-   * @param {number} requestLimit maxmimum number of calls, must be >=1
+   * @param {number} requestLimit maximum number of calls, must be >=1
    * @param {object} tsPlayer sonos-ts player
    * 
    * @returns {Promise<exportedItem[]>} all Music Library items matching criteria, could be empty
@@ -597,8 +663,6 @@ module.exports = {
       'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
       'StartingIndex': 0, 'RequestedCount': ML_REQUESTED_COUNT, 'SortCriteria': ''
     })
-    const totalMatches = browseCategory.TotalMatches
-    let totalList = [] // concatanation of all http requests
 
     let list // single list from one http request
     if (type === 'A:TRACKS:') {
@@ -609,7 +673,12 @@ module.exports = {
     if (!isTruthy(list)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
     }
+
+    // if there are more items, then get them
+    const totalMatches = browseCategory.TotalMatches
+    let totalList = [] // concatenation of all http requests, parsed
     totalList = totalList.concat(list)
+
     if (totalMatches > ML_REQUESTED_COUNT) {
       // we need to fetch the rest: 0..999 no additional request/ 1000..1999 1 add request, ...
       const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / ML_REQUESTED_COUNT)) 
