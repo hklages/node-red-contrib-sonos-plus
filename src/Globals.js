@@ -14,7 +14,7 @@ module.exports = {
   PACKAGE_PREFIX: 'nrcsp:',
 
   TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
-  TIMEOUT_DISCOVERY: 4, //in seconds
+  TIMEOUT_DISCOVERY: 30, //in seconds
 
   ML_REQUESTS_MAXIMUM: 10, // Music library: maximum number of http requests submitted
   ML_REQUESTED_COUNT: 1000,  // Music library: Should always be 1000, the allowed maximum
@@ -27,7 +27,7 @@ module.exports = {
 
   REGEX_TIME: /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only hh:mm:ss and hours from 0 to 19
   REGEX_TIME_DELTA: /^([-+]?([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only +/- REGEX_TIME
-  REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
+  REGEX_IP: /.+/,  // any character but at least 1 - because of domain names
   REGEX_HTTP: /^(http|https):\/\/.+$/,
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
   REGEX_RADIO_ID: /^([s][0-9]+)$/,
