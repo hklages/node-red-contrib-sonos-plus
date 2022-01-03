@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.2.8] 2022-01-03
+
+#### Changed
+
+- default time out increased (see sonos-ts)
+
+- update dependencies (but not fast xml parser)
+
 ### [5.2.7] 2021-10-26
 
 ### Added
