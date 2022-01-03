@@ -29,6 +29,8 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
+- new timeout for all request
+
 - universal node: new command group.get.queue.length
 
 - universal node: new command player.get.batterylevel provides the battery for SONOS Roam player

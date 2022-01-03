@@ -8,7 +8,9 @@ All notable changes to this project are documented in this file.
 
 - default time out increased (see sonos-ts)
 
-- update dependencies (but not fast xml parser)
+- update dependencies (but NOT fast xml parser)
+
+- removed regex check for ip addresses
 
 ### [5.2.7] 2021-10-26
 
