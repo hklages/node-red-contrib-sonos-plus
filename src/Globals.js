@@ -14,7 +14,7 @@ module.exports = {
   PACKAGE_PREFIX: 'nrcsp:',
 
   TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
-  TIMEOUT_DISCOVERY: 30, //in seconds
+  TIMEOUT_DISCOVERY: 4, //in seconds
 
   ML_REQUESTS_MAXIMUM: 10, // Music library: maximum number of http requests submitted
   ML_REQUESTED_COUNT: 1000,  // Music library: Should always be 1000, the allowed maximum
