@@ -49,17 +49,17 @@
   "author": "hklages",
   "license": "MIT",
   "dependencies": {
-    "@svrooij/sonos": "v2.4.1",
+    "@svrooij/sonos": "2.5.0-beta.4",
     "axios": "^0.24.0",
-    "debug": "^4.3.2",
-    "fast-xml-parser": "^3.21.0",
+    "debug": "^4.3.3",
+    "fast-xml-parser": "^4.0.0-beta.8",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.2.0",
-    "@typescript-eslint/parser": "^5.2.0",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
     "chai": "^4.3.4",
-    "eslint": "^8.1.0",
+    "eslint": "^8.6.0",
     "mocha": "^9.1.3"
   }
 }
