@@ -10,8 +10,6 @@ All notable changes to this project are documented in this file.
 
 - update dependencies (but NOT fast xml parser)
 
-- removed regex check for ip addresses
-
 ### [5.2.7] 2021-10-26
 
 ### Added
