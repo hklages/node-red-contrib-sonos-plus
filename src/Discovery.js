@@ -17,7 +17,8 @@ const { matchSerialUuid: matchSerialUuid, getDeviceProperties: getDeviceProperti
 } = require('./Extensions.js')
 
 const { SonosDeviceDiscovery, SonosDevice } = require('@svrooij/sonos/lib')
-const SonosPlayerDiscovery  = require('./Discovery-hk.js')
+// testing SonosPlayerDiscovery and SonosDeviceDiscovery - what is more reliable?
+const SonosPlayerDiscovery  = require('./Discovery-base-hk.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}discovery`)
 
@@ -85,6 +86,9 @@ module.exports = {
    */
   discoverAllPlayerWithHost: async (timeout) => {
     debug('method:%s', 'discoverAllPlayerWithHost')
+    debug('timeout not used' + timeout)
+    
+    // TODO get experience, then consolidate
     const deviceDiscovery = new SonosPlayerDiscovery()
     const firstPlayerData = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
