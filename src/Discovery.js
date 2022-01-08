@@ -17,6 +17,7 @@ const { matchSerialUuid: matchSerialUuid, getDeviceProperties: getDeviceProperti
 } = require('./Extensions.js')
 
 const { SonosDeviceDiscovery, SonosDevice } = require('@svrooij/sonos/lib')
+const SonosPlayerDiscovery  = require('./Discovery-hk.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}discovery`)
 
@@ -84,10 +85,10 @@ module.exports = {
    */
   discoverAllPlayerWithHost: async (timeout) => {
     debug('method:%s', 'discoverAllPlayerWithHost')
-    const deviceDiscovery = new SonosDeviceDiscovery()
-    const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
+    const deviceDiscovery = new SonosPlayerDiscovery()
+    const firstPlayerData = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
-    const firstPlayer = new SonosDevice(firstPlayerData.host)
+    const firstPlayer = new SonosDevice(firstPlayerData)
     const allGroups = await getGroupsAll(firstPlayer)
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)
