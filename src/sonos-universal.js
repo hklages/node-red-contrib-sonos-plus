@@ -10,9 +10,9 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS, REGEX_QUEUEMODES,
-  REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_TIME_DELTA, REQUESTED_COUNT_PLAYLISTS,
-  TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
+const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
+  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME,
+  REGEX_TIME_DELTA, REQUESTED_COUNT_PLAYLISTS, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
   REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM
 } = require('./Globals.js')
 
@@ -150,28 +150,39 @@ module.exports = function (RED) {
     const node = this
     node.status({}) // Clear node status
     
-    // Ip address overruling serial number - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
 
-    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
-      && (REGEX_IP.test(configNode.ipaddress)||REGEX_DNS.test(configNode.ipaddress))) {
-      // Using config ip address to define the default SONOS player
-      // and check whether that IP address is reachable (http request)
-
+    // Order of processing of the two fields ip/dns field versus serial number field:
+    // 1. ipv4 address entered and syntax is valid
+    // 2. DNS name entered and syntax is valid: resolve and use resolved ipv4 address
+    // 3. No ipv4/DNS entered & serial entered & valid syntax: 
+    //    discover ipv4 address by serial and use it   
+    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress'])) {
+      
+      const hostname = configNode.ipaddress // ipv4 address or dns name, syntax not validated
+      let ipv4Address // pure ipv4Address, syntax validated
+      
       // async wrap to make it possible to use await dnsPromise
       // TODO do the same for my sonos
       (async function () {
-        let ipv4Address = configNode.ipaddress
-        if (!REGEX_IP.test(configNode.ipaddress)) {
-          // TODO maybe check at least 1 character because then resolve does not make sense
-          const ipv4Array = await dnsPromises.resolve4(configNode.ipaddress) 
+        if (REGEX_IP.test(hostname)) {
+          ipv4Address = hostname // priority 1
+        } else if (REGEX_DNS.test(hostname)) {
+          const ipv4Array = await dnsPromises.resolve4(hostname) 
           // dnsPromise returns an array with all data
-          ipv4Address = ipv4Array[0]
-        } 
+          ipv4Address = ipv4Array[0] // priority 2
+        } else {
+          failure(node, null,
+            new Error(`${PACKAGE_PREFIX} ipv4//DNS name >>${hostname} invalid syntax`),
+            thisFunctionName)
+          return
+        }
+        // ipv4Address is a pure ipv4 address and ready to use
         const port = 1400 // assuming this port
         const playerUrlObject = new URL(`http://${ipv4Address}:${port}`)
-        // eslint-disable-next-line max-len
-        decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST, config.avoidCheckPlayerAvailability)
+        // If box is ticked it is checked whether that IP address is reachable (http request)
+        decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST,
+          config.avoidCheckPlayerAvailability)
           .then((createNodeOn) => {
             if (createNodeOn) {
               // subscribe and set processing function
@@ -206,13 +217,20 @@ module.exports = function (RED) {
         .catch((err) => {
           debug('Could not retrieve ipv4 >>%', JSON.stringify(err, Object.getOwnPropertyNames(err)))
           failure(node, null,
-            new Error(`${PACKAGE_PREFIX} Could not retrieve ipv4 for >>${configNode.ipaddress}`),
+            new Error(`${PACKAGE_PREFIX} Could not retrieve ipv4 for >>${hostname}`),
             thisFunctionName)
         })
-    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
-      && REGEX_SERIAL.test(configNode.serialnum)) {
+    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])) {
       // start discovery
-      discoverSpecificSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
+      const serialNb = configNode.serialnum
+      if (!REGEX_SERIAL.test(serialNb)) {
+        failure(node, null,
+          new Error(`${PACKAGE_PREFIX} serial number >>${serialNb} invalid syntax`),
+          thisFunctionName)
+        return
+      }
+
+      discoverSpecificSonosPlayerBySerial(serialNb, TIMEOUT_DISCOVERY)
         .then((discoveredHost) => {
           debug('found ip address >>%s', discoveredHost)
           const validHost = discoveredHost
