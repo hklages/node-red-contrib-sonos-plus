@@ -163,7 +163,6 @@ module.exports = function (RED) {
       let ipv4Address // pure ipv4Address, syntax validated
       
       // async wrap to make it possible to use await dnsPromise
-      // TODO do the same for my sonos
       (async function () {
         if (REGEX_IP.test(hostname)) {
           ipv4Address = hostname // priority 1
@@ -211,7 +210,7 @@ module.exports = function (RED) {
           }) // then createnode
           .catch((err) => {
             debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-            node.status({ fill: 'red', shape: 'dot', text: 'error: isSonos went wrong' })
+            node.status({ fill: 'red', shape: 'dot', text: 'error: decideCreateNodeOn went wrong' })
           }) // catch
       })() // async function
         .catch((err) => {
@@ -220,6 +219,7 @@ module.exports = function (RED) {
             new Error(`${PACKAGE_PREFIX} Could not retrieve ipv4 for >>${hostname}`),
             thisFunctionName)
         })
+      
     } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])) {
       // start discovery
       const serialNb = configNode.serialnum
