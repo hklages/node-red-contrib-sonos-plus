@@ -91,7 +91,11 @@ class SonosPlayerDiscovery {
     }
   }
 
-  async discoverOnePlayer () {
+  async discoverOnePlayer() {
+    /**
+     *  @returns {Promise<string>} ipv4 address of first found player
+     */
+   
     debug('method discoverOnePlayer')
     return new Promise((resolve, reject) => {
       

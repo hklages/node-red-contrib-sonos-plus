@@ -5,18 +5,18 @@
  * 
  * @author Henning Klages
  * 
- * @since 2021-02-13
+ * @since 2022-01-11
 */
 
 'use strict'
-const { PACKAGE_PREFIX } = require('./Globals.js')
+const { PACKAGE_PREFIX, ERROR_NOT_FOUND_BY_SERIAL } = require('./Globals.js')
 
 const { getGroupsAll: getGroupsAll } = require('./Commands.js')
 
 const { matchSerialUuid: matchSerialUuid, getDeviceProperties: getDeviceProperties
 } = require('./Extensions.js')
 
-const { SonosDeviceDiscovery, SonosDevice } = require('@svrooij/sonos/lib')
+const { SonosDevice } = require('@svrooij/sonos/lib')
 // testing SonosPlayerDiscovery and SonosDeviceDiscovery - what is more reliable?
 const SonosPlayerDiscovery  = require('./Discovery-base-hk.js')
 
@@ -27,7 +27,7 @@ module.exports = {
   /** Does an async discovery of SONOS player, compares with given serial number 
    * and returns ip address if success - otherwise throws error.
    * @param {string} serialNumber player serial number
-   * @param {number} timeoutSeconds in seconds
+   * @param {number} timeout in seconds
    * 
    * @returns {Promise<object>} {'uuid', urlHost} su
    * 
@@ -39,12 +39,15 @@ module.exports = {
    * Discovering 10 player or more might be time consuming in some networks.
    *
    */
-  discoverSpecificSonosPlayerBySerial: async (serialNumber, timeoutSeconds) => {
+  discoverSpecificSonosPlayerBySerial: async (serialNumber, timeout) => {
     debug('method:%s', 'discoverSpecificSonosPlayerBySerial')
-    const deviceDiscovery = new SonosDeviceDiscovery()
-    const firstPlayerData = await deviceDiscovery.SearchOne(timeoutSeconds)
+    debug('timeout not used' + timeout)
+    
+    // TODO get experience - remove the timeout
+    const deviceDiscovery = new SonosPlayerDiscovery()
+    const firstPlayerIpv4 = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
-    const tsFirstPlayer = new SonosDevice(firstPlayerData.host)
+    const tsFirstPlayer = new SonosDevice(firstPlayerIpv4)
     const allGroups = await getGroupsAll(tsFirstPlayer)
     const flatList = [].concat.apply([], allGroups) // merge array of array in array
     debug('got more players, in total >>%s', flatList.length)
@@ -66,7 +69,7 @@ module.exports = {
       }
     }
     if (foundIndex < 0) {
-      new Error(`${PACKAGE_PREFIX} could not find any player matching serial`)
+      throw new Error(ERROR_NOT_FOUND_BY_SERIAL)
     }
     return reducedList[foundIndex].urlHost
   },
@@ -88,11 +91,11 @@ module.exports = {
     debug('method:%s', 'discoverAllPlayerWithHost')
     debug('timeout not used' + timeout)
     
-    // TODO get experience, then consolidate
+    // TODO get experience - remove the timeout
     const deviceDiscovery = new SonosPlayerDiscovery()
-    const firstPlayerData = await deviceDiscovery.discoverOnePlayer()
+    const firstPlayerIpv4 = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
-    const firstPlayer = new SonosDevice(firstPlayerData)
+    const firstPlayer = new SonosDevice(firstPlayerIpv4)
     const allGroups = await getGroupsAll(firstPlayer)
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)
@@ -121,10 +124,13 @@ module.exports = {
    */
   discoverAllPlayerWithSerialnumber: async (timeout) => {
     debug('method:%s', 'discoverAllPlayerWithSerialnumber')
-    const deviceDiscovery = new SonosDeviceDiscovery()
-    const firstPlayerData = await deviceDiscovery.SearchOne(timeout)
+    debug('timeout not used' + timeout)
+    
+    // TODO get experience - remove the timeout
+    const deviceDiscovery = new SonosPlayerDiscovery()
+    const firstPlayerIpv4 = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
-    const firstPlayer = new SonosDevice(firstPlayerData.host)
+    const firstPlayer = new SonosDevice(firstPlayerIpv4)
     const allGroups = await getGroupsAll(firstPlayer)
     const flatList = [].concat.apply([], allGroups)
     debug('got more players, in total >>%s', flatList.length)

@@ -13,7 +13,7 @@
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
   REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME,
   REGEX_TIME_DELTA, REQUESTED_COUNT_PLAYLISTS, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
-  REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM
+  REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, ERROR_NOT_FOUND_BY_SERIAL
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
@@ -204,8 +204,11 @@ module.exports = function (RED) {
               debug('successfully subscribed - node.on')
               node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
             } else {
-              debug('ip address not reachable')
-              node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })
+              debug('device not reachable/rejected')
+              node.status({
+                fill: 'red', shape: 'dot',
+                text: 'error: device not reachable/rejected'
+              })
             }
           }) // then createnode
           .catch((err) => {
@@ -258,8 +261,12 @@ module.exports = function (RED) {
         })
         .catch((err) => {
           // discovery failed - most likely because could not find any matching player
+          let txt = 'could not discover player by serial'
+          if (err.message === ERROR_NOT_FOUND_BY_SERIAL) {
+           txt = ERROR_NOT_FOUND_BY_SERIAL
+          }
           debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          failure(node, null, 'could not discover player by serial', thisFunctionName)
+          failure(node, txt, err, thisFunctionName)
           return
         })
    

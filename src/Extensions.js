@@ -458,13 +458,13 @@ module.exports = {
    * @param {string} uuid the string such as RINCON_000E58FE3AEA01400
    * RINCONG_xxxxxxxxxxxx01400 (01400 is port)
    * 
-   * @returns {Promise<boolean>} true if matching
+   * @returns {Promise<boolean>} true if matching but ignores last digit here 5
    * 
    * @throws only split, replace exceptions
    * 
    * Algorithm: only checks the first part of serial number
    * 
-   * @since 2021-02-13
+   * @since 2022-01-11
    */
   matchSerialUuid: (serial, uuid) => {
     debug('method:%s', 'matchSerialUuid')

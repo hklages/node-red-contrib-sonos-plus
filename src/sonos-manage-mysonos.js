@@ -114,8 +114,11 @@ module.exports = function (RED) {
               debug('successfully subscribed - node.on')
               node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
             } else {
-              debug('ip address not reachable')
-              node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })
+              debug('device not reachable/rejected')
+              node.status({
+                fill: 'red', shape: 'dot',
+                text: 'error: device not reachable/rejected'
+              })
             }
           }) // then createnode
           .catch((err) => {
