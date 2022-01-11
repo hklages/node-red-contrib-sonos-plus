@@ -61,7 +61,7 @@ class SonosPlayerDiscovery {
     this.SEARCH_SONOS_IDENTIFIER = 'Sonos'
   }
 
-  doBroadcastWithTimeout (timeoutInMs) {
+  async doBroadcastWithTimeout (timeoutInMs) {
     debug('method doBroadcastWithTimeout')
   
     // send broadcast
@@ -83,15 +83,20 @@ class SonosPlayerDiscovery {
 
   cleanup () {
     debug('method cleanup')
-    if (this.socket) {
-      this.socket.close()
+    try {
+      if (this.socket) {
+        this.socket.close()
+      }
+      if (this.broadcastTimeOutId !== undefined) {
+        clearTimeout(this.broadcastTimeOutId)
+      }
+    } catch (error) {
+      debug('try/catch error from dgram in cleanup')
     }
-    if (this.broadcastTimeOutId !== undefined) {
-      clearTimeout(this.broadcastTimeOutId)
-    }
+    
   }
 
-  async discoverOnePlayer() {
+  async discoverOnePlayer () {
     /**
      *  @returns {Promise<string>} ipv4 address of first found player
      */
@@ -137,7 +142,7 @@ class SonosPlayerDiscovery {
         }
       })
       
-      this.socket.bind(() => {
+      this.socket.bind(() =>  {
         debug('random port:' + this.socket.address().port)
         this.doBroadcastWithTimeout(this.SEARCH_TIMEOUT_DURATION)
       })
