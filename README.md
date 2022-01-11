@@ -25,9 +25,15 @@ This package is in no way connected to or supported by [Sonos Inc.](https://www.
 
 - Group players by using their SONOS-Playernames.
 
+- DNS names are supported
+
 Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
 
 ### NEWS (cumulative, recent)
+
+- DNS names are now supported instead of pure ipv4 address (config dialog)
+
+- bug fix player discovery for windows 10
 
 - new timeout for all request
 

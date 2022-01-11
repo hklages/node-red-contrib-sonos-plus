@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+### [5.3.0] 2022-01-12
+
+#### Changed
+
+- DNS names instead of ipv4 addresses are now allowed in config dialog
+
+- bug fix player discovery for windows 10 (different for ip address/ serial)
+
+- testcases for REGEX, ipv4 address now with syntax check
+
+- update dependencies (but NOT fast xml parser)
+
 ### [5.2.8] 2022-01-03
 
 #### Changed
