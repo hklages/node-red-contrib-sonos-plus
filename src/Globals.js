@@ -27,7 +27,24 @@ module.exports = {
 
   REGEX_TIME: /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only hh:mm:ss and hours from 0 to 19
   REGEX_TIME_DELTA: /^([-+]?([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/, // Only +/- REGEX_TIME
-  REGEX_IP: /.+/,  // any character but at least 1 - because of domain names
+
+  // Credits: 
+  // https://mkyong.com/regular-expressions/how-to-validate-ip-address-with-regular-expression/
+  REGEX_IP: /^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.(?!$)|$)){4}$/,
+
+  // TODO old one might be removed in May - just to have a roll back
+  // REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
+
+  // credits: 
+  //  https://mkyong.com/regular-expressions/domain-name-regular-expression-example/
+  // The domain name should be a-z | A-Z | 0-9 and hyphen(-)
+  // The domain name should between 1 and 63 characters long
+  // Last Tld must be at least two characters, and a maximum of 6 characters
+  // The domain name should not start or end with hyphen (-) (e.g. -google.com or google-.com)
+  // The domain name can be a subdomain (e.g. mkyong.blogspot.com)
+  // -- modification: replaced \\ by \ and added i instead of capital letters
+  REGEX_DNS: /^((?!-)[a-z0-9-]{1,63}(?<!-)\.)+[a-z]{2,6}$/i,
+
   REGEX_HTTP: /^(http|https):\/\/.+$/,
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
   REGEX_RADIO_ID: /^([s][0-9]+)$/,
@@ -36,7 +53,7 @@ module.exports = {
   REGEX_2DIGITSSIGN: /^[-+]?\d{1,2}$/,
   REGEX_3DIGITSSIGN: /^[-+]?\d{1,3}$/,
   REGEX_4DIGITSSIGN: /^[-+]?\d{1,4}$/,
-  REGEX_ANYCHAR: /.+/,  // any character but at least 1
+  REGEX_ANYCHAR: /.+/,  // any characters sequence (a-Z, 0-9 !. ... ) but at least 1
 
   REGEX_ANYCHAR_BLANK: /.*/, //any character or blank
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,

@@ -535,35 +535,6 @@ module.exports = {
     return transformed
   }, 
 
-  /** Get array of all SONOS-Queue items.
-   * Adds processingType and player urlObject.origin to artUri.
-   * @param {object} tsPlayer sonos-ts player
-   * @param {number} requestedCount integer, 1 to ...
-   *
-   * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
-   *
-   * @throws {error} invalid return from Browse, parseBrowseToArray error
-   */
-  getSonosQueue: async (tsPlayer, requestedCount) => {
-    debug('method:%s', 'getSonosQueue')
-    
-    // Q:0 = SONOS-Queue
-    const browseQueue = await tsPlayer.ContentDirectoryService.Browse({
-      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-      'StartingIndex': 0, 'RequestedCount': requestedCount, 'SortCriteria': ''
-    })
-    
-    const itemArray = await parseBrowseToArray(browseQueue, 'item')
-    const transformed = itemArray.map((item) => {
-      if (item.artUri.startsWith('/getaa')) {
-        item.artUri = tsPlayer.urlObject.origin + item.artUri
-      }
-      return item
-    })
-
-    return transformed
-  },
-
   /** Get array of all SONOS-Queue items - Version 2 for more then 1000 items
    * Adds processingType and player urlObject.origin to artUri.
    * @param {object} tsPlayer sonos-ts player

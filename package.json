@@ -23,6 +23,7 @@
     "TEST-strt-server": "NODE-RED",
     "TEST-all": "mocha",
     "TEST-Helper": "mocha ./test/Helper.js",
+    "TEST-regex": "mocha ./test/regex.js",
     "TEST-Extensions": "mocha ./test/Extensions.js"
   },
   "keywords": [
