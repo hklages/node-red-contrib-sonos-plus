@@ -37,8 +37,8 @@
 'use strict'
 
 const {
-  PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_SERIAL,
-  ML_REQUESTS_MAXIMUM, REQUESTED_COUNT_MYSONOS_DEFAULT,
+  PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_DNS,
+  REGEX_SERIAL, ML_REQUESTS_MAXIMUM, REQUESTED_COUNT_MYSONOS_DEFAULT,
   REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
@@ -54,6 +54,9 @@ const { isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex, 
 } = require('./Helper.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
+
+const Dns = require('dns')
+const dnsPromises = Dns.promises
 
 const debug = require('debug')(`${PACKAGE_PREFIX}mysonos`)
 
@@ -85,50 +88,88 @@ module.exports = function (RED) {
     const node = this
     node.status({}) // Clear node status
 
-    // Ip address overruling serial number - at least one must be valid
     const configNode = RED.nodes.getNode(config.confignode)
-    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress']) 
-      &amp;&amp; REGEX_IP.test(configNode.ipaddress)) {
-      // Using config ip address to define the default SONOS player
-      // and check whether that IP address is reachable (http request)
-      const port = 1400 // assuming this port
-      const playerUrlObject = new URL(`http://${configNode.ipaddress}:${port}`)
-      decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST, config.avoidCheckPlayerAvailability)
-        .then((isSonos) => {
-          if (isSonos) {
-            
-            // subscribe and set processing function
-            node.on('input', (msg) => {
-              debug('msg received >>%s', 'universal node')
-              processInputMsg(node, config, msg, playerUrlObject.hostname)
-                // processInputMsg sets msg.nrcspCmd to current command
-                .then((msgUpdate) => {
-                  Object.assign(msg, msgUpdate) // Defines the output message
-                  success(node, msg, msg.nrcspCmd)
-                })
-                .catch((error) => {
-                  let lastFunction = 'processInputMsg'
-                  if (msg.nrcspCmd &amp;&amp; typeof msg.nrcspCmd === 'string') {
-                    lastFunction = msg.nrcspCmd
-                  }
-                  failure(node, msg, error, lastFunction)
-                })
-            })
-            debug('successfully subscribed - node.on')
-            node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
-          } else {
-            debug('ip address not reachable')
-            node.status({ fill: 'red', shape: 'dot', text: 'error: ip not reachable' })
-          }
-        })
+
+    // Order of processing of the two fields ip/dns field versus serial number field:
+    // 1. ipv4 address entered and syntax is valid
+    // 2. DNS name entered and syntax is valid: resolve and use resolved ipv4 address
+    // 3. No ipv4/DNS entered &amp; serial entered &amp; valid syntax: 
+    //    discover ipv4 address by serial and use it   
+    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress'])) {
+
+      const hostname = configNode.ipaddress // ipv4 address or dns name, syntax not validated
+      let ipv4Address // pure ipv4Address, syntax validated
+      
+      // async wrap to make it possible to use await dnsPromise
+      (async function () { 
+        if (REGEX_IP.test(hostname)) {
+          ipv4Address = hostname // priority 1
+        } else if (REGEX_DNS.test(hostname)) {
+          const ipv4Array = await dnsPromises.resolve4(hostname) 
+          // dnsPromise returns an array with all data
+          ipv4Address = ipv4Array[0] // priority 2
+        } else {
+          failure(node, null,
+            new Error(`${PACKAGE_PREFIX} ipv4//DNS name >>${hostname} invalid syntax`),
+            thisFunctionName)
+          return
+        }
+        // ipv4Address is a pure ipv4 address and ready to use
+        const port = 1400 // assuming this port
+        const playerUrlObject = new URL(`http://${ipv4Address}:${port}`)
+        // If box is ticked it is checked whether that IP address is reachable (http request)
+        decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST,
+          config.avoidCheckPlayerAvailability)
+          .then((createNodeOn) => {
+            if (createNodeOn) {
+              // subscribe and set processing function
+              node.on('input', (msg) => {
+                debug('msg received >>%s', 'universal node')
+                processInputMsg(node, config, msg, playerUrlObject.hostname)
+                  // processInputMsg sets msg.nrcspCmd to current command
+                  .then((msgUpdate) => {
+                    Object.assign(msg, msgUpdate) // Defines the output message
+                    success(node, msg, msg.nrcspCmd)
+                  })
+                  .catch((error) => {
+                    let lastFunction = 'processInputMsg'
+                    if (msg.nrcspCmd &amp;&amp; typeof msg.nrcspCmd === 'string') {
+                      lastFunction = msg.nrcspCmd
+                    }
+                    failure(node, msg, error, lastFunction)
+                  })
+              })
+              debug('successfully subscribed - node.on')
+              node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
+            } else {
+              debug('device not reachable/rejected')
+              node.status({
+                fill: 'red', shape: 'dot',
+                text: 'error: device not reachable/rejected'
+              })
+            }
+          }) // then createnode
+          .catch((err) => {
+            debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+            node.status({ fill: 'red', shape: 'dot', text: 'error: decideCreateNodeOn went wrong' })
+          }) // catch
+      })() // async function
         .catch((err) => {
-          debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          node.status({ fill: 'red', shape: 'dot', text: 'error: isSonos went wrong' })
+          debug('Could not retrieve ipv4 >>%', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+          failure(node, null,
+            new Error(`${PACKAGE_PREFIX} Could not retrieve ipv4 for >>${hostname}`),
+            thisFunctionName)
         })
       
-    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])
-      &amp;&amp; REGEX_SERIAL.test(configNode.serialnum)) {
+    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])) {
       // start discovery
+      const serialNb = configNode.serialnum
+      if (!REGEX_SERIAL.test(serialNb)) {
+        failure(node, null,
+          new Error(`${PACKAGE_PREFIX} serial number >>${serialNb} invalid syntax`),
+          thisFunctionName)
+        return
+      }
       discoverSpecificSonosPlayerBySerial(configNode.serialnum, TIMEOUT_DISCOVERY)
         .then((discoveredHost) => {
           debug('found ip address >>%s', discoveredHost)
@@ -494,13 +535,13 @@ module.exports = function (RED) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-Discovery-base-hk.html">Discovery-base-hk</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Tue Jan 11 2022 08:27:41 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Tue Jan 11 2022 13:52:12 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
