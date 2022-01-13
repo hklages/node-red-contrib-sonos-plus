@@ -31,7 +31,7 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
-- DNS names are now supported instead of pure ipv4 address (config dialog)
+- DNS names are now supported and recommended instead of pure ipv4 address (config dialog)
 
 - bug fix player discovery for windows 10
 

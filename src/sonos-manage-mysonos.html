@@ -10,35 +10,35 @@
         value: '',
         type: 'sonos-config'
       },
-      command: { 
+      command: {
         value: 'message',
         required: true
       },
-      state: { 
+      state: {
         value: '',
-        validate: RED.validators.typedInput('stateType') 
+        validate: RED.validators.typedInput('stateType')
       },
-      stateType: { value: 'str'},
+      stateType: { value: 'str' },
       avoidCheckPlayerAvailability: { value: false },
-      name: {value: ''}
+      name: { value: '' }
     },
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
     icon: 'sonos.png', // saved in icons/myicon.png
     color: '#95c292',
-    label: function() {
+    label: function () {
       let found = mySonosCmdList.find(item => item.cmd === this.command);
       let nodeLabel = this.name || found.cmd || 'My Sonos'
       return nodeLabel;
     },
-    oneditprepare: function() {
+    oneditprepare: function () {
       // set up list for command 
       for (var i = 0; i < mySonosCmdList.length; i++) {
-       $('#node-input-command').append($('<option></option>').attr('value', mySonosCmdList[i].cmd).text(mySonosCmdList[i].cmd));
+        $('#node-input-command').append($('<option></option>').attr('value', mySonosCmdList[i].cmd).text(mySonosCmdList[i].cmd));
       }
       // select command
       $('#node-input-command').val(this.command);
-      
+
       // set up typed input for state
       $('#node-input-state').typedInput({
         default: 'str',
@@ -60,8 +60,8 @@
     </div>
 
     <div class="form-tips">
-      <b>Config node</b>: Please select a config node. Config node holds the IP address (and in some rare cases the serial number)
-      of a player. All commands will be send to this player/IP address.
+      <b>Config node</b>:  Please select a config node. Config node stores the DNS name or ipv4 address or the serial number
+      of a SONOS-Player. The Commands (Topic) is send to this SONOS-Player.
     </div><br>
 
     <!-- Topic (Command selection) -->
@@ -112,21 +112,21 @@
 <script type="text/javascript">
   // mySonosCmdList has to be kept in sync with the table in .js file! First item is message! 
   // Message first, all others in lexical order, ascending
-    const mySonosCmdList = [
-    {cmd: "message"},
-    {cmd: "library.export.album"},
-    {cmd: "library.export.artist"},
-    {cmd: "library.export.playlist"},
-    {cmd: "library.export.track"},
-    {cmd: "library.get.albums"},
-    {cmd: "library.get.artists"},
-    {cmd: "library.get.playlists"},
-    {cmd: "library.get.tracks"},
-    {cmd: "mysonos.export.item"},
-    {cmd: "mysonos.get.items"},
-    {cmd: "mysonos.queue.item"},
-    {cmd: "mysonos.stream.item"}
-    ];
+  const mySonosCmdList = [
+    { cmd: "message" },
+    { cmd: "library.export.album" },
+    { cmd: "library.export.artist" },
+    { cmd: "library.export.playlist" },
+    { cmd: "library.export.track" },
+    { cmd: "library.get.albums" },
+    { cmd: "library.get.artists" },
+    { cmd: "library.get.playlists" },
+    { cmd: "library.get.tracks" },
+    { cmd: "mysonos.export.item" },
+    { cmd: "mysonos.get.items" },
+    { cmd: "mysonos.queue.item" },
+    { cmd: "mysonos.stream.item" }
+  ];
 </script>
 
 <!-- Help text (HTML) -->

@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.0.1] 2022-01-16
+
+#### Changed
+
+- dialogs are updated due to DNS name support
+
+- internal: bug fix requestcount - consolidation
+
+- internal: update dependencies fast xml parser, minor code changes
+
+- internal: update mocha test due to renaming of my SONOS-Player names, addresses
+
 ### [6.0.0] 2022-01-12
 
 #### Changed

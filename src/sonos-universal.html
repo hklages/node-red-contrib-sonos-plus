@@ -10,32 +10,32 @@
         value: '',
         type: 'sonos-config'
       },
-      command: { 
+      command: {
         value: 'message',
         required: true
       },
-      state: { 
+      state: {
         value: '',
-        validate: RED.validators.typedInput('stateType') 
+        validate: RED.validators.typedInput('stateType')
       },
-      stateType: { value: 'str'},
+      stateType: { value: 'str' },
       avoidCheckPlayerAvailability: { value: false },
-      name: {value: ''}
+      name: { value: '' }
     },
     inputs: 1, // set the number of inputs - only 0 or 1
     outputs: 1, // set the number of outputs - 0 to n
     icon: 'sonos.png', // saved in icons/myicon.png
     color: '#AAAAAA',
-    label: function() {
+    label: function () {
       let found = universalCmdList.find(item => item.cmd === this.command);
       let nodeLabel = this.name || found.cmd || 'Universal'
       return nodeLabel;
     },
-    oneditprepare: function() {
+    oneditprepare: function () {
       // set up list for command 
       for (var i = 0; i < universalCmdList.length; i++) {
         $('#node-input-command').append($('<option></option>').attr('value', universalCmdList[i].cmd).text(universalCmdList[i].cmd));
-      } 
+      }
       // selected command
       $('#node-input-command').val(this.command);
 
@@ -43,9 +43,9 @@
       $('#node-input-state').typedInput({
         default: 'str',
         typeField: $('#node-input-stateType'),
-        types: ['str','num']
+        types: ['str', 'num']
       });
-    }, 
+    },
     paletteLabel: 'Universal'
   });
 </script>
@@ -60,10 +60,12 @@
     </div>
 
     <div class="form-tips">
-      <b>Config node</b>: Please select a config node. Config node holds the IP address (and in some rare cases the serial number)
-      of a player. All commands will be send to this player/IP address.
-      <br><br>
-      Some commands accept msg.playerName. Providing msg.playerName overrules the config node player.
+      <b>Config node</b>: Please select a config node. Config node stores the DNS name or ipv4 address or the serial number
+      of a SONOS-Player. <br><br>
+
+      Some commands accept msg.playerName. Providing msg.playerName overrules the config node player.<br><br>
+
+      The command (Topic) is being send to the specified SONOS-Player. In case of a group command the command is send to the coordinator of that group.
     </div><br>
 
     <!-- Topic (Command selection) -->
@@ -112,105 +114,105 @@
 </script>
 
 <script type="text/javascript">
-// universalCmdList has to be kept in sync with the table .js file! First item is message! 
-// Message first, all others in lexical order, ascending
+  // universalCmdList has to be kept in sync with the table .js file! First item is message! 
+  // Message first, all others in lexical order, ascending
   const universalCmdList = [
-    {cmd: "message"},
-    {cmd: "coordinator.delegate"},
-    {cmd: "group.adjust.volume"},
-    {cmd: "group.cancel.sleeptimer"},
-    {cmd: "group.clear.queue"},
-    {cmd: "group.create.snap"},
-    {cmd: "group.create.volumesnap"},
-    {cmd: "group.get.actions"},
-    {cmd: "group.get.crossfade"},
-    {cmd: "group.get.members"},
-    {cmd: "group.get.mutestate"},
-    {cmd: "group.get.playbackstate"},
-    {cmd: "group.get.queue"},
-    {cmd: "group.get.queue.length"},
-    {cmd: "group.get.sleeptimer"},
-    {cmd: "group.get.state"},
-    {cmd: "group.get.trackplus"},
-    {cmd: "group.get.volume"},
-    {cmd: "group.next.track"},
-    {cmd: "group.pause"},
-    {cmd: "group.play"},
-    {cmd: "group.play.export"},
-    {cmd: "group.play.library.album"},
-    {cmd: "group.play.library.artist"},
-    {cmd: "group.play.library.playlist"},
-    {cmd: "group.play.library.track"},
-    {cmd: "group.play.mysonos"},
-    {cmd: "group.play.notification"},
-    {cmd: "group.play.queue"},
-    {cmd: "group.play.snap"},
-    {cmd: "group.play.streamhttp"},
-    {cmd: "group.play.track"},
-    {cmd: "group.play.tunein"},
-    {cmd: "group.previous.track"},
-    {cmd: "group.queue.library.album"},
-    {cmd: "group.queue.library.artist"},
-    {cmd: "group.queue.library.playlist"},
-    {cmd: "group.queue.library.track"},
-    {cmd: "group.queue.uri"},
-    {cmd: "group.queue.urispotify"},
-    {cmd: "group.remove.tracks"},
-    {cmd: "group.save.queue"},
-    {cmd: "group.seek"},
-    {cmd: "group.seek.delta"},
-    {cmd: "group.set.crossfade"},
-    {cmd: "group.set.mutestate"},
-    {cmd: "group.set.queuemode"},
-    {cmd: "group.set.sleeptimer"},
-    {cmd: "group.set.volume"},
-    {cmd: "group.stop"},
-    {cmd: "group.toggle.playback"},
-    {cmd: "household.create.group"},
-    {cmd: "household.create.stereopair"},
-    {cmd: "household.disable.alarm"},
-    {cmd: "household.enable.alarm"},
-    {cmd: "household.get.alarms"},
-    {cmd: "household.get.groups"},
-    {cmd: "household.get.sonosplaylists"},
-    {cmd: "household.remove.sonosplaylist"},
-    {cmd: "household.separate.group"},
-    {cmd: "household.separate.stereopair"},
-    {cmd: "household.test.player"},
-    {cmd: "joiner.play.notification"},
-    {cmd: "player.adjust.volume"},
-    {cmd: "player.become.standalone"},
-    {cmd: "player.get.bass"},
-    {cmd: "player.get.batterylevel"},
-    {cmd: "player.get.buttonlockstate"},
-    {cmd: "player.get.dialoglevel"},
-    {cmd: "player.get.led"},
-    {cmd: "player.get.loudness"},
-    {cmd: "player.get.mutestate"},
-    {cmd: "player.get.nightmode"},
-    {cmd: "player.get.properties"},
-    {cmd: "player.get.queue"},
-    {cmd: "player.get.role"},
-    {cmd: "player.get.subgain"},
-    {cmd: "player.get.treble"},
-    {cmd: "player.get.volume"},
-    {cmd: "player.join.group"},
-    {cmd: "player.leave.group"},
-    {cmd: "player.play.avtransport"},
-    {cmd: "player.play.linein"},
-    {cmd: "player.play.tv"},
-    {cmd: "player.set.bass"},
-    {cmd: "player.set.buttonlockstate"},
-    {cmd: "player.set.dialoglevel"},
-    {cmd: "player.set.led"},
-    {cmd: "player.set.loudness"},
-    {cmd: "player.set.mutestate"},
-    {cmd: "player.set.nightmode"},
-    {cmd: "player.set.subgain"},
-    {cmd: "player.set.treble"},
-    {cmd: "player.set.volume"},
-    {cmd: "player.test"}
-]
+    { cmd: "message" },
+    { cmd: "coordinator.delegate" },
+    { cmd: "group.adjust.volume" },
+    { cmd: "group.cancel.sleeptimer" },
+    { cmd: "group.clear.queue" },
+    { cmd: "group.create.snap" },
+    { cmd: "group.create.volumesnap" },
+    { cmd: "group.get.actions" },
+    { cmd: "group.get.crossfade" },
+    { cmd: "group.get.members" },
+    { cmd: "group.get.mutestate" },
+    { cmd: "group.get.playbackstate" },
+    { cmd: "group.get.queue" },
+    { cmd: "group.get.queue.length" },
+    { cmd: "group.get.sleeptimer" },
+    { cmd: "group.get.state" },
+    { cmd: "group.get.trackplus" },
+    { cmd: "group.get.volume" },
+    { cmd: "group.next.track" },
+    { cmd: "group.pause" },
+    { cmd: "group.play" },
+    { cmd: "group.play.export" },
+    { cmd: "group.play.library.album" },
+    { cmd: "group.play.library.artist" },
+    { cmd: "group.play.library.playlist" },
+    { cmd: "group.play.library.track" },
+    { cmd: "group.play.mysonos" },
+    { cmd: "group.play.notification" },
+    { cmd: "group.play.queue" },
+    { cmd: "group.play.snap" },
+    { cmd: "group.play.streamhttp" },
+    { cmd: "group.play.track" },
+    { cmd: "group.play.tunein" },
+    { cmd: "group.previous.track" },
+    { cmd: "group.queue.library.album" },
+    { cmd: "group.queue.library.artist" },
+    { cmd: "group.queue.library.playlist" },
+    { cmd: "group.queue.library.track" },
+    { cmd: "group.queue.uri" },
+    { cmd: "group.queue.urispotify" },
+    { cmd: "group.remove.tracks" },
+    { cmd: "group.save.queue" },
+    { cmd: "group.seek" },
+    { cmd: "group.seek.delta" },
+    { cmd: "group.set.crossfade" },
+    { cmd: "group.set.mutestate" },
+    { cmd: "group.set.queuemode" },
+    { cmd: "group.set.sleeptimer" },
+    { cmd: "group.set.volume" },
+    { cmd: "group.stop" },
+    { cmd: "group.toggle.playback" },
+    { cmd: "household.create.group" },
+    { cmd: "household.create.stereopair" },
+    { cmd: "household.disable.alarm" },
+    { cmd: "household.enable.alarm" },
+    { cmd: "household.get.alarms" },
+    { cmd: "household.get.groups" },
+    { cmd: "household.get.sonosplaylists" },
+    { cmd: "household.remove.sonosplaylist" },
+    { cmd: "household.separate.group" },
+    { cmd: "household.separate.stereopair" },
+    { cmd: "household.test.player" },
+    { cmd: "joiner.play.notification" },
+    { cmd: "player.adjust.volume" },
+    { cmd: "player.become.standalone" },
+    { cmd: "player.get.bass" },
+    { cmd: "player.get.batterylevel" },
+    { cmd: "player.get.buttonlockstate" },
+    { cmd: "player.get.dialoglevel" },
+    { cmd: "player.get.led" },
+    { cmd: "player.get.loudness" },
+    { cmd: "player.get.mutestate" },
+    { cmd: "player.get.nightmode" },
+    { cmd: "player.get.properties" },
+    { cmd: "player.get.queue" },
+    { cmd: "player.get.role" },
+    { cmd: "player.get.subgain" },
+    { cmd: "player.get.treble" },
+    { cmd: "player.get.volume" },
+    { cmd: "player.join.group" },
+    { cmd: "player.leave.group" },
+    { cmd: "player.play.avtransport" },
+    { cmd: "player.play.linein" },
+    { cmd: "player.play.tv" },
+    { cmd: "player.set.bass" },
+    { cmd: "player.set.buttonlockstate" },
+    { cmd: "player.set.dialoglevel" },
+    { cmd: "player.set.led" },
+    { cmd: "player.set.loudness" },
+    { cmd: "player.set.mutestate" },
+    { cmd: "player.set.nightmode" },
+    { cmd: "player.set.subgain" },
+    { cmd: "player.set.treble" },
+    { cmd: "player.set.volume" },
+    { cmd: "player.test" }
+  ]
 </script>
 
 <!-- Help text (HTML) -->

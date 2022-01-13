@@ -18,32 +18,32 @@
         value: ''
       }
     },
-    label: function() {
+    label: function () {
       return this.name
     },
-    oneditprepare: function() {
+    oneditprepare: function () {
 
       // ipaddress: build list
       try {
         $('#node-config-input-ipaddress').autocomplete('destroy')
-      } catch (err) {}
-      $('#node-lookup-ipaddress').click(function() {
+      } catch (err) { }
+      $('#node-lookup-ipaddress').click(function () {
         $('#node-lookup-ipaddress-icon').removeClass('fa-search')
         $('#node-lookup-ipaddress-icon').addClass('spinner')
         $('#node-lookup-ipaddress').addClass('disabled')
-        $.getJSON((RED.settings.httpAdminRoot ||'') + 'nrcsp/discoverAllPlayerWithHost', function(sonosPlayer) {
+        $.getJSON((RED.settings.httpAdminRoot || '') + 'nrcsp/discoverAllPlayerWithHost', function (sonosPlayer) {
           $('#node-lookup-ipaddress-icon').addClass('fa-search')
           $('#node-lookup-ipaddress-icon').removeClass('spinner')
           $('#node-lookup-ipaddress').removeClass('disabled')
           var dataArray = []
-          $.each(sonosPlayer, function(i, element) {
+          $.each(sonosPlayer, function (i, element) {
             dataArray.push(element)
           })
           $('#node-config-input-ipaddress')
             .autocomplete({
               source: dataArray,
               minLength: 0,
-              close: function(event, ui) {
+              close: function (event, ui) {
                 $('#node-config-input-ipaddress').autocomplete('destroy')
               }
             })
@@ -51,27 +51,27 @@
         })
       })
 
-    // serialnum: enter serial number or select from list
-    try {
+      // serialnum: enter serial number or select from list
+      try {
         $('#node-config-input-serialnum').autocomplete('destroy')
-      } catch (err) {}
-      $('#node-config-lookup-serialnum').click(function() {
+      } catch (err) { }
+      $('#node-config-lookup-serialnum').click(function () {
         $('#node-config-lookup-serialnum-icon').removeClass('fa-search')
         $('#node-config-lookup-serialnum-icon').addClass('spinner')
         $('#node-config-lookup-serialnum').addClass('disabled')
-        $.getJSON((RED.settings.httpAdminRoot ||'') + 'nrcsp/discoverAllPlayerWithSerialnumber', function(sonosPlayer) {
+        $.getJSON((RED.settings.httpAdminRoot || '') + 'nrcsp/discoverAllPlayerWithSerialnumber', function (sonosPlayer) {
           $('#node-config-lookup-serialnum-icon').addClass('fa-search')
           $('#node-config-lookup-serialnum-icon').removeClass('spinner')
           $('#node-config-lookup-serialnum').removeClass('disabled')
           var dataArray = []
-          $.each(sonosPlayer, function(i, element) {
+          $.each(sonosPlayer, function (i, element) {
             dataArray.push(element)
           })
           $('#node-config-input-serialnum')
             .autocomplete({
               source: dataArray,
               minLength: 0,
-              close: function(event, ui) {
+              close: function (event, ui) {
                 $('#node-config-input-serialnum').autocomplete('destroy')
               }
             })
@@ -87,42 +87,48 @@
 
 <!-- node name -->
 <div class="form-row">
-<label for="node-config-input-name" style="width: 30%;"><i class="fa fa-tag"></i> Name</label>
-<input type="text" id="node-config-input-name" style="width: auto;" placeholder="This Node Name" />
-</div>
-
-<!-- IP address such as 192.168.178.37 -->
-<div class="form-row">
-<label for="node-config-input-ipaddress" style="width: 30%;"><i class="fa fa-volume-up"></i> Player IP address</label>
-<input type="text" id="node-config-input-ipaddress" style="width: auto;" placeholder="e.g. 192.168.178.37">
-<button id="node-lookup-ipaddress" class="red-ui-button"><i id="node-lookup-ipaddress-icon" class="fa fa-search"></i></button>
+  <label for="node-config-input-name" style="width: 30%;"><i class="fa fa-tag"></i> Name</label>
+  <input type="text" id="node-config-input-name" style="width: auto;" placeholder="This Node Name" />
 </div>
 
 <div class="form-tips">
-<b>Player IP address</b>: Please enter - or search and select from list - a STATIC(!) SONOS-Player IP address. It must be a valid private address in your local network. 
-This address will be used as default. Some commands allow usage of msg.playerName property to overrule the default.<br><br>
-A given <b>IP address always overrules serial number</b> 
-<br><br>
-Search requires available/open port 1900.
+  <b>You must provide</b> Player address or Player serial!<br>
+  A given DNS name or ipv4 address overrules serial number.
+</div><br>
+
+<!-- DNS name such as play1.fritz.box or ipv4 address such as 192.168.178.37 -->
+<div class="form-row">
+  <label for="node-config-input-ipaddress" style="width: 30%;"><i class="fa fa-volume-up"></i> Player address</label>
+  <input type="text" id="node-config-input-ipaddress" style="width: auto;"
+    placeholder="e.g. play1.fritz.box or 192.168.178.37">
+  <button id="node-lookup-ipaddress" class="red-ui-button"><i id="node-lookup-ipaddress-icon"
+      class="fa fa-search"></i></button>
+</div>
+
+<div class="form-tips">
+  <b>Player address</b>: Please enter a DNS name (preferred option) or a ipv4 address of a SONOS-Player. You may also
+  use the search button and select the ipv4 address from the list. <br><br>
+
+  It must be a valid STATIC! private address in your local network. This address will be used as default. Some
+  commands allow usage of msg.playerName property to overrule the default.<br><br>
 </div><br>
 
 <!-- serial number such as 5C-AA-FD-00-22-36:1 -->
 <div class="form-row">
-<label for="node-config-input-serialnum" style="width: 30%;" ><i class="fa fa-barcode" aria-hidden="true"></i> Player serial nb</label>
-<input type="text" id="node-config-input-serialnum" style="width: auto;" placeholder="e.g. 5C-AA-FD-00-22-36:1">
-<button id="node-config-lookup-serialnum" class="red-ui-button"><i id="node-config-lookup-serialnum-icon" class="fa fa-search"></i></button>
+  <label for="node-config-input-serialnum" style="width: 30%;"><i class="fa fa-barcode" aria-hidden="true"></i> Player
+    serial</label>
+  <input type="text" id="node-config-input-serialnum" style="width: auto;" placeholder="e.g. 5C-AA-FD-00-22-36:1">
+  <button id="node-config-lookup-serialnum" class="red-ui-button"><i id="node-config-lookup-serialnum-icon"
+      class="fa fa-search"></i></button>
 </div>
 
 <div class="form-tips">
-<b>Player serial nb</b>: Please leave this field empty. Only enter data - or search and select from list - in such cases, where it is not possible to use a (STATIC) IP address.
-Providing a serial number causes a discovery during deployment. This discovery attempts to find a corresponding IP address, which is then being used. 
-<br><br>
-If you use serial numbers for many nodes, it may happen that some players can not be discovered due to network traffic / SONOS player overload. The node status for those 
-nodes will be marked with red dot. 
-<br><br>
-You must provide <b>either an IP address (recommended) or a serial number!</b>
-<br><br>
-Search requires open port 1900.
+  <b>Player serial</b>: Please leave this field empty. Only enter data - or search and select from list - in such
+  cases, where it is not possible to use a DNS name or ipv4 address.
+  Providing a serial number causes a discovery during deployment. This discovery attempts to find a corresponding ipv4
+  address, which is then being used.
+  <br><br>
+  If you use serial numbers for many nodes, it may happen that some SONOS-Player can not be discovered due to network
+  traffic / SONOS-Player overload. The node status for those nodes will be marked with red dot.
 </div><br>
-
 </script>
