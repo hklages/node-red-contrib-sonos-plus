@@ -24,7 +24,7 @@ const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
 
 const request = require('axios').default
 const xml2js = require('xml2js')
-const parser = require('fast-xml-parser')
+const { XMLParser } = require('fast-xml-parser')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}extensions`)
 
@@ -290,11 +290,11 @@ module.exports = {
     // response.data = '<?xml version="1.0" ?><?xml-stylesheet type="text/xsl" href="/xml/review.xsl"?><ZPSupportInfo><LocalBatteryStatus><Data name="Health">GREEN</Data><Data name="Level">89</Data><Data name="Temperature">NORMAL</Data><Data name="PowerSource">BATTERY</Data></LocalBatteryStatus><!-- SDT: 0 ms --></ZPSupportInfo>'
     let clean = response.data.replace('<?xml', '<xml')
     clean = clean.replace('?>', '>') // strange but necessary
-    const parsed = await parser.parse(clean, {
-      // 'ignoreAttributes': false,
-      // 'attributeNamePrefix': '_',
-      'parseNodeValue': false
-    }) 
+    
+    const parser = new XMLParser({
+      parseTagValue: false,
+    })
+    const parsed = await parser.parse(clean) 
 
     if (!isTruthyProperty(parsed, ['xml', 'ZPSupportInfo', 'LocalBatteryStatus'])) {
       throw new Error(`${PACKAGE_PREFIX} SONOS player did not provide battery level status!`)
@@ -334,11 +334,12 @@ module.exports = {
     }
     let clean = response.data.replace('<?xml', '<xml')
     clean = clean.replace('?>', '>') // strange but necessary
-    properties = await parser.parse(clean, {
-      'ignoreAttributes': false,
-      'attributeNamePrefix': '_',
-      'parseNodeValue': false
-    }) 
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '_',
+      parseTagValue: false,
+    })
+    properties = await parser.parse(clean) 
     if (!isTruthy) {
       throw new Error(`${PACKAGE_PREFIX} xml parser: invalid response`)
     }
@@ -521,15 +522,16 @@ module.exports = {
     }
     const decodedResult = await decodeHtmlEntity(browseOutcome['Result'])
     // stopNodes because we use that value for export and import and no further processing
-    const browseJson = await parser.parse(decodedResult, {
-      'arrayMode': false, // watch fields of type array!
-      'ignoreAttributes': false,
-      'attributeNamePrefix': '_', 
-      'stopNodes': ['r:resMD'], // for My-Sonos items, play export!
-      'parseNodeValue': false, // is default - example Title 49 will otherwise be converted
-      'parseAttributeValue': false,  // is default
-      'textNodeName': '#text'  //is default, just to remember
-    })  
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '_',
+      parseAttributeValue: false,  // is default
+      parseTagValue: false, // is default - example Title 49 will otherwise be converted
+      arrayMode: false,
+      stopNodes: ['r:resMD'], // for My-Sonos items, play export!
+      textNodeName: '#text'  //is default, just to remember
+    })
+    const browseJson = await parser.parse(decodedResult)  
     if (!isTruthyProperty(browseJson, ['DIDL-Lite'])) {
       throw new Error(`${PACKAGE_PREFIX} invalid response Browse: missing DIDL-Lite`)
     }
@@ -768,14 +770,15 @@ module.exports = {
       // no alarms
       alarmsAlwaysArray = []
     } else {
-      const alarmsJson = await parser.parse(decodedAlarmXml, {
-        'arrayMode': false, // watch fields of type array!
-        'ignoreAttributes': false,
-        'attributeNamePrefix': '', 
-        'parseNodeValue': false, // is default - example Title 49 will otherwise be converted
-        'parseAttributeValue': false,  // is default
-        'textNodeName': '#text'  //is default, just to remember
+      const parser = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '',
+        parseAttributeValue: false,  // is default
+        parseTagValue: false,
+        arrayMode: false, // watch fields of type array!
+        textNodeName: '#text'  //is default, just to remember
       })
+      const alarmsJson = await parser.parse(decodedAlarmXml)
       // convert single object to array
       if (isTruthyProperty(alarmsJson, ['Alarms', 'Alarm'])) {
         if (Array.isArray(alarmsJson.Alarms.Alarm)) {
@@ -813,13 +816,14 @@ module.exports = {
     }
     
     const decoded = await decodeHtmlEntity(zoneGroupState)
-    const groupState = await parser.parse(decoded, {
-      'arrayMode': false,
-      'ignoreAttributes': false,
-      'attributeNamePrefix': '_',
-      'parseNodeValue': false,
-      'parseAttributeValue': false
-    }) 
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '_',
+      parseAttributeValue: false,
+      parseTagValue: false,
+      arrayMode: false
+    })
+    const groupState = await parser.parse(decoded) 
     
     // The following section is because of fast-xml-parser with 'arrayMode' = false
     // if only ONE group then convert it to array with one member

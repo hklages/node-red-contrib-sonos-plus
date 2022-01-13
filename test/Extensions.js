@@ -1,17 +1,28 @@
-// async/await syntax makes plugins such chai-as-promised obsolete 
-// Passing lambdas (or arrow functions) to Mocha is discouraged therefore we do: 
+// async/await syntax makes plugins such chai-as-promised obsolete
+// Passing lambdas (or arrow functions) to Mocha is discouraged therefore we do:
 // describe('xxxxx', function(){}) instead of describe('xxxxx', () => {})
 // That makes the this.timeout work!
 
-// These tests only work in my specific envirionment
-// Using http://192.168.178.37:1400 a SONOS Play:5
-// using http://192.168.178.38:1400 a SONOS Play:1 usually switched off
-// using http://192.168.178.15:1400 a Synology NAS 
+// These tests only work in my specific environment
+// Using http://192.168.178.51:1400 a SONOS Play:5
+// using http://192.168.178.54:1400 a SONOS Play:1 usually switched off
+// using http://192.168.178.53:1400 a SONOS Play:3
+// using http://192.168.178.15:1400 a Synology NAS
 
 const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
   parseAlarmsToArray
 } = require('../src/Extensions.js')
+
+const PLAY5 = 'http://192.168.178.51:1400'
+const BEAM = 'http://192.168.178.53:1400'
+const PLAY1 = 'http://192.168.178.54:1400'
+const BATH = 'http://192.168.178.52:1400'
+const SYNOLOGY_INVALID = 'http://192.168.178.15:1400' // is not a sonos player
+
+const FRITZBOX_IP = '192.168.178.1'
+
+const PLAYERNAME_KITCHEN = 'SonosKueche'
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
@@ -28,8 +39,8 @@ describe('extractGroup function', function () {
       })
       return group
     })
-    const playerUrlHost = '192.168.178.1' // wrong but not used!
-    const playerName = 'Bad'
+    const playerUrlHost = FRITZBOX_IP // wrong but not used!
+    const playerName = 'Bad' // old name
     const result = await extractGroup(playerUrlHost, groupData, playerName)
     expect(result)
       .be.a('object')
@@ -55,7 +66,7 @@ describe('extractGroup function', function () {
       })
       return group
     })
-    const playerUrlHost = '192.168.178.36'
+    const playerUrlHost = '192.168.178.36' // old ip
     const playerName = '' // not used
     const result = await extractGroup(playerUrlHost, groupData, playerName)
     expect(result)
@@ -75,7 +86,7 @@ describe('extractGroup function', function () {
   
   it('playerName number throws error not found', async () => {
     const GROUP_3PLAYER = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
-    const playerUrlHost = '192.168.178.1'
+    const playerUrlHost = FRITZBOX_IP
     const groupData = GROUP_3PLAYER
     const playerName = 'xxxxxx'
     await extractGroup(playerUrlHost, groupData, playerName)
@@ -88,7 +99,7 @@ describe('extractGroup function', function () {
 
   it('playerUrlHost throws error not found', async () => {
     const GROUP_3PLAYER = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
-    const playerUrlHost = '192.168.178.1'
+    const playerUrlHost = FRITZBOX_IP
     const groupData = GROUP_3PLAYER
     const playerName = '' // not used
     await extractGroup(playerUrlHost, groupData, playerName)
@@ -331,7 +342,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume is boolean throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = true
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -346,7 +357,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume array throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = ['x']
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -361,7 +372,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume number -1 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = -1
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -375,7 +386,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume number 101 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 101
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -389,7 +400,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume string -1 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = '-1'
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -402,7 +413,7 @@ describe('validatedGroupProperties function', function () {
   })
   it('playerName ok, volume string 101 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = '101'
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -416,7 +427,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume string 1.5 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 1.5
     msg.sameVolume = undefined
     msg.clearQueue = undefined
@@ -451,7 +462,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume 10, sameVolume string throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 10
     msg.sameVolume = 'true'
     msg.clearQueue = undefined
@@ -465,7 +476,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume 10, same volume array throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 10
     msg.sameVolume = ['x']
     msg.clearQueue = undefined
@@ -479,7 +490,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume 10, samevolume number 0 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 10
     msg.sameVolume = 0
     msg.clearQueue = undefined
@@ -493,7 +504,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume not given, sameVolume true throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = undefined
     msg.sameVolume = true
     msg.clearQueue = undefined
@@ -528,7 +539,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume 10, sameVolume true, cleaQueue string thows error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 10
     msg.sameVolume = true
     msg.clearQueue = 'true'
@@ -542,7 +553,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume 10, same volume true, cleaQueue array throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 10
     msg.sameVolume = true
     msg.clearQueue = ['X']
@@ -556,7 +567,7 @@ describe('validatedGroupProperties function', function () {
 
   it('playerName ok, volume 10, samevolume true, clearQueue number 0 throws error', async () => {
     const msg = {}
-    msg.playerName = 'Küche'
+    msg.playerName = PLAYERNAME_KITCHEN
     msg.volume = 10
     msg.sameVolume = true
     msg.clearQueue = 0
@@ -591,7 +602,7 @@ describe('decideCreateNodeOn function', function () {
   })
 
   it('Play:5 returns true', async () => {
-    const playerUrl = new URL('http://192.168.178.37:1400')
+    const playerUrl = new URL(PLAY5)
     const timeout = 500
     const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
@@ -600,7 +611,7 @@ describe('decideCreateNodeOn function', function () {
   })
 
   it('NAS returns false', async () => {
-    const playerUrl = new URL('http://192.168.178.15:1400')
+    const playerUrl = new URL(SYNOLOGY_INVALID)
     const timeout = 500
     const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
@@ -609,7 +620,7 @@ describe('decideCreateNodeOn function', function () {
   })
 
   it('Play:1 returns false if switched off', async () => {
-    const playerUrl = new URL('http://192.168.178.38:1400')
+    const playerUrl = new URL(PLAY1)
     const timeout = 500
     const result = await decideCreateNodeOn(playerUrl, timeout, false)
     expect(result)
@@ -618,7 +629,7 @@ describe('decideCreateNodeOn function', function () {
   })
 
   it('Play:1 returns false but that is ignored by option', async () => {
-    const playerUrl = new URL('http://192.168.178.38:1400')
+    const playerUrl = new URL(PLAY1)
     const timeout = 500
     const result = await decideCreateNodeOn(playerUrl, timeout, true)
     expect(result)
@@ -632,7 +643,7 @@ describe('getDeviceInfo function', function () {
   this.timeout(5000)
 
   it('kitchen returns id RINCON_5CAAFD00223601400', async () => {
-    const playerUrl = new URL('http://192.168.178.37:1400')
+    const playerUrl = new URL(PLAY5)
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.id)
@@ -641,14 +652,14 @@ describe('getDeviceInfo function', function () {
   })
 
   it('kitchen has line in', async () => {
-    const playerUrl = new URL('http://192.168.178.37:1400')
+    const playerUrl = new URL(PLAY5)
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities).to.include('LINE_IN')
   })
 
   it('living returns id RINCON_949F3EC13B9901400', async () => {
-    const playerUrl = new URL('http://192.168.178.36:1400')
+    const playerUrl = new URL(BEAM)
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.id)
@@ -657,7 +668,7 @@ describe('getDeviceInfo function', function () {
   })
 
   it('living has tv', async () => {
-    const playerUrl = new URL('http://192.168.178.36:1400')
+    const playerUrl = new URL(BEAM)
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities)
@@ -665,21 +676,21 @@ describe('getDeviceInfo function', function () {
   })
 
   it('bath has no tv', async () => {
-    const playerUrl = new URL('http://192.168.178.35:1400')
+    const playerUrl = new URL(BATH)
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities).to.not.include('HT_PLAYBACK')
   })
 
   it('bath has no line in', async () => {
-    const playerUrl = new URL('http://192.168.178.35:1400')
+    const playerUrl = new URL(BATH)
     const timeout = 2000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities).to.not.include('LINE_IN')
   })
 
   it('bath with too small time out throws error', async () => {
-    const playerUrl = new URL('http://192.168.178.35:1400')
+    const playerUrl = new URL(BATH)
     const timeout = 50
     await getDeviceInfo(playerUrl, timeout)
       .catch(function (err) {
@@ -809,10 +820,10 @@ describe('parseZoneGroupToArray function', function () {
       .to.equal(TEST.result[1].length)
     expect(result[0][0].playerName)
       .be.a('string')
-      .equal('Küche')
+      .equal('Küche') // old testdata
     expect(result[1][0].playerName)
       .be.a('string')
-      .equal('Bad')
+      .equal('Bad') // old testdata
     
   })
 })
