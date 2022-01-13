@@ -10,8 +10,7 @@
 
 const {
   PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_ANYCHAR_BLANK, REGEX_IP, REGEX_DNS,
-  REGEX_SERIAL, ML_REQUESTS_MAXIMUM, REQUESTED_COUNT_MYSONOS_DEFAULT,
-  REQUESTED_COUNT_MYSONOS_EXPORT, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
+  REGEX_SERIAL, ML_REQUESTS_MAXIMUM, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
@@ -374,7 +373,7 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
+    const mySonosItems = await getMySonos(tsPlayer)
     if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
@@ -406,7 +405,7 @@ module.exports = function (RED) {
    */
   async function mysonosGetItems (msg, tsPlayer) {
     debug('method:%s', 'mysonosGetItems')
-    const payload = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    const payload = await getMySonos(tsPlayer)
     if (!isTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
@@ -431,7 +430,7 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    const mySonosItems = await getMySonos(tsPlayer)
     if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
@@ -471,7 +470,7 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_DEFAULT)
+    const mySonosItems = await getMySonos(tsPlayer)
     if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }

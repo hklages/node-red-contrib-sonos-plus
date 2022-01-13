@@ -12,7 +12,7 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, ML_REQUESTED_COUNT, QUEUE_REQUESTED_COUNT } = require('./Globals.js')
+const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
   executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
@@ -462,7 +462,6 @@ module.exports = {
 
   /** Get array of all My Sonos Favorite items including SonosPlaylists - special imported playlists
    * @param {object} tsPlayer sonos-ts player
-   * @param {number} requestedCount integer, 1 to ... (no validation)
    *
    * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS Playlists)
    *
@@ -474,12 +473,15 @@ module.exports = {
    * "Imported" as search string will show error - undefined uri. Items are result fo A:PLAYLISTS
    * But you can add these single items to My Sonos category Playlists. Then it works.
    */ 
-  getMySonos: async (tsPlayer, requestedCount) =>  { 
+  getMySonos: async (tsPlayer) =>  { 
     debug('method:%s', 'getMySonos')
+
+    const REQUESTED_COUNT_MYSONOS = 1000 // always fetch the allowed maximum
+
     // FV:2 = Favorites 
     const favorites = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'FV:2', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
-      'RequestedCount': requestedCount, 'SortCriteria': ''
+      'RequestedCount': REQUESTED_COUNT_MYSONOS, 'SortCriteria': ''
     })
 
     const itemArray = await parseBrowseToArray(favorites, 'item')
@@ -501,26 +503,27 @@ module.exports = {
         return item
       }
     }))
-    const sonosPlaylists = await module.exports.getSonosPlaylists(tsPlayer, requestedCount)    
+    const sonosPlaylists = await module.exports.getSonosPlaylists(tsPlayer)    
 
     return transformedItems.concat(sonosPlaylists)
   },
 
   /** Get array of all SONOS-Playlists
    * @param {object} tsPlayer sonos-ts player
-   * @param {number} requestedCount integer, 1 to ...
    *
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
    *
    * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
    */
-  getSonosPlaylists: async (tsPlayer, requestedCount) => { 
+  getSonosPlaylists: async (tsPlayer) => { 
     debug('method:%s', 'getSonosPlaylists')
+
+    const REQUESTED_COUNT_PLAYLISTS = 1000 // always fetch the allowed maximum
 
     // SQ = SONOS-Playlists (saved queue) 
     const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'SQ:', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
-      'RequestedCount': requestedCount, 'SortCriteria': ''
+      'RequestedCount': REQUESTED_COUNT_PLAYLISTS, 'SortCriteria': ''
     })
     
     // caution: container not items
@@ -547,6 +550,8 @@ module.exports = {
   getSonosQueueV2: async (tsPlayer, requestLimit) => {
     debug('method:%s', 'getSonosQueueV2')
     
+    const QUEUE_REQUESTED_COUNT = 1000 // always try to fetch the allowed maximum
+
     // validate parameter
     if (typeof requestLimit !== 'number') {
       throw new Error(`${PACKAGE_PREFIX} requestLimit is not number`)
@@ -616,6 +621,8 @@ module.exports = {
    */
   getMusicLibraryItemsV2: async (type, searchString, requestLimit, tsPlayer) => { 
     debug('method:%s', 'getMusicLibraryItemsV2')
+
+    const ML_REQUESTED_COUNT = 1000
 
     // validate parameter
     if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(type)) {

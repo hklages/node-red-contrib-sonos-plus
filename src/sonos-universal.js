@@ -12,8 +12,9 @@
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
   REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME,
-  REGEX_TIME_DELTA, REQUESTED_COUNT_PLAYLISTS, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
-  REQUESTED_COUNT_MYSONOS_EXPORT, ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, ERROR_NOT_FOUND_BY_SERIAL
+  REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
+  ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM,
+  ERROR_NOT_FOUND_BY_SERIAL
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
@@ -263,7 +264,7 @@ module.exports = function (RED) {
           // discovery failed - most likely because could not find any matching player
           let txt = 'could not discover player by serial'
           if (err.message === ERROR_NOT_FOUND_BY_SERIAL) {
-           txt = ERROR_NOT_FOUND_BY_SERIAL
+            txt = ERROR_NOT_FOUND_BY_SERIAL
           }
           debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
           failure(node, txt, err, thisFunctionName)
@@ -1070,7 +1071,7 @@ module.exports = function (RED) {
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
 
-    const mySonosItems = await getMySonos(tsPlayer, REQUESTED_COUNT_MYSONOS_EXPORT)
+    const mySonosItems = await getMySonos(tsPlayer)
     if (!isTruthy(mySonosItems)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
     }
@@ -2252,7 +2253,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Get SONOS playlists - only the first REQUESTED_COUNT_PLAYLISTS
+   *  Get SONOS playlists.
    * @param {object} msg incoming message
    * @param {object} tsPlayer sonos-ts player
    *
@@ -2261,7 +2262,8 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetSonosPlaylists (msg, tsPlayer) {
-    const payload = await getSonosPlaylists(tsPlayer, REQUESTED_COUNT_PLAYLISTS)
+    
+    const payload = await getSonosPlaylists(tsPlayer)
 
     return { payload }
   }
