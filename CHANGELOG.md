@@ -14,6 +14,8 @@ All notable changes to this project are documented in this file.
 
 - internal: update mocha test due to renaming of my SONOS-Player names, addresses
 
+- internal: xml2js replaced by fast xml parser
+
 ### [6.0.0] 2022-01-12
 
 #### Changed
