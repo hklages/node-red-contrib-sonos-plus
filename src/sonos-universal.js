@@ -3272,15 +3272,9 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerTest (msg, tsPlayer) {
-    const { endpoint, action, inArgs } = msg.payload
-    const pl6 = await executeActionV7(tsPlayer.urlObject,
-      endpoint, action, inArgs)
-    const payload = await executeActionV7(tsPlayer.urlObject,
-      endpoint, action, inArgs)
-    return { payload, pl6 }
 
-    // const payload = await tsPlayer.AVTransportService.GetPositionInfo({ InstanceID: 0 })
-    // return { payload }
+    const payload = await tsPlayer.AVTransportService.GetPositionInfo({ InstanceID: 0 })
+    return { payload }
   }
 
   /**
