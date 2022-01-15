@@ -24,8 +24,8 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
   getMusicLibraryItemsV2
 } = require('./Commands.js')
 
-const { executeActionV6, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
-  getMusicServiceName, getPlaybackstate, getRadioId, decideCreateNodeOn,
+const { executeActionV7, failure, getDeviceInfo, getDeviceProperties,
+  getMusicServiceId, getMusicServiceName, getPlaybackstate, getRadioId, decideCreateNodeOn,
   play, setVolume, success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
 
@@ -137,7 +137,7 @@ module.exports = function (RED) {
     'player.set.treble': playerSetTreble,
     'player.set.volume': playerSetVolume,
     'player.test': playerTest,
-    'player.execute.action': playerExecuteActionV6
+    'player.execute.action': playerExecuteActionV7
   }
 
   /**
@@ -2093,20 +2093,20 @@ module.exports = function (RED) {
           if (
             householdPlayerList[i].groupIndex === householdPlayerList[iNewCoordinator].groupIndex) {
             // Leave group, no check - always returns true
-            await executeActionV6(householdPlayerList[i].urlObject,
+            await executeActionV7(householdPlayerList[i].urlObject,
               '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
               { 'InstanceID': 0 })
           }
         } else if (
           householdPlayerList[i].groupIndex !== householdPlayerList[iNewCoordinator].groupIndex) {
           // No check - always returns true. Using SetAVTransportURI as AddMember does not work
-          await executeActionV6(householdPlayerList[i].urlObject,
+          await executeActionV7(householdPlayerList[i].urlObject,
             '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
             { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
         }
       }
     } else {
-      await executeActionV6(householdPlayerList[iNewCoordinator].urlObject,
+      await executeActionV7(householdPlayerList[iNewCoordinator].urlObject,
         '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
         { 'InstanceID': 0 })
       
@@ -2117,7 +2117,7 @@ module.exports = function (RED) {
       for (let i = 1; i < newGroupPlayerArray.length; i++) { // Start with 1
         indexPlayer = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
         // No check - always returns true. Using SetAVTransportURI as AddMember does not work
-        await executeActionV6(householdPlayerList[indexPlayer].urlObject,
+        await executeActionV7(householdPlayerList[indexPlayer].urlObject,
           '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
           { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
       }
@@ -2178,7 +2178,7 @@ module.exports = function (RED) {
     }
 
     // No check - always returns true
-    await executeActionV6(playerLeftUrl,
+    await executeActionV7(playerLeftUrl,
       '/DeviceProperties/Control', 'CreateStereoPair',
       { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
 
@@ -2325,7 +2325,7 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     for (let i = 1; i < groupData.members.length; i++) { // Start with 1 - coordinator is last
       // No check - always returns true
-      await executeActionV6(groupData.members[i].urlObject,
+      await executeActionV7(groupData.members[i].urlObject,
         '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
         { 'InstanceID': 0 })
     }
@@ -2391,7 +2391,7 @@ module.exports = function (RED) {
     }
 
     // No check - always returns true
-    await executeActionV6(playerLeftUrlObject,
+    await executeActionV7(playerLeftUrlObject,
       '/DeviceProperties/Control', 'SeparateStereoPair',
       { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
 
@@ -2879,7 +2879,7 @@ module.exports = function (RED) {
       !== groupDataToJoin.members[0].playerName) {
       // No check - always returns true. We use SetAVTransport as AddMember does not work
 
-      await executeActionV6(groupDataJoiner.members[groupDataJoiner.playerIndex].urlObject,
+      await executeActionV7(groupDataJoiner.members[groupDataJoiner.playerIndex].urlObject,
         '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
         { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
     } // Else: do nothing - either playerName is already coordinator
@@ -3273,10 +3273,14 @@ module.exports = function (RED) {
    */
   async function playerTest (msg, tsPlayer) {
     const { endpoint, action, inArgs } = msg.payload
-    const payload = await executeActionV6(tsPlayer.urlObject,
+    const pl6 = await executeActionV7(tsPlayer.urlObject,
       endpoint, action, inArgs)
-    
-    return { payload }
+    const payload = await executeActionV7(tsPlayer.urlObject,
+      endpoint, action, inArgs)
+    return { payload, pl6 }
+
+    // const payload = await tsPlayer.AVTransportService.GetPositionInfo({ InstanceID: 0 })
+    // return { payload }
   }
 
   /**
@@ -3292,11 +3296,11 @@ module.exports = function (RED) {
    *
    * @throws {error} all methods
    */
-  async function playerExecuteActionV6 (msg, tsPlayer) {
+  async function playerExecuteActionV7 (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const { endpoint, action, inArgs } = msg.payload
-    const payload = await executeActionV6(groupData.members[groupData.playerIndex].urlObject,
+    const payload = await executeActionV7(groupData.members[groupData.playerIndex].urlObject,
       endpoint, action, inArgs)
     
     return { payload }
