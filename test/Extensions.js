@@ -11,8 +11,11 @@
 
 const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
-  parseAlarmsToArray
+  // eslint-disable-next-line max-len
+  parseAlarmsToArray, getMutestate, getPlaybackstate, getVolume, setVolume, selectTrack, play, getPositionInfo
 } = require('../src/Extensions.js')
+
+const { SonosDevice } = require('@svrooij/sonos/lib')
 
 const PLAY5 = 'http://192.168.178.51:1400'
 const BEAM = 'http://192.168.178.53:1400'
@@ -21,11 +24,158 @@ const BATH = 'http://192.168.178.52:1400'
 const SYNOLOGY_INVALID = 'http://192.168.178.15:1400' // is not a sonos player
 
 const FRITZBOX_IP = '192.168.178.1'
+const PLAY5_IP = '192.168.178.51'
+
+const SHADE_SONG = 'x-rincon-playlist:RINCON_000E58FE3AEA01400#A:ALBUM/Diamond%20Life'
 
 const PLAYERNAME_KITCHEN = 'SonosKueche'
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
+
+describe('executeV6 usage', function () {
+  
+  const tsPlayer = new SonosDevice(PLAY5_IP)  
+  const playerUrlObject = new URL(`http://${PLAY5_IP}:1400`)
+
+  it('method getMutestate on ', async () => {
+    // set
+    await tsPlayer.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: true })
+    // test
+    const result = await getMutestate(playerUrlObject)
+    expect(result)
+      .be.a('string')
+      .to.equal('on')
+  })
+  it('method getMutestate off ', async () => {
+    // set
+    await tsPlayer.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: false })
+    // test
+    const result = await getMutestate(playerUrlObject)
+    expect(result)
+      .be.a('string')
+      .to.equal('off')
+  })
+
+  it('method getPlaybackstate stopped', async () => {
+    // set
+    await tsPlayer.AVTransportService.Stop({ InstanceID: 0 })
+    // test
+    const result = await getPlaybackstate(playerUrlObject)
+    expect(result)
+      .be.a('string')
+      .to.equal('stopped')
+  })
+  it('method getPlaybackstate playing ', async () => {
+    // set
+    await tsPlayer.AVTransportService.Play({ InstanceID: 0, Speed: '1' })
+    // test
+    const result = await getPlaybackstate(playerUrlObject)
+    expect(result)
+      .be.a('string')
+      .to.be.oneOf(['playing', 'transitioning'])
+  })
+
+  it('getVolume string 0', async () => {
+    // set
+    await tsPlayer.RenderingControlService.SetVolume({
+      InstanceID: 0, Channel: 'Master',
+      DesiredVolume: 0
+    })
+    // test
+    const result = await getVolume(playerUrlObject)
+    expect(result)
+      .be.a('string')
+      .to.equal('0')
+  })
+  it('getVolume string 10 ', async () => {
+    // set
+    await tsPlayer.RenderingControlService.SetVolume({
+      InstanceID: 0, Channel: 'Master',
+      DesiredVolume: 10
+    })
+    // test
+    const result = await getVolume(playerUrlObject)
+    expect(result)
+      .be.a('string')
+      .to.equal('10')
+  })
+
+  it('getPositionInfo - queue in normal mode album from Sade', async () => {
+    // set
+    await tsPlayer.
+      AddUriToQueue(SHADE_SONG)
+    await tsPlayer.Play()
+    // test
+    const result = await getPositionInfo(playerUrlObject)
+    expect(result)
+      .be.a('object')
+    expect(result.Track)
+      .be.a('string')
+      .to.equal('1')
+    expect(result.TrackDuration)
+      .be.a('string')
+      .to.equal('0:05:00')
+    expect(result.TrackMetaData.startsWith('<DIDL-Lite xmlns:dc='))
+      .be.a('boolean')
+      .to.equal(true)
+    expect(result.TrackURI)
+      .be.a('string')
+      // eslint-disable-next-line max-len
+      .to.equal('x-file-cifs://hkNas/Multimedia/Music/MyMusic/Sade/Diamond%20Life/Sade%20-%20Smooth%20Operator.mp3')
+    expect(result.RelTime)
+      .be.a('string')
+  })
+
+  it('setVolume integer 0', async () => {
+    // INFO we set volume and test the result with another function!
+    // set
+    await setVolume(playerUrlObject, 0)
+    // test
+    const result = await tsPlayer.RenderingControlService.GetVolume({
+      InstanceID: 0,
+      Channel: 'Master'
+    })
+    expect(result.CurrentVolume)
+      .to.equal(0)
+  })
+  it('setVolume integer 10 ', async () => {
+    // set
+    await setVolume(playerUrlObject, 10)
+    // test
+    const result = await tsPlayer.RenderingControlService.GetVolume({
+      InstanceID: 0,
+      Channel: 'Master'
+    })
+    expect(result.CurrentVolume)
+      .to.equal(10)
+  })
+
+  it('play ', async () => {
+    // INFO we stop, then we start and then test the result with another function!
+    // first we stop
+    await tsPlayer.AVTransportService.Stop  
+    // set
+    await play(playerUrlObject)
+    // test
+    const result = await tsPlayer.AVTransportService.GetTransportInfo({ InstanceID: 0 })
+    expect(result.CurrentTransportState)
+      .to.be.oneOf(['PLAYING', 'TRANSITIONING'])
+  })
+
+  it('selectTrack  4,  prereq queue must be active and at least 4 entries', async () => {
+    // INFO we select the track and test the result with another function!
+    // set
+    const trackNb = 4
+    await selectTrack(playerUrlObject, trackNb)
+    // test
+    const result = await tsPlayer.AVTransportService.GetPositionInfo({
+      InstanceID: 0
+    })
+    expect(result.Track)
+      .to.equal(trackNb)
+  })
+})
 
 describe('extractGroup function', function () {
   const TEST_DATA_ZONEGROUP = require('./testdata-parsezonegroup.json')
@@ -1077,5 +1227,4 @@ describe('parseAlarmsToArray function', function () {
       .be.a('string')
       .equal('21')
   })
-
 })

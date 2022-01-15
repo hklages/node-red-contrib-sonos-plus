@@ -23,7 +23,6 @@ const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
 } = require('./Helper.js')
 
 const request = require('axios').default
-const xml2js = require('xml2js')
 const { XMLParser } = require('fast-xml-parser')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}extensions`)
@@ -360,24 +359,29 @@ module.exports = {
   // Get mute state of given player. values: on|off
   getMutestate: async (playerUrlObject) => {
     debug('method:%s', 'getMutestate')
-    return (await module.exports.executeActionV6(playerUrlObject,
+    return (await module.exports.executeActionV7(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetMute',
       { 'InstanceID': 0, 'Channel': 'Master' }) === '1' ? 'on' : 'off')
   },
 
   // Get media info of given player.
+  // Difference between standard sonos-ts and this implementation
+  // 1. Track is number versus string
+  // 2. CurrentURIMetaData is object versus string <DIDL-lite>
+  // 3. Most likely Next Metadata is also object 
+  // 4. undefined instead of ''
   getMediaInfo: async (coordinatorUrlObject) => {
     debug('method:%s', 'getMediaInfo')
-    return await module.exports.executeActionV6(coordinatorUrlObject,
+    return await module.exports.executeActionV7(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
   },
 
   // Get playbackstate of given player. 
-  // values: playing, stopped, playing, paused_playback, transitioning, no_media_present
+  // values: playing, stopped, paused, paused_playback, transitioning, no_media_present
   getPlaybackstate: async (coordinatorUrlObject) => {
     debug('method:%s', 'getPlaybackstate')
-    const transportInfo = await module.exports.executeActionV6(coordinatorUrlObject,
+    const transportInfo = await module.exports.executeActionV7(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
       { 'InstanceID': 0 })
     if (!isTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
@@ -387,9 +391,13 @@ module.exports = {
   },
 
   // Get position info of given player.
+  // Difference between standard sonos-ts and this implementation
+  // 1. Track is number versus string
+  // 2. TrackMetaData is object versus string <DIDL-lite>
+  // 3. undefined instead of ''
   getPositionInfo: async (coordinatorUrlObject) => {
     debug('method:%s', 'getPositionInfo')
-    return await module.exports.executeActionV6(coordinatorUrlObject,
+    return await module.exports.executeActionV7(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
       { 'InstanceID': 0 })
   },
@@ -397,7 +405,7 @@ module.exports = {
   // Get volume of given player. value: integer, range 0 .. 100
   getVolume: async (playerUrlObject) => {
     debug('method:%s', 'getVolume')
-    return await module.exports.executeActionV6(playerUrlObject,
+    return await module.exports.executeActionV7(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'GetVolume',
       { 'InstanceID': 0, 'Channel': 'Master' })
   },
@@ -405,7 +413,7 @@ module.exports = {
   //** Play (already set) URI.
   play: async (coordinatorUrlObject) => {
     debug('method:%s', 'play')
-    return await module.exports.executeActionV6(coordinatorUrlObject,
+    return await module.exports.executeActionV7(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'Play',
       { 'InstanceID': 0, 'Speed': 1 })
   },
@@ -420,7 +428,7 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} positionInTrack is not string`)
     }
 
-    return await module.exports.executeActionV6(coordinatorUrlObject,
+    return await module.exports.executeActionV7(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'Seek',
       { 'InstanceID': 0, 'Target': positionInTrack, 'Unit': 'REL_TIME' })
   },
@@ -437,7 +445,7 @@ module.exports = {
     }
     const track = parseInt(trackPosition)
 
-    return await module.exports.executeActionV6(coordinatorUrlObject,
+    return await module.exports.executeActionV7(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'Seek',
       { 'InstanceID': 0, 'Target': track, 'Unit': 'TRACK_NR' })
   },
@@ -445,7 +453,7 @@ module.exports = {
   // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
   setVolume: async (playerUrlObject, newVolume) => {
     debug('method:%s', 'setVolume')
-    return await module.exports.executeActionV6(playerUrlObject,
+    return await module.exports.executeActionV7(playerUrlObject,
       '/MediaRenderer/RenderingControl/Control', 'SetVolume',
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
   },
@@ -1014,13 +1022,14 @@ module.exports = {
    * 
    * @throws {error} nrcsp: any inArgs property missing, http return invalid status or not 200, 
    * missing body, unexpected response
-   * @throws {error} xml2js.parseStringPromise 
+   * @throws {error} fastxmlparser errors 
    * 
    * Everything OK if statusCode === 200 and body includes expected 
    * response value (set) or value (get)
    */
-  executeActionV6: async (playerUrl, endpoint, actionName, actionInArgs) => {
-    debug('method:%s', 'executeActionV6')
+
+  executeActionV7: async (playerUrl, endpoint, actionName, actionInArgs) => {
+    debug('method:%s', 'executeActionV7')
    
     // get action in, out properties from json file 
     const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
@@ -1062,10 +1071,15 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
 
-    // Convert XML to JSON
-    const parseXMLArgs = { 'mergeAttrs': true, 'explicitArray': false, 'charkey': '' } 
-    // documentation: https://www.npmjs.com/package/xml2js#options  -- don't change option!
-    const bodyXml = await xml2js.parseStringPromise(response.body, parseXMLArgs)
+    // Convert XML to JSON - now with fast xml parser
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '',
+      parseAttributeValue: false,
+      parseTagValue: false,
+      arrayMode: false
+    })
+    const bodyXml = await parser.parse(response.body)
     debug('parsed JSON response body >>%s', JSON.stringify(bodyXml))
 
     // RESPONSE

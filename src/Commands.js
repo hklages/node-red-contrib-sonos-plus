@@ -15,7 +15,7 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  executeActionV6, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
+  executeActionV7, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
   getRadioId, getUpnpClassEncoded, getVolume, guessProcessingType, parseBrowseToArray,
   parseZoneGroupToArray, positionInTrack, selectTrack, setVolume, parseAlarmsToArray
 } = require('./Extensions.js')
@@ -72,7 +72,7 @@ module.exports = {
     
     // set AVTransport on coordinator and if requested the volume
     const iCoord = 0
-    await executeActionV6(tsPlayerArray[iCoord].urlObject,
+    await executeActionV7(tsPlayerArray[iCoord].urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
         'InstanceID': 0,
         'CurrentURI': await encodeHtmlEntity(options.uri),
@@ -164,7 +164,7 @@ module.exports = {
     debug('Snapshot created - now start playing notification')
 
     // set AVTransport on joiner - joiner will leave group!
-    await executeActionV6(tsJoiner.urlObject,
+    await executeActionV7(tsJoiner.urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
         'InstanceID': 0,
         'CurrentURI': await encodeHtmlEntity(options.uri),
@@ -198,7 +198,7 @@ module.exports = {
       await setVolume(tsJoiner.urlObject, snapshot.joinerVolume)
     }
     const coordinatorRincon = `x-rincon:${tsCoordinator.myUuid}`
-    await executeActionV6(tsJoiner.urlObject,
+    await executeActionV7(tsJoiner.urlObject,
       '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
       { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
 
@@ -296,7 +296,7 @@ module.exports = {
     const metadata = await encodeHtmlEntity(snapshot.CurrentURIMetadata)
     const uri = await encodeHtmlEntity(snapshot.CurrentURI)
     if (!uri.includes('x-sonos-vli')) {
-      await executeActionV6(coordinatorUrlObject,
+      await executeActionV7(coordinatorUrlObject,
         '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
           'InstanceID': 0,
           'CurrentURI': uri,
