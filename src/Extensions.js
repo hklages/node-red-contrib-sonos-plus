@@ -356,14 +356,6 @@ module.exports = {
   //     @throws {error} from executeAction
   //     ..........................................................
   
-  // Get mute state of given player. values: on|off
-  getMutestate: async (playerUrlObject) => {
-    debug('method:%s', 'getMutestate')
-    return (await module.exports.executeActionV7(playerUrlObject,
-      '/MediaRenderer/RenderingControl/Control', 'GetMute',
-      { 'InstanceID': 0, 'Channel': 'Master' }) === '1' ? 'on' : 'off')
-  },
-
   // Get media info of given player.
   // Difference between standard sonos-ts and this implementation
   // 1. Track is number versus string
@@ -377,19 +369,6 @@ module.exports = {
       { 'InstanceID': 0 })
   },
 
-  // Get playbackstate of given player. 
-  // values: playing, stopped, paused, paused_playback, transitioning, no_media_present
-  getPlaybackstate: async (coordinatorUrlObject) => {
-    debug('method:%s', 'getPlaybackstate')
-    const transportInfo = await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
-      { 'InstanceID': 0 })
-    if (!isTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
-      throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
-    }
-    return transportInfo.CurrentTransportState.toLowerCase()
-  },
-
   // Get position info of given player.
   // Difference between standard sonos-ts and this implementation
   // 1. Track is number versus string
@@ -401,53 +380,18 @@ module.exports = {
       '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
       { 'InstanceID': 0 })
   },
-
-  // Get volume of given player. value: integer, range 0 .. 100
-  getVolume: async (playerUrlObject) => {
-    debug('method:%s', 'getVolume')
-    return await module.exports.executeActionV7(playerUrlObject,
-      '/MediaRenderer/RenderingControl/Control', 'GetVolume',
-      { 'InstanceID': 0, 'Channel': 'Master' })
-  },
-
-  //** Play (already set) URI.
-  play: async (coordinatorUrlObject) => {
-    debug('method:%s', 'play')
-    return await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'Play',
-      { 'InstanceID': 0, 'Speed': 1 })
-  },
-
-  //** Position in track - requires none empty queue. position h:mm:ss
-  positionInTrack: async (coordinatorUrlObject, positionInTrack) => {
-    debug('method:%s', 'positionInTrack')
-    if (!isTruthy(positionInTrack)) {
-      throw new Error(`${PACKAGE_PREFIX} positionInTrack is invalid/missing.`)
+  
+  // Get playbackstate of given player.
+  // values: playing, stopped, paused, paused_playback, transitioning, no_media_present
+  getPlaybackstate: async (coordinatorUrlObject) => {
+    debug('method:%s', 'getPlaybackstate')
+    const transportInfo = await module.exports.executeActionV7(coordinatorUrlObject,
+      '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
+      { 'InstanceID': 0 })
+    if (!isTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
+      throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
     }
-    if (typeof positionInTrack !== 'string') { 
-      throw new Error(`${PACKAGE_PREFIX} positionInTrack is not string`)
-    }
-
-    return await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'Seek',
-      { 'InstanceID': 0, 'Target': positionInTrack, 'Unit': 'REL_TIME' })
-  },
-
-  //** Play track - requires none empty queue. trackPosition (number) 1 to queue length
-  // track position number or string in range 1 to lenght
-  selectTrack: async (coordinatorUrlObject, trackPosition) => {
-    debug('method:%s', 'selectTrack')
-    if (!isTruthy(trackPosition)) {
-      throw new Error(`${PACKAGE_PREFIX} trackPosition is invalid/missing.`)
-    }
-    if (typeof trackPosition !== 'string' && typeof trackPosition !== 'number') { 
-      throw new Error(`${PACKAGE_PREFIX} trackPosition is not string/number`)
-    }
-    const track = parseInt(trackPosition)
-
-    return await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'Seek',
-      { 'InstanceID': 0, 'Target': track, 'Unit': 'TRACK_NR' })
+    return transportInfo.CurrentTransportState.toLowerCase()
   },
 
   // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
