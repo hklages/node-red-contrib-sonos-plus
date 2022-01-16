@@ -16,6 +16,8 @@ All notable changes to this project are documented in this file.
 
 - internal: xml2js replaced by fast xml parser
 
+- internal: removed setMute(), play(), ...
+
 ### [6.0.0] 2022-01-12
 
 #### Changed
