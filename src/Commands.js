@@ -15,9 +15,9 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  executeActionV7, extractGroup, getMediaInfo, getMutestate, getPlaybackstate, getPositionInfo,
-  getRadioId, getUpnpClassEncoded, getVolume, guessProcessingType, parseBrowseToArray,
-  parseZoneGroupToArray, positionInTrack, selectTrack, setVolume, parseAlarmsToArray
+  executeActionV7, extractGroup, getMediaInfo, getPlaybackstate, getPositionInfo,
+  getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
+  parseZoneGroupToArray, setVolume, parseAlarmsToArray
 } = require('./Extensions.js')
 
 const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
@@ -159,7 +159,9 @@ module.exports = {
     const state = await getPlaybackstate(tsCoordinator.urlObject)
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     if (options.volume !== -1) {
-      snapshot.joinerVolume = await getVolume(tsJoiner.urlObject)
+      const result = await tsJoiner.RenderingControlService.GetVolume(
+        { InstanceID: 0, Channel: 'Master' })
+      snapshot.joinerVolume = result.CurrentVolume
     }
     debug('Snapshot created - now start playing notification')
 
@@ -218,8 +220,8 @@ module.exports = {
    * @property {member[]} membersData array of members in a group
    * @property {object} member group members relevant data
    * @property {string} member.urlSchemeAuthority such as http://192.168.178.37:1400/
-   * @property {boolean} member.mutestate null for not available
-   * @property {string} member.volume -1 for not available
+   * @property {string} member.mutestate null for not available, otherwise on\|off
+   * @property {integer} member.volume null for not available, range 0 to 100
    * @property {string} member.playerName SONOS-Playername
    */
 
@@ -246,14 +248,19 @@ module.exports = {
         // urlSchemaAuthority because it may stored in flow variable
         urlSchemeAuthority: playersInGroup[index].urlObject.origin,
         mutestate: null,
-        volume: '-1',
+        volume: null,
         playerName: playersInGroup[index].playerName
       }
+      const tsPlayer = new SonosDevice(playersInGroup[index].urlObject.hostname)
       if (options.snapVolumes) {
-        member.volume = await getVolume(playersInGroup[index].urlObject)
+        const result = await tsPlayer.RenderingControlService.GetVolume(
+          { 'InstanceID': 0, 'Channel': 'Master' })
+        member.volume = result.CurrentVolume // number!
       }
       if (options.snapMutestates) {
-        member.mutestate = await getMutestate(playersInGroup[index].urlObject)
+        const result = await tsPlayer.RenderingControlService.GetMute(
+          { 'InstanceID': 0, 'Channel': 'Master' })
+        member.mutestate = (result.CurrentMute ? 'on' : 'off')
       }
       snapshot.membersData.push(member)
     }
@@ -291,7 +298,8 @@ module.exports = {
     // restore content
     // urlSchemeAuthority because we do create/restore
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
-    
+    const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
+
     // html encode for the &
     const metadata = await encodeHtmlEntity(snapshot.CurrentURIMetadata)
     const uri = await encodeHtmlEntity(snapshot.CurrentURI)
@@ -314,38 +322,37 @@ module.exports = {
     }
     if (track >= 1 && nrTracks >= track) {
       debug('Setting track to >>%s', snapshot.Track)
-      // we need to wait until track is selected
+      // wait then restore track
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500)
-      await selectTrack(coordinatorUrlObject, track)
+      
+      await tsCoordinator.SeekTrack(track)
         .catch(() => {
           debug('Reverting back track failed, happens for some music services.')
         })
     }
     if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
-    // we need to wait until track is selected
+      // wait then restore track position
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100)
       debug('Setting back time to >>%', snapshot.RelTime)
-      await positionInTrack(coordinatorUrlObject, snapshot.RelTime)
+
+      await tsCoordinator.SeekPosition(snapshot.RelTime)
         .catch(() => {
           debug('Reverting back track time failed, happens for some music services.')
         })
     }
     // restore volume/mute if captured.
-    let volume
-    let mutestate
-    let urlObject // JavaScript build-in URL
-    let url // url for player
-    let ts1Player // ts player object
     for (let i = 0; i < snapshot.membersData.length; i++) {
-      volume = snapshot.membersData[i].volume
-      urlObject = new URL(snapshot.membersData[i].urlSchemeAuthority)
-      if (volume !== '-1') { // volume is of type string
-        await setVolume(urlObject, parseInt(volume))
+      const urlObject = new URL(snapshot.membersData[i].urlSchemeAuthority)
+      const ts1Player = new SonosDevice(urlObject.hostname)
+      
+      const volume = snapshot.membersData[i].volume
+      if (volume !== null) { 
+        await ts1Player.RenderingControlService.SetVolume(
+          { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': volume.toString() })
       }
-      mutestate = snapshot.membersData[i].mutestate
+
+      const mutestate = snapshot.membersData[i].mutestate
       if (mutestate !== null) {
-        url = new URL(snapshot.membersData[i].urlSchemeAuthority)
-        ts1Player = new SonosDevice(url.hostname)
         await ts1Player.RenderingControlService.SetMute(
           { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': (mutestate === 'on') }) 
       }

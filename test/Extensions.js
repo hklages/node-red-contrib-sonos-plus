@@ -12,7 +12,7 @@
 const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
   // eslint-disable-next-line max-len
-  parseAlarmsToArray, getMutestate, getPlaybackstate, getVolume, setVolume, selectTrack, play, getPositionInfo
+  parseAlarmsToArray, getPlaybackstate, setVolume, getPositionInfo
 } = require('../src/Extensions.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
@@ -38,25 +38,6 @@ describe('executeV6 usage', function () {
   const tsPlayer = new SonosDevice(PLAY5_IP)  
   const playerUrlObject = new URL(`http://${PLAY5_IP}:1400`)
 
-  it('method getMutestate on ', async () => {
-    // set
-    await tsPlayer.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: true })
-    // test
-    const result = await getMutestate(playerUrlObject)
-    expect(result)
-      .be.a('string')
-      .to.equal('on')
-  })
-  it('method getMutestate off ', async () => {
-    // set
-    await tsPlayer.GroupRenderingControlService.SetGroupMute({ InstanceID: 0, DesiredMute: false })
-    // test
-    const result = await getMutestate(playerUrlObject)
-    expect(result)
-      .be.a('string')
-      .to.equal('off')
-  })
-
   it('method getPlaybackstate stopped', async () => {
     // set
     await tsPlayer.AVTransportService.Stop({ InstanceID: 0 })
@@ -74,31 +55,6 @@ describe('executeV6 usage', function () {
     expect(result)
       .be.a('string')
       .to.be.oneOf(['playing', 'transitioning'])
-  })
-
-  it('getVolume string 0', async () => {
-    // set
-    await tsPlayer.RenderingControlService.SetVolume({
-      InstanceID: 0, Channel: 'Master',
-      DesiredVolume: 0
-    })
-    // test
-    const result = await getVolume(playerUrlObject)
-    expect(result)
-      .be.a('string')
-      .to.equal('0')
-  })
-  it('getVolume string 10 ', async () => {
-    // set
-    await tsPlayer.RenderingControlService.SetVolume({
-      InstanceID: 0, Channel: 'Master',
-      DesiredVolume: 10
-    })
-    // test
-    const result = await getVolume(playerUrlObject)
-    expect(result)
-      .be.a('string')
-      .to.equal('10')
   })
 
   it('getPositionInfo - queue in normal mode album from Sade', async () => {
@@ -151,30 +107,6 @@ describe('executeV6 usage', function () {
       .to.equal(10)
   })
 
-  it('play ', async () => {
-    // INFO we stop, then we start and then test the result with another function!
-    // first we stop
-    await tsPlayer.AVTransportService.Stop  
-    // set
-    await play(playerUrlObject)
-    // test
-    const result = await tsPlayer.AVTransportService.GetTransportInfo({ InstanceID: 0 })
-    expect(result.CurrentTransportState)
-      .to.be.oneOf(['PLAYING', 'TRANSITIONING'])
-  })
-
-  it('selectTrack  4,  prereq queue must be active and at least 4 entries', async () => {
-    // INFO we select the track and test the result with another function!
-    // set
-    const trackNb = 4
-    await selectTrack(playerUrlObject, trackNb)
-    // test
-    const result = await tsPlayer.AVTransportService.GetPositionInfo({
-      InstanceID: 0
-    })
-    expect(result.Track)
-      .to.equal(trackNb)
-  })
 })
 
 describe('extractGroup function', function () {
