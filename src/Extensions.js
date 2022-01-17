@@ -368,18 +368,6 @@ module.exports = {
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
   },
-
-  // Get position info of given player.
-  // Difference between standard sonos-ts and this implementation
-  // 1. Track is number versus string
-  // 2. TrackMetaData is object versus string <DIDL-lite>
-  // 3. undefined instead of ''
-  getPositionInfo: async (coordinatorUrlObject) => {
-    debug('method:%s', 'getPositionInfo')
-    return await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
-      { 'InstanceID': 0 })
-  },
   
   //
   //     SONOS RELATED HELPER

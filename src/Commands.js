@@ -15,7 +15,7 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  executeActionV7, extractGroup, getMediaInfo, getPositionInfo,
+  executeActionV7, extractGroup, getMediaInfo,
   getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
   parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
@@ -277,7 +277,7 @@ module.exports = {
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
   || snapshot.playbackstate === 'transitioning')
     const mediaData = await getMediaInfo(coordinatorUrlObject)
-    const positionData = await getPositionInfo(coordinatorUrlObject)
+    const positionData = await tsCoordinator.AVTransportService.GetPositionInfo({ InstanceID: 0 })
     Object.assign(snapshot,
       {
         'CurrentURI': mediaData.CurrentURI,
@@ -286,9 +286,9 @@ module.exports = {
       })
     Object.assign(snapshot,
       {
-        'Track': positionData.Track,
-        'RelTime': positionData.RelTime,
-        'TrackDuration': positionData.TrackDuration
+        'Track': positionData.Track, // number
+        'RelTime': positionData.RelTime, // string h:mm:ss
+        'TrackDuration': positionData.TrackDuration // string h:mm:ss
       })
     return snapshot
   },

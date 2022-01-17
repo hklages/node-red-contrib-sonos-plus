@@ -3304,10 +3304,8 @@ module.exports = function (RED) {
    */
   async function playerTest (msg, tsPlayer) {
     
-    // Stephan - same as player.get.volume
-    const result = await tsPlayer.RenderingControlService.GetVolume(
-      { 'InstanceID': 0, 'Channel': 'Master' })
-    const payload = result.CurrentVolume
+    // Stephan 
+    const payload = await tsPlayer.AVTransportService.GetPositionInfo({ InstanceID: 0 })
     return { payload }
   }
 
