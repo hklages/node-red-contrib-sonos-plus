@@ -394,14 +394,6 @@ module.exports = {
     return transportInfo.CurrentTransportState.toLowerCase()
   },
 
-  // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
-  setVolume: async (playerUrlObject, newVolume) => {
-    debug('method:%s', 'setVolume')
-    return await module.exports.executeActionV7(playerUrlObject,
-      '/MediaRenderer/RenderingControl/Control', 'SetVolume',
-      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
-  },
-
   //
   //     SONOS RELATED HELPER
   //     ....................

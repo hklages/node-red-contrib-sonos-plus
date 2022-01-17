@@ -17,7 +17,7 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 const {
   executeActionV7, extractGroup, getMediaInfo, getPlaybackstate, getPositionInfo,
   getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
-  parseZoneGroupToArray, setVolume, parseAlarmsToArray
+  parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
 
 const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
@@ -81,11 +81,11 @@ module.exports = {
 
     // set volume and play notification everywhere
     if (options.volume !== -1) {
-      await setVolume(tsPlayerArray[iCoord].urlObject, options.volume)
+      await tsPlayerArray[iCoord].SetVolume(options.volume)
       debug('same Volume >>%s', options.sameVolume)
       if (options.sameVolume) { // all other members, starting at 1
         for (let index = 1; index < tsPlayerArray.length; index++) {
-          await setVolume(tsPlayerArray[index].urlObject, options.volume)
+          await tsPlayerArray[index].SetVolume(options.volume)
         }
       }
     }
@@ -175,7 +175,7 @@ module.exports = {
 
     // set volume and play notification on joiner
     if (options.volume !== -1) {
-      await setVolume(tsJoiner.urlObject, options.volume)
+      await tsJoiner.SetVolume(options.volume)
     }
     await tsJoiner.Play()
     debug('Playing notification started - now figuring out the end')
@@ -197,7 +197,7 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await setVolume(tsJoiner.urlObject, snapshot.joinerVolume)
+      await tsJoiner.SetVolume(snapshot.joinerVolume)
     }
     const coordinatorRincon = `x-rincon:${tsCoordinator.myUuid}`
     await executeActionV7(tsJoiner.urlObject,
