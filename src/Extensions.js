@@ -481,7 +481,8 @@ module.exports = {
       parseTagValue: false, // is default - example Title 49 will otherwise be converted
       arrayMode: false,
       stopNodes: ['r:resMD'], // for My-Sonos items, play export!
-      textNodeName: '#text'  //is default, just to remember
+      textNodeName: '#text',  //is default, just to remember
+      processEntities: false // very important to keep the didl in "r:resMD"!
     })
     const browseJson = await parser.parse(decodedResult)  
     if (!isTruthyProperty(browseJson, ['DIDL-Lite'])) {
@@ -728,7 +729,8 @@ module.exports = {
         parseAttributeValue: false,  // is default
         parseTagValue: false,
         arrayMode: false, // watch fields of type array!
-        textNodeName: '#text'  //is default, just to remember
+        textNodeName: '#text',  //is default, just to remember
+        processEntities: false // - see above decodedAlarmXml
       })
       const alarmsJson = await parser.parse(decodedAlarmXml)
       // convert single object to array
@@ -773,7 +775,8 @@ module.exports = {
       attributeNamePrefix: '_',
       parseAttributeValue: false,
       parseTagValue: false,
-      arrayMode: false
+      arrayMode: false,
+      processEntities: false // because already done
     })
     const groupState = await parser.parse(decoded) 
     
@@ -1021,7 +1024,8 @@ module.exports = {
       attributeNamePrefix: '',
       parseAttributeValue: false,
       parseTagValue: false,
-      arrayMode: false
+      arrayMode: false,
+      processEntities: false // decoding will be done manually
     })
     const bodyXml = await parser.parse(response.body)
     debug('parsed JSON response body >>%s', JSON.stringify(bodyXml))
