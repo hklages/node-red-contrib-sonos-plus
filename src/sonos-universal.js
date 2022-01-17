@@ -25,7 +25,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 } = require('./Commands.js')
 
 const { executeActionV7, failure, getDeviceInfo, getDeviceProperties,
-  getMusicServiceId, getMusicServiceName, getPlaybackstate, getRadioId, decideCreateNodeOn,
+  getMusicServiceId, getMusicServiceName, getRadioId, decideCreateNodeOn,
   success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
 
@@ -623,7 +623,10 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
     tsCoordinator.urlObject = groupData.members[0].urlObject
-    const payload = await getPlaybackstate(tsCoordinator.urlObject)
+    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    const payload = transportInfoObject.CurrentTransportState.toLowerCase()
 
     return { payload }
   }
@@ -722,7 +725,10 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
   
-    const playbackstate = await getPlaybackstate(tsCoordinator.urlObject)
+    const playbackstateObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    const playbackstate = playbackstateObject.CurrentTransportState.toLowerCase()
     
     let result
     result = await tsCoordinator.GroupRenderingControlService.GetGroupMute(

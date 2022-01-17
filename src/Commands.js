@@ -15,7 +15,7 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  executeActionV7, extractGroup, getMediaInfo, getPlaybackstate, getPositionInfo,
+  executeActionV7, extractGroup, getMediaInfo, getPositionInfo,
   getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
   parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
@@ -156,7 +156,10 @@ module.exports = {
     const snapshot = {}
 
     // Do we need that? 
-    const state = await getPlaybackstate(tsCoordinator.urlObject)
+    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    const state = transportInfoObject.CurrentTransportState.toLowerCase()
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     if (options.volume !== -1) {
       const result = await tsJoiner.RenderingControlService.GetVolume(
@@ -266,7 +269,11 @@ module.exports = {
     }
 
     const coordinatorUrlObject = playersInGroup[0].urlObject
-    snapshot.playbackstate = await getPlaybackstate(coordinatorUrlObject)
+    const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
+    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    snapshot.playbackstate = transportInfoObject.CurrentTransportState.toLowerCase()
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
   || snapshot.playbackstate === 'transitioning')
     const mediaData = await getMediaInfo(coordinatorUrlObject)

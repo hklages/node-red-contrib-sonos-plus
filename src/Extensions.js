@@ -381,19 +381,6 @@ module.exports = {
       { 'InstanceID': 0 })
   },
   
-  // Get playbackstate of given player.
-  // values: playing, stopped, paused, paused_playback, transitioning, no_media_present
-  getPlaybackstate: async (coordinatorUrlObject) => {
-    debug('method:%s', 'getPlaybackstate')
-    const transportInfo = await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
-      { 'InstanceID': 0 })
-    if (!isTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
-      throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
-    }
-    return transportInfo.CurrentTransportState.toLowerCase()
-  },
-
   //
   //     SONOS RELATED HELPER
   //     ....................
