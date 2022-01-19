@@ -12,7 +12,7 @@
 const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
   // eslint-disable-next-line max-len
-  parseAlarmsToArray, getPlaybackstate, setVolume, getPositionInfo
+  parseAlarmsToArray, getPositionInfo
 } = require('../src/Extensions.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
@@ -38,25 +38,6 @@ describe('executeV6 usage', function () {
   const tsPlayer = new SonosDevice(PLAY5_IP)  
   const playerUrlObject = new URL(`http://${PLAY5_IP}:1400`)
 
-  it('method getPlaybackstate stopped', async () => {
-    // set
-    await tsPlayer.AVTransportService.Stop({ InstanceID: 0 })
-    // test
-    const result = await getPlaybackstate(playerUrlObject)
-    expect(result)
-      .be.a('string')
-      .to.equal('stopped')
-  })
-  it('method getPlaybackstate playing ', async () => {
-    // set
-    await tsPlayer.AVTransportService.Play({ InstanceID: 0, Speed: '1' })
-    // test
-    const result = await getPlaybackstate(playerUrlObject)
-    expect(result)
-      .be.a('string')
-      .to.be.oneOf(['playing', 'transitioning'])
-  })
-
   it('getPositionInfo - queue in normal mode album from Sade', async () => {
     // set
     await tsPlayer.
@@ -81,30 +62,6 @@ describe('executeV6 usage', function () {
       .to.equal('x-file-cifs://hkNas/Multimedia/Music/MyMusic/Sade/Diamond%20Life/Sade%20-%20Smooth%20Operator.mp3')
     expect(result.RelTime)
       .be.a('string')
-  })
-
-  it('setVolume integer 0', async () => {
-    // INFO we set volume and test the result with another function!
-    // set
-    await setVolume(playerUrlObject, 0)
-    // test
-    const result = await tsPlayer.RenderingControlService.GetVolume({
-      InstanceID: 0,
-      Channel: 'Master'
-    })
-    expect(result.CurrentVolume)
-      .to.equal(0)
-  })
-  it('setVolume integer 10 ', async () => {
-    // set
-    await setVolume(playerUrlObject, 10)
-    // test
-    const result = await tsPlayer.RenderingControlService.GetVolume({
-      InstanceID: 0,
-      Channel: 'Master'
-    })
-    expect(result.CurrentVolume)
-      .to.equal(10)
   })
 
 })

@@ -368,40 +368,7 @@ module.exports = {
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
   },
-
-  // Get position info of given player.
-  // Difference between standard sonos-ts and this implementation
-  // 1. Track is number versus string
-  // 2. TrackMetaData is object versus string <DIDL-lite>
-  // 3. undefined instead of ''
-  getPositionInfo: async (coordinatorUrlObject) => {
-    debug('method:%s', 'getPositionInfo')
-    return await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'GetPositionInfo',
-      { 'InstanceID': 0 })
-  },
   
-  // Get playbackstate of given player.
-  // values: playing, stopped, paused, paused_playback, transitioning, no_media_present
-  getPlaybackstate: async (coordinatorUrlObject) => {
-    debug('method:%s', 'getPlaybackstate')
-    const transportInfo = await module.exports.executeActionV7(coordinatorUrlObject,
-      '/MediaRenderer/AVTransport/Control', 'GetTransportInfo',
-      { 'InstanceID': 0 })
-    if (!isTruthyPropertyStringNotEmpty(transportInfo, ['CurrentTransportState'])) {
-      throw new Error(`${PACKAGE_PREFIX}: CurrentTransportState is invalid/missing/not string`)
-    }
-    return transportInfo.CurrentTransportState.toLowerCase()
-  },
-
-  // Set new volume at given player. newVolume must be number, integer, in range 0 .. 100
-  setVolume: async (playerUrlObject, newVolume) => {
-    debug('method:%s', 'setVolume')
-    return await module.exports.executeActionV7(playerUrlObject,
-      '/MediaRenderer/RenderingControl/Control', 'SetVolume',
-      { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': newVolume })
-  },
-
   //
   //     SONOS RELATED HELPER
   //     ....................

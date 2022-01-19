@@ -15,9 +15,9 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  executeActionV7, extractGroup, getMediaInfo, getPlaybackstate, getPositionInfo,
+  executeActionV7, extractGroup, getMediaInfo,
   getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
-  parseZoneGroupToArray, setVolume, parseAlarmsToArray
+  parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
 
 const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
@@ -81,11 +81,11 @@ module.exports = {
 
     // set volume and play notification everywhere
     if (options.volume !== -1) {
-      await setVolume(tsPlayerArray[iCoord].urlObject, options.volume)
+      await tsPlayerArray[iCoord].SetVolume(options.volume)
       debug('same Volume >>%s', options.sameVolume)
       if (options.sameVolume) { // all other members, starting at 1
         for (let index = 1; index < tsPlayerArray.length; index++) {
-          await setVolume(tsPlayerArray[index].urlObject, options.volume)
+          await tsPlayerArray[index].SetVolume(options.volume)
         }
       }
     }
@@ -156,7 +156,10 @@ module.exports = {
     const snapshot = {}
 
     // Do we need that? 
-    const state = await getPlaybackstate(tsCoordinator.urlObject)
+    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    const state = transportInfoObject.CurrentTransportState.toLowerCase()
     snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
     if (options.volume !== -1) {
       const result = await tsJoiner.RenderingControlService.GetVolume(
@@ -175,7 +178,7 @@ module.exports = {
 
     // set volume and play notification on joiner
     if (options.volume !== -1) {
-      await setVolume(tsJoiner.urlObject, options.volume)
+      await tsJoiner.SetVolume(options.volume)
     }
     await tsJoiner.Play()
     debug('Playing notification started - now figuring out the end')
@@ -197,7 +200,7 @@ module.exports = {
 
     // return to previous state = restore snapshot
     if (options.volume !== -1) {
-      await setVolume(tsJoiner.urlObject, snapshot.joinerVolume)
+      await tsJoiner.SetVolume(snapshot.joinerVolume)
     }
     const coordinatorRincon = `x-rincon:${tsCoordinator.myUuid}`
     await executeActionV7(tsJoiner.urlObject,
@@ -266,11 +269,15 @@ module.exports = {
     }
 
     const coordinatorUrlObject = playersInGroup[0].urlObject
-    snapshot.playbackstate = await getPlaybackstate(coordinatorUrlObject)
+    const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
+    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    snapshot.playbackstate = transportInfoObject.CurrentTransportState.toLowerCase()
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
   || snapshot.playbackstate === 'transitioning')
     const mediaData = await getMediaInfo(coordinatorUrlObject)
-    const positionData = await getPositionInfo(coordinatorUrlObject)
+    const positionData = await tsCoordinator.AVTransportService.GetPositionInfo({ InstanceID: 0 })
     Object.assign(snapshot,
       {
         'CurrentURI': mediaData.CurrentURI,
@@ -279,9 +286,9 @@ module.exports = {
       })
     Object.assign(snapshot,
       {
-        'Track': positionData.Track,
-        'RelTime': positionData.RelTime,
-        'TrackDuration': positionData.TrackDuration
+        'Track': positionData.Track, // number
+        'RelTime': positionData.RelTime, // string h:mm:ss
+        'TrackDuration': positionData.TrackDuration // string h:mm:ss
       })
     return snapshot
   },
