@@ -123,7 +123,6 @@ module.exports = function (RED) {
     'player.get.treble': playerGetTreble,
     'player.get.volume': playerGetVolume,
     'player.join.group': playerJoinGroup,
-    'player.leave.group': playerLeaveGroup,
     'player.play.avtransport': playerPlayAvtransport,
     'player.play.linein': playerPlayLineIn,
     'player.play.tv': playerPlayTv,
@@ -2918,31 +2917,6 @@ module.exports = function (RED) {
     return {}
   }
 
-  /**
-   *  Leave a group - means become a standalone player.
-   * @param {object} msg incoming message
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise<object>} {}
-   *
-   * Details: if coordinator => will leave group (stop playing), 
-   * another will take over coordinator role
-   * if standalone - no change
-   *
-   * @throws {error} all methods
-   */
-  async function playerLeaveGroup (msg, tsPlayer) {
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.AVTransportService.BecomeCoordinatorOfStandaloneGroup(
-      { 'InstanceID': 0 })
-
-    return {}
-  }
-  
   /**
    *  Player play AVTransport uri: LineIn, TV, or streams.
    * @param {object} msg incoming message
