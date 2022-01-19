@@ -31,6 +31,8 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
+- Caution: player.leave.group removed - please use player.become.standalone
+
 - DNS names are now supported and recommended instead of pure ipv4 address (config dialog)
 
 - bug fix player discovery for windows 10

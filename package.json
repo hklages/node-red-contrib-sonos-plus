@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-sonos-plus",
-  "version": "6.0.1",
+  "version": "6.1.0",
   "description": "A set of Node-RED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {

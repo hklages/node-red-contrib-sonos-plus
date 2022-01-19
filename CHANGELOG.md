@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.1.0] 2022-01-20
+
+#### Changed
+
+- breaking change: player.leave.group removed, please use player.become.standalone
+
+- internal: code optimisation such as setVolume and some other removed
+
 ### [6.0.1] 2022-01-16
 
 #### Changed
