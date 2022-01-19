@@ -25,8 +25,8 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 } = require('./Commands.js')
 
 const { executeActionV7, failure, getDeviceInfo, getDeviceProperties,
-  getMusicServiceId, getMusicServiceName, getPlaybackstate, getRadioId, decideCreateNodeOn,
-  setVolume, success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
+  getMusicServiceId, getMusicServiceName, getRadioId, decideCreateNodeOn,
+  success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -123,7 +123,6 @@ module.exports = function (RED) {
     'player.get.treble': playerGetTreble,
     'player.get.volume': playerGetVolume,
     'player.join.group': playerJoinGroup,
-    'player.leave.group': playerLeaveGroup,
     'player.play.avtransport': playerPlayAvtransport,
     'player.play.linein': playerPlayLineIn,
     'player.play.tv': playerPlayTv,
@@ -623,7 +622,10 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
     tsCoordinator.urlObject = groupData.members[0].urlObject
-    const payload = await getPlaybackstate(tsCoordinator.urlObject)
+    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    const payload = transportInfoObject.CurrentTransportState.toLowerCase()
 
     return { payload }
   }
@@ -722,7 +724,10 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
   
-    const playbackstate = await getPlaybackstate(tsCoordinator.urlObject)
+    const playbackstateObject = await tsCoordinator.AVTransportService.GetTransportInfo({
+      InstanceID: 0
+    })
+    const playbackstate = playbackstateObject.CurrentTransportState.toLowerCase()
     
     let result
     result = await tsCoordinator.GroupRenderingControlService.GetGroupMute(
@@ -962,10 +967,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
 
@@ -1041,10 +1049,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
     await tsCoordinator.Play()
@@ -1120,10 +1131,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
     await tsCoordinator.Play()
@@ -1188,10 +1202,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
     await tsCoordinator.Play()
@@ -1302,10 +1319,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
 
@@ -1416,10 +1436,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
     
@@ -1474,10 +1497,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
     await tsCoordinator.Play()
@@ -1515,10 +1541,13 @@ module.exports = function (RED) {
     if (validated.volume !== -1) {
       if (validated.sameVolume) { // set all player
         for (let i = 0; i < groupData.members.length; i++) {
-          await setVolume(groupData.members[i].urlObject, validated.volume)
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
         }
       } else { // set only one player
-        await setVolume(groupData.members[groupData.playerIndex].urlObject, validated.volume)
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
       }
     }
     tsCoordinator.Play()
@@ -2889,31 +2918,6 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Leave a group - means become a standalone player.
-   * @param {object} msg incoming message
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
-   *
-   * @returns {promise<object>} {}
-   *
-   * Details: if coordinator => will leave group (stop playing), 
-   * another will take over coordinator role
-   * if standalone - no change
-   *
-   * @throws {error} all methods
-   */
-  async function playerLeaveGroup (msg, tsPlayer) {
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.AVTransportService.BecomeCoordinatorOfStandaloneGroup(
-      { 'InstanceID': 0 })
-
-    return {}
-  }
-  
-  /**
    *  Player play AVTransport uri: LineIn, TV, or streams.
    * @param {object} msg incoming message
    * @param {string} msg.payload uri x-***:
@@ -3274,10 +3278,8 @@ module.exports = function (RED) {
    */
   async function playerTest (msg, tsPlayer) {
     
-    // Stephan - same as player.get.volume
-    const result = await tsPlayer.RenderingControlService.GetVolume(
-      { 'InstanceID': 0, 'Channel': 'Master' })
-    const payload = result.CurrentVolume
+    // Stephan 
+    const payload = await tsPlayer.AVTransportService.GetPositionInfo({ InstanceID: 0 })
     return { payload }
   }
 

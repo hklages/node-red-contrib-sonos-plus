@@ -25,6 +25,8 @@ This package is in no way connected to or supported by [Sonos Inc.](https://www.
 
 - Group players by using their SONOS-Playernames.
 
+- Group commands automatically address the coordinator in that group
+
 - DNS names are supported in config node (ipv4 address should still work)
 
 Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contrib-sonos-plus/wiki)
