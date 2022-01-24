@@ -12,10 +12,8 @@
 const { decideCreateNodeOn, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
   // eslint-disable-next-line max-len
-  parseAlarmsToArray, getPositionInfo
+  parseAlarmsToArray
 } = require('../src/Extensions.js')
-
-const { SonosDevice } = require('@svrooij/sonos/lib')
 
 const PLAY5 = 'http://192.168.178.51:1400'
 const BEAM = 'http://192.168.178.53:1400'
@@ -24,47 +22,11 @@ const BATH = 'http://192.168.178.52:1400'
 const SYNOLOGY_INVALID = 'http://192.168.178.15:1400' // is not a sonos player
 
 const FRITZBOX_IP = '192.168.178.1'
-const PLAY5_IP = '192.168.178.51'
-
-const SHADE_SONG = 'x-rincon-playlist:RINCON_000E58FE3AEA01400#A:ALBUM/Diamond%20Life'
 
 const PLAYERNAME_KITCHEN = 'SonosKueche'
 
 const { describe, it } = require('mocha')
 const { expect } = require('chai')
-
-describe('executeV6 usage', function () {
-  
-  const tsPlayer = new SonosDevice(PLAY5_IP)  
-  const playerUrlObject = new URL(`http://${PLAY5_IP}:1400`)
-
-  it('getPositionInfo - queue in normal mode album from Sade', async () => {
-    // set
-    await tsPlayer.
-      AddUriToQueue(SHADE_SONG)
-    await tsPlayer.Play()
-    // test
-    const result = await getPositionInfo(playerUrlObject)
-    expect(result)
-      .be.a('object')
-    expect(result.Track)
-      .be.a('string')
-      .to.equal('1')
-    expect(result.TrackDuration)
-      .be.a('string')
-      .to.equal('0:05:00')
-    expect(result.TrackMetaData.startsWith('<DIDL-Lite xmlns:dc='))
-      .be.a('boolean')
-      .to.equal(true)
-    expect(result.TrackURI)
-      .be.a('string')
-      // eslint-disable-next-line max-len
-      .to.equal('x-file-cifs://hkNas/Multimedia/Music/MyMusic/Sade/Diamond%20Life/Sade%20-%20Smooth%20Operator.mp3')
-    expect(result.RelTime)
-      .be.a('string')
-  })
-
-})
 
 describe('extractGroup function', function () {
   const TEST_DATA_ZONEGROUP = require('./testdata-parsezonegroup.json')
