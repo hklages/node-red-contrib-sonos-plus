@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
 
 - internal optimization
 
+- update dependencies
+
 ### [6.1.0] 2022-01-24
 
 #### Changed
