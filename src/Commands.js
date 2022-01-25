@@ -72,12 +72,10 @@ module.exports = {
     
     // set AVTransport on coordinator and if requested the volume
     const iCoord = 0
-    await executeActionV7(tsPlayerArray[iCoord].urlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
-        'InstanceID': 0,
-        'CurrentURI': await encodeHtmlEntity(options.uri),
-        'CurrentURIMetaData': metadata
-      })
+    const uri = await encodeHtmlEntity(options.uri)
+    await tsPlayerArray[iCoord].AVTransportService.SetAVTransportURI({
+      InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata
+    })
 
     // set volume and play notification everywhere
     if (options.volume !== -1) {
@@ -307,16 +305,16 @@ module.exports = {
     const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
     const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
 
-    // html encode for the &
-    const metadata = await encodeHtmlEntity(snapshot.CurrentURIMetadata)
-    const uri = await encodeHtmlEntity(snapshot.CurrentURI)
+    // vli means managed by an external app such as spotifiy
+    const uri = snapshot.CurrentURI
     if (!uri.includes('x-sonos-vli')) {
-      await executeActionV7(coordinatorUrlObject,
-        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
-          'InstanceID': 0,
-          'CurrentURI': uri,
-          'CurrentURIMetaData': metadata
-        })
+      await tsCoordinator.AVTransportService.SetAVTransportURI({
+        InstanceID: 0, CurrentURI: uri,
+        CurrentURIMetaData: snapshot.CurrentURIMetadata
+      })
+    } else {
+      debug('content could not be restored >>type x-sonos-vli')
+      return true
     }
     
     let track
