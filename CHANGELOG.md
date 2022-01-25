@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.1.1] 2022-01-25
+
+#### Changed
+
+- bugfix in play notification
+
+- internal optimization
+
 ### [6.1.0] 2022-01-24
 
 #### Changed
