@@ -21,7 +21,8 @@ const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
-  getMusicLibraryItemsV2
+  getMusicLibraryItemsV2,
+  getSonosPlaylistTracks
 } = require('./Commands.js')
 
 const { executeActionV7, failure, getDeviceInfo, getDeviceProperties,
@@ -3385,8 +3386,14 @@ module.exports = function (RED) {
    */
   async function playerTest (msg, tsPlayer) {
     
-    // Stephan 
-    const payload = await tsPlayer.AVTransportService.GetPositionInfo({ InstanceID: 0 })
+    // const payload = await tsPlayer.ContentDirectoryService.Browse({
+    //   'ObjectID': 'SQ:71', 'BrowseFlag': 'BrowseDirectChildren',
+    //   'Filter': '*', 'StartingIndex': 0,
+    //   'RequestedCount': 1000, 'SortCriteria': ''
+    // })
+
+    const payload = await getSonosPlaylistTracks(tsPlayer)
+
     return { payload }
   }
 
