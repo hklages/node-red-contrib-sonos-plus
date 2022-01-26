@@ -73,6 +73,7 @@ module.exports = function (RED) {
     'group.play.notification': groupPlayNotification,
     'group.play.queue': groupPlayQueue,
     'group.play.snap': groupPlaySnapshot,
+    'group.play.sonosplaylist': groupPlaySonosPlaylist,
     'group.play.streamhttp': groupPlayStreamHttp,
     'group.play.track': groupPlayTrack,
     'group.play.tunein': groupPlayTuneIn,
@@ -81,6 +82,7 @@ module.exports = function (RED) {
     'group.queue.library.album': groupQueueLibraryItem,
     'group.queue.library.artist': groupQueueLibraryItem,
     'group.queue.library.track': groupQueueLibraryItem,
+    'group.queue.sonosplaylist': groupQueueSonosPlaylist,
     'group.queue.uri': groupQueueUri,
     'group.queue.urispotify': groupQueueUriFromSpotify,
     'group.remove.tracks': groupRemoveTracks,
@@ -1143,6 +1145,7 @@ module.exports = function (RED) {
     await tsCoordinator.Play()
     return {}
   }
+
   /**
    *  Play data being exported form My Sonos (uri/metadata) on a current group
    * @param {object} msg incoming message
@@ -1383,6 +1386,66 @@ module.exports = function (RED) {
       const tsPlayer = new SonosDevice(groupData.members[0].urlObject.hostname)
       await tsPlayer.Play()
     }
+    
+    return {}
+  }
+
+  /**
+   *  Play SONOS Playlist on group.
+   * @param {object} msg incoming message
+   * // TODO part of title or exact?
+   * @param {string} msg.payload search string, part of title
+   * @param {number/string} [msg.volume] volume - if missing do not touch volume
+   * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level.
+   * @param {boolean} [msg.clearQueue=true] if true the queue is cleared.
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer node-sonos player with urlObject - as default
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} 'msg.sameVolume is nonsense: player is standalone'
+   * @throws {error} all methods
+   */
+  async function groupPlaySonosPlaylist (msg, tsPlayer) {
+    debug('method:%s', 'groupPlayMySonos')
+  
+    // Payload SONOS-Playlist is required.
+    // TODO REGEX_ANYCHAR means any name but not special characters! - check
+    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+
+    // get uri of the SONOS-Playlist
+    const sonosPlaylists = await getSonosPlaylists(tsCoordinator)
+    // Find title in playlist - exact
+    const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
+    if (foundIndex === -1) {
+      // eslint-disable-next-line max-len
+      throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string >>${validatedTitle}`)
+    } 
+
+    if (validated.clearQueue) {
+      await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
+    }
+    // position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
+    await tsCoordinator.AddUriToQueue(sonosPlaylists[foundIndex].uri, 0, true)
+    await tsCoordinator.SwitchToQueue()
+
+    if (validated.volume !== -1) {
+      if (validated.sameVolume) { // set all player
+        for (let i = 0; i < groupData.members.length; i++) {
+          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+          await tsPlayer.SetVolume(validated.volume)
+        }
+      } else { // set only one player
+        const tsPlayer = new SonosDevice(
+          groupData.members[groupData.playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(validated.volume)
+      }
+    }
+    await tsCoordinator.Play()
     
     return {}
   }
@@ -1641,6 +1704,50 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Queue SONOS-Playlist
+   * @param {object} msg incoming message
+   * @param {string/number}msg.payload SONOS-Playlist name
+   * @param {boolean} [msg.clearQueue=true] if true and export.queue = true the queue is cleared.
+   * @param {string} [msg.playerName = using nodesonosPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function groupQueueSonosPlaylist (msg, tsPlayer) {
+
+    // Payload SONOS-Playlist is required.
+    // TODO REGEX_ANYCHAR means any name but not special characters! - check
+    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[0].urlObject
+
+    // get uri of the SONOS-Playlist
+    const sonosPlaylists = await getSonosPlaylists(tsCoordinator)
+    // Find title in playlist - exact
+    const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
+    if (foundIndex === -1) {
+      // eslint-disable-next-line max-len
+      throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string >>${validatedTitle}`)
+    } 
+
+    // Queue
+    if (validated.clearQueue) {
+      await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
+    }
+    // position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
+    const result = await tsCoordinator.AddUriToQueue(sonosPlaylists[foundIndex].uri, 0, true)
+  
+    return {
+      'newQueueLength': result.NewQueueLength,
+      'firstTrackNumberEnqueued': result.FirstTrackNumberEnqueued
+    }
+  }
+
+  /**
    *  Queue uri.
    * @param {object} msg incoming message
    * @param {string/number}msg.payload valid uri
@@ -1794,7 +1901,7 @@ module.exports = function (RED) {
       // Queue is empty
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }
-
+    // TODO why 2 times? Remove one
     if (browseQueue.TotalMatches === 0) {
       throw new Error(`${PACKAGE_PREFIX} queue is empty`)
     }

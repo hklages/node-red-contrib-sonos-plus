@@ -218,6 +218,7 @@ module.exports = {
    * @property {number} Track current track
    * @property {string} TrackDuration duration hh:mm:ss
    * @property {string} RelTime position hh:mm:ss
+   * @property {string} playlistName name of playlist
    * @property {member[]} membersData array of members in a group
    * @property {object} member group members relevant data
    * @property {string} member.urlSchemeAuthority such as http://192.168.178.37:1400/
@@ -234,6 +235,7 @@ module.exports = {
    * @param {object} options
    * @param {boolean} [options.snapVolumes = false] capture all players volume
    * @param {boolean} [options.snapMutestates = false] capture all players mute state
+   * @param {string} [options.sonosPlaylistName = ''] store queue in a SONOS-Playlist
    *
    * @returns {promise<Snapshot>} group snapshot object
    * 
@@ -243,10 +245,11 @@ module.exports = {
     debug('method:%s', 'createGroupSnapshot')
     const snapshot = {}
     snapshot.membersData = []
-    let member
+  
+    // mutestate and volume of all players
     for (let index = 0; index < playersInGroup.length; index++) {
-      member = { // default
-        // urlSchemaAuthority because it may stored in flow variable
+      const member = { // default
+        // urlSchemaAuthority because it maybe stored in flow variable
         urlSchemeAuthority: playersInGroup[index].urlObject.origin,
         mutestate: null,
         volume: null,
@@ -266,22 +269,39 @@ module.exports = {
       snapshot.membersData.push(member)
     }
 
-    const coordinatorUrlObject = playersInGroup[0].urlObject
+    const iCoord = 0
+    const coordinatorUrlObject = playersInGroup[iCoord].urlObject
     const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
+    
+    // save queue
+    if (options.sonosPlaylistName) {
+      // TODO validate title at least one character
+      // TODO what happens if queue is empty
+      // TODO what happens if playlist already exists!
+      const validatedTitle = options.sonosPlaylistName
+      await tsCoordinator.AVTransportService.SaveQueue(
+        { 'InstanceID': 0, 'Title': validatedTitle, 'ObjectID': '' }) 
+      snapshot.playlistName = validatedTitle
+    }
+
+    // content (MediaInfo, PositionInfo), playbackstate of coordinator
     const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
       InstanceID: 0
     })
     snapshot.playbackstate = transportInfoObject.CurrentTransportState.toLowerCase()
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
-  || snapshot.playbackstate === 'transitioning')
+      || snapshot.playbackstate === 'transitioning')
+    // Caution: CurrentUriMetadata as string not as object!
     const mediaData = await getMediaInfo(coordinatorUrlObject)
-    const positionData = await tsCoordinator.AVTransportService.GetPositionInfo({ InstanceID: 0 })
     Object.assign(snapshot,
       {
         'CurrentURI': mediaData.CurrentURI,
-        'CurrentURIMetadata': mediaData.CurrentURIMetaData,
+        'CurrentURIMetadata': mediaData.CurrentURIMetaData, // DIDL string
         'NrTracks': mediaData.NrTracks
       })
+    const positionData = await tsCoordinator.AVTransportService.GetPositionInfo({ InstanceID: 0 })
+    // TODO what value NRTrack if not exist - update the data definition above!
+    // TODO what value TRACK, .... if not exist for instance stream
     Object.assign(snapshot,
       {
         'Track': positionData.Track, // number
@@ -300,12 +320,22 @@ module.exports = {
  */
   restoreGroupSnapshot: async (snapshot) => {
     debug('method:%s', 'restoreGroupSnapshot')
-    // restore content
-    // urlSchemeAuthority because we do create/restore
-    const coordinatorUrlObject = new URL(snapshot.membersData[0].urlSchemeAuthority)
-    const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
 
-    // vli means managed by an external app such as spotifiy
+    const WAIT_FOR_SETAV = 500 // content needs time to finish
+    const WAIT_FOR_TRACK = 100 // track position needs time to finish
+    
+    const iCoord = 0 // coordinator is always at position 0
+    const coordinatorUrlObject = new URL(snapshot.membersData[iCoord].urlSchemeAuthority)
+    const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
+   
+    // restore queue if saved
+    // TODO restore queue
+    if (isTruthyProperty(snapshot, ['playlistName'])) {
+      // restore queue
+    }
+
+    // restore content, urlSchemeAuthority because we do create/restore
+    // vli means managed by an external app such as spotifiy, not restorable
     const uri = snapshot.CurrentURI
     if (!uri.includes('x-sonos-vli')) {
       await tsCoordinator.AVTransportService.SetAVTransportURI({
@@ -316,20 +346,18 @@ module.exports = {
       debug('content could not be restored >>type x-sonos-vli')
       return true
     }
-    
-    let track
+    let track = 0 // 0 for undefined track - dont restore
     if (isTruthyProperty(snapshot, ['Track'])) {
       track = parseInt(snapshot['Track'])
     }
-    let nrTracks
+    let nrTracks = 0 
     if (isTruthyProperty(snapshot, ['NrTracks'])) {
       nrTracks = parseInt(snapshot['NrTracks'])
     }
     if (track >= 1 && nrTracks >= track) {
       debug('Setting track to >>%s', snapshot.Track)
-      // wait then restore track
-      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500)
-      
+      // wait for SetAVTransportURI being competed then restore track
+      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](WAIT_FOR_SETAV)
       await tsCoordinator.SeekTrack(track)
         .catch(() => {
           debug('Reverting back track failed, happens for some music services.')
@@ -337,20 +365,20 @@ module.exports = {
     }
     if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
       // wait then restore track position
-      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100)
+      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](WAIT_FOR_TRACK)
       debug('Setting back time to >>%', snapshot.RelTime)
-
       await tsCoordinator.SeekPosition(snapshot.RelTime)
         .catch(() => {
           debug('Reverting back track time failed, happens for some music services.')
         })
     }
+
     // restore volume/mute if captured.
     for (let i = 0; i < snapshot.membersData.length; i++) {
       const urlObject = new URL(snapshot.membersData[i].urlSchemeAuthority)
       const ts1Player = new SonosDevice(urlObject.hostname)
-      
       const volume = snapshot.membersData[i].volume
+      
       if (volume !== null) { 
         await ts1Player.RenderingControlService.SetVolume(
           { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': volume.toString() })
