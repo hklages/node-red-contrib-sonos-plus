@@ -938,7 +938,7 @@ describe('parseBrowseToArray function', function () {
       .deep.eq(result[23])
   })
 
-  it('sonos playlist 0 entries - array & length', async () => {
+  it('SONOS-Playlist 0 entries - array & length', async () => {
     const TEST = TEST_DATA_BROWSE['sonosplaylist-0entries']
     const result = await parseBrowseToArray(TEST.browseOut, 'container')
     expect(result)
@@ -947,7 +947,7 @@ describe('parseBrowseToArray function', function () {
       .to.equal(TEST.result.length)
   })
 
-  it('sonos playlist  1 entry - array, length, first item', async () => {
+  it('SONOS-Playlist  1 entry - array, length, first item', async () => {
     const TEST = TEST_DATA_BROWSE['sonosplaylist-1entry']
     const result = await parseBrowseToArray(TEST.browseOut, 'container')
     expect(result)

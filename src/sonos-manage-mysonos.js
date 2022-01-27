@@ -1,6 +1,6 @@
 /**
  * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
- * My Sonos also holds SONOS playlists.
+ * My Sonos also holds SONOS-Playlist.
  *
  * @module MySonos
  * 

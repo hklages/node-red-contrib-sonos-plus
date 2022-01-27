@@ -104,6 +104,7 @@ module.exports = function (RED) {
     'household.get.alarms': householdGetAlarms,
     'household.get.groups': householdGetGroups,
     'household.get.sonosplaylists': householdGetSonosPlaylists,
+    'household.get.sonosplaylisttracks': householdGetSonosPlaylistTracks,
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
@@ -1392,10 +1393,9 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Play SONOS Playlist on group.
+   *  Play SONOS-Playlist on group.
    * @param {object} msg incoming message
-   * // TODO part of title or exact?
-   * @param {string} msg.payload search string, part of title
+   * @param {string} msg.payload search string, exact title, case sensitive
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level.
    * @param {boolean} [msg.clearQueue=true] if true the queue is cleared.
@@ -1408,10 +1408,9 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlaySonosPlaylist (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayMySonos')
+    debug('method:%s', 'groupPlaySonosPlaylist')
   
     // Payload SONOS-Playlist is required.
-    // TODO REGEX_ANYCHAR means any name but not special characters! - check
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1707,7 +1706,7 @@ module.exports = function (RED) {
   /**
    *  Queue SONOS-Playlist
    * @param {object} msg incoming message
-   * @param {string/number}msg.payload SONOS-Playlist name
+   * @param {string/number}msg.payload SONOS-Playlist name, exact, case sensitive
    * @param {boolean} [msg.clearQueue=true] if true and export.queue = true the queue is cleared.
    * @param {string} [msg.playerName = using nodesonosPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
@@ -1719,7 +1718,6 @@ module.exports = function (RED) {
   async function groupQueueSonosPlaylist (msg, tsPlayer) {
 
     // Payload SONOS-Playlist is required.
-    // TODO REGEX_ANYCHAR means any name but not special characters! - check
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1870,15 +1868,15 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Save SONOS queue to Sonos playlist.
+   *  Save SONOS-Queue to SONOS-Playlist. Must not be empty.
    * @param {object} msg incoming message
-   * @param {string} msg.payload title of Sonos playlist.
+   * @param {string} msg.payload title of SONOS-Playlist.
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise} {}
    *
-   * @throws {error} 'queue is empty'
+   * @throws {error} 'SONOS-Queue is empty'
    * @throws {error} all methods
    */
   // eslint-disable-next-line max-len
@@ -1900,11 +1898,7 @@ module.exports = function (RED) {
     })
     if (browseQueue.TotalMatches === 0) {
       // Queue is empty
-      throw new Error(`${PACKAGE_PREFIX} queue is empty`)
-    }
-    // TODO why 2 times? Remove one
-    if (browseQueue.TotalMatches === 0) {
-      throw new Error(`${PACKAGE_PREFIX} queue is empty`)
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Queue is empty`)
     }
     await tsCoordinator.AVTransportService.SaveQueue(
       { 'InstanceID': 0, 'Title': validatedTitle, 'ObjectID': '' }) 
@@ -2391,11 +2385,11 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Get SONOS playlists.
+   *  Get array of all SONOS-Playlists.
    * @param {object} msg incoming message
    * @param {object} tsPlayer sonos-ts player
    *
-   * @returns {promise<object>} property payload is array of all sonos playlists as objects
+   * @returns {promise<object>} property payload is array of all SONOS-Playlists as objects
    *
    * @throws {error} all methods
    */
@@ -2407,37 +2401,59 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Remove Sonos playlist with given title. (impact on My Sonos and also Sonos playlist list)
+   * Get array of all tracks of first SONOS-Playlist matching title.
+   * Caution: titles may not be unique! Case sensitive!
    * @param {object} msg incoming message
-   * @param {string} msg.payload title of Sonos playlist.
-   * @param {boolean} [msg.ignoreNotExists] if missing assume true
+   * @param {string} msg.payload title of SONOS-Playlist. 
+   * @param {object} tsPlayer sonos-ts player
+   *
+   * @returns {promise<object>} payload is array of all tracks of that SONOS-Playlist
+   *
+   * @throws {error} all methods
+   */
+  async function householdGetSonosPlaylistTracks (msg, tsPlayer) {
+    // Payload title search string is required.
+    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
+
+    const payload = await getSonosPlaylistTracks(tsPlayer, validatedTitle, QUEUE_REQUESTS_MAXIMUM)
+    
+    return { payload }
+  }
+
+  /**
+   * Remove first SONOS-Playlist matching given title. 
+   * Caution: titles may not be unique! Case sensitive!
+   * Impact on My Sonos and also SONOS-Playlist list
+   * @param {object} msg incoming message
+   * @param {string} msg.payload title of SONOS-Playlist
+   * @param {boolean} [msg.ignoreNotExists] if missing assume true means dont throw error
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
    *
    * @throws {error} 'msg.ignoreNotExists is not boolean', 
-   * 'no Sonos playlist title matching search string'
+   * 'no SONOS-Playlist title matching search string'
    * @throws {error} all methods
    */
   async function householdRemoveSonosPlaylist (msg, tsPlayer) {
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
-    let ignoreNotExists = true
+    let ignoreNotExists = true // default
     if (isTruthyProperty(msg, ['ignoreNotExists'])) {
       if (typeof msg.ignoreNotExists !== 'boolean') {
         throw new Error(`${PACKAGE_PREFIX}: msg.ignoreNotExists is not boolean`)
       }
-      ignoreNotExists = msg.ignoreNotExist
+      ignoreNotExists = msg.ignoreNotExists
     }
 
-    // Using the default player of this node
+    // Get all SONOS-Playlists using the default player of this node
     const sonosPlaylists = await getSonosPlaylists(tsPlayer)
     // Find title in playlist - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
     if (foundIndex === -1) {
       if (!ignoreNotExists) {
-        throw new Error(`${PACKAGE_PREFIX} no Sonos playlist title matching search string`)
+        throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string`)
       }
       //ignore and return
     } else {

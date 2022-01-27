@@ -16,8 +16,10 @@ module.exports = {
   TIMEOUT_HTTP_REQUEST: 4000, //in milliseconds
   TIMEOUT_DISCOVERY: 4, //in seconds
 
-  ML_REQUESTS_MAXIMUM: 10, // Music library: maximum number of http requests submitted
-  QUEUE_REQUESTS_MAXIMUM: 10, // SONOS Queue: maximum number of http requests submitted
+  // Integer, greater equal 1 - Music library: maximum number of http requests submitted
+  ML_REQUESTS_MAXIMUM: 10, 
+  // Integer, greater equal 1 -  SONOS Queue: maximum number of http requests submitted
+  QUEUE_REQUESTS_MAXIMUM: 10, 
   VALIDATION_INTEGER_MAXIMUM: 9999, // because of validToInteger, REGEX_4DIGITSSIGN
   VALIDATION_INTEGER_MINIMUM: -9999, // because of validToInteger, REGEX_4DIGITSSIGN
 

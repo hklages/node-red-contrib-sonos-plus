@@ -503,7 +503,7 @@ module.exports = {
   /** Get array of all My Sonos Favorite items including SonosPlaylists - special imported playlists
    * @param {object} tsPlayer sonos-ts player
    *
-   * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS Playlists)
+   * @returns {Promise<DidlBrowseItem[]>} all My Sonos items as array (except SONOS-Playlists)
    *
    * @throws {error} all methods
    * 
@@ -578,41 +578,72 @@ module.exports = {
     return transformed
   }, 
 
-  /** Get array of all SONOS-Playlists
+  /** Get array of all items of specified SONOS-Playlist. Can be empty array.
    * @param {object} tsPlayer sonos-ts player
+   * @param {number} requestLimit maximum number of calls, must be >=1
+   * 
+   * @returns {Promise<DidlBrowseItem[]>} array of all items of the SONOS-Playlist, could be empty 
    *
-   * @returns {Promise<DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
-   *
-   * @throws {error} invalid return from Browse, decodeHtmlEntityTs, parser.parse
+   * @throws {error} invalid return from Browse, parser.parse
+   * 
+   * Info: Parsing is done per single list and not on the total list
+   * because parsing routine uses as parameter the object of Browse. 
+   * Parse on the full list would be more efficient
    */
-  getSonosPlaylistTracks: async (tsPlayer) => { 
+  getSonosPlaylistTracks: async (tsPlayer, title, requestLimit) => { 
     debug('method:%s', 'getSonosPlaylistTracks')
+    const REQUESTED_COUNT = 1000 // allowed maximum
 
-    const REQUESTED_COUNT_PLAYLISTS = 1000 // always fetch the allowed maximum
-
-    // TODO repeat fetch, paramtise the SQ:...
-    // TODO get the id from list of playlists by provided name!
-    const browsePlaylistTracks = await tsPlayer.ContentDirectoryService.Browse({
-      'ObjectID': 'SQ:76', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,
-      'RequestedCount': REQUESTED_COUNT_PLAYLISTS, 'SortCriteria': ''
-    })
+    // validate parameter - just to avoid basic bugs
+    if (typeof requestLimit !== 'number') {
+      throw new Error(`${PACKAGE_PREFIX} requestLimit is not number`)
+    }
     
-    // caution: container not items
-    const trackArray = await parseBrowseToArray(browsePlaylistTracks, 'item')
-    const transformed = trackArray.map((item) => {
+    // Get the FIRST corresponding ObjectID for given title (not unique) 
+    const sonosPlaylists = await module.exports.getSonosPlaylists(tsPlayer)
+    // - exact, case sensitive
+    const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === title))
+    if (foundIndex === -1) {
+      throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string`)
+    } 
+    const objectId = sonosPlaylists[foundIndex].id // first id of SONOS-Playlist matching title
+    
+    // do multiple request, parse them and combine to one list
+    let totalListParsed = [] // concatenation of all http requests, parsed
+    let numberRequestsDone = 0
+    let totalMatches = 1 // at least one call
+    while ((numberRequestsDone < requestLimit)
+        && (numberRequestsDone * REQUESTED_COUNT < totalMatches)) {
+      // get up to REQUESTED_COUNT items and parse them
+      const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
+        'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+        'StartingIndex': 0, 'RequestedCount': REQUESTED_COUNT, 'SortCriteria': ''
+      })
+      const SingleListParsed = await parseBrowseToArray(browsePlaylist, 'item')
+      totalListParsed = totalListParsed.concat(SingleListParsed)
+      totalMatches = browsePlaylist.TotalMatches
+     
+      numberRequestsDone++
+    }
+
+    // transform
+    const totalListTransformed = totalListParsed.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
       return item
     })
+    if (!isTruthy(totalListTransformed)) {
+      throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
+    }
 
-    return transformed
+    return totalListTransformed
   }, 
 
-  /** Get array of all SONOS-Queue items - Version 2 for more then 1000 items
+  /** Get array of all SONOS-Queue tracks - Version 2 for more then 1000 items
    * Adds processingType and player urlObject.origin to artUri.
    * @param {object} tsPlayer sonos-ts player
-    * @param {number} requestLimit maximum number of calls, must be >=1
+   * @param {number} requestLimit maximum number of calls, must be >=1
    *
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-queue items, could be empty
    *
@@ -620,21 +651,21 @@ module.exports = {
    */
   getSonosQueueV2: async (tsPlayer, requestLimit) => {
     debug('method:%s', 'getSonosQueueV2')
-    
-    const QUEUE_REQUESTED_COUNT = 1000 // always try to fetch the allowed maximum
+    const REQUESTED_COUNT = 1000 // allowed maximum
 
-    // validate parameter
+    // validate parameter - just to avoid basic bugs
     if (typeof requestLimit !== 'number') {
       throw new Error(`${PACKAGE_PREFIX} requestLimit is not number`)
     }
 
-    // Q:0 = SONOS-Queue
+    const objectId = 'Q:0' // SONOS-Queue
+    // Get first items and transform them
     let browseQueue = await tsPlayer.ContentDirectoryService.Browse({
-      'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-      'StartingIndex': 0, 'RequestedCount': QUEUE_REQUESTED_COUNT, 'SortCriteria': ''
+      'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': REQUESTED_COUNT, 'SortCriteria': ''
     })
     
-    let list // list from single http request
+    let list // list from single http request, parsed, transformed items
     let itemArray = await parseBrowseToArray(browseQueue, 'item')
     list = itemArray.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
@@ -651,13 +682,13 @@ module.exports = {
     let totalList = [] // concatenation of all http requests, parsed, transformed
     totalList = totalList.concat(list)
 
-    if (totalMatches > QUEUE_REQUESTED_COUNT) {
+    if (totalMatches > REQUESTED_COUNT) {
       // we need to fetch the rest: 0..999 no additional request/ 1000..1999 1 add request, ...
-      const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / QUEUE_REQUESTED_COUNT)) 
+      const iterations = Math.min(requestLimit-1, Math.floor(totalMatches / REQUESTED_COUNT)) 
       for (let i = 1; i < iterations + 1 ; i++) { // we start at 1
         browseQueue = await tsPlayer.ContentDirectoryService.Browse({
-          'ObjectID': 'Q:0', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
-          'StartingIndex': i * QUEUE_REQUESTED_COUNT, 'RequestedCount': QUEUE_REQUESTED_COUNT,
+          'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+          'StartingIndex': i * REQUESTED_COUNT, 'RequestedCount': REQUESTED_COUNT,
           'SortCriteria': ''
         })        
         itemArray = await parseBrowseToArray(browseQueue, 'item')
@@ -692,8 +723,7 @@ module.exports = {
    */
   getMusicLibraryItemsV2: async (type, searchString, requestLimit, tsPlayer) => { 
     debug('method:%s', 'getMusicLibraryItemsV2')
-
-    const ML_REQUESTED_COUNT = 1000
+    const ML_REQUESTED_COUNT = 1000 // allowed maximum
 
     // validate parameter
     if (!['A:ALBUM:', 'A:PLAYLISTS:', 'A:TRACKS:', 'A:ARTIST:'].includes(type)) {
