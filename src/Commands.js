@@ -66,7 +66,8 @@ module.exports = {
     // create snapshot state/volume/content
     const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
       snapVolumes: true,
-      snapMutes: false
+      snapMutes: false,
+      sonosPlaylistName: null // dont save the SONOS-Queue
     })
     debug('Snapshot created - now start playing notification')
     
@@ -225,21 +226,26 @@ module.exports = {
    * @property {string} member.mutestate null for not available, otherwise on\|off
    * @property {integer} member.volume null for not available, range 0 to 100
    * @property {string} member.playerName SONOS-Playername
+   * @property {string} [member.sonosPlaylistName] SONOS-Playlist if provided
+   * @property {string} [member.objectId] null if queue empty
+   * 
+   * If the SONOS-Queue is empty and there is a request to save it to a SONOS-Playlist
+   * then the objectId is set to null! SONOS des not support to save an empty SONOS-QUEUE!
    */
 
-  /**  Creates snapshot of a current group.
+  /**  Creates snapshot of a current group. 
+   * In case of an empty SONOS-Queue, the objectId is set to null.
    * @param {player[]} playersInGroup player data in group, coordinator at 0 
    * @param {object} player player 
    * @param {object} player.urlObject player JavaScript build-in URL
    * @param {string} player.playerName SONOS-Playername
    * @param {object} options
-   * @param {boolean} [options.snapVolumes = false] capture all players volume
-   * @param {boolean} [options.snapMutestates = false] capture all players mute state
-   * @param {string} [options.sonosPlaylistName = ''] store queue in a SONOS-Playlist
-   *
+   * @param {boolean} options.snapVolumes if true capture all players volume
+   * @param {boolean} options.snapMutestates if true capture all players mute state
+   * @param {string} options.sonosPlaylistName if not null store queue in a SONOS-Playlist
    * @returns {promise<Snapshot>} group snapshot object
    * 
-   * @throws {error} all methods
+   * @throws {error} all methods, ... wrong syntax
   */
   createGroupSnapshot: async (playersInGroup, options) => {
     debug('method:%s', 'createGroupSnapshot')
@@ -272,18 +278,28 @@ module.exports = {
     const iCoord = 0
     const coordinatorUrlObject = playersInGroup[iCoord].urlObject
     const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
-    
-    // save queue
-    if (options.sonosPlaylistName) {
-      // TODO validate title at least one character
-      // TODO what happens if queue is empty
-      // TODO what happens if playlist already exists!
-      const validatedTitle = options.sonosPlaylistName
-      await tsCoordinator.AVTransportService.SaveQueue(
-        { 'InstanceID': 0, 'Title': validatedTitle, 'ObjectID': '' }) 
-      snapshot.playlistName = validatedTitle
-    }
 
+    // Is queue empty? We just fetch 1 = RequestedCount to test
+    const SONOS_QUEUE_OBJECTID = 'Q:0'
+    const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
+      'ObjectID': SONOS_QUEUE_OBJECTID, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
+      'StartingIndex': 0, 'RequestedCount': 1, 'SortCriteria': ''
+    })
+    if (browseQueue.TotalMatches === 0) {
+      // Queue is empty
+      snapshot.playlistObjectid = null //
+    } else {
+      // Save non empty SONOS-Queue to SONOS-Playlist. 
+      // If already exist a SONOS-Playlist with same name create new with different objectId
+      if (options.sonosPlaylistName !== null) {
+        const result = await tsCoordinator.AVTransportService.SaveQueue(
+          { 'InstanceID': 0, 'Title': options.sonosPlaylistName, 'ObjectID': '' }) 
+      
+        snapshot.playlistObjectid = result.AssignedObjectID
+      }
+    }
+    snapshot.playlistName = options.sonosPlaylistName // in any case
+    
     // content (MediaInfo, PositionInfo), playbackstate of coordinator
     const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
       InstanceID: 0
@@ -321,6 +337,7 @@ module.exports = {
   restoreGroupSnapshot: async (snapshot) => {
     debug('method:%s', 'restoreGroupSnapshot')
 
+    const WAIT_FOR_QUEUE = 300 // Restore the SONOS-Queue
     const WAIT_FOR_SETAV = 500 // content needs time to finish
     const WAIT_FOR_TRACK = 100 // track position needs time to finish
     
@@ -328,10 +345,18 @@ module.exports = {
     const coordinatorUrlObject = new URL(snapshot.membersData[iCoord].urlSchemeAuthority)
     const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
    
-    // restore queue if saved
-    // TODO restore queue
-    if (isTruthyProperty(snapshot, ['playlistName'])) {
-      // restore queue
+    // restore SONOS-Queue if it was requested
+    if (snapshot.sonosPlaylistName !== null) {
+      if (snapshot.objectId == null) {
+        // it was requested but queue was empty - so we restore that state!
+        await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
+      } else {
+        // restore SONOS-Queue from SONOS-Playlist with given objectId
+        const objectIdCount = snapshot.objectId.replace('SQ:', '')
+        const uri = `file:///jffs/settings/savedqueues.rsq#${objectIdCount}`
+        await tsCoordinator.AddUriToQueue(uri, 0, true)
+        await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](WAIT_FOR_QUEUE)
+      }
     }
 
     // restore content, urlSchemeAuthority because we do create/restore

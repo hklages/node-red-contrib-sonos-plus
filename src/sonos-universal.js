@@ -471,6 +471,7 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {boolean} [msg.snapVolumes = false] will capture the players volumes
    * @param {boolean} [msg.snapMutestates = false] will capture the players mutestates
+   * @param {boolean} [msg.sonosPlaylistName = null] will capture the players mutestates
    * @param {string} [msg.playerName = using tssPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -483,23 +484,35 @@ module.exports = function (RED) {
   async function groupCreateSnapshot (msg, tsPlayer) {
     debug('method:%s', 'groupCreateSnapshot')
     // Validate msg properties
-    const options = { 'snapVolumes': false, 'snapMutestates': false } // Default
+    const options
+      = { 'snapVolumes': false, 'snapMutestates': false, sonosPlaylistName: null } // defaults
     if (isTruthyProperty(msg, ['snapVolumes'])) {
       if (typeof msg.snapVolumes !== 'boolean') {
-        throw new Error(`${PACKAGE_PREFIX}: snapVolumes (msg.snapVolumes) is not boolean`)
+        throw new Error(`${PACKAGE_PREFIX}: snapVolumes (snapVolumes) is not boolean`)
       }
       options.snapVolumes = msg.snapVolumes
     }
     if (isTruthyProperty(msg, ['snapMutestates'])) {
-      if (typeof msg.snapVolumes !== 'boolean') {
-        throw new Error(`${PACKAGE_PREFIX}: snapMutestates (msg.snapMutestates) is not boolean`)
+      if (typeof msg.snapMutestates !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: snapMutestates (snapMutestates) is not boolean`)
       }
       options.snapMutestates = msg.snapMutestates
+    }
+    if (isTruthyProperty(msg, ['sonosPlaylistName'])) {
+      if (typeof msg.sonosPlaylistName !== 'string') {
+        throw new Error(`${PACKAGE_PREFIX}: sonosPlaylistName is not string`)
+      }
+      if (!REGEX_ANYCHAR.test(msg.sonosPlaylistName)) {
+        // eslint-disable-next-line max-len
+        throw new Error(`${PACKAGE_PREFIX}: sonosPlaylistName name has wrong syntax`)
+      }
+      options.sonosPlaylistName = msg.sonosPlaylistName
     }
 
     // Validate msg.playerName 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    
     const payload = await createGroupSnapshot(groupData.members, options)
     
     return { payload }
