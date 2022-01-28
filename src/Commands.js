@@ -219,22 +219,24 @@ module.exports = {
    * @property {number} Track current track
    * @property {string} TrackDuration duration hh:mm:ss
    * @property {string} RelTime position hh:mm:ss
-   * @property {string} playlistName name of playlist
+   * @property {string} sonosPlaylistName  null or SONOS-Playlist if provided
+   * @property {string} playlistObjectId null if queue empty
+   * 
    * @property {member[]} membersData array of members in a group
    * @property {object} member group members relevant data
    * @property {string} member.urlSchemeAuthority such as http://192.168.178.37:1400/
    * @property {string} member.mutestate null for not available, otherwise on\|off
    * @property {integer} member.volume null for not available, range 0 to 100
    * @property {string} member.playerName SONOS-Playername
-   * @property {string} [member.sonosPlaylistName] SONOS-Playlist if provided
-   * @property {string} [member.objectId] null if queue empty
+  
    * 
    * If the SONOS-Queue is empty and there is a request to save it to a SONOS-Playlist
-   * then the objectId is set to null! SONOS des not support to save an empty SONOS-QUEUE!
+   * then the playlistObjectId is set to null! SONOS des not support to save an empty SONOS-QUEUE!
    */
 
-  /**  Creates snapshot of a current group. 
-   * In case of an empty SONOS-Queue, the objectId is set to null.
+  /**  Creates snapshot of the current group: playbackstate, content, SONOS-Queue, track, position.
+   * Volume, mutestate of all players in group, but not the group structure itself.  
+   * In case of an empty SONOS-Queue, the playlistObjectId is set to null.
    * @param {player[]} playersInGroup player data in group, coordinator at 0 
    * @param {object} player player 
    * @param {object} player.urlObject player JavaScript build-in URL
@@ -287,7 +289,7 @@ module.exports = {
     })
     if (browseQueue.TotalMatches === 0) {
       // Queue is empty
-      snapshot.playlistObjectid = null //
+      snapshot.playlistObjectId = null //
     } else {
       // Save non empty SONOS-Queue to SONOS-Playlist. 
       // If already exist a SONOS-Playlist with same name create new with different objectId
@@ -295,7 +297,7 @@ module.exports = {
         const result = await tsCoordinator.AVTransportService.SaveQueue(
           { 'InstanceID': 0, 'Title': options.sonosPlaylistName, 'ObjectID': '' }) 
       
-        snapshot.playlistObjectid = result.AssignedObjectID
+        snapshot.playlistObjectId = result.AssignedObjectID
       }
     }
     snapshot.playlistName = options.sonosPlaylistName // in any case
@@ -316,8 +318,7 @@ module.exports = {
         'NrTracks': mediaData.NrTracks
       })
     const positionData = await tsCoordinator.AVTransportService.GetPositionInfo({ InstanceID: 0 })
-    // TODO what value NRTrack if not exist - update the data definition above!
-    // TODO what value TRACK, .... if not exist for instance stream
+    // The following are only useful in case of a queue, but we store it in any case. 
     Object.assign(snapshot,
       {
         'Track': positionData.Track, // number
@@ -347,12 +348,11 @@ module.exports = {
    
     // restore SONOS-Queue if it was requested
     if (snapshot.sonosPlaylistName !== null) {
-      if (snapshot.objectId == null) {
-        // it was requested but queue was empty - so we restore that state!
-        await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
-      } else {
+      // in any case we have to clear the queue because it might have been modified
+      await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
+      if (snapshot.playlistObjectId !== null) {
         // restore SONOS-Queue from SONOS-Playlist with given objectId
-        const objectIdCount = snapshot.objectId.replace('SQ:', '')
+        const objectIdCount = snapshot.playlistObjectId.replace('SQ:', '')
         const uri = `file:///jffs/settings/savedqueues.rsq#${objectIdCount}`
         await tsCoordinator.AddUriToQueue(uri, 0, true)
         await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](WAIT_FOR_QUEUE)
