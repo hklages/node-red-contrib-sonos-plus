@@ -31,17 +31,17 @@ module.exports = {
 
   //
   //     NOTIFICATION & SNAPSHOT 
-  //     .......................
+  //     
 
-  /**  Play notification on a group. Coordinator is index 0 in tsPlayerArray
-   * @param {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject
-   *               coordinator has index 0. Length = 1 is allowed
+  /**  Play notification on an existing group.
+   * @param {tsPlayer[]} tsPlayerArray sonos-ts player array with JavaScript build-in URL urlObject.
+   *               Coordinator has index 0. Length = 1 is allowed.
    * @param {object} options options
-   * @param {string} options.uri uri required!
+   * @param {string} options.uri uri to be used as notification
    * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
    * @param {boolean} options.sameVolume all player in group play at same volume level
    * @param {boolean} options.automaticDuration duration will be received from player
-   * @param {string} options.duration format hh:mm:ss
+   * @param {string} [options.duration] format hh:mm:ss, only required
    * 
    * @returns {promise} true
    * 
@@ -50,7 +50,8 @@ module.exports = {
 
   playGroupNotification: async (tsPlayerArray, options) => {
     debug('method:%s', 'playGroupNotification')
-    const WAIT_ADJUSTMENT = 2000
+    const WAIT_ADJUSTMENT = 1000 // milliseconds
+    const DEFAULT_DURATION = '00:00:15'
 
     // generate metadata if not provided
     if (!isTruthyProperty(options, ['uri'])) {
@@ -61,59 +62,71 @@ module.exports = {
     if (metadata !== '') {
       metadata = await encodeHtmlEntity(metadata) // html not url encoding!
     }
-    debug('metadata >>%s' + JSON.stringify(metadata))
+    debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
-    // create snapshot state/volume/content
+    // create snapshot state/volume/content but not the queue
+    // The queue is not snapshot because usually it is not changed.
     const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
-      snapVolumes: true,
-      snapMutes: false,
+      snapVolumes: true,  // simplification - only necessary in some cases
+      snapMutes: false, // dont save the mutestates of each player
       sonosPlaylistName: null // dont save the SONOS-Queue
     })
-    debug('Snapshot created - now start playing notification')
+    debug('Info: Snapshot created')
     
-    // set AVTransport on coordinator and if requested the volume
+    // set AVTransport on coordinator
     const iCoord = 0
     const uri = await encodeHtmlEntity(options.uri)
     await tsPlayerArray[iCoord].AVTransportService.SetAVTransportURI({
       InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata
     })
 
-    // set volume and play notification everywhere
+    // set volume
     if (options.volume !== -1) {
-      await tsPlayerArray[iCoord].SetVolume(options.volume)
-      debug('same Volume >>%s', options.sameVolume)
-      if (options.sameVolume) { // all other members, starting at 1
-        for (let index = 1; index < tsPlayerArray.length; index++) {
-          await tsPlayerArray[index].SetVolume(options.volume)
+      debug('Info: using same volume >>%s', options.sameVolume)
+      if (options.sameVolume) { // all player including coordinator
+        for (const tsPlayer in tsPlayerArray) {
+          await tsPlayer.SetVolume(options.volume)
         }
+      } else {
+        await tsPlayerArray[iCoord].SetVolume(options.volume) // coordinator only
       }
     }
+
+    // now play on coordinator
     await tsPlayerArray[iCoord].Play()
-    debug('Playing notification started - now figuring out the end')
+    debug('Info: Playing notification started')
 
     // Coordinator waiting either based on SONOS estimation, per default or user specified
-    let waitInMilliseconds = hhmmss2msec(options.duration)
+    let waitInMilliseconds = DEFAULT_DURATION
     if (options.automaticDuration) {
-      const positionInfo
-        = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
+      const positionInfo = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
       if (isTruthyProperty(positionInfo, ['TrackDuration'])) {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
-        debug('Did retrieve duration from SONOS player')
+        debug('Info: Using duration received from SONOS player')
       } else {
-        debug('Could NOT retrieve duration from SONOS player - using default/specified length')
+        debug('Info: Could NOT retrieve duration from SONOS player - using default') 
+      }
+    } else {
+      if (isTruthyProperty(options, ['duration'])) {
+        waitInMilliseconds = hhmmss2msec(options.duration)
+      } else {
+        debug('Error: options.duration is not set but needed - using default') 
       }
     }
-    debug('duration >>%s', JSON.stringify(waitInMilliseconds))
+    debug('Info: using duration >>%s', JSON.stringify(waitInMilliseconds))
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
-    debug('notification finished - now starting to restore')
+    debug('Info: notification finished - now starting to restore')
 
-    // return to previous state = restore snapshot
+    // return to previous state = restore snapshot (does not play)
     await module.exports.restoreGroupSnapshot(snapShot)
+    debug('Info: snapshot restored')
 
     // vli can not be recovered
     if (snapShot.wasPlaying) {
       if (!options.uri.includes('x-sonos-vli')) {
         await tsPlayerArray[iCoord].Play()
+      } else {
+        debug('Info: Stream can not be played >>%s:', JSON.stringify(options.uri))
       }
     }
   },
@@ -245,6 +258,7 @@ module.exports = {
    * @param {boolean} options.snapVolumes if true capture all players volume
    * @param {boolean} options.snapMutestates if true capture all players mute state
    * @param {string} options.sonosPlaylistName if not null store queue in a SONOS-Playlist
+   * 
    * @returns {promise<Snapshot>} group snapshot object
    * 
    * @throws {error} all methods, ... wrong syntax
@@ -421,7 +435,7 @@ module.exports = {
 
   //
   //     GROUP RELATED
-  //     .............
+  //     
 
   /** Get group data for a given player.
    * @param {string} tsPlayer sonos-ts player
@@ -475,7 +489,7 @@ module.exports = {
 
   //
   //     ALARMS RELATED
-  //     ...............
+  //     .
   /**
   /** Get alarm list version and array of all alarms. 
    * @param {object} player sonos-ts player
@@ -506,7 +520,7 @@ module.exports = {
 
   //
   //     CONTENT RELATED
-  //     ...............
+  //     
   /**
   * Transformed data of Browse action response. 
   * @global

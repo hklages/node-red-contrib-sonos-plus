@@ -1239,8 +1239,9 @@ module.exports = function (RED) {
    * @param {string} msg.payload notification uri.
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level. 
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *
    * - default is calculation, if that fails then 00:00:05
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -1251,7 +1252,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    *
    * Hint:
-   * While playing a notification (start .. to end + 2 seconds)
+   * While playing a notification (start .. to end + 1 seconds)
    * there should not be send another request to this group.
    */
   async function groupPlayNotification (msg, tsPlayer) {
@@ -1259,7 +1260,7 @@ module.exports = function (RED) {
     // Payload uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
 
-    // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
+    // Validate msg.playerName, msg.volume, msg.sameVolume -errors are thrown
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -1268,7 +1269,7 @@ module.exports = function (RED) {
       'volume': validated.volume,
       'sameVolume': validated.sameVolume,
       'automaticDuration': true,
-      'duration': '00:00:05' // In case automaticDuration does not work - 5 seconds
+      'duration': '00:00:15' // In case automaticDuration does not work - 5 seconds
     }
 
     // Update options.duration - get info from SONOS
@@ -1283,8 +1284,8 @@ module.exports = function (RED) {
       options.automaticDuration = false
     }
 
+    // create the array of players in that group
     const tsPlayerArray = []
-    
     for (let index = 0; index < groupData.members.length; index++) {
       const tsNewPlayer = new SonosDevice(groupData.members[index].urlObject.hostname)
       tsNewPlayer.urlObject = groupData.members[index].urlObject
