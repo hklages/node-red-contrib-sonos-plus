@@ -2172,9 +2172,12 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
 
-  // Algorithm: If the new coordinator is already the coordinator in a existing group, 
-  // then just take that group and remove (first)/ add (second) the needed players.
+  // Algorithm: If the new coordinator is already the coordinator in an existing group, 
+  // then just take that group and remove (first step)/ add (second step) the needed players.
   // else make the new coordinator stand alone and add all needed players.
+  // TODO check else: maybe better to find "closest" group and make coordinator
+  // Maybe 2 options. Find the closest (number of players) group and define coordinator 
+  // and add other
   
   async function householdCreateGroup (msg, tsPlayer) {
     const validatedPlayerList = validRegex(msg, 'payload', REGEX_CSV, 'player list')
