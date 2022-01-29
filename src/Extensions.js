@@ -210,8 +210,9 @@ module.exports = {
     debug('method:%s', 'decideCreateNodeOn')
     
     // if no check, then true is returned
-    if (avoidCheckPlayerAvailability) return true
-
+    if (avoidCheckPlayerAvailability) {
+      return true
+    }
     let response = null
     try {
       response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  

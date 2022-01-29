@@ -59,9 +59,11 @@ module.exports = {
     }
     const track = await MetaDataHelper.GuessTrack(options.uri)
     let metadata = await MetaDataHelper.TrackToMetaData(track)
-    if (metadata !== '') {
-      metadata = await encodeHtmlEntity(metadata) // html not url encoding!
-    }
+    // TODO check this and remove
+    // if (metadata !== '') {
+    //   metadata = await encodeHtmlEntity(metadata) // html not url encoding!
+    // }
+    metadata = (metadata !== '' ? await encodeHtmlEntity(metadata) : '')
     debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content but not the queue
@@ -157,9 +159,11 @@ module.exports = {
     }
     const track = await MetaDataHelper.GuessTrack(options.uri)
     let metadata = await MetaDataHelper.TrackToMetaData(track)
-    if (metadata !== '') {
-      metadata = await encodeHtmlEntity(metadata) // html not url encoding!
-    }
+    // TODO check and remove
+    // if (metadata !== '') {
+    //   metadata = await encodeHtmlEntity(metadata) // html not url encoding!
+    // }
+    metadata = (metadata !== '' ? await encodeHtmlEntity(metadata) : '')
     debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content
@@ -316,7 +320,6 @@ module.exports = {
       if (options.sonosPlaylistName !== null) {
         const result = await tsCoordinator.AVTransportService.SaveQueue(
           { 'InstanceID': 0, 'Title': options.sonosPlaylistName, 'ObjectID': '' }) 
-      
         snapshot.playlistObjectId = result.AssignedObjectID
       }
     }
@@ -782,6 +785,7 @@ module.exports = {
     }
     
     // The search string must be encoded- but not the category (:)
+    // TODO replace by while loop
     const objectId = type + encodeURIComponent(searchString)
     let browseCategory = await tsPlayer.ContentDirectoryService.Browse({ 
       'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
@@ -794,6 +798,10 @@ module.exports = {
     } else {
       list = await parseBrowseToArray(browseCategory, 'container')  
     }
+    // TODO Check and replace aboe
+    // const category = (type === 'A:TRACKS:' ? 'item' : 'container')
+    // const list =  await parseBrowseToArray(browseCategory, category)  
+
     if (!isTruthy(list)) {
       throw new Error(`${PACKAGE_PREFIX} response form parsing Browse is invalid`)
     }
@@ -817,6 +825,10 @@ module.exports = {
         } else {
           list = await parseBrowseToArray(browseCategory, 'container')  
         }
+        // TODO Check and replace aboe
+        // const category = (type === 'A:TRACKS:' ? 'item' : 'container')
+        // const list =  await parseBrowseToArray(browseCategory, category)  
+
         if (!isTruthy(list)) {
           throw new Error(`${PACKAGE_PREFIX} response form parsing Browse Album is invalid`)
         }

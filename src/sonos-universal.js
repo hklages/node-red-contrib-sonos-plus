@@ -760,6 +760,7 @@ module.exports = function (RED) {
     if (!isTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current MediaInfo is invalid`)
     }
+    // TODO replace with uri = (   ?   :  )
     let uri = '' // Set as default if not available
     if (isTruthyPropertyStringNotEmpty(mediaData, ['CurrentURI'])) {
       uri = mediaData.CurrentURI
@@ -815,6 +816,7 @@ module.exports = function (RED) {
     if (!isTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current media data is invalid`)
     }
+    // TODO replace with unitary operator
     let uri = ''
     if (isTruthyPropertyStringNotEmpty(mediaData, ['CurrentURI'])) {
       uri = mediaData.CurrentURI
@@ -825,6 +827,7 @@ module.exports = function (RED) {
     let serviceId = await getMusicServiceId(uri)
 
     // Get station uri for all "x-sonosapi-stream"
+    // TODO replace with unitary operator
     let stationArtUri = ''
     if (uri.startsWith('x-sonosapi-stream')) {
       stationArtUri = `${tsCoordinator.urlObject.origin}/getaa?s=1&u=${uri}`
@@ -867,7 +870,7 @@ module.exports = function (RED) {
         title = positionData.TrackMetaData.Title
       }
     }
-
+    // TODO replace with tertiar operator
     let album = ''
     if (isTruthyPropertyStringNotEmpty(positionData, ['TrackMetaData', 'Album'])) {
       album = positionData.TrackMetaData.Album
