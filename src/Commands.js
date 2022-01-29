@@ -15,7 +15,7 @@
 const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
-  executeActionV7, extractGroup, getMediaInfo,
+  extractGroup, getMediaInfo,
   getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
   parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
@@ -40,8 +40,8 @@ module.exports = {
    * @param {string} options.uri uri to be used as notification
    * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
    * @param {boolean} options.sameVolume all player in group play at same volume level
-   * @param {boolean} options.automaticDuration duration will be received from player
-   * @param {string} [options.duration] format hh:mm:ss, only required
+   * @param {boolean} options.automaticDuration true: duration will be received from player
+   * @param {string} [options.duration] format hh:mm:ss, only required if automaticDuration = false
    * 
    * @returns {promise} true
    * 
@@ -65,7 +65,7 @@ module.exports = {
     debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content but not the queue
-    // The queue is not snapshot because usually it is not changed.
+    // The SONOS-Queue is not snapshot because usually it is not changed.
     const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
       snapVolumes: true,  // simplification - only necessary in some cases
       snapMutes: false, // dont save the mutestates of each player
@@ -80,24 +80,22 @@ module.exports = {
       InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata
     })
 
-    // set volume
+    // set volume and play on coordinator
     if (options.volume !== -1) {
       debug('Info: using same volume >>%s', options.sameVolume)
       if (options.sameVolume) { // all player including coordinator
-        for (const tsPlayer in tsPlayerArray) {
+        for (const tsPlayer of tsPlayerArray) {
           await tsPlayer.SetVolume(options.volume)
         }
       } else {
         await tsPlayerArray[iCoord].SetVolume(options.volume) // coordinator only
       }
     }
-
-    // now play on coordinator
     await tsPlayerArray[iCoord].Play()
     debug('Info: Playing notification started')
 
-    // Coordinator waiting either based on SONOS estimation, per default or user specified
-    let waitInMilliseconds = DEFAULT_DURATION
+    // coordinator waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds = hhmmss2msec(DEFAULT_DURATION)
     if (options.automaticDuration) {
       const positionInfo = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
       if (isTruthyProperty(positionInfo, ['TrackDuration'])) {
@@ -115,7 +113,7 @@ module.exports = {
     }
     debug('Info: using duration >>%s', JSON.stringify(waitInMilliseconds))
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
-    debug('Info: notification finished - now starting to restore')
+    debug('Info: notification finished')
 
     // return to previous state = restore snapshot (does not play)
     await module.exports.restoreGroupSnapshot(snapShot)
@@ -133,13 +131,13 @@ module.exports = {
 
   /**  Play notification on a single joiner but must not be coordinator.
    * @param {object} tsCoordinator sonos-ts coordinator in group with url
+   * @param {string} coordinatorUuid coordinator uuid - used for grouping
    * @param {object} tsJoiner node-sonos player in group with url
    * @param {object} options options
-   * @param {string} options.uri uri
-   * @param {string} [options.metadata] metadata - will be generated if missing
-   * @param {string} options.volume volume during notification: 1 means don't use, range 1 .. 99
-   * @param {boolean} options.automaticDuration
-   * @param {string} options.duration format hh:mm:ss
+   * @param {string} options.uri uri to be used as notification
+   * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
+   * @param {boolean} options.automaticDuration true: duration will be received from player
+   * @param {string} [options.duration] format hh:mm:ss, only required if automaticDuration = false
    * @returns {promise} true
    *
    * @throws {error} all methods
@@ -148,9 +146,10 @@ module.exports = {
    * State will be imported from group.
    */
 
-  playJoinerNotification: async (tsCoordinator, tsJoiner, options) => {
+  playJoinerNotification: async (tsCoordinator, coordinatorUuid, tsJoiner, options) => {
     debug('method:%s', 'playJoinerNotification')
-    const WAIT_ADJUSTMENT = 2000
+    const WAIT_ADJUSTMENT = 1000 // milliseconds
+    const DEFAULT_DURATION = '00:00:15'
 
     // generate metadata if not provided
     if (!isTruthyProperty(options, ['uri'])) {
@@ -161,63 +160,70 @@ module.exports = {
     if (metadata !== '') {
       metadata = await encodeHtmlEntity(metadata) // html not url encoding!
     }
-    debug('metadata >>%s' + JSON.stringify(metadata))
+    debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
     // create snapshot state/volume/content
-    // coordinator playback state is relevant - not joiner
-    const snapshot = {}
-
-    // Do we need that? 
-    const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
-      InstanceID: 0
+    // the SONOS-Queue is not snapshot because usually it is not changed.
+    const tsPlayerArray = [tsCoordinator, tsJoiner]
+    const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
+      snapVolumes: true,  // simplification - only necessary in some cases
+      snapMutes: false, // dont save the mutestates of each player
+      sonosPlaylistName: null // dont save the SONOS-Queue
     })
-    const state = transportInfoObject.CurrentTransportState.toLowerCase()
-    snapshot.wasPlaying = (state === 'playing' || state === 'transitioning')
-    if (options.volume !== -1) {
-      const result = await tsJoiner.RenderingControlService.GetVolume(
-        { InstanceID: 0, Channel: 'Master' })
-      snapshot.joinerVolume = result.CurrentVolume
-    }
-    debug('Snapshot created - now start playing notification')
+    debug('Info: Snapshot created')
 
-    // set AVTransport on joiner - joiner will leave group!
-    await executeActionV7(tsJoiner.urlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI', {
-        'InstanceID': 0,
-        'CurrentURI': await encodeHtmlEntity(options.uri),
-        'CurrentURIMetaData': metadata
-      })
+    // set AVTransport on joiner - joiner will automatically leave group!
+    const uri = await encodeHtmlEntity(options.uri)
+    await tsJoiner.AVTransportService.SetAVTransportURI({
+      InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata
+    })
 
     // set volume and play notification on joiner
     if (options.volume !== -1) {
       await tsJoiner.SetVolume(options.volume)
+      debug('Info: new volume set')
     }
     await tsJoiner.Play()
-    debug('Playing notification started - now figuring out the end')
+    debug('Info: Playing notification started')
 
-    // Joiner: waiting either based on SONOS estimation, per default or user specified
-    let waitInMilliseconds = hhmmss2msec(options.duration)
+    // joiner: waiting either based on SONOS estimation, per default or user specified
+    let waitInMilliseconds = hhmmss2msec(DEFAULT_DURATION)
     if (options.automaticDuration) {
       const positionInfo = await tsJoiner.AVTransportService.GetPositionInfo()
       if (isTruthyProperty(positionInfo, ['TrackDuration'])) {
         waitInMilliseconds = hhmmss2msec(positionInfo.TrackDuration) + WAIT_ADJUSTMENT
-        debug('Did retrieve duration from SONOS player')
+        debug('Info: Using duration received from SONOS player')
       } else {
-        debug('Could NOT retrieve duration from SONOS player - using default/specified length')
+        debug('Info: Could NOT retrieve duration from SONOS player - using default') 
+      }
+    } else {
+      if (isTruthyProperty(options, ['duration'])) {
+        waitInMilliseconds = hhmmss2msec(options.duration)
+      } else {
+        debug('Error: options.duration is not set but needed - using default') 
       }
     }
     debug('duration >>' + JSON.stringify(waitInMilliseconds))
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
-    debug('notification finished - now starting to restore')
+    debug('Info: notification finished')
 
-    // return to previous state = restore snapshot
-    if (options.volume !== -1) {
-      await tsJoiner.SetVolume(snapshot.joinerVolume)
+    // return to previous state - first let joiner join the group
+    const coordinatorRincon = `x-rincon:${coordinatorUuid}`
+    await tsJoiner.AVTransportService.SetAVTransportURI(
+      { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' }
+    )
+  
+    await module.exports.restoreGroupSnapshot(snapShot)
+    debug('Info: snapshot restored')
+
+    // vli can not be recovered
+    if (snapShot.wasPlaying) {
+      if (!options.uri.includes('x-sonos-vli')) {
+        await tsCoordinator.Play()
+      } else {
+        debug('Info: Stream can not be played >>%s:', JSON.stringify(options.uri))
+      }
     }
-    const coordinatorRincon = `x-rincon:${tsCoordinator.myUuid}`
-    await executeActionV7(tsJoiner.urlObject,
-      '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
-      { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
 
   },
 
@@ -314,7 +320,7 @@ module.exports = {
         snapshot.playlistObjectId = result.AssignedObjectID
       }
     }
-    snapshot.playlistName = options.sonosPlaylistName // in any case
+    snapshot.sonosPlaylistName = options.sonosPlaylistName // in any case
     
     // content (MediaInfo, PositionInfo), playbackstate of coordinator
     const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({

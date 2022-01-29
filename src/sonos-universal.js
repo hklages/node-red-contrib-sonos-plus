@@ -1241,8 +1241,6 @@ module.exports = function (RED) {
    * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level. 
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
-   *
-   * - default is calculation, if that fails then 00:00:05
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -1257,7 +1255,7 @@ module.exports = function (RED) {
    */
   async function groupPlayNotification (msg, tsPlayer) {
     debug('method:%s', 'groupPlayNotification')
-    // Payload uri is required.
+    // Payload notification uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
 
     // Validate msg.playerName, msg.volume, msg.sameVolume -errors are thrown
@@ -1269,10 +1267,10 @@ module.exports = function (RED) {
       'volume': validated.volume,
       'sameVolume': validated.sameVolume,
       'automaticDuration': true,
-      'duration': '00:00:15' // In case automaticDuration does not work - 5 seconds
+      'duration': '00:00:15' // In case automaticDuration does not work - 15 seconds
     }
 
-    // Update options.duration - get info from SONOS
+    // Update options.duration - get info from SONOS-Player
     if (isTruthyProperty(msg, ['duration'])) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
@@ -2618,7 +2616,6 @@ module.exports = function (RED) {
    * @param {string} msg.payload notification uri.
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
-   * - default is calculation, if that fails then 00:00:05
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -2629,7 +2626,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    *
    * Hints:
-   *  While playing a notification (start .. to end + 2 seconds)
+   *  While playing a notification (start .. to end + 1 seconds)
    *     there should not be send another request to this player and the group shound be modified
    */
   async function joinerPlayNotification (msg, tsPlayer) {
@@ -2645,15 +2642,16 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} player (msg.player/node) is not a joiner`)
     }
 
-    // Msg.sameVolume is not used (only one player!)
+    // msg.sameVolume is not used (only one player!)
     const options = { // Set defaults
       'uri': validatedUri,
       'volume': validated.volume, // Means don't touch
+      'sameVolume': false, // not used
       'automaticDuration': true,
-      'duration': '00:00:05' // In case automaticDuration does not work - 5 seconds
+      'duration': '00:00:15' // In case automaticDuration does not work - 15 seconds
     }
 
-    // Update options.duration - get info from SONOS player
+    // Update options.duration - get info from SONOS-Player
     if (isTruthyProperty(msg, ['duration'])) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
@@ -2666,13 +2664,14 @@ module.exports = function (RED) {
     }
 
     // The coordinator is being used to capture group status (playing, content, ...)
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[0].urlObject
-    tsCoordinator.myUuid = groupData.members[0].uuid
+    const iCoord = 0
+    const tsCoordinator = new SonosDevice(groupData.members[iCoord].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[iCoord].urlObject
+    const coordinatorUuid = groupData.members[iCoord].uuid
     const tsJoiner = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     tsJoiner.urlObject = groupData.members[groupData.playerIndex].urlObject
     
-    await playJoinerNotification(tsCoordinator, tsJoiner, options)
+    await playJoinerNotification(tsCoordinator, coordinatorUuid, tsJoiner, options)
 
     return {}
   }
