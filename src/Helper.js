@@ -212,6 +212,7 @@ module.exports = {
         throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
       }
     } else {
+      // TODO value = (propertNameExists? validValue:defaulvalue) and then return
       if (propertyNameExists) {
         return validValue  
       } else {
