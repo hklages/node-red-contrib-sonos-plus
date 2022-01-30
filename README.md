@@ -1,6 +1,5 @@
 ## node-red-contrib-sonos-plus
 
-[![Dependencies](https://david-dm.org/hklages/node-red-contrib-sonos-plus.svg)](https://david-dm.org/hklages/node-red-contrib-sonos-plus)
 [![npm](https://img.shields.io/npm/dt/node-red-contrib-sonos-plus.svg)](https://www.npmjs.com/package/node-red-contrib-sonos-plus)
 [![npm](https://img.shields.io/npm/v/node-red-contrib-sonos-plus.svg)](https://www.npmjs.com/package/node-red-contrib-sonos-plus)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -35,23 +34,11 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 - Caution: player.leave.group removed - please use player.become.standalone
 
+- New commands group.play.sonosplaylist, group.queue.sonosplaylist, group.get.sonosplaylisttracks
+
+- You can now save/restore the SONOS-Queue in group.create/restore.snapshot
+
 - DNS names are now supported and recommended instead of pure ipv4 address (config dialog)
-
-- bug fix player discovery for windows 10
-
-- new timeout for all request
-
-- universal node: new command group.get.queue.length
-
-- universal node: new command player.get.batterylevel provides the battery for SONOS Roam player
-
-- universal node: group.queue.* now outputs firstTrackNumberEnqueued, newQueueLength
-
-- universal node: group.get.queue now fetches up to 10,000 items (multiple calls)
-
-- my sonos node: library.get.* now fetches up to 10,000 items (multiple calls) - no need anymore for "requestedCount" property.
-
-- universal node: new commands group.queue.library.*
 
 ### QUICKSTART - DEGUG - SUPPORT
 

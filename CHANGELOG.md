@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.2.0] 2022-02-01
+
+#### Changed
+
+- New commands group.play.sonosplaylist, group.queue.sonosplaylist, group.get.sonosplaylisttracks
+
+- You can now save/restore the SONOS-Queue in group.create/restore.snapshot
+
+- internal: changed group/joiner.play.notification, household.separate.group
+
 ### [6.1.1] 2022-01-25
 
 #### Changed
