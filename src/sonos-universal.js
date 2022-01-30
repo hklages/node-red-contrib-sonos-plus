@@ -21,8 +21,7 @@ const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
-  getMusicLibraryItemsV2,
-  getSonosPlaylistTracks
+  getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers
 } = require('./Commands.js')
 
 const { executeActionV7, failure, getDeviceInfo, getDeviceProperties,
@@ -884,18 +883,8 @@ module.exports = function (RED) {
     }
     return {
       'payload': {
-        artist,
-        album,
-        title,
-        artUri,
-        mediaData,
-        queueActivated,
-        radioId,
-        serviceId,
-        serviceName,
-        stationArtUri,
-        positionData
-      }
+        artist, album, title, artUri, mediaData, queueActivated, radioId,
+        serviceId, serviceName, stationArtUri, positionData }
     }
   }
 
@@ -1412,8 +1401,8 @@ module.exports = function (RED) {
    * @param {object} msg incoming message
    * @param {string} msg.payload search string, exact title, case sensitive
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
-   * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level.
-   * @param {boolean} [msg.clearQueue=true] if true the queue is cleared.
+   * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level
+   * @param {boolean} [msg.clearQueue=true] if true the queue is cleared
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer node-sonos player with urlObject - as default
    *
@@ -1427,14 +1416,16 @@ module.exports = function (RED) {
   
     // Payload SONOS-Playlist is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
+
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[0].urlObject
+    const iCoord = 0
+    const tsCoordinator = new SonosDevice(groupData.members[iCoord].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[iCoord].urlObject
 
-    // get uri of the SONOS-Playlist
+    // Get uri of the SONOS-Playlist
     const sonosPlaylists = await getSonosPlaylists(tsCoordinator)
-    // Find title in playlist - exact
+    // - Find title in list of SONOS-Playlists - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
     if (foundIndex === -1) {
       // eslint-disable-next-line max-len
@@ -1444,22 +1435,13 @@ module.exports = function (RED) {
     if (validated.clearQueue) {
       await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
     }
-    // position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
+    // Position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
     await tsCoordinator.AddUriToQueue(sonosPlaylists[foundIndex].uri, 0, true)
     await tsCoordinator.SwitchToQueue()
 
-    if (validated.volume !== -1) {
-      if (validated.sameVolume) { // set all player
-        for (let i = 0; i < groupData.members.length; i++) {
-          const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
-          await tsPlayer.SetVolume(validated.volume)
-        }
-      } else { // set only one player
-        const tsPlayer = new SonosDevice(
-          groupData.members[groupData.playerIndex].urlObject.hostname)
-        await tsPlayer.SetVolume(validated.volume)
-      }
-    }
+    // validated with volume, sameVolume, groupData.members
+    
+    await setVolumeOnMembers(groupData.members, iCoord, validated.volume, validated.sameVolume)
     await tsCoordinator.Play()
     
     return {}
@@ -1719,25 +1701,26 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Queue SONOS-Playlist
+   *  Queue SONOS-Playlist aka insert into the SONOS-Queue.
    * @param {object} msg incoming message
    * @param {string/number}msg.payload SONOS-Playlist name, exact, case sensitive
-   * @param {boolean} [msg.clearQueue=true] if true and export.queue = true the queue is cleared.
+   * @param {boolean} [msg.clearQueue=true] if true then the queue is cleared.
    * @param {string} [msg.playerName = using nodesonosPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<object>} {}
+   * @returns {promise<object>} see return
    *
-   * @throws {error} all methods
+   * @throws {error} all methods, 'no SONOS-Playlist title matching search string'
    */
   async function groupQueueSonosPlaylist (msg, tsPlayer) {
 
-    // Payload SONOS-Playlist is required.
-    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
+    // Payload SONOS-Playlist title is required.
+    const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist title')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[0].urlObject
+    const iCoord = 0
+    const tsCoordinator = new SonosDevice(groupData.members[iCoord].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[iCoord].urlObject
 
     // get uri of the SONOS-Playlist
     const sonosPlaylists = await getSonosPlaylists(tsCoordinator)
@@ -1883,9 +1866,9 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Save SONOS-Queue to SONOS-Playlist. Must not be empty.
+   *  Save SONOS-Queue to SONOS-Playlist. SONOS-Queue must not be empty!
    * @param {object} msg incoming message
-   * @param {string} msg.payload title of SONOS-Playlist.
+   * @param {string} msg.payload SONOS-Playlist title
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -1894,17 +1877,15 @@ module.exports = function (RED) {
    * @throws {error} 'SONOS-Queue is empty'
    * @throws {error} all methods
    */
-  // eslint-disable-next-line max-len
   async function groupSaveQueueToSonosPlaylist (msg, tsPlayer) {
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-
-    const coordinatorIndex = 0
-    const tsCoordinator = new SonosDevice(groupData.members[coordinatorIndex].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[coordinatorIndex].urlObject
+    const iCoord = 0 // Coordinator index
+    const tsCoordinator = new SonosDevice(groupData.members[iCoord].urlObject.hostname)
+    tsCoordinator.urlObject = groupData.members[iCoord].urlObject
 
     // Is queue empty? Q:0 = SONOS-Queue // browseQueue.TotalMatches
     const browseQueue = await tsCoordinator.ContentDirectoryService.Browse({
@@ -2419,8 +2400,8 @@ module.exports = function (RED) {
   }
 
   /**
-   * Get array of all tracks of first SONOS-Playlist matching title.
-   * Caution: titles may not be unique! Case sensitive!
+   *  Get array of all tracks of first SONOS-Playlist matching title.
+   * Caution: Titles may not be unique! Case sensitive!
    * @param {object} msg incoming message
    * @param {string} msg.payload title of SONOS-Playlist. 
    * @param {object} tsPlayer sonos-ts player
@@ -2439,7 +2420,7 @@ module.exports = function (RED) {
   }
 
   /**
-   * Remove first SONOS-Playlist matching given title. 
+   *  Remove first SONOS-Playlist matching given title. 
    * Caution: titles may not be unique! Case sensitive!
    * Impact on My Sonos and also SONOS-Playlist list
    * @param {object} msg incoming message
@@ -2465,7 +2446,7 @@ module.exports = function (RED) {
       ignoreNotExists = msg.ignoreNotExists
     }
 
-    // Get all SONOS-Playlists using the default player of this node
+    // Get all SONOS-Playlists using the default SONOS-Player of this node
     const sonosPlaylists = await getSonosPlaylists(tsPlayer)
     // Find title in playlist - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
@@ -2473,7 +2454,6 @@ module.exports = function (RED) {
       if (!ignoreNotExists) {
         throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string`)
       }
-      //ignore and return
     } else {
       await tsPlayer.ContentDirectoryService.DestroyObject(
         { 'ObjectID': sonosPlaylists[foundIndex].id })
@@ -2495,11 +2475,11 @@ module.exports = function (RED) {
   async function householdSeparateGroup (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    for (let i = 1; i < groupData.members.length; i++) { // Start with 1 - coordinator is last
+
+    for (let i = 1; i < groupData.members.length; i++) { // Start with 1!
       // No check - always returns true
-      await executeActionV7(groupData.members[i].urlObject,
-        '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
-        { 'InstanceID': 0 })
+      const tsPlayer = new SonosDevice(groupData.members[i].urlObject.hostname)
+      await tsPlayer.AVTransportService.BecomeCoordinatorOfStandaloneGroup({ 'InstanceID': 0 })
     }
 
     return {}

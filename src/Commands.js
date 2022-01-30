@@ -444,7 +444,7 @@ module.exports = {
 
   //
   //     GROUP RELATED
-  //     
+  //  
 
   /** Get group data for a given player.
    * @param {string} tsPlayer sonos-ts player
@@ -494,6 +494,36 @@ module.exports = {
     }
     
     return await parseZoneGroupToArray(householdGroups.ZoneGroupState) 
+  },
+
+  /** Set volume on members in a group. Does not do anything if volume = -1.
+   * @property {object[]} members array of playerGroupData
+   * @property {number} playerIndex the key to major player, integer 0, members.length
+   * @property {number} volume new volume, integer 0 .. 100 or -1 means no change
+   * @property {boolean} everywhere set volume on every player
+   * 
+   * @returns {promise<true>} 
+   *
+   * @throws {error} all methods
+   */
+  setVolumeOnMembers: async (members, playerIndex, volume, everywhere) => {
+    debug('method:%s', 'setVolumeOnMembers')
+  
+    if (volume !== -1) {
+      debug('changing volumes')
+      if (everywhere) { // set all player
+        debug('changing volumes everywhere')
+        for (const member of members) {
+          const tsPlayer = new SonosDevice(member.urlObject.hostname)
+          await tsPlayer.SetVolume(volume)
+        }
+      } else { // set only one player
+        const tsPlayer = new SonosDevice(members[playerIndex].urlObject.hostname)
+        await tsPlayer.SetVolume(volume)
+      }
+    }
+  
+    return true
   },
 
   //
