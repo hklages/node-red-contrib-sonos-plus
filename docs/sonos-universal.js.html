@@ -1256,9 +1256,9 @@ module.exports = function (RED) {
   /**
    *  Play notification on current group. Group topology will not being touched.
    * @param {object} msg incoming message
-   * @param {string} msg.payload notification uri.
+   * @param {string} msg.payload notification uri
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
-   * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level. 
+   * @param {boolean} [msg.sameVolume=true] shall all players play at same volume level
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
@@ -1302,7 +1302,7 @@ module.exports = function (RED) {
       options.automaticDuration = false
     }
 
-    // create the array of players in that group
+    // Create the array of players in that group
     const tsPlayerArray = []
     for (let index = 0; index &lt; groupData.members.length; index++) {
       const tsNewPlayer = new SonosDevice(groupData.members[index].urlObject.hostname)
@@ -1399,14 +1399,14 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
     const snapshot = msg.payload
-    // compare current group with group data from snap
+    // Compare current group with group data from snap
     if (groupData.members.length !== snapshot.membersData.length) {
       throw new Error(`${PACKAGE_PREFIX}: snapshot/current group have different size`)
     }
     if (groupData.members[0].playerName !== snapshot.membersData[0].playerName) {
       throw new Error(`${PACKAGE_PREFIX}: snapshot/current group have different coordinator`)
     }
-    // check all other member except 0 = coordinator
+    // Check all other member except 0 = coordinator
     let foundIndex
     for (let i = 1; i &lt; groupData.members.length; i++) {
       foundIndex = snapshot.membersData.findIndex(
@@ -1467,7 +1467,7 @@ module.exports = function (RED) {
     await tsCoordinator.AddUriToQueue(sonosPlaylists[foundIndex].uri, 0, true)
     await tsCoordinator.SwitchToQueue()
 
-    // validated with volume, sameVolume, groupData.members
+    // Validated with volume, sameVolume, groupData.members
     
     await setVolumeOnMembers(groupData.members, iCoord, validated.volume, validated.sameVolume)
     await tsCoordinator.Play()
@@ -1741,6 +1741,7 @@ module.exports = function (RED) {
    * @throws {error} all methods, 'no SONOS-Playlist title matching search string'
    */
   async function groupQueueSonosPlaylist (msg, tsPlayer) {
+    debug('method:%s', 'groupQueueSonosPlaylist')
 
     // Payload SONOS-Playlist title is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist title')
@@ -1750,9 +1751,9 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[iCoord].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[iCoord].urlObject
 
-    // get uri of the SONOS-Playlist
+    // Get uri of the SONOS-Playlist
     const sonosPlaylists = await getSonosPlaylists(tsCoordinator)
-    // Find title in playlist - exact
+    // - Find title in playlist - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
     if (foundIndex === -1) {
       // eslint-disable-next-line max-len
@@ -1763,7 +1764,7 @@ module.exports = function (RED) {
     if (validated.clearQueue) {
       await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
     }
-    // position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
+    // Position in queue = 0 (at the end), enqueue next true (only effective in shuffle mode)
     const result = await tsCoordinator.AddUriToQueue(sonosPlaylists[foundIndex].uri, 0, true)
   
     return {
@@ -1906,6 +1907,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSaveQueueToSonosPlaylist (msg, tsPlayer) {
+    debug('method:%s', 'groupSaveQueueToSonosPlaylist')
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
@@ -2421,7 +2423,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetSonosPlaylists (msg, tsPlayer) {
-    
+    debug('method:%s', 'householdGetSonosPlaylists')
     const payload = await getSonosPlaylists(tsPlayer)
 
     return { payload }
@@ -2439,6 +2441,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetSonosPlaylistTracks (msg, tsPlayer) {
+    debug('method:%s', 'householdGetSonosPlaylistTracks')
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
@@ -2463,6 +2466,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdRemoveSonosPlaylist (msg, tsPlayer) {
+    debug('method:%s', 'householdRemoveSonosPlaylist')
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
@@ -2476,7 +2480,7 @@ module.exports = function (RED) {
 
     // Get all SONOS-Playlists using the default SONOS-Player of this node
     const sonosPlaylists = await getSonosPlaylists(tsPlayer)
-    // Find title in playlist - exact
+    // - Find title in playlist - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
     if (foundIndex === -1) {
       if (!ignoreNotExists) {
@@ -2501,6 +2505,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdSeparateGroup (msg, tsPlayer) {
+    debug('method:%s', 'householdSeparateGroup')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2623,8 +2628,10 @@ module.exports = function (RED) {
 
   /**
    *  Play notification on a joiner (in group) specified by sonosPlayer (default) or by playerName.
+   * Joiner leaves group plays notification and rejoins the group. 
+   * Group continues playing if playing.
    * @param {object} msg incoming message
-   * @param {string} msg.payload notification uri.
+   * @param {string} msg.payload notification uri
    * @param {number/string} [msg.volume] volume - if missing do not touch volume
    * @param {string} [msg.duration] duration of notification hh:mm:ss 
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
@@ -2656,8 +2663,7 @@ module.exports = function (RED) {
     // msg.sameVolume is not used (only one player!)
     const options = { // Set defaults
       'uri': validatedUri,
-      'volume': validated.volume, // Means don't touch
-      'sameVolume': false, // not used
+      'volume': validated.volume, // -1 means don't touch
       'automaticDuration': true,
       'duration': '00:00:15' // In case automaticDuration does not work - 15 seconds
     }
@@ -2674,15 +2680,13 @@ module.exports = function (RED) {
       options.automaticDuration = false
     }
 
-    // The coordinator is being used to capture group status (playing, content, ...)
+    // The coordinator is not being used - group is not changed
     const iCoord = 0
-    const tsCoordinator = new SonosDevice(groupData.members[iCoord].urlObject.hostname)
-    tsCoordinator.urlObject = groupData.members[iCoord].urlObject
     const coordinatorUuid = groupData.members[iCoord].uuid
     const tsJoiner = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     tsJoiner.urlObject = groupData.members[groupData.playerIndex].urlObject
     
-    await playJoinerNotification(tsCoordinator, coordinatorUuid, tsJoiner, options)
+    await playJoinerNotification(tsJoiner, coordinatorUuid, options)
 
     return {}
   }
@@ -3481,7 +3485,7 @@ module.exports = function (RED) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Sun Jan 30 2022 10:32:39 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Mon Jan 31 2022 09:03:29 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

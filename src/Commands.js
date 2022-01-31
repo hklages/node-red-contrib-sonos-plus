@@ -53,21 +53,17 @@ module.exports = {
     const WAIT_ADJUSTMENT = 1000 // milliseconds
     const DEFAULT_DURATION = '00:00:15'
 
-    // generate metadata if not provided
+    // Generate metadata if not provided
     if (!isTruthyProperty(options, ['uri'])) {
       throw new Error(`${PACKAGE_PREFIX} uri is missing`)
     }
     const track = await MetaDataHelper.GuessTrack(options.uri)
     let metadata = await MetaDataHelper.TrackToMetaData(track)
-    // TODO check this and remove
-    // if (metadata !== '') {
-    //   metadata = await encodeHtmlEntity(metadata) // html not url encoding!
-    // }
     metadata = (metadata !== '' ? await encodeHtmlEntity(metadata) : '')
     debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
-    // create snapshot state/volume/content but not the queue
-    // The SONOS-Queue is not snapshot because usually it is not changed.
+    // Create snapshot state/volume/content but not the queue
+    // SONOS-Queue is not snapshot because usually it is not changed.
     const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
       snapVolumes: true,  // simplification - only necessary in some cases
       snapMutes: false, // dont save the mutestates of each player
@@ -75,14 +71,14 @@ module.exports = {
     })
     debug('Info: Snapshot created')
     
-    // set AVTransport on coordinator
+    // Set AVTransport on coordinator
     const iCoord = 0
     const uri = await encodeHtmlEntity(options.uri)
     await tsPlayerArray[iCoord].AVTransportService.SetAVTransportURI({
       InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata
     })
 
-    // set volume and play on coordinator
+    // Set volume and play on coordinator
     if (options.volume !== -1) {
       debug('Info: using same volume >>%s', options.sameVolume)
       if (options.sameVolume) { // all player including coordinator
@@ -96,7 +92,7 @@ module.exports = {
     await tsPlayerArray[iCoord].Play()
     debug('Info: Playing notification started')
 
-    // coordinator waiting either based on SONOS estimation, per default or user specified
+    // Coordinator waiting either based on SONOS estimation, per default or user specified
     let waitInMilliseconds = hhmmss2msec(DEFAULT_DURATION)
     if (options.automaticDuration) {
       const positionInfo = await tsPlayerArray[iCoord].AVTransportService.GetPositionInfo()
@@ -117,7 +113,7 @@ module.exports = {
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
     debug('Info: notification finished')
 
-    // return to previous state = restore snapshot (does not play)
+    // Return to previous state = restore snapshot (does not play)
     await module.exports.restoreGroupSnapshot(snapShot)
     debug('Info: snapshot restored')
 
@@ -131,10 +127,11 @@ module.exports = {
     }
   },
 
-  /**  Play notification on a single joiner but must not be coordinator.
-   * @param {object} tsCoordinator sonos-ts coordinator in group with url
-   * @param {string} coordinatorUuid coordinator uuid - used for grouping
+  /**  Play notification on a single joiner (must not be coordinator).
+   * Original group continues playing (if playing). If duration is not 
+   * specified or can not be calculated the default 15 sec is used.
    * @param {object} tsJoiner node-sonos player in group with url
+   * @param {string} coordinatorUuid coordinator uuid - used for grouping
    * @param {object} options options
    * @param {string} options.uri uri to be used as notification
    * @param {string} options.volume volume during notification - if -1 don't use, range 1 .. 99
@@ -145,44 +142,37 @@ module.exports = {
    * @throws {error} all methods
    *
    * Hint: joiner will leave group, play notification and rejoin the group. 
-   * State will be imported from group.
    */
 
-  playJoinerNotification: async (tsCoordinator, coordinatorUuid, tsJoiner, options) => {
+  playJoinerNotification: async (tsJoiner, coordinatorUuid, options) => {
     debug('method:%s', 'playJoinerNotification')
     const WAIT_ADJUSTMENT = 1000 // milliseconds
     const DEFAULT_DURATION = '00:00:15'
 
-    // generate metadata if not provided
+    // Generate metadata if not provided
     if (!isTruthyProperty(options, ['uri'])) {
       throw new Error(`${PACKAGE_PREFIX} uri is missing`)
     }
     const track = await MetaDataHelper.GuessTrack(options.uri)
     let metadata = await MetaDataHelper.TrackToMetaData(track)
-    // TODO check and remove
-    // if (metadata !== '') {
-    //   metadata = await encodeHtmlEntity(metadata) // html not url encoding!
-    // }
     metadata = (metadata !== '' ? await encodeHtmlEntity(metadata) : '')
     debug('Info: metadata >>%s' + JSON.stringify(metadata))
 
-    // create snapshot state/volume/content
-    // the SONOS-Queue is not snapshot because usually it is not changed.
-    const tsPlayerArray = [tsCoordinator, tsJoiner]
-    const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
-      snapVolumes: true,  // simplification - only necessary in some cases
-      snapMutes: false, // dont save the mutestates of each player
-      sonosPlaylistName: null // dont save the SONOS-Queue
-    })
-    debug('Info: Snapshot created')
+    // No full snapshot needed as the original group does not change
+    let joinerVolume 
+    if (options.volume !== -1) { 
+      const result = await tsJoiner.RenderingControlService.GetVolume(
+        { 'InstanceID': 0, 'Channel': 'Master' })
+      joinerVolume = result.CurrentVolume
+    }
 
-    // set AVTransport on joiner - joiner will automatically leave group!
+    // Set AVTransport on joiner - joiner will automatically leave group!
     const uri = await encodeHtmlEntity(options.uri)
     await tsJoiner.AVTransportService.SetAVTransportURI({
       InstanceID: 0, CurrentURI: uri, CurrentURIMetaData: metadata
     })
 
-    // set volume and play notification on joiner
+    // Set joiner volume if requested
     if (options.volume !== -1) {
       await tsJoiner.SetVolume(options.volume)
       debug('Info: new volume set')
@@ -190,7 +180,7 @@ module.exports = {
     await tsJoiner.Play()
     debug('Info: Playing notification started')
 
-    // joiner: waiting either based on SONOS estimation, per default or user specified
+    // Joiner: waiting either based on SONOS estimation, per default or user specified
     let waitInMilliseconds = hhmmss2msec(DEFAULT_DURATION)
     if (options.automaticDuration) {
       const positionInfo = await tsJoiner.AVTransportService.GetPositionInfo()
@@ -211,23 +201,15 @@ module.exports = {
     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](waitInMilliseconds)
     debug('Info: notification finished')
 
-    // return to previous state - first let joiner join the group
+    // Return to previous state
+    if (options.volume !== -1) { 
+      await tsJoiner.SetVolume(joinerVolume)
+    }
     const coordinatorRincon = `x-rincon:${coordinatorUuid}`
     await tsJoiner.AVTransportService.SetAVTransportURI(
       { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' }
     )
-  
-    await module.exports.restoreGroupSnapshot(snapShot)
-    debug('Info: snapshot restored')
-
-    // vli can not be recovered
-    if (snapShot.wasPlaying) {
-      if (!options.uri.includes('x-sonos-vli')) {
-        await tsCoordinator.Play()
-      } else {
-        debug('Info: Stream can not be played >>%s:', JSON.stringify(options.uri))
-      }
-    }
+    debug('Info: restored')
 
   },
 
@@ -258,7 +240,7 @@ module.exports = {
    */
 
   /**  Creates snapshot of the current group: playbackstate, content, SONOS-Queue, track, position.
-   * Volume, mutestate of all players in group, but not the group structure itself.  
+   * Volume, mutestate of all players in group, but not the group structure itself.
    * In case of an empty SONOS-Queue, the playlistObjectId is set to null.
    * @param {player[]} playersInGroup player data in group, coordinator at 0 
    * @param {object} player player 
@@ -278,16 +260,16 @@ module.exports = {
     const snapshot = {}
     snapshot.membersData = []
   
-    // mutestate and volume of all players
-    for (let index = 0; index < playersInGroup.length; index++) {
+    // Mutestate and volume of all players
+    for (const player of playersInGroup) {
       const member = { // default
         // urlSchemaAuthority because it maybe stored in flow variable
-        urlSchemeAuthority: playersInGroup[index].urlObject.origin,
+        urlSchemeAuthority: player.urlObject.origin,
         mutestate: null,
         volume: null,
-        playerName: playersInGroup[index].playerName
+        playerName: player.playerName
       }
-      const tsPlayer = new SonosDevice(playersInGroup[index].urlObject.hostname)
+      const tsPlayer = new SonosDevice(player.urlObject.hostname)
       if (options.snapVolumes) {
         const result = await tsPlayer.RenderingControlService.GetVolume(
           { 'InstanceID': 0, 'Channel': 'Master' })
@@ -315,7 +297,7 @@ module.exports = {
       // Queue is empty
       snapshot.playlistObjectId = null //
     } else {
-      // Save non empty SONOS-Queue to SONOS-Playlist. 
+      // Save non empty SONOS-Queue to SONOS-Playlist
       // If already exist a SONOS-Playlist with same name create new with different objectId
       if (options.sonosPlaylistName !== null) {
         const result = await tsCoordinator.AVTransportService.SaveQueue(
@@ -325,7 +307,7 @@ module.exports = {
     }
     snapshot.sonosPlaylistName = options.sonosPlaylistName // in any case
     
-    // content (MediaInfo, PositionInfo), playbackstate of coordinator
+    // Content (MediaInfo, PositionInfo), playbackstate of coordinator
     const transportInfoObject = await tsCoordinator.AVTransportService.GetTransportInfo({
       InstanceID: 0
     })
@@ -369,7 +351,7 @@ module.exports = {
     const coordinatorUrlObject = new URL(snapshot.membersData[iCoord].urlSchemeAuthority)
     const tsCoordinator = new SonosDevice(coordinatorUrlObject.hostname)
    
-    // restore SONOS-Queue if it was requested
+    // Restore SONOS-Queue if it was requested
     if (snapshot.sonosPlaylistName !== null) {
       // in any case we have to clear the queue because it might have been modified
       await tsCoordinator.AVTransportService.RemoveAllTracksFromQueue()
@@ -382,7 +364,7 @@ module.exports = {
       }
     }
 
-    // restore content, urlSchemeAuthority because we do create/restore
+    // Restore content, urlSchemeAuthority because we do create/restore
     // vli means managed by an external app such as spotifiy, not restorable
     const uri = snapshot.CurrentURI
     if (!uri.includes('x-sonos-vli')) {
@@ -404,7 +386,7 @@ module.exports = {
     }
     if (track >= 1 && nrTracks >= track) {
       debug('Setting track to >>%s', snapshot.Track)
-      // wait for SetAVTransportURI being competed then restore track
+      // Wait for SetAVTransportURI being competed then restore track
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](WAIT_FOR_SETAV)
       await tsCoordinator.SeekTrack(track)
         .catch(() => {
@@ -412,7 +394,7 @@ module.exports = {
         })
     }
     if (snapshot.RelTime && snapshot.TrackDuration !== '0:00:00') {
-      // wait then restore track position
+      // Wait then restore track position
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](WAIT_FOR_TRACK)
       debug('Setting back time to >>%', snapshot.RelTime)
       await tsCoordinator.SeekPosition(snapshot.RelTime)
@@ -421,18 +403,18 @@ module.exports = {
         })
     }
 
-    // restore volume/mute if captured.
-    for (let i = 0; i < snapshot.membersData.length; i++) {
-      const urlObject = new URL(snapshot.membersData[i].urlSchemeAuthority)
+    // Restore volume/mute if captured.
+    for (const member of snapshot.membersData) {
+      const urlObject = new URL(member.urlSchemeAuthority)
       const ts1Player = new SonosDevice(urlObject.hostname)
-      const volume = snapshot.membersData[i].volume
+      const volume = member.volume
       
       if (volume !== null) { 
         await ts1Player.RenderingControlService.SetVolume(
           { 'InstanceID': 0, 'Channel': 'Master', 'DesiredVolume': volume.toString() })
       }
 
-      const mutestate = snapshot.membersData[i].mutestate
+      const mutestate = member.mutestate
       if (mutestate !== null) {
         await ts1Player.RenderingControlService.SetMute(
           { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': (mutestate === 'on') }) 
@@ -517,7 +499,7 @@ module.exports = {
           const tsPlayer = new SonosDevice(member.urlObject.hostname)
           await tsPlayer.SetVolume(volume)
         }
-      } else { // set only one player
+      } else { // Set only one player
         const tsPlayer = new SonosDevice(members[playerIndex].urlObject.hostname)
         await tsPlayer.SetVolume(volume)
       }
@@ -626,7 +608,7 @@ module.exports = {
     return transformedItems.concat(sonosPlaylists)
   },
 
-  /** Get array of all SONOS-Playlists
+  /** Get array of all SONOS-Playlists.
    * @param {object} tsPlayer sonos-ts player
    *
    * @returns {Promise<DidlBrowseItem[]>} all SONOS-Playlists as array, could be empty
@@ -644,7 +626,7 @@ module.exports = {
       'RequestedCount': REQUESTED_COUNT_PLAYLISTS, 'SortCriteria': ''
     })
     
-    // caution: container not items
+    // Caution: container not items
     const itemArray = await parseBrowseToArray(browsePlaylist, 'container')
     const transformed = itemArray.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
@@ -679,20 +661,20 @@ module.exports = {
     
     // Get the FIRST corresponding ObjectID for given title (not unique) 
     const sonosPlaylists = await module.exports.getSonosPlaylists(tsPlayer)
-    // - exact, case sensitive
+    // - Exact, case sensitive
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === title))
     if (foundIndex === -1) {
       throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string`)
     } 
     const objectId = sonosPlaylists[foundIndex].id // first id of SONOS-Playlist matching title
-    
-    // do multiple request, parse them and combine to one list
+  
+    // Do multiple request, parse them and combine to one list
     let totalListParsed = [] // concatenation of all http requests, parsed
     let numberRequestsDone = 0
     let totalMatches = 1 // at least one call
     while ((numberRequestsDone < requestLimit)
         && (numberRequestsDone * REQUESTED_COUNT < totalMatches)) {
-      // get up to REQUESTED_COUNT items and parse them
+      // Get up to REQUESTED_COUNT items and parse them
       const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
         'ObjectID': objectId, 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*',
         'StartingIndex': 0, 'RequestedCount': REQUESTED_COUNT, 'SortCriteria': ''
@@ -704,7 +686,7 @@ module.exports = {
       numberRequestsDone++
     }
 
-    // transform
+    // Transform
     const totalListTransformed = totalListParsed.map((item) => {
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
