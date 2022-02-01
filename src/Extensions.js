@@ -730,6 +730,8 @@ module.exports = {
    * 
    * CAUTION: to be on the safe side: playerName uses String (see parse*Value)
    * CAUTION: we use arrayMode false and do it manually
+   * 
+   * CAUTION: we use  stopNodes and handle that field! Different to Stephans SONOS-TS
    */
   parseZoneGroupToArray: async (zoneGroupState) => { 
     // validate method parameter
@@ -744,7 +746,8 @@ module.exports = {
       parseAttributeValue: false,
       parseTagValue: false,
       arrayMode: false,
-      processEntities: false // because already done
+      processEntities: false, // because already done
+      stopNodes: ['ChannelMapSet']
     })
     const groupState = await parser.parse(decoded) 
     
