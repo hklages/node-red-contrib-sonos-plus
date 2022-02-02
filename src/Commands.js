@@ -719,6 +719,7 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} requestLimit is not number`)
     }
 
+    // TODO replace by while
     const objectId = 'Q:0' // SONOS-Queue
     // Get first items and transform them
     let browseQueue = await tsPlayer.ContentDirectoryService.Browse({

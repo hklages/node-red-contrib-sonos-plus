@@ -18,8 +18,7 @@
 const { PACKAGE_PREFIX, REGEX_ANYCHAR } = require('./Globals.js')
 
 const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
-  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger,
-  encodeHtmlEntity
+  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger
 } = require('./Helper.js')
 
 const request = require('axios').default
@@ -893,34 +892,6 @@ module.exports = {
       'coordinatorIndex': 0,
       members
     }
-  },
-
-  // TODO description is nonsense, substr depreciated
-  /**  Extract group for a given player. playerName - if isTruthyStringNotEmpty- 
-   * is overruling playerUrlHost
-   * @param {string} uri such as x-sonosapi-radio:xxxx?sid=201&flags=8300&sn=19
-   * 
-   * @returns {promise<string>} returns cleaned uri 
-   *
-   * @throws {error} 'could not split into parts'
-   */
-  cleanUpUri: async (uri) => {
-    debug('method:%s', 'cleanUpUri')
-    // split into parts
-    let position = uri.indexOf(':')
-    if (position < 0) {
-      throw new Error(`${PACKAGE_PREFIX} could not split into parts :`)
-    }
-    const part1 = uri.substr(0, position + 1) // includes the :
-    const rest = uri.substr(position + 1) // does not include the :
-    position = rest.indexOf('?')
-    if (position < 0) {
-      throw new Error(`${PACKAGE_PREFIX} could not split into parts ?`)
-    }
-    const part2 = rest.substr(0, position) // does not include the ?
-    const part3 = rest.substr(position) // does include the ?
-
-    return part1 + await encodeURIComponent(part2) + await encodeHtmlEntity(part3)
   },
 
   //
