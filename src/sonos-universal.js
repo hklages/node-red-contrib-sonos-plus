@@ -140,7 +140,7 @@ module.exports = function (RED) {
     'player.set.treble': playerSetTreble,
     'player.set.volume': playerSetVolume,
     'player.test': playerTest,
-    'player.execute.action': playerExecuteActionV7
+    'player.execute.action': playerDirectAction
   }
 
   /**
@@ -2180,14 +2180,12 @@ module.exports = function (RED) {
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
-    let player
-    let visible
     const householdPlayerList = []
-    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        visible = !allGroupsData[iGroup][iMember].invisible
+    for (const iGroup in allGroupsData) {
+      for (const iMember in allGroupsData[iGroup]) {
+        const visible = !allGroupsData[iGroup][iMember].invisible
         if (visible) {
-          player = {
+          const player = {
             playerName: allGroupsData[iGroup][iMember].playerName,
             urlObject: allGroupsData[iGroup][iMember].urlObject,
             uuid: allGroupsData[iGroup][iMember].uuid,
@@ -2200,58 +2198,51 @@ module.exports = function (RED) {
     }
 
     // Validate all player names in newGroupPlayerArray and get index of new coordinator
-    let indexInList
     let iNewCoordinator
-    for (let i = 0; i < newGroupPlayerArray.length; i++) {
-      indexInList = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
-
+    for (const i in newGroupPlayerArray) {
+      const indexInList
+        = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
       if (indexInList === -1) {
         throw new Error(`${PACKAGE_PREFIX} Could not find player: ${newGroupPlayerArray[i]}`)
       }
-      if (i === 0) {
-        iNewCoordinator = indexInList
-      }
+      if (i === 0) iNewCoordinator = indexInList
     }
     const coordinatorRincon = `x-rincon:${householdPlayerList[iNewCoordinator].uuid}`
 
     // Is new coordinator already the coordinator in its group? Then use this group and adjust
     if (householdPlayerList[iNewCoordinator].isCoordinator) { // Means is a coordinator
       // Modify this group (remove those not needed and add some)
-      let found
-      for (let i = 0; i < householdPlayerList.length; i++) {
+      for (const player of householdPlayerList) {
         // Should this player be in group?
-        found = newGroupPlayerArray.indexOf(householdPlayerList[i].playerName)
+        const found = newGroupPlayerArray.indexOf(player.playerName)
         if (found === -1) {
           // Remove if in new coordinator group
-          if (
-            householdPlayerList[i].groupIndex === householdPlayerList[iNewCoordinator].groupIndex) {
+          if (player.groupIndex === householdPlayerList[iNewCoordinator].groupIndex) {
             // Leave group, no check - always returns true
-            await executeActionV7(householdPlayerList[i].urlObject,
-              '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+            const ts1Player = new SonosDevice(player.urlObject.hostname)
+            await ts1Player.AVTransportService.BecomeCoordinatorOfStandaloneGroup(
               { 'InstanceID': 0 })
           }
-        } else if (
-          householdPlayerList[i].groupIndex !== householdPlayerList[iNewCoordinator].groupIndex) {
+        } else if (player.groupIndex !== householdPlayerList[iNewCoordinator].groupIndex) {
           // No check - always returns true. Using SetAVTransportURI as AddMember does not work
-          await executeActionV7(householdPlayerList[i].urlObject,
-            '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+          const ts1Player = new SonosDevice(player.urlObject.hostname)
+          await ts1Player.AVTransportService.SetAVTransportURI(
             { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
         }
       }
     } else {
-      await executeActionV7(householdPlayerList[iNewCoordinator].urlObject,
-        '/MediaRenderer/AVTransport/Control', 'BecomeCoordinatorOfStandaloneGroup',
+      const ts1Player = new SonosDevice(householdPlayerList[iNewCoordinator].urlObject.hostname)
+      await ts1Player.AVTransportService.BecomeCoordinatorOfStandaloneGroup(
         { 'InstanceID': 0 })
-      
       // Because it takes time to BecomeCoordinator
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) 
-      let indexPlayer
 
-      for (let i = 1; i < newGroupPlayerArray.length; i++) { // Start with 1
-        indexPlayer = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
+      for (const i in newGroupPlayerArray) { // Start with 1
+        const indexPlayer
+          = householdPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
         // No check - always returns true. Using SetAVTransportURI as AddMember does not work
-        await executeActionV7(householdPlayerList[indexPlayer].urlObject,
-          '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+        const ts1Player = new SonosDevice(householdPlayerList[indexPlayer].urlObject.hostname)
+        await ts1Player.AVTransportService.SetAVTransportURI(
           { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
       }
     }
@@ -2712,7 +2703,7 @@ module.exports = function (RED) {
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
-   * @returns {promise<object>} battery level 0 100
+   * @returns {promise<object>} { payload: battery level 0 100, powerSource: string }
    *
    * @throws {error} all methods
    */
@@ -2720,10 +2711,12 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    const payload = await getDeviceBatteryLevel(
+    const result = await getDeviceBatteryLevel(
       groupData.members[groupData.playerIndex].urlObject, 1000)
-
-    return { payload }
+    
+    const payload = result.level
+    const powerSource = result.powerSource
+    return { payload, powerSource }
   }
 
   /**
@@ -3006,16 +2999,15 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupDataJoiner = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    if (
-      groupDataJoiner.members[groupDataJoiner.playerIndex].playerName
+    if (groupDataJoiner.members[groupDataJoiner.playerIndex].playerName
       !== groupDataToJoin.members[0].playerName) {
       // No check - always returns true. We use SetAVTransport as AddMember does not work
-
-      await executeActionV7(groupDataJoiner.members[groupDataJoiner.playerIndex].urlObject,
-        '/MediaRenderer/AVTransport/Control', 'SetAVTransportURI',
+      const tsSinglePlayer = new SonosDevice(
+        groupDataJoiner.members[groupDataJoiner.playerIndex].urlObject.hostname)
+      await tsSinglePlayer.AVTransportService.SetAVTransportURI(
         { 'InstanceID': 0, 'CurrentURI': coordinatorRincon, 'CurrentURIMetaData': '' })
-    } // Else: do nothing - either playerName is already coordinator
-
+    }
+    
     return {}
   }
 
@@ -3404,7 +3396,7 @@ module.exports = function (RED) {
    *
    * @throws {error} all methods
    */
-  async function playerExecuteActionV7 (msg, tsPlayer) {
+  async function playerDirectAction (msg, tsPlayer) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const { endpoint, action, inArgs } = msg.payload

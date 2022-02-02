@@ -300,8 +300,11 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} SONOS player did not provide battery level status!`)
     }    
 
-    const payload = Number(parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[1])
-    return payload
+    const result = {
+      'level': Number(parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[1]),
+      'powerSource': parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[3]
+    }
+    return result
   },
 
   /** Get device properties.
@@ -788,16 +791,16 @@ module.exports = {
     // Sort all groups that coordinator is in position 0 and select properties
     // See typeDef playerGroupData. 
     const groupsArraySorted = [] // result to be returned
-    for (let group of groupsAlwaysArray) {
+    for (const group of groupsAlwaysArray) {
       let groupSorted = []
-      let coordinatorUuid = group._Coordinator
-      let groupId = group._ID
+      const coordinatorUuid = group._Coordinator
+      const groupId = group._ID
       // First push coordinator, its other properties will be updated later!
       groupSorted.push({ groupId, 'uuid': coordinatorUuid })
       const iCoord = 0 // used for later access
       
-      for (let member of group.ZoneGroupMember) {
-        let urlObject = new URL(member._Location)
+      for (const member of group.ZoneGroupMember) {
+        const urlObject = new URL(member._Location)
         urlObject.pathname = '' // clean up
         const uuid = member._UUID  
         // My naming is playerName instead of the SONOS ZoneName
@@ -819,7 +822,7 @@ module.exports = {
         groupSorted = groupSorted.filter((member) => member.invisible === false)   
       }
       // Invisible player form a group with 1 - remove that. Should not happen
-      if (groupSorted.length !== 0 ) groupsArraySorted.push(groupSorted)
+      if (groupSorted.length !== 0) groupsArraySorted.push(groupSorted)
     }
     return groupsArraySorted
   },
@@ -842,15 +845,14 @@ module.exports = {
     // this ensures that playerName overrules given playerUrlHostname
     const searchByPlayerName = isTruthyStringNotEmpty(playerName)
 
-    // find player in group bei playerUrlHostname or playerName
-    // playerName overrules playerUrlHostname
+    // find player in group bei playerName or playerUrlHostname
+    // playerName - if valid - overrules playerUrlHostname!
     let foundGroupIndex = -1 // indicator for player NOT found
     let visible
     let groupId
     let usedPlayerUrlHost = ''
-    // TODO make the loop readable
-    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
+    for (const iGroup in allGroupsData) {
+      for (const iMember in allGroupsData[iGroup]) {
         visible = !allGroupsData[iGroup][iMember].invisible
         groupId = allGroupsData[iGroup][iMember].groupId
         if (searchByPlayerName) {
@@ -893,7 +895,8 @@ module.exports = {
     }
   },
 
-  /** Extract group for a given player. playerName - if isTruthyStringNotEmpty- 
+  // TODO description is nonsense, substr depreciated
+  /**  Extract group for a given player. playerName - if isTruthyStringNotEmpty- 
    * is overruling playerUrlHost
    * @param {string} uri such as x-sonosapi-radio:xxxx?sid=201&flags=8300&sn=19
    * 
@@ -909,7 +912,7 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} could not split into parts :`)
     }
     const part1 = uri.substr(0, position + 1) // includes the :
-    const rest = uri.substr(position + 1) // does not incude the :
+    const rest = uri.substr(position + 1) // does not include the :
     position = rest.indexOf('?')
     if (position < 0) {
       throw new Error(`${PACKAGE_PREFIX} could not split into parts ?`)
