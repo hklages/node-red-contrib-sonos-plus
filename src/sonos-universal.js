@@ -148,7 +148,7 @@ module.exports = function (RED) {
    * @param {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
-    debug('method:%s', 'SonosUniversalNode')
+    debug('command:%s', 'SonosUniversalNode')
     const thisFunctionName = 'create and subscribe'
     RED.nodes.createNode(this, config)
     const node = this
@@ -299,7 +299,7 @@ module.exports = function (RED) {
    *  the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
-    debug('method:%s', 'processInputMsg')
+    debug('command:%s', 'processInputMsg')
     const tsPlayer = new SonosDevice(urlHost)
     if (!isTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
@@ -354,7 +354,7 @@ module.exports = function (RED) {
 
   //
   //                                          COMMANDS
-  //...............................................................................................
+  //
   
   /**
    *  Coordinator delegate coordination of group. New player must be in same group!
@@ -371,7 +371,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function coordinatorDelegateCoordination (msg, tsPlayer) {
-    debug('method:%s', 'coordinatorDelegateCoordination')
+    debug('command:%s', 'coordinatorDelegateCoordination')
     // Payload new player name is required.
     const validPlayerName = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name')
     const validated = await validatedGroupProperties(msg)
@@ -410,7 +410,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupAdjustVolume (msg, tsPlayer) {
-    debug('method:%s', 'groupAdjustVolume')
+    debug('command:%s', 'groupAdjustVolume')
     // Payload adjusted volume is required
     const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
     const validated = await validatedGroupProperties(msg)
@@ -435,6 +435,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupCancelSleeptimer (msg, tsPlayer) {
+    debug('command:%s', 'groupCancelSleeptimer')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -456,6 +457,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupClearQueue (msg, tsPlayer) {
+    debug('command:%s', 'groupClearQueue')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -481,7 +483,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupCreateSnapshot (msg, tsPlayer) {
-    debug('method:%s', 'groupCreateSnapshot')
+    debug('command:%s', 'groupCreateSnapshot')
     // Validate msg properties
     const options
       = { 'snapVolumes': false, 'snapMutestates': false, sonosPlaylistName: null } // defaults
@@ -528,6 +530,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupCreateVolumeSnapshot (msg, tsPlayer) {
+    debug('command:%s', 'groupCreateVolumeSnapshot')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -550,6 +553,7 @@ module.exports = function (RED) {
    */
   // eslint-disable-next-line max-len
   async function groupGetTransportActions (msg, tsPlayer) {
+    debug('command:%s', 'groupGetTransportActions')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -572,6 +576,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetCrossfadeMode (msg, tsPlayer) {
+    debug('command:%s', 'groupGetCrossfadeMode')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -594,6 +599,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetMembers (msg, tsPlayer) {
+    debug('command:%s', 'groupGetMembers')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -611,6 +617,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetMute (msg, tsPlayer) {
+    debug('command:%s', 'groupGetMute')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -634,6 +641,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetPlaybackstate (msg, tsPlayer) {
+    debug('command:%s', 'groupGetPlaybackstate')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
@@ -657,6 +665,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetQueue (msg, tsPlayer) {
+    debug('command:%s', 'groupGetQueue')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
@@ -677,6 +686,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetQueueLength (msg, tsPlayer) {
+    debug('command:%s', 'groupGetQueueLength')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname) 
@@ -703,6 +713,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetSleeptimer (msg, tsPlayer) {
+    debug('command:%s', 'groupGetSleeptimer')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -734,7 +745,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetState (msg, tsPlayer) {
-    debug('method:%s', 'groupGetState')
+    debug('command:%s', 'groupGetState')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -804,7 +815,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetTrackPlus (msg, tsPlayer) {
-    debug('method:%s', 'groupGetTrackPlus')
+    debug('command:%s', 'groupGetTrackPlus')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -899,6 +910,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupGetVolume (msg, tsPlayer) {
+    debug('command:%s', 'groupGetVolume')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -921,6 +933,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupNextTrack (msg, tsPlayer) {
+    debug('command:%s', 'groupNextTrack')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -940,6 +953,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPause (msg, tsPlayer) {
+    debug('command:%s', 'groupPause')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -962,7 +976,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlay (msg, tsPlayer) {
-    debug('method:%s', 'groupPlay')
+    debug('command:%s', 'groupPlay')
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1007,7 +1021,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayLibraryItem (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayLibraryItem')
+    debug('command:%s', 'groupPlayLibraryItem')
 
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -1087,7 +1101,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayMySonos (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayMySonos')
+    debug('command:%s', 'groupPlayMySonos')
 
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -1173,7 +1187,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayExport (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayExport')
+    debug('command:%s', 'groupPlayExport')
     // Simple validation of export and activation
     const exportData = msg.payload
     if (!isTruthyPropertyStringNotEmpty(exportData, ['uri'])) {
@@ -1246,7 +1260,7 @@ module.exports = function (RED) {
    * there should not be send another request to this group.
    */
   async function groupPlayNotification (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayNotification')
+    debug('command:%s', 'groupPlayNotification')
     // Payload notification uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
 
@@ -1300,7 +1314,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayQueue (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayQueue')
+    debug('command:%s', 'groupPlayQueue')
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1358,7 +1372,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlaySnapshot (msg, tsPlayer) {
-    debug('method:%s', 'groupPlaySnapshot')
+    debug('command:%s', 'groupPlaySnapshot')
     if (isTruthyProperty(msg, ['payload'])) {
       if (typeof msg.payload !== 'object') {
         throw new Error(`${PACKAGE_PREFIX}: snapshot (msg.payload) is not object`)
@@ -1412,7 +1426,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlaySonosPlaylist (msg, tsPlayer) {
-    debug('method:%s', 'groupPlaySonosPlaylist')
+    debug('command:%s', 'groupPlaySonosPlaylist')
   
     // Payload SONOS-Playlist is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist')
@@ -1464,7 +1478,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayStreamHttp (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayStreamHttp')
+    debug('command:%s', 'groupPlayStreamHttp')
     // msg.payload uri is required.
     let validatedUri = validRegex(msg, 'payload', REGEX_HTTP, 'uri')
 
@@ -1524,7 +1538,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayTrack (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayTrack')
+    debug('command:%s', 'groupPlayTrack')
     // Get the playerName
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -1585,7 +1599,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPlayTuneIn (msg, tsPlayer) {
-    debug('method:%s', 'groupPlayTuneIn')
+    debug('command:%s', 'groupPlayTuneIn')
     // Payload radio id is required
     const validatedRadioId = validRegex(msg, 'payload', REGEX_RADIO_ID, 'radio id')
     // Validate msg.playerName, msg.volume, msg.sameVolume -error are thrown
@@ -1626,6 +1640,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupPreviousTrack (msg, tsPlayer) {
+    debug('command:%s', 'groupPreviousTrack')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -1650,7 +1665,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupQueueLibraryItem (msg, tsPlayer) {
-    debug('method:%s', 'groupQueueLibraryItem')
+    debug('command:%s', 'groupQueueLibraryItem')
 
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -1713,7 +1728,7 @@ module.exports = function (RED) {
    * @throws {error} all methods, 'no SONOS-Playlist title matching search string'
    */
   async function groupQueueSonosPlaylist (msg, tsPlayer) {
-    debug('method:%s', 'groupQueueSonosPlaylist')
+    debug('command:%s', 'groupQueueSonosPlaylist')
 
     // Payload SONOS-Playlist title is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'SONOS-Playlist title')
@@ -1757,6 +1772,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupQueueUri (msg, tsPlayer) {
+    debug('command:%s', 'groupQueueUri')
     // Payload uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
     const validated = await validatedGroupProperties(msg)
@@ -1793,6 +1809,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupQueueUriFromSpotify (msg, tsPlayer) {
+    debug('command:%s', 'groupQueueUriFromSpotify')
     // Payload uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'spotify uri')
     if (!(validatedUri.startsWith('spotify:track:')
@@ -1830,6 +1847,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupRemoveTracks (msg, tsPlayer) {
+    debug('command:%s', 'groupRemoveTracks')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -1879,7 +1897,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSaveQueueToSonosPlaylist (msg, tsPlayer) {
-    debug('method:%s', 'groupSaveQueueToSonosPlaylist')
+    debug('command:%s', 'groupSaveQueueToSonosPlaylist')
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
@@ -1916,6 +1934,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSeek (msg, tsPlayer) {
+    debug('command:%s', 'groupSeek')
     // Payload seek time is required.
     const validTime = validRegex(msg, 'payload', REGEX_TIME, 'seek time')
     const validated = await validatedGroupProperties(msg)
@@ -1941,6 +1960,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSeekDelta (msg, tsPlayer) {
+    debug('command:%s', 'groupSeekDelta')
     // Payload seek time is required.
     const validTime = validRegex(msg, 'payload', REGEX_TIME_DELTA, 'relative seek time')
     const validated = await validatedGroupProperties(msg)
@@ -1965,6 +1985,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSetCrossfade (msg, tsPlayer) {
+    debug('command:%s', 'groupSetCrossfade')
     // Payload crossfade sate is required.
     const newState = isOnOff(msg, 'payload', 'crosssfade state')
     const validated = await validatedGroupProperties(msg)
@@ -1989,6 +2010,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSetMute (msg, tsPlayer) {
+    debug('command:%s', 'groupSetMute')
     // Payload mute state is required.
     const newState = isOnOff(msg, 'payload', 'mute state')
     const validated = await validatedGroupProperties(msg)
@@ -2014,6 +2036,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSetQueuemode (msg, tsPlayer) {
+    debug('command:%s', 'groupSetQueuemode')
     // Payload queuemode is required.
     const newState = validRegex(msg, 'payload', REGEX_QUEUEMODES, 'queue mode')
 
@@ -2070,6 +2093,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSetSleeptimer (msg, tsPlayer) {
+    debug('command:%s', 'groupSetSleeptimer')
     // Payload sleep time is required.
     const validTime = validRegex(msg, 'payload', REGEX_TIME, 'timer duration')
 
@@ -2095,6 +2119,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupSetVolume (msg, tsPlayer) {
+    debug('command:%s', 'groupSetVolume')
     const newVolume = validToInteger(msg, 'payload', -100, +100, 'new volume')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -2117,6 +2142,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupStop (msg, tsPlayer) {
+    debug('command:%s', 'groupStop')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -2136,6 +2162,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function groupTogglePlayback (msg, tsPlayer) {
+    debug('command:%s', 'groupTogglePlayback')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
@@ -2165,6 +2192,7 @@ module.exports = function (RED) {
   // and add other
   
   async function householdCreateGroup (msg, tsPlayer) {
+    debug('command:%s', 'householdCreateGroup')
     const validatedPlayerList = validRegex(msg, 'payload', REGEX_CSV, 'player list')
     const newGroupPlayerArray = validatedPlayerList.split(',')
 
@@ -2266,6 +2294,7 @@ module.exports = function (RED) {
    *
    */
   async function householdCreateStereoPair (msg, tsPlayer) {
+    debug('command:%s', 'householdCreateStereoPair')
     // Both playerNames are required
     const sonosPlayernameLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left')
     const sonosPlayernameRight = validRegex(msg, 'playerNameRight',
@@ -2317,6 +2346,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdDisableAlarm (msg, tsPlayer) {
+    debug('command:%s', 'householdDisableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })   
@@ -2335,6 +2365,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdEnableAlarm (msg, tsPlayer) {
+    debug('command:%s', 'householdEnableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })   
@@ -2353,6 +2384,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetAlarms (msg, tsPlayer) {
+    debug('command:%s', 'householdGetAlarms')
     const payload = await getAlarmsAll(tsPlayer)
     return { payload }
   }
@@ -2368,6 +2400,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetGroups (msg, tsPlayer) {
+    debug('command:%s', 'householdGetGroups')
     const payload = await getGroupsAll(tsPlayer, true)
 
     return { payload }
@@ -2383,7 +2416,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetSonosPlaylists (msg, tsPlayer) {
-    debug('method:%s', 'householdGetSonosPlaylists')
+    debug('command:%s', 'householdGetSonosPlaylists')
     const payload = await getSonosPlaylists(tsPlayer)
 
     return { payload }
@@ -2401,7 +2434,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetSonosPlaylistTracks (msg, tsPlayer) {
-    debug('method:%s', 'householdGetSonosPlaylistTracks')
+    debug('command:%s', 'householdGetSonosPlaylistTracks')
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
@@ -2426,7 +2459,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdRemoveSonosPlaylist (msg, tsPlayer) {
-    debug('method:%s', 'householdRemoveSonosPlaylist')
+    debug('command:%s', 'householdRemoveSonosPlaylist')
     // Payload title search string is required.
     const validatedTitle = validRegex(msg, 'payload', REGEX_ANYCHAR, 'title')
 
@@ -2465,7 +2498,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdSeparateGroup (msg, tsPlayer) {
-    debug('method:%s', 'householdSeparateGroup')
+    debug('command:%s', 'householdSeparateGroup')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2494,7 +2527,7 @@ module.exports = function (RED) {
    *
    */
   async function householdSeparateStereoPair (msg, tsPlayer) {
-    debug('method:%s', 'householdSeparateStereoPair')
+    debug('command:%s', 'householdSeparateStereoPair')
 
     const sonosPlayernameLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left')
 
@@ -2535,6 +2568,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdTestPlayerOnline (msg, tsPlayer) {
+    debug('command:%s', 'householdTestPlayerOnline')
     // Player name is required
     if (!isTruthyProperty(msg, ['payload'])) {
       throw new Error(`${PACKAGE_PREFIX} player name (msg.${msg.payload}) is missing/invalid`)
@@ -2584,6 +2618,7 @@ module.exports = function (RED) {
    *     there should not be send another request to this player and the group shound be modified
    */
   async function joinerPlayNotification (msg, tsPlayer) {
+    debug('command:%s', 'joinerPlayNotification')
     // Payload notification uri is required.
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
 
@@ -2639,6 +2674,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerAdjustVolume (msg, tsPlayer) {
+    debug('command:%s', 'playerAdjustVolume')
     // msg.payload volume is required.
     const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
     const validated = await validatedGroupProperties(msg)
@@ -2663,6 +2699,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerBecomeStandalone (msg, tsPlayer) {
+    debug('command:%s', 'playerBecomeStandalone')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     
@@ -2684,6 +2721,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetBass (msg, tsPlayer) {
+    debug('command:%s', 'playerGetBass')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2706,6 +2744,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetBatteryLevel (msg, tsPlayer) {
+    debug('command:%s', 'playerGetBatteryLevel')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2728,6 +2767,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetButtonLockState (msg, tsPlayer) {
+    debug('command:%s', 'playerGetButtonLockState')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2755,6 +2795,7 @@ module.exports = function (RED) {
    * EQ data are only available for specific players.
    */
   async function playerGetEq (msg, tsPlayer) {
+    debug('command:%s', 'playerGetEq')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     // eslint-disable-next-line max-len
@@ -2804,6 +2845,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetLed (msg, tsPlayer) {
+    debug('command:%s', 'playerGetLed')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     // returns On or Off
@@ -2825,6 +2867,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetLoudness (msg, tsPlayer) {
+    debug('command:%s', 'playerGetLoudness')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2847,6 +2890,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetMute (msg, tsPlayer) {
+    debug('command:%s', 'playerGetMute')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2869,6 +2913,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetProperties (msg, tsPlayer) {
+    debug('command:%s', 'playerGetProperties')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
@@ -2892,6 +2937,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetQueue (msg, tsPlayer) {
+    debug('command:%s', 'playerGetQueue')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
@@ -2912,6 +2958,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetRole (msg, tsPlayer) {
+    debug('command:%s', 'playerGetRole')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     let role
@@ -2937,6 +2984,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetTreble (msg, tsPlayer) {
+    debug('command:%s', 'playerGetTreble')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2959,6 +3007,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerGetVolume (msg, tsPlayer) {
+    debug('command:%s', 'playerGetVolume')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2986,6 +3035,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerJoinGroup (msg, tsPlayer) {
+    debug('command:%s', 'playerJoinGroup')
     // Payload a playername in target group is required
     const validatedGroupPlayerName = validRegex(msg, 'payload', REGEX_ANYCHAR, 'group player name')
 
@@ -3029,6 +3079,7 @@ module.exports = function (RED) {
    *
    */
   async function playerPlayAvtransport (msg, tsPlayer) {
+    debug('command:%s', 'playerPlayAvtransport')
     // Payload uri is required: eg x-rincon-stream:RINCON_5CAAFD00223601400 for line in
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'uri')
 
@@ -3064,6 +3115,7 @@ module.exports = function (RED) {
    *
    */
   async function playerPlayLineIn (msg, tsPlayer) {
+    debug('command:%s', 'playerPlayLineIn')
     // Validate msg.playerName, msg.volume
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -3105,6 +3157,7 @@ module.exports = function (RED) {
    *
    */
   async function playerPlayTv (msg, tsPlayer) {
+    debug('command:%s', 'playerPlayTv')
     // Validate msg.playerName, msg.volume
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -3146,6 +3199,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetBass (msg, tsPlayer) {
+    debug('command:%s', 'playerSetBass')
     // Payload bass is required.
     const newBass = validToInteger(msg, 'payload', -10, +10, 'set bass')
     const validated = await validatedGroupProperties(msg)
@@ -3170,6 +3224,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetButtonLockState (msg, tsPlayer) {
+    debug('command:%s', 'playerSetButtonLockState')
     //msg.payload button state is required - convert to On Off
     const newState = (isOnOff(msg, 'payload', 'button lock state') ? 'On' : 'Off')
      
@@ -3196,6 +3251,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetEQ (msg, tsPlayer) {
+    debug('command:%s', 'playerSetEQ')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
@@ -3243,6 +3299,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetLed (msg, tsPlayer) {
+    debug('command:%s', 'playerSetLed')
     // msg.payload Led state is required - convert to On Off
     const newState = (isOnOff(msg, 'payload', 'led state') ? 'On' : 'Off')
 
@@ -3268,6 +3325,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetLoudness (msg, tsPlayer) {
+    debug('command:%s', 'playerSetLoudness')
     // msg.payload is required
     const newState = isOnOff(msg, 'payload', 'loudness state')
 
@@ -3293,6 +3351,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetMute (msg, tsPlayer) {
+    debug('command:%s', 'playerSetMute')
     // Payload mute state is required.
     const newState = isOnOff(msg, 'payload', 'mute state')
 
@@ -3318,6 +3377,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetTreble (msg, tsPlayer) {
+    debug('command:%s', 'playerSetTreble')
     // Payload volume is required.
     const newTreble = validToInteger(msg, 'payload', -10, +10, 'set treble')
 
@@ -3343,6 +3403,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerSetVolume (msg, tsPlayer) {
+    debug('command:%s', 'playerSetVolume')
     // Payload volume is required.
     const validatedVolume = validToInteger(msg, 'payload', 0, 100, 'set volume')
     const validatedPlayerName = validRegex(msg, 'playerName', REGEX_ANYCHAR,
@@ -3369,6 +3430,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerTest (msg, tsPlayer) {
+    debug('command:%s', 'coordplayerTestinatorDelegateCoordination')
     
     // const payload = await tsPlayer.ContentDirectoryService.Browse({
     //   'ObjectID': 'SQ:71', 'BrowseFlag': 'BrowseDirectChildren',
@@ -3395,6 +3457,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerDirectAction (msg, tsPlayer) {
+    debug('command:%s', 'playerDirectAction')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const { endpoint, action, inArgs } = msg.payload
