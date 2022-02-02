@@ -2176,7 +2176,7 @@ module.exports = function (RED) {
 
     // Get groups with members and convert multi dimensional array to simple array 
     // where objects have new property groupIndex, memberIndex
-    const allGroupsData = await getGroupsAll(tsPlayer)
+    const allGroupsData = await getGroupsAll(tsPlayer, true)
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
@@ -2260,59 +2260,58 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Create a stereo pair of players. Right one will be hidden! 
-   * Is only supported for some type of SONOS player.
+   *  Create a stereo pair of players. Right one will be hidden!
+   * Stereopairing is only supported for some type of SONOS player.
    * @param {object} msg incoming message
    * @param {string} msg.payload - left player, will keep visible
    * @param {string} msg.playerNameRight - right player, will become invisible
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
    *
-   * @throws {error} 'all groups data undefined', 'player name left was not found', 
-   * 'player name right was not found'
+   * @throws {error} 'all groups data undefined', 'SONOS-Playername left was not found', 
+   * 'SONOS-Playername right was not found'
    * @throws {error} all methods
    *
-   * Caution: In executeAction it should be left: playerLeftBaseUrl
+   * Caution: The stereopair command must be send to the left player otherwise it will fail.
    *
    */
-  // eslint-disable-next-line max-len
   async function householdCreateStereoPair (msg, tsPlayer) {
-    // Both player are required
-    const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left')
-    const playerRight = validRegex(msg, 'playerNameRight', REGEX_ANYCHAR, 'player name right')
+    // Both playerNames are required
+    const sonosPlayernameLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left')
+    const sonosPlayernameRight = validRegex(msg, 'playerNameRight',
+      REGEX_ANYCHAR, 'player name right')
 
-    // Verify that playerNames are valid and get the uuid
-    const allGroupsData = await getGroupsAll(tsPlayer)
+    // Get the group data and extra t uuid, urlObject
+    const allGroupsData = await getGroupsAll(tsPlayer, false)
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
-    let playerLeftUuid = ''
-    let playerRightUuid = ''
-    let name
-    let playerLeftUrl // type JavaScript URL
-    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        name = allGroupsData[iGroup][iMember].playerName
-        if (name === playerRight) {
-          playerRightUuid = allGroupsData[iGroup][iMember].uuid
+    let playerLeftUuid = '' // for ChannelMapSet
+    let playerRightUuid = '' // for ChannelMapSet
+    let playerLeftUrlObject = null // needed to create the tsLeftPlayer
+    for (const group of allGroupsData) {
+      for (const member of  group) {
+        const name = member.playerName
+        if (name === sonosPlayernameRight) {
+          playerRightUuid = member.uuid
         }
-        if (name === playerLeft) {
-          playerLeftUuid = allGroupsData[iGroup][iMember].uuid
-          playerLeftUrl = allGroupsData[iGroup][iMember].urlObject
+        if (name === sonosPlayernameLeft) {
+          playerLeftUuid = member.uuid
+          playerLeftUrlObject = member.urlObject
         }
       }
     }
     if (playerLeftUuid === '') {
-      throw new Error(`${PACKAGE_PREFIX} player name left was not found`)
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername left was not found`)
     }
     if (playerRightUuid === '') {
-      throw new Error(`${PACKAGE_PREFIX} player name right was not found`)
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername right was not found`)
     }
 
-    // No check - always returns true
-    await executeActionV7(playerLeftUrl,
-      '/DeviceProperties/Control', 'CreateStereoPair',
+    // We have to use left player, otherwise it will not work!
+    const tsLeftPlayer = new SonosDevice(playerLeftUrlObject.hostname)
+    await tsLeftPlayer.DevicePropertiesService.CreateStereoPair(
       { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
 
     return {}
@@ -2380,7 +2379,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function householdGetGroups (msg, tsPlayer) {
-    const payload = await getGroupsAll(tsPlayer)
+    const payload = await getGroupsAll(tsPlayer, true)
 
     return { payload }
   }
@@ -2494,64 +2493,40 @@ module.exports = function (RED) {
    *  Separate a stereo pair of players. Right player will become visible again.
    * @param {object} msg incoming message
    * @param {string} msg.payload - left SONOS-Playername, is visible
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
    *
    * @throws {error} 'all groups data undefined', 'channelmap is in error - right uuid', 
    * 'player name left was not found', 'player name right was not found'
    * @throws {error} all methods
+   * 
+   * CAUTION: The separate command has to be send to the left player!
    *
    */
   async function householdSeparateStereoPair (msg, tsPlayer) {
-    // Player left is required
-    const playerLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left')
+    debug('method:%s', 'householdSeparateStereoPair')
 
-    // Verify that playerNames are valid and get the uuid
-    const allGroupsData = await getGroupsAll(tsPlayer)
+    const sonosPlayernameLeft = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name left')
+
+    // Get all player and find the given one
+    const allGroupsData = await getGroupsAll(tsPlayer, true)
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
-
-    let playerLeftUuid = ''
-    let playerRightUuid = ''
-    let playerChannelMap
-    let playerUuid
-    let name
-    let playerLeftUrlObject // type JavaScript URL
-    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
-        name = allGroupsData[iGroup][iMember].playerName
-        if (name === playerLeft) {
-          // Both player have same name. Get the left one
-          playerUuid = allGroupsData[iGroup][iMember].uuid
-          // such as RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
-          playerChannelMap = allGroupsData[iGroup][iMember].channelMapSet
-          if (playerChannelMap.startsWith(playerUuid)) {
-            playerLeftUuid = playerUuid
-            playerLeftUrlObject = allGroupsData[iGroup][iMember].urlObject
-            if (!playerChannelMap.includes(';')) {
-              throw new Error(`${PACKAGE_PREFIX} channelmap is in error - right uuid`)
-            }
-            // extract right UUID
-            playerRightUuid = playerChannelMap.split(';')[1]
-            playerRightUuid = playerRightUuid.replace(':RF,RF', '')
-          }
-        }
-      }
-    }
-    if (playerLeftUuid === '') {
-      throw new Error(`${PACKAGE_PREFIX} player name left was not found`)
-    }
-    if (playerRightUuid === '') {
-      throw new Error(`${PACKAGE_PREFIX} player name right was not found`)
+    // - flatten the array of groups of player and search our left player
+    const flatArrayOfPlayer = [].concat.apply([], allGroupsData)
+    const leftPlayerData = flatArrayOfPlayer.find(singlePlayer => { 
+      return singlePlayer.playerName === sonosPlayernameLeft
+    })
+    if (leftPlayerData === undefined) {
+      throw new Error(`${PACKAGE_PREFIX} could not find given left player`) 
     }
 
-    // No check - always returns true
-    await executeActionV7(playerLeftUrlObject,
-      '/DeviceProperties/Control', 'SeparateStereoPair',
-      { 'ChannelMapSet': `${playerLeftUuid}:LF,LF;${playerRightUuid}:RF,RF` })
-
+    // IMPORTANT: Must be send to left player
+    const tsLeftPlayer = new SonosDevice(leftPlayerData.urlObject.hostname)
+    await tsLeftPlayer.DevicePropertiesService.SeparateStereoPair(
+      { 'ChannelMapSet': leftPlayerData.channelMapSet })
     return {}
   }
 
@@ -2580,7 +2555,7 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} player name (msg.${msg.payload}) is not string or empty`)
     }
 
-    const allGroupsData = await getGroupsAll(tsPlayer)
+    const allGroupsData = await getGroupsAll(tsPlayer, true)
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
