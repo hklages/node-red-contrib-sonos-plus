@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.3.0] 2022-02-05
+
+#### Added
+
+- Universal: New commands household.get.musiclibrary.options, household.update.musiclibrary
+
+#### Changed
+
+- added property powerSource to output of player.get.batterylevel
+
+- internal: debug everywhere in universal, my sonos node
+
+- internal: replaces executeAction by sonos-ts: separate/create Stereopair, player.join.group, householed.create.group
+
+- internal: optimization group.create/play.snapshot and subroutines
+
+- internal executeActionV8 replaces v7 - no need for JSON anymore
+
 ### [6.2.0] 2022-02-01
 
 #### Added

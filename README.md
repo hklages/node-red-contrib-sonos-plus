@@ -34,6 +34,8 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 - Caution: player.leave.group removed - please use player.become.standalone
 
+- New command household.update.musiclibrary, household.get.musiclibrary.options
+
 - New commands group.play.sonosplaylist, group.queue.sonosplaylist, group.get.sonosplaylisttracks
 
 - You can now save/restore the SONOS-Queue in group.create/restore.snapshot
