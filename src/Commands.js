@@ -314,7 +314,7 @@ module.exports = {
     snapshot.playbackstate = transportInfoObject.CurrentTransportState.toLowerCase()
     snapshot.wasPlaying = (snapshot.playbackstate === 'playing'
       || snapshot.playbackstate === 'transitioning')
-    // Caution: CurrentUriMetadata as string not as object!
+    // Caution: CurrentUriMetadata as string not as object! Thats important!
     const mediaData = await getMediaInfo(coordinatorUrlObject)
     Object.assign(snapshot,
       {

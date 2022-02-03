@@ -28,7 +28,6 @@ const debug = require('debug')(`${PACKAGE_PREFIX}extensions`)
 
 module.exports = {
 
-  ACTIONS_TEMPLATESV6: require('./Db-ActionsV6.json'),
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
   NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
   SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),  
@@ -367,7 +366,7 @@ module.exports = {
   // 4. undefined instead of ''
   getMediaInfo: async (coordinatorUrlObject) => {
     debug('method:%s', 'getMediaInfo')
-    return await module.exports.executeActionV7(coordinatorUrlObject,
+    return await module.exports.executeActionV8(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
   },
@@ -904,124 +903,6 @@ module.exports = {
    * @param {string} actionName the action name such as Seek
    * @param {object} actionInArgs all arguments - throws error if one argument is missing!
    *
-   * @uses ACTIONS_TEMPLATESV6 to get required inArgs and outArgs. 
-   * 
-   * @returns {Promise<(object|boolean)>} true or outArgs of that action
-   * 
-   * @throws {error} nrcsp: any inArgs property missing, http return invalid status or not 200, 
-   * missing body, unexpected response
-   * @throws {error} fastxmlparser errors 
-   * 
-   * Everything OK if statusCode === 200 and body includes expected 
-   * response value (set) or value (get)
-   */
-
-  executeActionV7: async (playerUrl, endpoint, actionName, actionInArgs) => {
-    debug('method:%s', 'executeActionV7')
-   
-    // get action in, out properties from json file 
-    const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
-    const { inArgs, outArgs } = endpointActions[actionName]
-    
-    // actionInArgs must have all properties
-    inArgs.forEach(property => {
-      if (!isTruthyProperty(actionInArgs, [property])) {
-        throw new Error(`${PACKAGE_PREFIX} property ${property} is missing}`)
-      }
-    })
-    
-    // generate serviceName from endpoint - its always the second last
-    // SONOS endpoint is either /<component>/<serviceName>/Control or /<serviceName>/Control
-    // component MediaRenderer or MediaServer
-    const tmp = endpoint.split('/')  
-    const serviceName = tmp[tmp.length - 2]
-  
-    const response
-      // eslint-disable-next-line max-len
-      = await module.exports.sendSoapToPlayer(playerUrl.origin, endpoint, serviceName, actionName, actionInArgs)
-    debug('xml response body as string >>%s', response.body)
-
-    // Everything OK if statusCode === 200 
-    // && body includes expected response value or requested value
-    if (!isTruthyProperty(response, ['statusCode'])) {
-      // This should never happen. Just to avoid unhandled exception.
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} status code from sendToPlayer is invalid - response.statusCode >>${JSON.stringify(response)}`)
-    }
-    if (response.statusCode !== 200) {
-      // This should not happen as long as axios is being used. Just to avoid unhandled exception.
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} status code is not 200: ${response.statusCode} - response >>${JSON.stringify(response)}`)
-    }
-    if (!isTruthyProperty(response, ['body'])) {
-      // This should not happen. Just to avoid unhandled exception.
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-
-    // Convert XML to JSON - now with fast xml parser
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: '',
-      parseAttributeValue: false,
-      parseTagValue: false,
-      arrayMode: false,
-      processEntities: false // decoding will be done manually
-    })
-    const bodyXml = await parser.parse(response.body)
-    debug('parsed JSON response body >>%s', JSON.stringify(bodyXml))
-
-    // RESPONSE
-    // The key to the core data is ['s:Envelope','s:Body',`u:${actionName}Response`]
-    // There are 2 cases: 
-    //   1. no output argument thats typically in a "set" action: 
-    //      expected response is just an envelope with
-    //      .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1`  
-    //   2. one or more values typically in a "get" action: in addition 
-    //       the values outArgs are included.
-    //       .... 'xmlns:u' = `urn:schemas-upnp-org:service:${serviceName}:1` 
-    //       and in addition the properties from outArgs
-    // 
-    const key = ['s:Envelope', 's:Body']
-    key.push(`u:${actionName}Response`)
-
-    // check body response
-    if (!isTruthyProperty(bodyXml, key)) {
-      // eslint-disable-next-line max-len
-      throw new Error(`${PACKAGE_PREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
-    }
-    let result = getNestedProperty(bodyXml, key)
-    if (!isTruthyProperty(result, ['xmlns:u'])) {
-      throw new Error(`${PACKAGE_PREFIX} xmlns:u property is missing`)
-    }
-    const expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`  
-    if (result['xmlns:u'] !== expectedResponseValue) {
-      throw new Error(`${PACKAGE_PREFIX} unexpected player response: urn:schemas ... is missing `)
-    }
-    
-    if (outArgs.length === 0) { // case 1 
-      result = true
-    } else {
-      // check whether all outArgs exist and return them as object!
-      outArgs.forEach(property => { 
-        if (!isTruthyProperty(result, [property])) {
-          throw new Error(`${PACKAGE_PREFIX} response property ${property} is missing}`)
-        }
-      })
-      delete result['xmlns:u'] // thats not needed
-    }
-    if (outArgs.length === 1) {
-      result = result[outArgs[0]]
-    }
-    return result
-  },
-
-  /**  Sends action with actionInArgs to endpoint at playerUrl.origin and returns result.
-   * @param {object} playerUrl player URL (JavaScript build in) such as http://192.168.178.37:1400
-   * @param {string} endpoint the endpoint name such as /MediaRenderer/AVTransport/Control
-   * @param {string} actionName the action name such as Seek
-   * @param {object} actionInArgs all arguments - throws error if one argument is missing!
-   *
    * @returns {Promise<(object|boolean)>} true or outArgs of that action
    * 
    * @throws {error} http return invalid status or not 200, 
@@ -1104,10 +985,10 @@ module.exports = {
     const expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`  
     if (result['xmlns:u'] !== expectedResponseValue) {
       throw new Error(`${PACKAGE_PREFIX} unexpected player response: urn:schemas ... is missing `)
+    } else {
+      delete result['xmlns:u']
     }
     
-    // TODO check xlmns:u - to be removed
-
     return result
   },
 

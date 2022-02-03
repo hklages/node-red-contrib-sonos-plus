@@ -24,7 +24,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
   getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers
 } = require('./Commands.js')
 
-const { executeActionV7, failure, getDeviceInfo, getDeviceProperties,
+const { executeActionV8, failure, getDeviceInfo, getDeviceProperties,
   getMusicServiceId, getMusicServiceName, getRadioId, decideCreateNodeOn,
   success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
@@ -142,7 +142,7 @@ module.exports = function (RED) {
     'player.set.treble': playerSetTreble,
     'player.set.volume': playerSetVolume,
     'player.test': playerTest,
-    'player.execute.action': playerDirectAction
+    'player.execute.action.v8': playerDirectAction8  // hidden
   }
 
   /**
@@ -3485,23 +3485,17 @@ module.exports = function (RED) {
     //   { id: 'artist', term: 'Guus', index: 0, count: 10 })
     // return { payload: JSON.stringify(payload) }
 
-    let  result = await tsPlayer.ContentDirectoryService.GetAlbumArtistDisplayOption({})
-    const albumArtistDisplayOption = result.AlbumArtistDisplayOption
-    
-    result = await tsPlayer.ContentDirectoryService.GetSortCapabilities({})
-    console.log(JSON.stringify(result))
-    const sortCapabilites = result.SortCaps
-
-    // await tsPlayer.ContentDirectoryService.RefreshShareIndex(
-    //   { 'AlbumArtistDisplayOption': albumArtistDisplayOption })
-    
-    const payload = { 'p1': albumArtistDisplayOption, 'p2': sortCapabilites }
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    const { endpoint, action, inArgs } = msg.payload
+    const payload = await executeActionV8(groupData.members[groupData.playerIndex].urlObject,
+      endpoint, action, inArgs)
     
     return { payload }
   }
 
   /**
-   *  Test action
+   *  Direct commands with executektionV8. Hidden command
    * @param {object} msg incoming message
    * @param {string} msg.endpoint 
    * @param {string} msg.action
@@ -3513,14 +3507,14 @@ module.exports = function (RED) {
    *
    * @throws {error} all methods
    */
-  async function playerDirectAction (msg, tsPlayer) {
+  async function playerDirectAction8 (msg, tsPlayer) {
     debug('command:%s', 'playerDirectAction')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const { endpoint, action, inArgs } = msg.payload
-    const payload = await executeActionV7(groupData.members[groupData.playerIndex].urlObject,
+    const payload = await executeActionV8(groupData.members[groupData.playerIndex].urlObject,
       endpoint, action, inArgs)
-    
+      
     return { payload }
   }
 
