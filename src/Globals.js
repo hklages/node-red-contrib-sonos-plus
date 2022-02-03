@@ -57,6 +57,7 @@ module.exports = {
 
   REGEX_ANYCHAR_BLANK: /.*/, //any character or blank
   REGEX_QUEUEMODES: /^(NORMAL|REPEAT_ONE|REPEAT_ALL|SHUFFLE|SHUFFLE_NOREPEAT|SHUFFLE_REPEAT_ONE)$/i,
+  REGEX_ALBUMARTISTDISPLAY: /^(WMP|ITUNES|NONE)$/i,
   REGEX_CSV: /^[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9]+)*(,[\p{L}0-9]+([: -._]{0,1}[\p{L}0-9])*)*$/u,
 
 }

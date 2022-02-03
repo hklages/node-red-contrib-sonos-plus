@@ -14,7 +14,7 @@ const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DN
   REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME,
   REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM,
-  ERROR_NOT_FOUND_BY_SERIAL
+  ERROR_NOT_FOUND_BY_SERIAL, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
@@ -101,6 +101,7 @@ module.exports = function (RED) {
     'household.disable.alarm': householdDisableAlarm,
     'household.enable.alarm': householdEnableAlarm,
     'household.get.alarms': householdGetAlarms,
+    'household.get.musiclibrary.options': householdGetMusicLibraryAlbumArtistDisplayOption,
     'household.get.groups': householdGetGroups,
     'household.get.sonosplaylists': householdGetSonosPlaylists,
     'household.get.sonosplaylisttracks': householdGetSonosPlaylistTracks,
@@ -108,6 +109,7 @@ module.exports = function (RED) {
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
     'household.test.player': householdTestPlayerOnline,
+    'household.update.musiclibrary': householdMusicLibraryUpdate,
     'joiner.play.notification': joinerPlayNotification,
     'player.adjust.volume': playerAdjustVolume,
     'player.become.standalone': playerBecomeStandalone,
@@ -2390,6 +2392,28 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Get Music Library AlbumArtistDisplayOption.
+   * @param {object} msg incoming message
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} property payload is string 'WMP', 'ITUNES', 'NONE'
+   *
+   * @throws {error} all methods
+   */
+  async function householdGetMusicLibraryAlbumArtistDisplayOption (msg, tsPlayer) {
+    debug('command:%s', 'householdGetMusicLibraryAlbumArtistDisplayOption')
+    const result =  await tsPlayer.ContentDirectoryService.GetAlbumArtistDisplayOption({})
+    const payload = result.AlbumArtistDisplayOption
+
+    // Must be 'WMP'|'ITUNES'|'NONE'
+    if (!REGEX_ALBUMARTISTDISPLAY.test(payload)) {
+      throw new Error(`${PACKAGE_PREFIX}: unexpected result, not WMP, ITUNES, NONE)`)
+    }
+
+    return { payload }
+  }
+
+  /**
    *  Get household groups. Ignores hidden player.
 
    * @param {object} msg incoming message
@@ -2594,6 +2618,28 @@ module.exports = function (RED) {
     }
 
     return { 'payload': false }
+  }
+
+  /**
+   *  Household Music Library Update Index
+   * @param {object} msg incoming message
+   * @param {string} msg.payload  AlbumArtistDisplayOption: WMP, ITUNES, NONE
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   *
+   * @throws {error} 'payload is not WMP ITUNES NONE', 
+   * @throws {error} all methods
+   */
+  async function householdMusicLibraryUpdate (msg, tsPlayer) {
+    debug('command:%s', 'householdMusicLibraryUpdate')
+    // Payload is required WMP ITUNES NONE
+    const albumArtDPO = validRegex(msg, 'payload', REGEX_ALBUMARTISTDISPLAY, 'music library option')
+    await tsPlayer.ContentDirectoryService.RefreshShareIndex(
+      { 'AlbumArtistDisplayOption': albumArtDPO })
+    
+    return {}
   }
 
   /**
@@ -3430,16 +3476,27 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function playerTest (msg, tsPlayer) {
-    debug('command:%s', 'coordplayerTestinatorDelegateCoordination')
+    debug('command:%s', 'playerTest')
     
-    // const payload = await tsPlayer.ContentDirectoryService.Browse({
-    //   'ObjectID': 'SQ:71', 'BrowseFlag': 'BrowseDirectChildren',
-    //   'Filter': '*', 'StartingIndex': 0,
-    //   'RequestedCount': 1000, 'SortCriteria': ''
-    // })
+    // const serviceId = 284 // spotify
+    // const musicService = await tsPlayer.MusicServicesClient(serviceId)
+    // // const payload = JSON.stringify(musicService)
+    // const payload = await musicService.Search(
+    //   { id: 'artist', term: 'Guus', index: 0, count: 10 })
+    // return { payload: JSON.stringify(payload) }
 
-    const payload = await getSonosPlaylistTracks(tsPlayer)
+    let  result = await tsPlayer.ContentDirectoryService.GetAlbumArtistDisplayOption({})
+    const albumArtistDisplayOption = result.AlbumArtistDisplayOption
+    
+    result = await tsPlayer.ContentDirectoryService.GetSortCapabilities({})
+    console.log(JSON.stringify(result))
+    const sortCapabilites = result.SortCaps
 
+    // await tsPlayer.ContentDirectoryService.RefreshShareIndex(
+    //   { 'AlbumArtistDisplayOption': albumArtistDisplayOption })
+    
+    const payload = { 'p1': albumArtistDisplayOption, 'p2': sortCapabilites }
+    
     return { payload }
   }
 
