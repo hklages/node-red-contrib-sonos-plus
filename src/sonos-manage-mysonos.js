@@ -53,7 +53,7 @@ module.exports = function (RED) {
    * @param {object} config current node configuration data
    */
   function SonosManageMySonosNode (config) {
-    debug('method:%s', 'SonosManageMySonosNode')
+    debug('command:%s', 'SonosManageMySonosNode')
     const thisFunctionName = 'create and subscribe'
     RED.nodes.createNode(this, config)
     const node = this
@@ -198,7 +198,7 @@ module.exports = function (RED) {
    * the original msg.payload will be modified and set to true.
    */
   async function processInputMsg (node, config, msg, urlHost) {
-    debug('method:%s', 'processInputMsg')
+    debug('command:%s', 'processInputMsg')
     const tsPlayer = new SonosDevice(urlHost)
     if (!isTruthy(tsPlayer)) {
       throw new Error(`${PACKAGE_PREFIX} tsPlayer is undefined`)
@@ -253,7 +253,7 @@ module.exports = function (RED) {
 
   //
   //                                          COMMANDS
-  //...............................................................................................
+  //
 
   /**
    * @typedef {object} exportedItem exported data which can be used in group.play.export
@@ -275,7 +275,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryExportItem (msg, tsPlayer) {
-    debug('method:%s', 'libraryExportItem')
+    debug('command:%s', 'libraryExportItem')
 
     // payload title search string is required.
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -320,7 +320,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function libraryGetItem (msg, tsPlayer) {
-    debug('method:%s', 'libraryGetItem')
+    debug('command:%s', 'libraryGetItem')
     
     // payload as title search string is optional.
     // eslint-disable-next-line max-len
@@ -368,7 +368,7 @@ module.exports = function (RED) {
    * Info: content validation of mediaType, serviceName
    */
   async function mysonosExportItem (msg, tsPlayer) {
-    debug('method:%s', 'mysonosExportItem')
+    debug('command:%s', 'mysonosExportItem')
     // payload title search string is required.
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -404,7 +404,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function mysonosGetItems (msg, tsPlayer) {
-    debug('method:%s', 'mysonosGetItems')
+    debug('command:%s', 'mysonosGetItems')
     const payload = await getMySonos(tsPlayer)
     if (!isTruthy(payload)) {
       throw new Error(`${PACKAGE_PREFIX} could not find any My Sonos items`)
@@ -425,7 +425,7 @@ module.exports = function (RED) {
    * 
    */
   async function mysonosQueueItem (msg, tsPlayer) {
-    debug('method:%s', 'mysonosQueueItem')
+    debug('command:%s', 'mysonosQueueItem')
     // payload title search string is required.
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')
@@ -465,7 +465,7 @@ module.exports = function (RED) {
    * @throws {error} all methods
    */
   async function mysonosStreamItem (msg, tsPlayer) {
-    debug('method:%s', 'mysonosStreamItem')
+    debug('command:%s', 'mysonosStreamItem')
     // payload title search string is required.
     const validSearch
       = validRegex(msg, 'payload', REGEX_ANYCHAR, 'search string')

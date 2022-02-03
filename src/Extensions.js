@@ -18,8 +18,7 @@
 const { PACKAGE_PREFIX, REGEX_ANYCHAR } = require('./Globals.js')
 
 const { decodeHtmlEntity, getNestedProperty, isTruthy, isTruthyProperty,
-  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger,
-  encodeHtmlEntity
+  isTruthyPropertyStringNotEmpty, isTruthyStringNotEmpty, validRegex, validToInteger
 } = require('./Helper.js')
 
 const request = require('axios').default
@@ -29,7 +28,6 @@ const debug = require('debug')(`${PACKAGE_PREFIX}extensions`)
 
 module.exports = {
 
-  ACTIONS_TEMPLATESV6: require('./Db-ActionsV6.json'),
   NODE_SONOS_ERRORPREFIX: 'upnp: ', // all errors from services _requests
   NODE_SONOS_UPNP500: 'upnp: statusCode 500 & upnpErrorCode ', // only those with 500 (subset)
   SOAP_ERRORS: require('./Db-Soap-Errorcodes.json'),  
@@ -38,7 +36,7 @@ module.exports = {
 
   //
   //     NODE-RED STATUS & ERROR HANDLING 
-  //     ................................
+  //     
 
   /**
    *  Validates general group properties msg.playerName, msg.volume, msg.sameVolume, msg.clearQueue
@@ -185,7 +183,7 @@ module.exports = {
 
   //
   //     SPECIAL COMMANDS - SIMPLE HTML REQUEST
-  //     ......................................
+  //     
 
   /** Decide whether node.on should created. 
     * @param {object} playerUrlObject player JavaScript build-in URL 
@@ -300,8 +298,11 @@ module.exports = {
       throw new Error(`${PACKAGE_PREFIX} SONOS player did not provide battery level status!`)
     }    
 
-    const payload = Number(parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[1])
-    return payload
+    const result = {
+      'level': Number(parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[1]),
+      'powerSource': parsed.xml.ZPSupportInfo.LocalBatteryStatus.Data[3]
+    }
+    return result
   },
 
   /** Get device properties.
@@ -365,7 +366,7 @@ module.exports = {
   // 4. undefined instead of ''
   getMediaInfo: async (coordinatorUrlObject) => {
     debug('method:%s', 'getMediaInfo')
-    return await module.exports.executeActionV7(coordinatorUrlObject,
+    return await module.exports.executeActionV8(coordinatorUrlObject,
       '/MediaRenderer/AVTransport/Control', 'GetMediaInfo',
       { 'InstanceID': 0 })
   },
@@ -717,24 +718,25 @@ module.exports = {
   },
 
   /** Parse outcome of GetZoneGroupState and create an array of all groups in household. 
-   * Each group consist of an array of players <playerGroupData>
-   * Coordinator is always in position 0. Group array may have size 1 (standalone)
+   * Each group consist of an array of player <playerGroupData>.
+   * Coordinator is always in position 0. Group array may have size 1 (standalone).
+   * Hidden players (example stereopair) are removed, if removeHiden = true (default).
    * @param {string} zoneGroupState the xml data from GetZoneGroupState
+   * @param {boolean} removeHidden removes all hidden payers  
    * 
    * @returns {promise<playerGroupData[]>} array of arrays with playerGroupData
-   *          First group member is coordinator.
+   *          First group member is coordinator
    *
    * @throws {error} 'response form parse xml is invalid', 'parameter package name is missing',
    * 'parameter zoneGroupState is missing`
    * @throws {error} all methods
    * 
-   * CAUTION: to be on the safe side: playerName uses String (see parse*Value)
-   * CAUTION: we use arrayMode false and do it manually
-   * 
-   * CAUTION: we use  stopNodes and handle that field! Different to Stephans SONOS-TS
+   * CAUTION: To be on the safe side: playerName uses String (see parse*Value)
+   * CAUTION: We use arrayMode false and do it manually
    */
-  parseZoneGroupToArray: async (zoneGroupState) => { 
-    // validate method parameter
+  parseZoneGroupToArray: async (zoneGroupState, removeHidden = true) => { 
+    debug('method:%s', 'parseZoneGroupToArray')
+    // Validate method parameter
     if (!isTruthyStringNotEmpty(zoneGroupState)) {
       throw new Error('parameter zoneGroupState is missing')
     }
@@ -746,13 +748,12 @@ module.exports = {
       parseAttributeValue: false,
       parseTagValue: false,
       arrayMode: false,
-      processEntities: false, // because already done
-      stopNodes: ['ChannelMapSet']
+      processEntities: false
     })
     const groupState = await parser.parse(decoded) 
     
     // The following section is because of fast-xml-parser with 'arrayMode' = false
-    // if only ONE group then convert it to array with one member
+    // If only ONE group then convert it to array of groups with one member
     let groupsAlwaysArray
     if (isTruthyProperty(groupState, ['ZoneGroupState', 'ZoneGroups', 'ZoneGroup'])) {
       // This is the standard case for new firmware!
@@ -761,20 +762,20 @@ module.exports = {
       } else {
         groupsAlwaysArray = [groupState.ZoneGroupState.ZoneGroups.ZoneGroup] 
       }
-      // if a group has only ONE member then convert it to array with one member
+      // If a group has only ONE member then convert it to array with one member
       groupsAlwaysArray = groupsAlwaysArray.map(group => {
         if (!Array.isArray(group.ZoneGroupMember)) group.ZoneGroupMember = [group.ZoneGroupMember]
         return group
       })
     } else {
-      // try this for very old firmware version, where ZoneGroupState is missing
+      // Try this for very old firmware version, where ZoneGroupState is missing
       if (isTruthyProperty(groupState, ['ZoneGroups', 'ZoneGroup'])) {
         if (Array.isArray(groupState.ZoneGroups.ZoneGroup)) {
           groupsAlwaysArray = groupState.ZoneGroups.ZoneGroup.slice()
         } else {
           groupsAlwaysArray = [groupState.ZoneGroups.ZoneGroup] 
         }
-        // if a group has only ONE member then convert it to array with one member
+        // If a group has only ONE member then convert it to array with one member
         groupsAlwaysArray = groupsAlwaysArray.map(group => {
           if (!Array.isArray(group.ZoneGroupMember)) group.ZoneGroupMember = [group.ZoneGroupMember]
           return group
@@ -783,48 +784,43 @@ module.exports = {
         throw new Error(`${PACKAGE_PREFIX} response form parse xml: properties missing.`)
       }
     }
-    //result is groupsAlwaysArray is array<groupDataRaw> and always arrays (not single item)
+    // Result is groupsAlwaysArray is array<groupDataRaw> and always arrays (not single item)
 
-    // sort all groups that coordinator is in position 0 and select properties
-    // see typeDef playerGroupData. 
+    // Sort all groups that coordinator is in position 0 and select properties
+    // See typeDef playerGroupData. 
     const groupsArraySorted = [] // result to be returned
-    let groupSorted // keeps the group members, now sorted
-    let coordinatorUuid = ''
-    let groupId = ''
-    let playerName = ''
-    let uuid = ''
-    let invisible = ''
-    let channelMapSet = ''
-    let urlObject // player JavaScript build-in URL
-    for (let iGroup = 0; iGroup < groupsAlwaysArray.length; iGroup++) {
-      groupSorted = []
-      coordinatorUuid = groupsAlwaysArray[iGroup]._Coordinator
-      groupId = groupsAlwaysArray[iGroup]._ID
-      // first push coordinator, other properties will be updated later!
+    for (const group of groupsAlwaysArray) {
+      let groupSorted = []
+      const coordinatorUuid = group._Coordinator
+      const groupId = group._ID
+      // First push coordinator, its other properties will be updated later!
       groupSorted.push({ groupId, 'uuid': coordinatorUuid })
+      const iCoord = 0 // used for later access
       
-      for (let iMember = 0; iMember < groupsAlwaysArray[iGroup].ZoneGroupMember.length; iMember++) {
-        urlObject = new URL(groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._Location)
+      for (const member of group.ZoneGroupMember) {
+        const urlObject = new URL(member._Location)
         urlObject.pathname = '' // clean up
-        uuid = groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._UUID  
-        // my naming is playerName instead of the SONOS ZoneName
-        playerName = String(groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._ZoneName) // safety
-        invisible = (groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._Invisible === '1')
-        // eslint-disable-next-line max-len
-        channelMapSet = groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._ChannelMapSet || ''      
-        if (groupsAlwaysArray[iGroup].ZoneGroupMember[iMember]._UUID !== coordinatorUuid) {
-          // push new except coordinator
+        const uuid = member._UUID  
+        // My naming is playerName instead of the SONOS ZoneName
+        const playerName = String(member._ZoneName) // safety
+        const invisible = (member._Invisible === '1')
+        const channelMapSet = member._ChannelMapSet || ''      
+        if (member._UUID !== coordinatorUuid) {
+          // Push new joiner 
           groupSorted.push({ urlObject, playerName, uuid, groupId, invisible, channelMapSet })
         } else {
-          // update coordinator on position 0 with name
-          groupSorted[0].urlObject = urlObject
-          groupSorted[0].playerName = playerName
-          groupSorted[0].invisible = invisible
-          groupSorted[0].channelMapSet = channelMapSet
+          // Update coordinator
+          groupSorted[iCoord].urlObject = urlObject
+          groupSorted[iCoord].playerName = playerName
+          groupSorted[iCoord].invisible = invisible
+          groupSorted[iCoord].channelMapSet = channelMapSet
         }
       }
-      groupSorted = groupSorted.filter((member) => member.invisible === false)
-      groupsArraySorted.push(groupSorted)
+      if (removeHidden) { // Removes all hidden player
+        groupSorted = groupSorted.filter((member) => member.invisible === false)   
+      }
+      // Invisible player form a group with 1 - remove that. Should not happen
+      if (groupSorted.length !== 0) groupsArraySorted.push(groupSorted)
     }
     return groupsArraySorted
   },
@@ -847,14 +843,14 @@ module.exports = {
     // this ensures that playerName overrules given playerUrlHostname
     const searchByPlayerName = isTruthyStringNotEmpty(playerName)
 
-    // find player in group bei playerUrlHostname or playerName
-    // playerName overrules playerUrlHostname
+    // find player in group bei playerName or playerUrlHostname
+    // playerName - if valid - overrules playerUrlHostname!
     let foundGroupIndex = -1 // indicator for player NOT found
     let visible
     let groupId
     let usedPlayerUrlHost = ''
-    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
+    for (const iGroup in allGroupsData) {
+      for (const iMember in allGroupsData[iGroup]) {
         visible = !allGroupsData[iGroup][iMember].invisible
         groupId = allGroupsData[iGroup][iMember].groupId
         if (searchByPlayerName) {
@@ -897,36 +893,9 @@ module.exports = {
     }
   },
 
-  /** Extract group for a given player. playerName - if isTruthyStringNotEmpty- 
-   * is overruling playerUrlHost
-   * @param {string} uri such as x-sonosapi-radio:xxxx?sid=201&flags=8300&sn=19
-   * 
-   * @returns {promise<string>} returns cleaned uri 
-   *
-   * @throws {error} 'could not split into parts'
-   */
-  cleanUpUri: async (uri) => {
-    debug('method:%s', 'cleanUpUri')
-    // split into parts
-    let position = uri.indexOf(':')
-    if (position < 0) {
-      throw new Error(`${PACKAGE_PREFIX} could not split into parts :`)
-    }
-    const part1 = uri.substr(0, position + 1) // includes the :
-    const rest = uri.substr(position + 1) // does not incude the :
-    position = rest.indexOf('?')
-    if (position < 0) {
-      throw new Error(`${PACKAGE_PREFIX} could not split into parts ?`)
-    }
-    const part2 = rest.substr(0, position) // does not include the ?
-    const part3 = rest.substr(position) // does include the ?
-
-    return part1 + await encodeURIComponent(part2) + await encodeHtmlEntity(part3)
-  },
-
   //
   //    BASIC EXECUTE UPNP ACTION COMMAND AND SOAP REQUEST
-  //    ..................................................
+  //    
 
   /**  Sends action with actionInArgs to endpoint at playerUrl.origin and returns result.
    * @param {object} playerUrl player URL (JavaScript build in) such as http://192.168.178.37:1400
@@ -934,11 +903,9 @@ module.exports = {
    * @param {string} actionName the action name such as Seek
    * @param {object} actionInArgs all arguments - throws error if one argument is missing!
    *
-   * @uses ACTIONS_TEMPLATESV6 to get required inArgs and outArgs. 
-   * 
    * @returns {Promise<(object|boolean)>} true or outArgs of that action
    * 
-   * @throws {error} nrcsp: any inArgs property missing, http return invalid status or not 200, 
+   * @throws {error} http return invalid status or not 200, 
    * missing body, unexpected response
    * @throws {error} fastxmlparser errors 
    * 
@@ -946,20 +913,11 @@ module.exports = {
    * response value (set) or value (get)
    */
 
-  executeActionV7: async (playerUrl, endpoint, actionName, actionInArgs) => {
+  executeActionV8: async (playerUrl, endpoint, actionName, actionInArgs) => {
     debug('method:%s', 'executeActionV7')
    
-    // get action in, out properties from json file 
-    const endpointActions = module.exports.ACTIONS_TEMPLATESV6[endpoint]
-    const { inArgs, outArgs } = endpointActions[actionName]
-    
-    // actionInArgs must have all properties
-    inArgs.forEach(property => {
-      if (!isTruthyProperty(actionInArgs, [property])) {
-        throw new Error(`${PACKAGE_PREFIX} property ${property} is missing}`)
-      }
-    })
-    
+    // !no check of inArgs
+     
     // generate serviceName from endpoint - its always the second last
     // SONOS endpoint is either /<component>/<serviceName>/Control or /<serviceName>/Control
     // component MediaRenderer or MediaServer
@@ -1020,29 +978,17 @@ module.exports = {
       // eslint-disable-next-line max-len
       throw new Error(`${PACKAGE_PREFIX} body from sendToPlayer is invalid - response >>${JSON.stringify(response)}`)
     }
-    let result = getNestedProperty(bodyXml, key)
+    const result = getNestedProperty(bodyXml, key)
     if (!isTruthyProperty(result, ['xmlns:u'])) {
       throw new Error(`${PACKAGE_PREFIX} xmlns:u property is missing`)
     }
     const expectedResponseValue = `urn:schemas-upnp-org:service:${serviceName}:1`  
     if (result['xmlns:u'] !== expectedResponseValue) {
       throw new Error(`${PACKAGE_PREFIX} unexpected player response: urn:schemas ... is missing `)
+    } else {
+      delete result['xmlns:u']
     }
     
-    if (outArgs.length === 0) { // case 1 
-      result = true
-    } else {
-      // check whether all outArgs exist and return them as object!
-      outArgs.forEach(property => { 
-        if (!isTruthyProperty(result, [property])) {
-          throw new Error(`${PACKAGE_PREFIX} response property ${property} is missing}`)
-        }
-      })
-      delete result['xmlns:u'] // thats not needed
-    }
-    if (outArgs.length === 1) {
-      result = result[outArgs[0]]
-    }
     return result
   },
 
