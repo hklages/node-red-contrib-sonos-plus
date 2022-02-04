@@ -2212,7 +2212,7 @@ module.exports = function (RED) {
     }
     const allPlayerList = []
     for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
-      for (let iMember = 0; iMember < allGroupsData[iGroup]; iMember++) {
+      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
         if (!allGroupsData[iGroup][iMember].invisible) {
           const player = {
             playerName: allGroupsData[iGroup][iMember].playerName,
