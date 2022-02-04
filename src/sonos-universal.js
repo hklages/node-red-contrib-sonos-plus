@@ -2266,7 +2266,7 @@ module.exports = function (RED) {
       // Because it takes time to BecomeCoordinator
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) 
 
-      for (let i = 0; i < newGroupPlayerArray.length; i++) { // Start with 1
+      for (let i = 1; i < newGroupPlayerArray.length; i++) { // Start with 1
         const indexPlayer = allPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
         // No check - always returns true. Using SetAVTransportURI as AddMember does not work
         const ts1Player = new SonosDevice(allPlayerList[indexPlayer].urlObject.hostname)
@@ -2526,7 +2526,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    for (const member of groupData.members) { // Start with 1!
+    for (let iMember = 1; iMember < groupData.members.length; iMember++) { // Start with 1!
       // No check - always returns true
       const tsPlayer = new SonosDevice(member.urlObject.hostname)
       await tsPlayer.AVTransportService.BecomeCoordinatorOfStandaloneGroup({ 'InstanceID': 0 })
