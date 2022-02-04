@@ -8,13 +8,13 @@ All notable changes to this project are documented in this file.
 
 - Universal: New commands household.get.musiclibrary.options, household.update.musiclibrary
 
-#### Changed
-
 - added property powerSource to output of player.get.batterylevel
+
+#### Changed
 
 - internal: debug everywhere in universal, my sonos node
 
-- internal: replaces executeAction by sonos-ts: separate/create Stereopair, player.join.group, householed.create.group
+- internal: replaces executeAction by sonos-ts: separate/create Stereopair, player.join.group, household.create.group
 
 - internal: optimization group.create/play.snapshot and subroutines
 
