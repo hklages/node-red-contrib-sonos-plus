@@ -2211,8 +2211,8 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
     const allPlayerList = []
-    for (const iGroup in allGroupsData) {
-      for (const iMember in allGroupsData[iGroup]) {
+    for (let iGroup = 0; iGroup < allGroupsData.lenght; iGroup++) {
+      for (let iMember = 0; iMember < allGroupsData[iGroup]; iMember++) {
         if (!allGroupsData[iGroup][iMember].invisible) {
           const player = {
             playerName: allGroupsData[iGroup][iMember].playerName,
@@ -2228,7 +2228,7 @@ module.exports = function (RED) {
 
     // Validate all player names in newGroupPlayerArray and get index of new coordinator
     let iNewCoordinator
-    for (const i in newGroupPlayerArray) {
+    for (let i = 0; i < newGroupPlayerArray.length; i++) {
       const indexInList
         = allPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
       if (indexInList === -1) {
@@ -2266,7 +2266,7 @@ module.exports = function (RED) {
       // Because it takes time to BecomeCoordinator
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) 
 
-      for (const i in newGroupPlayerArray) { // Start with 1
+      for (let i = 0; i < newGroupPlayerArray.length; i++) { // Start with 1
         const indexPlayer = allPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
         // No check - always returns true. Using SetAVTransportURI as AddMember does not work
         const ts1Player = new SonosDevice(allPlayerList[indexPlayer].urlObject.hostname)

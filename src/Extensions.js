@@ -849,8 +849,8 @@ module.exports = {
     let visible
     let groupId
     let usedPlayerUrlHost = ''
-    for (const iGroup in allGroupsData) {
-      for (const iMember in allGroupsData[iGroup]) {
+    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
+      for (let iMember = 0; iMember < allGroupsData[iGroup].length; iMember++) {
         visible = !allGroupsData[iGroup][iMember].invisible
         groupId = allGroupsData[iGroup][iMember].groupId
         if (searchByPlayerName) {
