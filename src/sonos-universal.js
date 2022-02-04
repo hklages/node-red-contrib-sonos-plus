@@ -2528,7 +2528,7 @@ module.exports = function (RED) {
 
     for (let iMember = 1; iMember < groupData.members.length; iMember++) { // Start with 1!
       // No check - always returns true
-      const tsPlayer = new SonosDevice(member.urlObject.hostname)
+      const tsPlayer = new SonosDevice(groupData.members[iMember].urlObject.hostname)
       await tsPlayer.AVTransportService.BecomeCoordinatorOfStandaloneGroup({ 'InstanceID': 0 })
     }
 
