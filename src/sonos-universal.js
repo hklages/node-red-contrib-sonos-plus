@@ -2211,7 +2211,7 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
     const allPlayerList = []
-    for (let iGroup = 0; iGroup < allGroupsData.lenght; iGroup++) {
+    for (let iGroup = 0; iGroup < allGroupsData.length; iGroup++) {
       for (let iMember = 0; iMember < allGroupsData[iGroup]; iMember++) {
         if (!allGroupsData[iGroup][iMember].invisible) {
           const player = {

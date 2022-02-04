@@ -1053,7 +1053,7 @@ describe('parseAlarmsToArray function', function () {
       .equal(0)
   })
 
-  it('1 alarms means array of lenght 1 ', async () => {
+  it('1 alarms means array of length 1 ', async () => {
     // eslint-disable-next-line max-len
     const xmlIn = '&lt;Alarms&gt;&lt;Alarm ID=&quot;20&quot; StartTime=&quot;07:00:00&quot; Duration=&quot;02:00:00&quot; Recurrence=&quot;DAILY&quot; Enabled=&quot;1&quot; RoomUUID=&quot;RINCON_949F3EC13B9901400&quot; ProgramURI=&quot;x-rincon-buzzer:0&quot; ProgramMetaData=&quot;&quot; PlayMode=&quot;SHUFFLE&quot; Volume=&quot;25&quot; IncludeLinkedZones=&quot;0&quot;/&gt;&lt;/Alarms&gt;'
     const result = await parseAlarmsToArray(xmlIn)
