@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.3.1] 2022-06-26
+
+#### Changed
+
+- internal: update dependencies and node-red requirements engines
+
 ### [6.3.0] 2022-02-05
 
 #### Added
