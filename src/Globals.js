@@ -47,6 +47,7 @@ module.exports = {
 
   REGEX_HTTP: /^(http|https):\/\/.+$/,
   REGEX_SERIAL: /^([0-9a-fA-F][0-9a-fA-F]-){5}[0-9a-fA-F][0-9a-fA-F]:/, // the end might be improved
+  REGEX_MACADDRESS: /^[a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5}$/, 
   REGEX_RADIO_ID: /^([s][0-9]+)$/,
   REGEX_2DIGITS: /^\d{1,2}$/, // up to 2 digits but at least 1
   REGEX_3DIGITS: /^\d{1,3}$/, // up to 3 digits but at least 1
