@@ -586,23 +586,6 @@ module.exports = {
     return serviceName
   }, 
 
-  /**  Get TuneIn radioId from Transport URI - only for Music Service TuneIn 
-   * @param {string} uri uri such as x-sonosapi-stream:s24903?sid=254&flags=8224&sn=0
-   * 
-   * @returns {string} TuneIn radio id or if not found empty
-   *
-   * prerequisite: uri with radio id is in between "x-sonosapi-stream:" and "?sid=254"
-   */
-  getRadioId: (uri) => {
-    let radioId = ''
-    if (uri.startsWith('x-sonosapi-stream:') && uri.includes('sid=254')) {
-      const end = uri.indexOf('?sid=254')
-      const start = 'x-sonosapi-stream:'.length
-      radioId = uri.substring(start, end)
-    }
-    return radioId
-  },
-
   /**  Get UpnP class from string metadata. 
    * @param {string} metadataEncoded DIDL-Lite metadata, encoded
    * 

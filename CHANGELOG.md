@@ -2,9 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
-### [6.3.1] 2022-06-26
+### [6.3.1] 2022-06-30
+
+### Added
+
+- Universal node: household.wakeup.player to wake up SONOS Roam/Move
+
+- internal: Browse processing optimized
 
 #### Changed
+
+- Universal node: removed property radioId (is not anymore available)
 
 - internal: update dependencies and node-red requirements engines
 
@@ -100,7 +108,7 @@ All notable changes to this project are documented in this file.
 
 ### [5.2.7] 2021-10-26
 
-### Added
+#### Added
 
 - universal node: new command group.get.queue.length provides the length of the SONOS queue
 

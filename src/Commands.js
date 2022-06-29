@@ -16,7 +16,7 @@ const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const {
   extractGroup, getMediaInfo,
-  getRadioId, getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
+  getUpnpClassEncoded, guessProcessingType, parseBrowseToArray,
   parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
 
@@ -593,10 +593,6 @@ module.exports = {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
       }
       
-      if (isTruthyProperty(item, ['uri'])) {
-        item.radioId = getRadioId(item.uri)
-      }
-
       // My Sonos items have own upnp class object.itemobject.item.sonos-favorite"
       // metadata contains the relevant upnp class of the track, album, stream, ...
       if (isTruthyProperty(item, ['metadata'])) {

@@ -19,8 +19,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/228",
@@ -34,8 +33,7 @@
           "sid": "232",
           "serviceName": "Radioplayer",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/296",
@@ -49,8 +47,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/97",
@@ -64,8 +61,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s42824"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/98",
@@ -79,8 +75,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s24903"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/99",
@@ -94,8 +89,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s14991"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/287",
@@ -109,8 +103,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/290",
@@ -124,8 +117,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/137",
@@ -139,8 +131,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.container.playlistContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/243",
@@ -154,8 +145,7 @@
           "sid": "9",
           "serviceName": "Spotify",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/227",
@@ -169,8 +159,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/297",
@@ -184,8 +173,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/201",
@@ -199,8 +187,7 @@
           "sid": "9",
           "serviceName": "Spotify",
           "upnpClass": "object.container.playlistContainer#playlistItem",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/299",
@@ -214,8 +201,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/298",
@@ -229,8 +215,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/285",
@@ -244,8 +229,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/230",
@@ -259,8 +243,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.radioShow",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/210",
@@ -274,8 +257,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.podcast.#podcastContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/214",
@@ -289,8 +271,7 @@
           "sid": "9",
           "serviceName": "Spotify",
           "upnpClass": "object.container.playlistContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/289",
@@ -304,8 +285,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/294",
@@ -319,8 +299,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/103",
@@ -334,8 +313,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s57109"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/295",
@@ -349,8 +327,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/143",
@@ -364,8 +341,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/292",
@@ -379,8 +355,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/234",
@@ -394,8 +369,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/284",
@@ -409,8 +383,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/266",
@@ -424,8 +397,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s32537"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/300",
@@ -439,8 +411,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.container.playlistContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/124",
@@ -454,8 +425,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s56857"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/136",
@@ -469,8 +439,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.container.playlistContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/275",
@@ -484,8 +453,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/293",
@@ -499,8 +467,7 @@
           "sid": "",
           "serviceName": "",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/288",
@@ -514,8 +481,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": ""
+          "processingType": "stream"
         },
         {
           "id": "FV:2/267",
@@ -529,8 +495,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s119032"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/286",
@@ -544,8 +509,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.container.playlistContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/238",
@@ -559,8 +523,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.item.audioItem.musicTrack",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/102",
@@ -574,8 +537,7 @@
           "sid": "254",
           "serviceName": "TuneIn",
           "upnpClass": "object.item.audioItem.audioBroadcast",
-          "processingType": "stream",
-          "radioId": "s24896"
+          "processingType": "stream"
         },
         {
           "id": "FV:2/225",
@@ -589,8 +551,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/226",
@@ -604,8 +565,7 @@
           "sid": "201",
           "serviceName": "Amazon Music",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/241",
@@ -619,8 +579,7 @@
           "sid": "9",
           "serviceName": "Spotify",
           "upnpClass": "object.container.playlistContainer",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         },
         {
           "id": "FV:2/180",
@@ -634,8 +593,7 @@
           "sid": "9",
           "serviceName": "Spotify",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         }
       ]
   },
@@ -659,8 +617,7 @@
           "sid": "9",
           "serviceName": "Spotify",
           "upnpClass": "object.container.album.musicAlbum",
-          "processingType": "queue",
-          "radioId": ""
+          "processingType": "queue"
         }
       ]
   },

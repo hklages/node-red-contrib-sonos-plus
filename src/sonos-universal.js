@@ -26,7 +26,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 } = require('./Commands.js')
 
 const { executeActionV8, failure, getDeviceInfo, getDeviceProperties,
-  getMusicServiceId, getMusicServiceName, getRadioId, decideCreateNodeOn,
+  getMusicServiceId, getMusicServiceName, decideCreateNodeOn,
   success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
 
@@ -825,7 +825,7 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
 
-    // Get current media data and extract queueActivated, radioId
+    // Get current media data and extract queueActivated
     const mediaData = await tsCoordinator.AVTransportService.GetMediaInfo()
     if (!isTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current media data is invalid`)
@@ -836,7 +836,6 @@ module.exports = function (RED) {
       uri = mediaData.CurrentURI
     }
     const queueActivated = uri.startsWith('x-rincon-queue')
-    const radioId = getRadioId(uri)
 
     let serviceId = await getMusicServiceId(uri)
 
@@ -898,7 +897,7 @@ module.exports = function (RED) {
     }
     return {
       'payload': {
-        artist, album, title, artUri, mediaData, queueActivated, radioId,
+        artist, album, title, artUri, mediaData, queueActivated,
         serviceId, serviceName, stationArtUri, positionData }
     }
   }

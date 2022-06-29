@@ -39,13 +39,14 @@
 'use strict'
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
-  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME,
+  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
   REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM,
   ERROR_NOT_FOUND_BY_SERIAL, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
+const { sendWakeUp } = require('./Wake-on-lan')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
@@ -53,7 +54,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
 } = require('./Commands.js')
 
 const { executeActionV8, failure, getDeviceInfo, getDeviceProperties,
-  getMusicServiceId, getMusicServiceName, getRadioId, decideCreateNodeOn,
+  getMusicServiceId, getMusicServiceName, decideCreateNodeOn,
   success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
 } = require('./Extensions.js')
 
@@ -138,6 +139,7 @@ module.exports = function (RED) {
     'household.separate.stereopair': householdSeparateStereoPair,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
+    'household.wakeup.player': householdPlayerWakeUp,
     'joiner.play.notification': joinerPlayNotification,
     'player.adjust.volume': playerAdjustVolume,
     'player.become.standalone': playerBecomeStandalone,
@@ -851,7 +853,7 @@ module.exports = function (RED) {
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     tsCoordinator.urlObject = groupData.members[0].urlObject
 
-    // Get current media data and extract queueActivated, radioId
+    // Get current media data and extract queueActivated
     const mediaData = await tsCoordinator.AVTransportService.GetMediaInfo()
     if (!isTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current media data is invalid`)
@@ -862,7 +864,6 @@ module.exports = function (RED) {
       uri = mediaData.CurrentURI
     }
     const queueActivated = uri.startsWith('x-rincon-queue')
-    const radioId = getRadioId(uri)
 
     let serviceId = await getMusicServiceId(uri)
 
@@ -924,7 +925,7 @@ module.exports = function (RED) {
     }
     return {
       'payload': {
-        artist, album, title, artUri, mediaData, queueActivated, radioId,
+        artist, album, title, artUri, mediaData, queueActivated,
         serviceId, serviceName, stationArtUri, positionData }
     }
   }
@@ -2239,8 +2240,8 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
     }
     const allPlayerList = []
-    for (const iGroup in allGroupsData) {
-      for (const iMember in allGroupsData[iGroup]) {
+    for (let iGroup = 0; iGroup &lt; allGroupsData.length; iGroup++) {
+      for (let iMember = 0; iMember &lt; allGroupsData[iGroup].length; iMember++) {
         if (!allGroupsData[iGroup][iMember].invisible) {
           const player = {
             playerName: allGroupsData[iGroup][iMember].playerName,
@@ -2256,7 +2257,7 @@ module.exports = function (RED) {
 
     // Validate all player names in newGroupPlayerArray and get index of new coordinator
     let iNewCoordinator
-    for (const i in newGroupPlayerArray) {
+    for (let i = 0; i &lt; newGroupPlayerArray.length; i++) {
       const indexInList
         = allPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
       if (indexInList === -1) {
@@ -2294,7 +2295,7 @@ module.exports = function (RED) {
       // Because it takes time to BecomeCoordinator
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](500) 
 
-      for (const i in newGroupPlayerArray) { // Start with 1
+      for (let i = 1; i &lt; newGroupPlayerArray.length; i++) { // Start with 1
         const indexPlayer = allPlayerList.findIndex((p) => p.playerName === newGroupPlayerArray[i])
         // No check - always returns true. Using SetAVTransportURI as AddMember does not work
         const ts1Player = new SonosDevice(allPlayerList[indexPlayer].urlObject.hostname)
@@ -2554,9 +2555,9 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    for (const member of groupData.members) { // Start with 1!
+    for (let iMember = 1; iMember &lt; groupData.members.length; iMember++) { // Start with 1!
       // No check - always returns true
-      const tsPlayer = new SonosDevice(member.urlObject.hostname)
+      const tsPlayer = new SonosDevice(groupData.members[iMember].urlObject.hostname)
       await tsPlayer.AVTransportService.BecomeCoordinatorOfStandaloneGroup({ 'InstanceID': 0 })
     }
 
@@ -2666,6 +2667,28 @@ module.exports = function (RED) {
     const albumArtDPO = validRegex(msg, 'payload', REGEX_ALBUMARTISTDISPLAY, 'music library option')
     await tsPlayer.ContentDirectoryService.RefreshShareIndex(
       { 'AlbumArtistDisplayOption': albumArtDPO })
+    
+    return {}
+  }
+
+  /**
+   *  Wake up a player such as SONOS Roam or SONOS Move
+   * @param {object} msg incoming message
+   * @param {string} msg.payload valid mac address such as F0:F6:C1:D5:AE:08 
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise&lt;object>} {}
+   *
+   * @throws {error} all methods, invalid ip address mac address
+   */
+
+  // TODO Does not make sense to send to Roam - musst be another player bc Roam not available
+  async function householdPlayerWakeUp (msg) {
+    debug('command:%s', 'playerWakeUp')
+    // Payload mac address  is required such as F0:F6:C1:D5:AE:08
+    const validatedMacAddress = validRegex(msg, 'payload', REGEX_MACADDRESS, 'mac address')
+    const macAddress = validatedMacAddress
+    await sendWakeUp(macAddress)
     
     return {}
   }
@@ -3523,7 +3546,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Direct commands with executektionV8. Hidden command
+   *  Direct commands with executionV8. Hidden command
    * @param {object} msg incoming message
    * @param {string} msg.endpoint 
    * @param {string} msg.action
@@ -3558,13 +3581,13 @@ module.exports = function (RED) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-Discovery-base-hk.html">Discovery-base-hk</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-Config.html">Config</a></li><li><a href="module-Discovery.html">Discovery</a></li><li><a href="module-Discovery-base-hk.html">Discovery-base-hk</a></li><li><a href="module-GlobalsTs.html">GlobalsTs</a></li><li><a href="module-Helper.html">Helper</a></li><li><a href="module-MySonos.html">MySonos</a></li><li><a href="module-Sonos-Commands.html">Sonos-Commands</a></li><li><a href="module-Universal.html">Universal</a></li><li><a href="module-Wake-on-lan.html">Wake-on-lan</a></li><li><a href="Sonos-Extensions.module_js.html">js</a></li></ul><h3><a href="global.html">Global</a></h3>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri Feb 04 2022 08:21:34 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Wed Jun 29 2022 20:18:02 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
