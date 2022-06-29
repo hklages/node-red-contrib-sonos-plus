@@ -11,13 +11,14 @@
 'use strict'
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
-  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME,
+  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
   REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM,
   ERROR_NOT_FOUND_BY_SERIAL, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
+const { sendWakeUp } = require('./Wake-on-lan')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
@@ -110,6 +111,7 @@ module.exports = function (RED) {
     'household.separate.stereopair': householdSeparateStereoPair,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
+    'household.wakeup.player': householdPlayerWakeUp,
     'joiner.play.notification': joinerPlayNotification,
     'player.adjust.volume': playerAdjustVolume,
     'player.become.standalone': playerBecomeStandalone,
@@ -2643,6 +2645,28 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Wake up a player such as SONOS Roam or SONOS Move
+   * @param {object} msg incoming message
+   * @param {string} msg.payload valid mac address such as F0:F6:C1:D5:AE:08 
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods, invalid ip address mac address
+   */
+
+  // TODO Does not make sense to send to Roam - musst be another player bc Roam not available
+  async function householdPlayerWakeUp (msg) {
+    debug('command:%s', 'playerWakeUp')
+    // Payload mac address  is required such as F0:F6:C1:D5:AE:08
+    const validatedMacAddress = validRegex(msg, 'payload', REGEX_MACADDRESS, 'mac address')
+    const macAddress = validatedMacAddress
+    await sendWakeUp(macAddress)
+    
+    return {}
+  }
+
+  /**
    *  Play notification on a joiner (in group) specified by sonosPlayer (default) or by playerName.
    * Joiner leaves group plays notification and rejoins the group. 
    * Group continues playing if playing.
@@ -3495,7 +3519,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Direct commands with executektionV8. Hidden command
+   *  Direct commands with executionV8. Hidden command
    * @param {object} msg incoming message
    * @param {string} msg.endpoint 
    * @param {string} msg.action
