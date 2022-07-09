@@ -12,9 +12,8 @@
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
   REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
-  REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
-  ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM,
-  ERROR_NOT_FOUND_BY_SERIAL, REGEX_ALBUMARTISTDISPLAY
+  REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST, 
+  ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
 
 const { discoverSpecificSonosPlayerBySerial } = require('./Discovery.js')
@@ -25,9 +24,9 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
   getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers
 } = require('./Commands.js')
 
-const { executeActionV8, failure, getDeviceInfo, getDeviceProperties,
-  getMusicServiceId, getMusicServiceName, decideCreateNodeOn,
-  success, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel
+const { executeActionV8, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
+  getMusicServiceName, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel,
+  isOnlineSonosPlayer
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
@@ -39,7 +38,7 @@ const Dns = require('dns')
 
 const dnsPromises = Dns.promises
 
-const debug = require('debug')(`${PACKAGE_PREFIX}universal`)
+const debug = require('debug')(`${PACKAGE_PREFIX}universal-create`)
 
 module.exports = function (RED) {
   
@@ -152,137 +151,141 @@ module.exports = function (RED) {
    * @param {object} config current node configuration data
    */
   function SonosUniversalNode (config) {
-    debug('command:%s', 'SonosUniversalNode')
-    const thisFunctionName = 'create and subscribe'
-    RED.nodes.createNode(this, config)
-    const node = this
-    node.status({}) // Clear node status
+    const nodeName = 'universal'
+    // same as in SonosManageMySonosNode
+    const thisMethodName = `${nodeName} create and subscribe`
+    debug('method:%s', thisMethodName)
     
-    const configNode = RED.nodes.getNode(config.confignode)
+    RED.nodes.createNode(this, config)
+    const thisNode = this
+    const configNode = RED.nodes.getNode(config.confignode);
+  
+    // async wrap reduces .then
+    (async function (configuration, configurationNode, node) {
+      node.status({}) // Clear node status
+      const port = 1400 // assuming this port, used to build playerUrlObject
+      let ipv4Validated // used to build playerUrlObject
+      let playerUrlObject // for node.on etc
+        
+      if (isTruthyPropertyStringNotEmpty(configurationNode, ['ipaddress'])) {
+        // Case A: using ip address or DNS name(must be resolved). SONOS does not accept DNS.
+        const hostname = configurationNode.ipaddress // ipv4 address or dns
+        if (REGEX_IP.test(hostname)) { // not the favorite but should be here before DNS
+          ipv4Validated = hostname 
+        } else if (REGEX_DNS.test(hostname)) { // favorite option
+          try {
+            const ipv4Array = await dnsPromises.resolve4(hostname) 
+            // dnsPromise returns an array with all data
+            ipv4Validated = ipv4Array[0]
+          } catch (err) {
+            debug('Error: could not resolve dns name >>%s', hostname)
+            node.status({
+              fill: 'red', shape: 'dot',
+              text: `error: could not resolve >>${hostname}`
+            })
 
-    // Order of processing of the two fields ip/dns field versus serial number field:
-    // 1. ipv4 address entered and syntax is valid
-    // 2. DNS name entered and syntax is valid: resolve and use resolved ipv4 address
-    // 3. No ipv4/DNS entered & serial entered & valid syntax: 
-    //    discover ipv4 address by serial and use it   
-    if (isTruthyPropertyStringNotEmpty(configNode, ['ipaddress'])) {
-      
-      const hostname = configNode.ipaddress // ipv4 address or dns name, syntax not validated
-      let ipv4Address // pure ipv4Address, syntax validated
-      
-      // async wrap to make it possible to use await dnsPromise
-      (async function () {
-        if (REGEX_IP.test(hostname)) {
-          ipv4Address = hostname // priority 1
-        } else if (REGEX_DNS.test(hostname)) {
-          const ipv4Array = await dnsPromises.resolve4(hostname) 
-          // dnsPromise returns an array with all data
-          ipv4Address = ipv4Array[0] // priority 2
+            return true // leaving async wrapper without error
+          }
         } else {
-          failure(node, null,
-            new Error(`${PACKAGE_PREFIX} ipv4//DNS name >>${hostname} invalid syntax`),
-            thisFunctionName)
-          return
+          debug('Error: ipv4/DNS field is invalid >>%s', hostname)
+          node.status({
+            fill: 'red', shape: 'dot',
+            text: `error: ipv4/DNS field is invalid >>${hostname}`
+          })
+          
+          return true // leaving async wrapper without error
         }
-        // ipv4Address is a pure ipv4 address and ready to use
-        const port = 1400 // assuming this port
-        const playerUrlObject = new URL(`http://${ipv4Address}:${port}`)
+        debug('using ip address >>%s', ipv4Validated)
+       
+        playerUrlObject = new URL(`http://${ipv4Validated}:${port}`)
         // If box is ticked it is checked whether that IP address is reachable (http request)
-        decideCreateNodeOn(playerUrlObject, TIMEOUT_HTTP_REQUEST,
-          config.avoidCheckPlayerAvailability)
-          .then((createNodeOn) => {
-            if (createNodeOn) {
-              // subscribe and set processing function
-              node.on('input', (msg) => {
-                debug('msg received >>%s', 'universal node')
-                processInputMsg(node, config, msg, playerUrlObject.hostname)
-                // processInputMsg sets msg.nrcspCmd to current command
-                  .then((msgUpdate) => {
-                    Object.assign(msg, msgUpdate) // Defines the output message
-                    success(node, msg, msg.nrcspCmd)
-                  })
-                  .catch((error) => {
-                    let lastFunction = 'processInputMsg'
-                    if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-                      lastFunction = msg.nrcspCmd
-                    }
-                    failure(node, msg, error, lastFunction)
-                  })
-              })
-              debug('successfully subscribed - node.on')
-              node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
-            } else {
-              debug('device not reachable/rejected')
-              node.status({
-                fill: 'red', shape: 'dot',
-                text: 'error: device not reachable/rejected'
-              })
-            }
-          }) // then createnode
-          .catch((err) => {
-            debug('xIsSonos failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-            node.status({ fill: 'red', shape: 'dot', text: 'error: decideCreateNodeOn went wrong' })
-          }) // catch
-      })() // async function
-        .catch((err) => {
-          debug('Could not retrieve ipv4 >>%', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          failure(node, null,
-            new Error(`${PACKAGE_PREFIX} Could not retrieve ipv4 for >>${hostname}`),
-            thisFunctionName)
+        if (!configuration.avoidCheckPlayerAvailability) {
+          const isOnline = await isOnlineSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
+          if (!isOnline) {
+            debug('Error: device not reachable/rejected >>%s', ipv4Validated)
+            node.status({
+              fill: 'red', shape: 'dot',
+              text: `error: device not reachable/rejected >>${ipv4Validated}`
+            })
+
+            return true // because error handling here
+          }
+        }
+        // => ip is valid or no check requested
+              
+      } else if (isTruthyPropertyStringNotEmpty(configurationNode, ['serialnum'])) {
+      // Case B: using serial number and start a discover
+        const serialNb = configurationNode.serialnum
+        if (!REGEX_SERIAL.test(serialNb)) {
+          debug('Error: serial number invalid >>%s', JSON.stringify(serialNb))
+          node.status({
+            fill: 'red', shape: 'dot',
+            text: `error: serial number invalid >>${serialNb}`
+          })
+          
+          return true
+        }
+        try {
+          ipv4Validated = await discoverSpecificSonosPlayerBySerial(serialNb, TIMEOUT_DISCOVERY)  
+          debug('found ip address >>%s', ipv4Validated)
+        } catch (err) {
+          // discovery failed - either no player found or no matching serial number
+          debug('Error: discovery failed >>%s',
+            JSON.stringify(err, Object.getOwnPropertyNames(err)))
+          node.status({
+            fill: 'red', shape: 'dot',
+            text: `error: no player with serial >>${serialNb}`
+          })
+
+          return true
+        }
+      } else {
+        debug('Error: serial number/ipv4//DNS name are missing/invalid')
+        node.status({
+          fill: 'red', shape: 'dot',
+          text: 'error: serial number/ipv4//DNS name are missing/invalid'
         })
-      
-    } else if (isTruthyPropertyStringNotEmpty(configNode, ['serialnum'])) {
-      // start discovery
-      const serialNb = configNode.serialnum
-      if (!REGEX_SERIAL.test(serialNb)) {
-        failure(node, null,
-          new Error(`${PACKAGE_PREFIX} serial number >>${serialNb} invalid syntax`),
-          thisFunctionName)
-        return
+        
+        return true
       }
 
-      discoverSpecificSonosPlayerBySerial(serialNb, TIMEOUT_DISCOVERY)
-        .then((discoveredHost) => {
-          debug('found ip address >>%s', discoveredHost)
-          const validHost = discoveredHost
-          
-          // subscribe and set processing function
-          node.on('input', (msg) => {
-            debug('msg received >>%s', 'universal node')
-            processInputMsg(node, config, msg, validHost)
-              // processInputMsg sets msg.nrcspCmd to current command
-              .then((msgUpdate) => {
-                Object.assign(msg, msgUpdate) // Defines the output message
-                success(node, msg, msg.nrcspCmd)
-              })
-              .catch((error) => {
-                let lastFunction = 'processInputMsg'
-                if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
-                  lastFunction = msg.nrcspCmd
-                }
-                failure(node, msg, error, lastFunction)
-              })
-          })
-          debug('successfully subscribed - node.on')
-          node.status({ fill: 'green', shape: 'dot', text: 'ok:ready' })
-
+      // subscribe and set processing function (all invalid options are done ahead)
+      try {
+        node.on('input', (msg) => {
+          debug('msg received >>%s', thisMethodName)
+          processInputMsg(node, configuration, msg, ipv4Validated)
+          // processInputMsg sets msg.nrcspCmd to current command
+            .then((msgUpdate) => {
+              Object.assign(msg, msgUpdate) // Defines the output message
+              node.send(msg)
+              node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${msg.nrcspCmd}` })
+              debug('OK: %s', msg.nrcspCmd)
+            })
+            .catch((err) => {
+              let lastFunction = 'processInputMsg'
+              if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
+                lastFunction = msg.nrcspCmd
+              }
+              failure(node, msg, err, lastFunction)
+            })
         })
-        .catch((err) => {
-          // discovery failed - most likely because could not find any matching player
-          let txt = 'could not discover player by serial'
-          if (err.message === ERROR_NOT_FOUND_BY_SERIAL) {
-            txt = ERROR_NOT_FOUND_BY_SERIAL
-          }
-          debug('discovery failed >>%s', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          failure(node, txt, err, thisFunctionName)
-          return
+        debug('successfully subscribed - node.on')
+        const success = (configuration.avoidCheckPlayerAvailability
+          ? 'ok:ready - maybe not online' : 'ok:ready')
+        node.status({ fill: 'green', shape: 'dot', text: success })
+      } catch (err) {
+        debug('Error: could not subscribe to msg')
+        node.status({
+          fill: 'red', shape: 'dot',
+          text: 'error: could not subscribe to msg'
         })
-   
-    } else {
-      failure(node, null,
-        new Error(`${PACKAGE_PREFIX} serial number/ipv4//DNS name are invalid`), thisFunctionName)
-      return
-    }
+      }
+      
+    })(config, configNode, thisNode) // async function
+      .catch((err) => {
+        debug(`Error: ${thisMethodName} >>%s`, JSON.stringify(err, Object.getOwnPropertyNames(err)))
+        thisNode.status({ fill: 'red', shape: 'dot', text: 'error: create node' })
+      })
   }
 
   /**

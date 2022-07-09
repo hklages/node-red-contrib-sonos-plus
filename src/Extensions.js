@@ -169,61 +169,43 @@ module.exports = {
     })
   },
   
-  /** Set node status and send message.
-    * 
-    * @param {object} node current node
-    * @param {object} msg current msg (maybe null)
-    * @param {string} functionName name of calling function
-    */
-  success: (node, msg, functionName) => {
-    node.send(msg)
-    node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${functionName}` })
-    debug('OK: %s', functionName)
-  },
-
   //
   //     SPECIAL COMMANDS - SIMPLE HTML REQUEST
   //     
 
-  /** Decide whether node.on should created. 
-    * @param {object} playerUrlObject player JavaScript build-in URL 
+  /** Check whether device is a SONOS-Player and online.
+   * @param {object} playerUrlObject player JavaScript build-in URL 
    * @param {number} timeout in milliseconds
-   * @param {boolean} [avoidCheckPlayerAvailability = false]  if true just return true
-   * @returns {Promise<boolean>} true if typical SONOS player response
+   *
+   * @returns {Promise<boolean>} true if SONOS player response
    *
    * Does not validate parameter!
-   * 
-   * Better understanding: This function is called during deployment time of the Node-RED
-   * node. It has to be decided wether the node should
-   * - throw an error message if the player is not reachable at deployment time
-   * - dont throw an error and handle error during run time (time out, etc)
-   * The last one can be enforced with avoidCheckPlayerAvailability = true
    * 
    * Method: Every SONOS player will answer to http request with 
    * end point /info and provide the household id. 
    * 
    * @throws none - they are caught insight
    */
-  decideCreateNodeOn: async (playerUrlObject, timeout, avoidCheckPlayerAvailability) => {
-    debug('method:%s', 'decideCreateNodeOn')
+  isOnlineSonosPlayer: async (playerUrlObject, timeout) => {
+    debug('method:%s', 'isOnlineSonosPlayer')
     
-    // if no check, then true is returned
-    if (avoidCheckPlayerAvailability) {
-      return true
-    }
-    let response = null
+    let response
     try {
       response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
     } catch (error) {
       // timeout will show up here
-      debug('request failed >>%s', playerUrlObject.host + '-'
+      debug('Error: SONOS endpoint does not respond >>%s', playerUrlObject.host + '-'
         + JSON.stringify(error, Object.getOwnPropertyNames(error)))
+      
       return false
     }
     if (!isTruthyPropertyStringNotEmpty(response, ['data', 'householdId'])) {
-      debug('invalid response >>%s', JSON.stringify(response, Object.getOwnPropertyNames(response)))
+      debug('Error: missing householdId >>%s',
+        JSON.stringify(response, Object.getOwnPropertyNames(response)))
+      
       return false
     }
+
     return true
   },
 

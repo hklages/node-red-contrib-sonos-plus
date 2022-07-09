@@ -41,6 +41,7 @@ module.exports = {
    */
   discoverSpecificSonosPlayerBySerial: async (serialNumber, timeout) => {
     debug('method:%s', 'discoverSpecificSonosPlayerBySerial')
+    // TODO why is this not used
     debug('timeout not used' + timeout)
     
     // TODO get experience - remove the timeout
