@@ -185,6 +185,41 @@ module.exports = {
   //     SPECIAL COMMANDS - SIMPLE HTML REQUEST
   //     
 
+  /** Check whether device is a SONOS-Player and online.
+   * @param {object} playerUrlObject player JavaScript build-in URL 
+   * @param {number} timeout in milliseconds
+   *
+   * @returns {Promise<boolean>} true if SONOS player response
+   *
+   * Does not validate parameter!
+   * 
+   * Method: Every SONOS player will answer to http request with 
+   * end point /info and provide the household id. 
+   * 
+   * @throws none - they are caught insight
+   */
+  isOnlineSonosPlayer: async (playerUrlObject, timeout) => {
+    debug('method:%s', 'isOnlineSonosPlayer')
+    
+    let response
+    try {
+      response = await request.get(`${playerUrlObject.origin}/info`, { 'timeout': timeout })  
+    } catch (error) {
+      // timeout will show up here
+      debug('SONOS endpoint does not respond >>%s', playerUrlObject.host + '-'
+        + JSON.stringify(error, Object.getOwnPropertyNames(error)))
+      
+      return false
+    }
+    if (!isTruthyPropertyStringNotEmpty(response, ['data', 'householdId'])) {
+      debug('invalid response >>%s', JSON.stringify(response, Object.getOwnPropertyNames(response)))
+      
+      return false
+    }
+
+    return true
+  },
+
   /** Decide whether node.on should created. 
     * @param {object} playerUrlObject player JavaScript build-in URL 
    * @param {number} timeout in milliseconds
