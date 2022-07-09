@@ -618,7 +618,7 @@ module.exports = {
 
     const REQUESTED_COUNT_PLAYLISTS = 1000 // always fetch the allowed maximum
 
-    // SQ = SONOS-Playlists (saved queue) 
+    // SQ: stands for SONOS-Playlists (saved queue) 
     // Assumption: less then 1000 Playlists, otherwise we have to iterate (see MusicLibrary)
     const browsePlaylist = await tsPlayer.ContentDirectoryService.Browse({
       'ObjectID': 'SQ:', 'BrowseFlag': 'BrowseDirectChildren', 'Filter': '*', 'StartingIndex': 0,

@@ -777,11 +777,10 @@ module.exports = function (RED) {
     if (!isTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current MediaInfo is invalid`)
     }
-    // TODO replace with uri = (   ?   :  )
-    let uri = '' // Set as default if not available
-    if (isTruthyPropertyStringNotEmpty(mediaData, ['CurrentURI'])) {
-      uri = mediaData.CurrentURI
-    }
+    
+    const uri
+      = (isTruthyPropertyStringNotEmpty(mediaData, ['CurrentURI']) ? mediaData.CurrentURI : '')
+    
     const queueActivated = uri.startsWith('x-rincon-queue')
     const tvActivated = uri.startsWith('x-sonos-htastream')
 
@@ -833,22 +832,17 @@ module.exports = function (RED) {
     if (!isTruthy(mediaData)) {
       throw new Error(`${PACKAGE_PREFIX} current media data is invalid`)
     }
-    // TODO replace with unitary operator
-    let uri = ''
-    if (isTruthyPropertyStringNotEmpty(mediaData, ['CurrentURI'])) {
-      uri = mediaData.CurrentURI
-    }
+    const uri
+      = (isTruthyPropertyStringNotEmpty(mediaData, ['CurrentURI']) ? mediaData.CurrentURI : '')
+
     const queueActivated = uri.startsWith('x-rincon-queue')
 
     let serviceId = await getMusicServiceId(uri)
 
     // Get station uri for all "x-sonosapi-stream"
-    // TODO replace with unitary operator
-    let stationArtUri = ''
-    if (uri.startsWith('x-sonosapi-stream')) {
-      stationArtUri = `${tsCoordinator.urlObject.origin}/getaa?s=1&u=${uri}`
-    }
-
+    // eslint-disable-next-line max-len
+    const stationArtUri = (uri.startsWith('x-sonosapi-stream') ? `${tsCoordinator.urlObject.origin}/getaa?s=1&u=${uri}` : '')
+      
     // Get current position data
     const positionData = await tsCoordinator.AVTransportService.GetPositionInfo()
     if (!isTruthy(positionData)) {
@@ -886,11 +880,9 @@ module.exports = function (RED) {
         title = positionData.TrackMetaData.Title
       }
     }
-    // TODO replace with tertiar operator
-    let album = ''
-    if (isTruthyPropertyStringNotEmpty(positionData, ['TrackMetaData', 'Album'])) {
-      album = positionData.TrackMetaData.Album
-    }
+    // eslint-disable-next-line max-len
+    const album = (isTruthyPropertyStringNotEmpty(positionData, ['TrackMetaData', 'Album']) ? positionData.TrackMetaData.Album : '')
+    
     let artUri = ''
     if (isTruthyPropertyStringNotEmpty(positionData, ['TrackMetaData', 'AlbumArtUri'])) {
       artUri = positionData.TrackMetaData.AlbumArtUri
@@ -2650,14 +2642,14 @@ module.exports = function (RED) {
    *  Wake up a player such as SONOS Roam or SONOS Move
    * @param {object} msg incoming message
    * @param {string} msg.payload valid mac address such as F0:F6:C1:D5:AE:08 
-   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   * @param {object} tsPlayer not used
    *
    * @returns {promise<object>} {}
    *
    * @throws {error} all methods, invalid ip address mac address
    */
 
-  // TODO Does not make sense to send to Roam - musst be another player bc Roam not available
+  // we dont send to player, instead a broadcast!
   async function householdPlayerWakeUp (msg) {
     debug('command:%s', 'playerWakeUp')
     // Payload mac address  is required such as F0:F6:C1:D5:AE:08

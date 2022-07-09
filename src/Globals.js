@@ -32,9 +32,6 @@ module.exports = {
   // https://mkyong.com/regular-expressions/how-to-validate-ip-address-with-regular-expression/
   REGEX_IP: /^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.(?!$)|$)){4}$/,
 
-  // TODO old one might be removed in May - just to have a roll back
-  // REGEX_IP: /^(?:(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(\.(?!$)|$)){4}$/,
-
   // credits: 
   //  https://mkyong.com/regular-expressions/domain-name-regular-expression-example/
   // The domain name should be a-z | A-Z | 0-9 and hyphen(-)
