@@ -32,13 +32,11 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
-- Caution: player.leave.group removed - please use player.become.standalone
+- New ENV variable to set Spotify region US for US, Australie, New Zealand, ..
+
+- New household.wakeup.player, more error messages
 
 - New command household.update.musiclibrary, household.get.musiclibrary.options
-
-- New commands group.play.sonosplaylist, group.queue.sonosplaylist, group.get.sonosplaylisttracks
-
-- You can now save/restore the SONOS-Queue in group.create/restore.snapshot
 
 - DNS names are now supported and recommended instead of pure ipv4 address (config dialog)
 

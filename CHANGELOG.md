@@ -2,9 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
-### [6.3.1] 2022-06-30
+### [6.3.2] 2022-07-10
 
 ### Added
+
+- Universal/My Sonos node: you can now change the Spotify region
+
+#### Changed
+
+- internal: create node asyn wrapper revised, more ternary operator
+
+- dependencies updated
+
+### [6.3.1] 2022-06-30
+
+#### Added
 
 - Universal node: household.wakeup.player to wake up SONOS Roam/Move
 
