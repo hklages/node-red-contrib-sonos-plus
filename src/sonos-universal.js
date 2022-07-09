@@ -38,7 +38,7 @@ const Dns = require('dns')
 
 const dnsPromises = Dns.promises
 
-const debug = require('debug')(`${PACKAGE_PREFIX}universal`)
+const debug = require('debug')(`${PACKAGE_PREFIX}universal-create`)
 
 module.exports = function (RED) {
   
@@ -152,20 +152,21 @@ module.exports = function (RED) {
    */
   function SonosUniversalNode (config) {
     const nodeName = 'universal'
+    // same as in SonosManageMySonosNode
     const thisMethodName = `${nodeName} create and subscribe`
     debug('method:%s', thisMethodName)
-    RED.nodes.createNode(this, config)
-    const node = this
-    node.status({}) // Clear node status
     
-    const configNode = RED.nodes.getNode(config.confignode)
-    const port = 1400 // assuming this port, used to build playerUrlObject
-    let ipv4Validated // used to build playerUrlObject
-    let playerUrlObject // for node.on etc
-      
-    (async function (configurationNode, configuration) {
-      // async wrap reduces .then
- 
+    RED.nodes.createNode(this, config)
+    const thisNode = this
+    const configNode = RED.nodes.getNode(config.confignode);
+  
+    // async wrap reduces .then
+    (async function (configuration, configurationNode, node) {
+      node.status({}) // Clear node status
+      const port = 1400 // assuming this port, used to build playerUrlObject
+      let ipv4Validated // used to build playerUrlObject
+      let playerUrlObject // for node.on etc
+        
       if (isTruthyPropertyStringNotEmpty(configurationNode, ['ipaddress'])) {
         // Case A: using ip address or DNS name(must be resolved). SONOS does not accept DNS.
         const hostname = configurationNode.ipaddress // ipv4 address or dns
@@ -233,7 +234,7 @@ module.exports = function (RED) {
             JSON.stringify(err, Object.getOwnPropertyNames(err)))
           node.status({
             fill: 'red', shape: 'dot',
-            text: 'error: could not find player with given serial number'
+            text: `error: no player with serial >>${serialNb}`
           })
 
           return true
@@ -280,12 +281,11 @@ module.exports = function (RED) {
         })
       }
       
-    })(configNode, config) // async function
+    })(config, configNode, thisNode) // async function
       .catch((err) => {
         debug(`Error: ${thisMethodName} >>%s`, JSON.stringify(err, Object.getOwnPropertyNames(err)))
-        node.status({ fill: 'red', shape: 'dot', text: 'error: create node' })
+        thisNode.status({ fill: 'red', shape: 'dot', text: 'error: create node' })
       })
-    
   }
 
   /**
