@@ -24,7 +24,7 @@ const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, g
   getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers
 } = require('./Commands.js')
 
-const { executeActionV8, failure, getDeviceInfo, getDeviceProperties, getMusicServiceId,
+const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusicServiceId,
   getMusicServiceName, validatedGroupProperties, replaceAposColon, getDeviceBatteryLevel,
   isOnlineSonosPlayer
 } = require('./Extensions.js')
@@ -157,7 +157,6 @@ module.exports = function (RED) {
     debug('method:%s', thisMethodName)
     
     RED.nodes.createNode(this, config)
-    const thisNode = this
     const configNode = RED.nodes.getNode(config.confignode);
   
     // async wrap reduces .then
@@ -173,27 +172,17 @@ module.exports = function (RED) {
         if (REGEX_IP.test(hostname)) { // not the favorite but should be here before DNS
           ipv4Validated = hostname 
         } else if (REGEX_DNS.test(hostname)) { // favorite option
-          try {
+          try { // redundant - just to get custom error message
             const ipv4Array = await dnsPromises.resolve4(hostname) 
             // dnsPromise returns an array with all data
             ipv4Validated = ipv4Array[0]
           } catch (err) {
-            debug('Error: could not resolve dns name >>%s', hostname)
-            node.status({
-              fill: 'red', shape: 'dot',
-              text: `error: could not resolve >>${hostname}`
-            })
-
-            return true // leaving async wrapper without error
+            
+            throw new Error(`${PACKAGE_PREFIX} could not resolve dns name >>${hostname}`)
           }
         } else {
-          debug('Error: ipv4/DNS field is invalid >>%s', hostname)
-          node.status({
-            fill: 'red', shape: 'dot',
-            text: `error: ipv4/DNS field is invalid >>${hostname}`
-          })
-          
-          return true // leaving async wrapper without error
+
+          throw new Error(`${PACKAGE_PREFIX} ipv4/DNS field is invalid >> >>${hostname}`)
         }
         debug('using ip address >>%s', ipv4Validated)
        
@@ -201,63 +190,41 @@ module.exports = function (RED) {
         // If box is ticked it is checked whether that IP address is reachable (http request)
         if (!configuration.avoidCheckPlayerAvailability) {
           const isOnline = await isOnlineSonosPlayer(playerUrlObject, TIMEOUT_HTTP_REQUEST)
-          if (!isOnline) {
-            debug('Error: device not reachable/rejected >>%s', ipv4Validated)
-            node.status({
-              fill: 'red', shape: 'dot',
-              text: `error: device not reachable/rejected >>${ipv4Validated}`
-            })
-
-            return true // because error handling here
-          }
+          if (!isOnline)
+            
+            throw new Error(`${PACKAGE_PREFIX} device not reachable/rejected >>${ipv4Validated}`)
         }
         // => ip is valid or no check requested
               
       } else if (isTruthyPropertyStringNotEmpty(configurationNode, ['serialnum'])) {
       // Case B: using serial number and start a discover
         const serialNb = configurationNode.serialnum
-        if (!REGEX_SERIAL.test(serialNb)) {
-          debug('Error: serial number invalid >>%s', JSON.stringify(serialNb))
-          node.status({
-            fill: 'red', shape: 'dot',
-            text: `error: serial number invalid >>${serialNb}`
-          })
-          
-          return true
-        }
-        try {
+        if (!REGEX_SERIAL.test(serialNb)) 
+          throw new Error(`${PACKAGE_PREFIX} serial number invalid >>${serialNb}`)
+        
+        try { // redundant - just to get custom error message
           ipv4Validated = await discoverSpecificSonosPlayerBySerial(serialNb, TIMEOUT_DISCOVERY)  
           debug('found ip address >>%s', ipv4Validated)
         } catch (err) {
           // discovery failed - either no player found or no matching serial number
-          debug('Error: discovery failed >>%s',
-            JSON.stringify(err, Object.getOwnPropertyNames(err)))
-          node.status({
-            fill: 'red', shape: 'dot',
-            text: `error: no player with serial >>${serialNb}`
-          })
 
-          return true
+          throw new Error(`${PACKAGE_PREFIX} discovery failed`)
         }
       } else {
-        debug('Error: serial number/ipv4//DNS name are missing/invalid')
-        node.status({
-          fill: 'red', shape: 'dot',
-          text: 'error: serial number/ipv4//DNS name are missing/invalid'
-        })
-        
-        return true
+
+        throw new Error(`${PACKAGE_PREFIX} serial number/ipv4//DNS name are missing/invalid`)
       }
 
       // subscribe and set processing function (all invalid options are done ahead)
-      try {
-        node.on('input', (msg) => {
+      try { // redundant - only to get custom error message
+        node.on('input', (msg, send, done) => {
           debug('msg received >>%s', thisMethodName)
           processInputMsg(node, configuration, msg, ipv4Validated)
           // processInputMsg sets msg.nrcspCmd to current command
             .then((msgUpdate) => {
               Object.assign(msg, msgUpdate) // Defines the output message
-              node.send(msg)
+              send(msg) // incompatibility to 0.x
+              done() // incompatibility to 0.x
               node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${msg.nrcspCmd}` })
               debug('OK: %s', msg.nrcspCmd)
             })
@@ -266,7 +233,7 @@ module.exports = function (RED) {
               if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
                 lastFunction = msg.nrcspCmd
               }
-              failure(node, msg, err, lastFunction)
+              failureV2(node, msg, done, err, lastFunction)
             })
         })
         debug('successfully subscribed - node.on')
@@ -274,17 +241,26 @@ module.exports = function (RED) {
           ? 'ok:ready - maybe not online' : 'ok:ready')
         node.status({ fill: 'green', shape: 'dot', text: success })
       } catch (err) {
-        debug('Error: could not subscribe to msg')
-        node.status({
-          fill: 'red', shape: 'dot',
-          text: 'error: could not subscribe to msg'
-        })
+        
+        throw new Error(`${PACKAGE_PREFIX} could not subscribe to msg`)
       }
       
-    })(config, configNode, thisNode) // async function
+    })(config, configNode, this) // handle any error of async wrapper but not the messages
       .catch((err) => {
-        debug(`Error: ${thisMethodName} >>%s`, JSON.stringify(err, Object.getOwnPropertyNames(err)))
-        thisNode.status({ fill: 'red', shape: 'dot', text: 'error: create node' })
+        debug(`Error: ${thisMethodName} >>%s`,
+          JSON.stringify(err, Object.getOwnPropertyNames(err)))
+        
+        if (isTruthyPropertyStringNotEmpty(err, ['message'])) {
+          if (err.message.startsWith(PACKAGE_PREFIX)) { // means custom error messages
+            // my custom error messages from throws
+            this.status({ fill: 'red', shape: 'dot', text: `error: ${err.message}` })
+          } else {
+            this.status({
+              fill: 'red', shape: 'dot',
+              text: 'error: any not handled in create node - see debug'
+            })
+          }
+        }
       })
   }
 
