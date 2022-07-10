@@ -2,15 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
-### [6.3.2] 2022-07-10
+### [6.4.0] 2022-07-10
 
 ### Added
 
-- Universal/My Sonos node: you can now change the Spotify region
+- Universal/My Sonos node: you can now change the Spotify region (ENV variable)
 
 #### Changed
 
-- internal: create node asyn wrapper revised, more ternary operator
+- internal: create node async wrapper revised, more ternary operator
+
+- internal: using throw instead of local error handling in create node
+
+- internal: implementing done, siomplification of create node
 
 - dependencies updated
 
