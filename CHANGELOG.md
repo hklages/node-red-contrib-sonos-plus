@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.4.1] 2022-09-11
+
+#### Added
+
+- Universal node - player.get.subwoofer, player.set.subwoofer
+
+#### Changed
+
+- dependencies updated
+
 ### [6.4.0] 2022-07-10
 
 ### Added
@@ -14,7 +24,7 @@ All notable changes to this project are documented in this file.
 
 - internal: using throw instead of local error handling in create node
 
-- internal: implementing done, siomplification of create node
+- internal: implementing done, simplification of create node
 
 - dependencies updated
 
