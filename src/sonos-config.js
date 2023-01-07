@@ -1,16 +1,21 @@
 /**
- * All configuration data - is being used in Universal and My Sonos node 
- *
+ * This module is is to update the config data from given user input
+ * and provides a http server to access the back end.  It is being used 
+ * in Universal and My Sonos node.
+ * 
+ * Endpoints at /nrcsp
+ * discoverAllPlayerWithHost - discover SONOS player via UDP SSDP broadcast
+ * discoverAllPlayerWithSerial - same but based on serial
  * @module Config
  *
  * @author Henning Klages
  *
- * @since 2021-02-21
+ * @since 2023-01-05
  */
 
 'use strict'
 
-const { PACKAGE_PREFIX, TIMEOUT_DISCOVERY } = require('./Globals.js')
+const { PACKAGE_PREFIX } = require('./Globals.js')
 
 const { discoverAllPlayerWithHost, discoverAllPlayerWithSerialnumber } = require('./Discovery.js')
 
@@ -30,15 +35,19 @@ module.exports = function (RED) {
     node.ipaddress = config.ipaddress
   }
 
+  //
+  //          HTTP Server to access backend: Discovery
+  // ...................................................................
+
   RED.httpAdmin.get('/nrcsp/*', function (req, response) {
     debug('method:%s', 'REDhttpAdmin.get')
 
-    const NO_PLAYER_MESSAGE = 'No players found' // from sonos-ts
+    const NO_PLAYER_MESSAGE = 'No players found'
 
     switch (req.params[0]) {
     case 'discoverAllPlayerWithHost':
       debug('starting discovery')
-      discoverAllPlayerWithHost(TIMEOUT_DISCOVERY)
+      discoverAllPlayerWithHost()
         .then((playerList) => {
           debug('found player during discovery')
           response.json(playerList)
@@ -57,7 +66,7 @@ module.exports = function (RED) {
     
     case 'discoverAllPlayerWithSerialnumber':
       debug('starting discovery')
-      discoverAllPlayerWithSerialnumber(TIMEOUT_DISCOVERY)
+      discoverAllPlayerWithSerialnumber()
         .then((playerList) => {
           debug('found player during discovery')
           response.json(playerList)
