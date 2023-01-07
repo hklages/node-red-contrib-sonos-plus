@@ -1,11 +1,12 @@
 /**
- * Collection of methods to handle the discovery of player.
+ * Collection of methods to handle the discovery of player. 
+ * Method: UDP SSD broadcast port 1900.
  *
  * @module Discovery
  * 
  * @author Henning Klages
  * 
- * @since 2022-01-11
+ * @since 2023-01-05
 */
 
 'use strict'
@@ -17,7 +18,7 @@ const { matchSerialUuid: matchSerialUuid, getDeviceProperties: getDeviceProperti
 } = require('./Extensions.js')
 
 const { SonosDevice } = require('@svrooij/sonos/lib')
-// testing SonosPlayerDiscovery and SonosDeviceDiscovery - what is more reliable?
+// Using my own discovery as it is more reliable
 const SonosPlayerDiscovery  = require('./Discovery-base-hk.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}discovery`)
@@ -27,7 +28,6 @@ module.exports = {
   /** Does an async discovery of SONOS player, compares with given serial number 
    * and returns ip address if success - otherwise throws error.
    * @param {string} serialNumber player serial number
-   * @param {number} timeout in seconds
    * 
    * @returns {Promise<object>} {'uuid', urlHost} su
    * 
@@ -39,12 +39,9 @@ module.exports = {
    * Discovering 10 player or more might be time consuming in some networks.
    *
    */
-  discoverSpecificSonosPlayerBySerial: async (serialNumber, timeout) => {
+  discoverSpecificSonosPlayerBySerial: async (serialNumber) => {
     debug('method:%s', 'discoverSpecificSonosPlayerBySerial')
-    // TODO why is this not used
-    debug('timeout not used' + timeout)
     
-    // TODO get experience - remove the timeout
     const deviceDiscovery = new SonosPlayerDiscovery()
     const firstPlayerIpv4 = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
@@ -78,7 +75,6 @@ module.exports = {
   /** Does an async discovery of SONOS player and returns list of objects
    * with properties label and value including the IP address = host.
    * 
-   * @param {number} timeoutSeconds in seconds
    * 
    * @returns {Promise<object>} {'label', value}
    * 
@@ -88,11 +84,9 @@ module.exports = {
    * Thats very reliable -deterministic. 
    * Discovering 10 player or more might be time consuming in some networks.
    */
-  discoverAllPlayerWithHost: async (timeout) => {
+  discoverAllPlayerWithHost: async () => {
     debug('method:%s', 'discoverAllPlayerWithHost')
-    debug('timeout not used' + timeout)
     
-    // TODO get experience - remove the timeout
     const deviceDiscovery = new SonosPlayerDiscovery()
     const firstPlayerIpv4 = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')
@@ -113,8 +107,6 @@ module.exports = {
   /** Does an async discovery of SONOS player and returns list of objects
    * with properties label and value including the serial number.
    * 
-   * @param {number} timeoutSeconds in seconds
-   * 
    * @returns {Promise<object>} {'label', value}
    * 
    * @throws {error} all methods
@@ -123,11 +115,9 @@ module.exports = {
    * Thats very reliable -deterministic. 
    * Discovering 10 player or more might be time consuming in some networks.
    */
-  discoverAllPlayerWithSerialnumber: async (timeout) => {
+  discoverAllPlayerWithSerialnumber: async () => {
     debug('method:%s', 'discoverAllPlayerWithSerialnumber')
-    debug('timeout not used' + timeout)
     
-    // TODO get experience - remove the timeout
     const deviceDiscovery = new SonosPlayerDiscovery()
     const firstPlayerIpv4 = await deviceDiscovery.discoverOnePlayer()
     debug('first player found')

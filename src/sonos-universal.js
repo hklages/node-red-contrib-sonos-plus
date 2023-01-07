@@ -12,7 +12,7 @@
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
   REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
-  REGEX_TIME_DELTA, TIMEOUT_DISCOVERY, TIMEOUT_HTTP_REQUEST,
+  REGEX_TIME_DELTA, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
 
@@ -205,7 +205,7 @@ module.exports = function (RED) {
           throw new Error(`${PACKAGE_PREFIX} serial number invalid >>${serialNb}`)
 
         try { // redundant - just to get custom error message
-          ipv4Validated = await discoverSpecificSonosPlayerBySerial(serialNb, TIMEOUT_DISCOVERY)
+          ipv4Validated = await discoverSpecificSonosPlayerBySerial(serialNb)
           debug('found ip address >>%s', ipv4Validated)
         } catch (err) {
           // discovery failed - either no player found or no matching serial number
