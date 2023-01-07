@@ -2327,7 +2327,7 @@ module.exports = function (RED) {
   async function householdDisableAlarm (msg, tsPlayer) {
     debug('command:%s', 'householdDisableAlarm')
     // Payload alarm id is required.
-    const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
+    const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })
 
     return {}
@@ -2346,7 +2346,7 @@ module.exports = function (RED) {
   async function householdEnableAlarm (msg, tsPlayer) {
     debug('command:%s', 'householdEnableAlarm')
     // Payload alarm id is required.
-    const validAlarmId = validToInteger(msg, 'payload', 0, 10000, 'enable alarm')
+    const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })
 
     return {}
