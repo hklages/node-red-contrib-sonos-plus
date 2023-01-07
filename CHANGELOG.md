@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.4.2] 2023-01-07
+
+#### Changed
+
+- dependencies updated
+
+- discovery: time out removed using default 6 sec
+
+- bugfix enable disable aAlarm
+
 ### [6.4.1] 2022-09-11
 
 #### Added
