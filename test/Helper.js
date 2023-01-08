@@ -3,7 +3,7 @@
 // describe('xxxxx', function(){}) instead of describe('xxxxx', () => {})
 // That makes the this.timeout work!
 
-const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
+const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, extractSatellitesUuids, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
   isOnOff, validToInteger, validRegex }
   = require('../src/Helper.js')
@@ -217,6 +217,41 @@ describe('encodeHtmlEntity function', function () {
       .equal('&lt;&gt;&apos;&amp;&quot;')
   })
 
+})
+
+describe('extractSatellitesUuids function', function () {
+  it('my player', async () => {
+    const value
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_000E58FE3AEA01400:SW'
+    const result = await extractSatellitesUuids(value)
+    expect(result)
+      .be.a('array')
+    expect(result[0])
+      .be.a('string')
+      .equal('RINCON_B8E9375831C001400')
+    expect(result[1])
+      .be.a('string')
+      .equal('RINCON_000E58FE3AEA01400')
+    expect(result.length)
+      .be.a('number')
+      .equal(2)
+  })
+  it('my player - number', async () => {
+    const value
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_000E58FE3AEA01400:SW'
+    const result = await extractSatellitesUuids(value)
+    expect(result)
+      .be.a('array')
+    expect(result[0])
+      .be.a('string')
+      .equal('RINCON_B8E9375831C001400')
+    expect(result[1])
+      .be.a('string')
+      .equal('RINCON_000E58FE3AEA01400')
+    expect(result.length)
+      .be.a('number')
+      .equal(2)
+  })
 })
 
 describe('hhmmss2msec function', function () {

@@ -30,7 +30,7 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger, encodeHtmlEntity
+  validToInteger, encodeHtmlEntity, extractSatellitesUuids
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -98,6 +98,7 @@ module.exports = function (RED) {
     'group.toggle.playback': groupTogglePlayback,
     'household.create.group': householdCreateGroup,
     'household.create.stereopair': householdCreateStereoPair,
+    'household.create.surroundsystem': householdCreateSurroundSystem,
     'household.disable.alarm': householdDisableAlarm,
     'household.enable.alarm': householdEnableAlarm,
     'household.get.alarms': householdGetAlarms,
@@ -108,6 +109,7 @@ module.exports = function (RED) {
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
+    'household.separate.surroundsystem': householdSeparateSurroundSystem,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
     'household.wakeup.player': householdPlayerWakeUp,
@@ -2315,6 +2317,90 @@ module.exports = function (RED) {
   }
 
   /**
+   * Create a surround system 5.1. Right Rear, left rear and subwoofer will become hidden!
+   * Surround systems are only supported for some type of SONOS player - see SONOS documentation.
+   * Working example: Beam, One, One, Sub.
+   * @param {object} msg incoming message
+   * @param {string} msg.payload - the main player, will keep visible
+   * @param {string} msg.playerNameRightRear - right rear player, will become invisible
+   * @param {string} msg.playerNameLeftRear - left rear player, will become invisible
+   * @param {string} msg.playerNameSubwoofer - subwoofer, will become invisible
+   * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} 'all groups data undefined', 'SONOS-Playername main was not found'
+   * 'SONOS-Playername left rear was not found', 'SONOS-Playername right right was not found', 
+   * 'SONOS-Playername subwoofer was not found', 'SONOS-Playername main was not found'
+   * @throws {error} all methods
+   *
+   * Caution: Command must be send to the main player. 
+   *
+   */
+  async function householdCreateSurroundSystem (msg, tsPlayer) {
+    debug('command:%s', 'householdCreateSurroundSystem')
+    // Alle player names are required!
+    const playerNameMain = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name main')
+    const playerNameRightRear
+      = validRegex(msg, 'playerNameRightRear', REGEX_ANYCHAR, 'player name right rear')
+    const playerNameLeftRear
+      = validRegex(msg, 'playerNameLeftRear', REGEX_ANYCHAR, 'player name left rear')
+    const playerNameSubwoofer
+      = validRegex(msg, 'playerNameSubwoofer', REGEX_ANYCHAR, 'player name subwoofer')
+
+    // Get the group data and extra the uuid, urlObject
+    const allGroupsData = await getGroupsAll(tsPlayer, false)
+    if (!isTruthy(allGroupsData)) {
+      throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
+    }
+
+    // Get the UUID of all players (used in HTSatChanMapSet)
+    let playerMainUuid = ''
+    let playerRightRearUuid = '' 
+    let playerLeftRearUuid = '' 
+    let playerSubwooferUuid = ''
+    let playerMainUrlObject = null // needed to create the tsMainPlayer
+    for (const group of allGroupsData) {
+      for (const member of group) {
+        const name = member.playerName
+        if (name === playerNameMain) {
+          playerMainUuid = member.uuid
+          playerMainUrlObject = member.urlObject
+        }
+        if (name === playerNameLeftRear) {
+          playerRightRearUuid = member.uuid
+        }
+        if (name === playerNameRightRear) {
+          playerLeftRearUuid = member.uuid
+        }
+        if (name === playerNameSubwoofer) {
+          playerSubwooferUuid = member.uuid
+        }
+      }
+    }
+    if (playerMainUuid === '') {
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername main was not found`)
+    }
+    if (playerRightRearUuid === '') {
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername right rear was not found`)
+    }
+    if (playerLeftRearUuid === '') {
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername left rear was not found`)
+    }
+    if (playerSubwooferUuid === '') {
+      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername subwoofer was not found`)
+    }
+
+    // We have to use main player
+    const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
+    await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
+      // eslint-disable-next-line max-len
+      { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerRightRearUuid}:RR;${playerLeftRearUuid}:LR;${playerSubwooferUuid}:SW` })
+
+    return {}
+  }
+
+  /**
    *  Disable alarm in household.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload alarm id, integer, not negative
@@ -2550,6 +2636,53 @@ module.exports = function (RED) {
     const tsLeftPlayer = new SonosDevice(leftPlayerData.urlObject.hostname)
     await tsLeftPlayer.DevicePropertiesService.SeparateStereoPair(
       { 'ChannelMapSet': leftPlayerData.channelMapSet })
+    return {}
+  }
+
+  /**
+   *  Separate a surround system of players. All players will become visible again.
+   * @param {object} msg incoming message
+   * @param {string} msg.payload - main SONOS-Playername, is visible
+   * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} 'all groups data undefined', 'channelmap is in error - right uuid', 
+   * 'main player name left was not found'
+   * @throws {error} all methods
+   * 
+   * CAUTION: The separate command has to be send to the main player!
+   *
+   */
+  async function householdSeparateSurroundSystem (msg, tsPlayer) {
+    debug('command:%s', 'householdSeparateSurroundSystem')
+
+    const mainPlayername = validRegex(msg, 'payload', REGEX_ANYCHAR, 'main player name')
+
+    // Get all player and find the given one
+    const allGroupsData = await getGroupsAll(tsPlayer, true)
+    if (!isTruthy(allGroupsData)) {
+      throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
+    }
+    // - flatten the array of groups of player and search for main player
+    const flatArrayOfPlayer = [].concat.apply([], allGroupsData)
+    const mainPlayerData = flatArrayOfPlayer.find(singlePlayer => {
+      return singlePlayer.playerName === mainPlayername
+    })
+    if (mainPlayerData === undefined) {
+      throw new Error(`${PACKAGE_PREFIX} could not find given main player`)
+    }
+
+    // Get Satellites UUIDs
+    const satellites = await extractSatellitesUuids(mainPlayerData.htSatChanMapSet)
+
+    // IMPORTANT: Must be send to main player
+    const tsMainPlayer = new SonosDevice(mainPlayerData.urlObject.hostname)
+    satellites.forEach(async (uuid) =>  {
+      await tsMainPlayer.DevicePropertiesService.RemoveHTSatellite(
+        { 'SatRoomUUID': uuid })
+    })
+
     return {}
   }
 

@@ -770,15 +770,20 @@ module.exports = {
         const playerName = String(member._ZoneName) // safety
         const invisible = (member._Invisible === '1')
         const channelMapSet = member._ChannelMapSet || ''      
+        const htSatChanMapSet = member._HTSatChanMapSet || ''   
         if (member._UUID !== coordinatorUuid) {
           // Push new joiner 
-          groupSorted.push({ urlObject, playerName, uuid, groupId, invisible, channelMapSet })
+          groupSorted.push({
+            urlObject, playerName, uuid, groupId, invisible,
+            channelMapSet, htSatChanMapSet
+          })
         } else {
           // Update coordinator
           groupSorted[iCoord].urlObject = urlObject
           groupSorted[iCoord].playerName = playerName
           groupSorted[iCoord].invisible = invisible
           groupSorted[iCoord].channelMapSet = channelMapSet
+          groupSorted[iCoord].htSatChanMapSet = htSatChanMapSet
         }
       }
       if (removeHidden) { // Removes all hidden player
