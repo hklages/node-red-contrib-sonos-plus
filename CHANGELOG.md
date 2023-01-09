@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.5.0] 2023-01-09
+
+#### Added
+
+- Universal node - household.create.surroundsystem, household.separate.surroundsystem
+
+#### Changed
+
+- group player data with HTSatChanMapSet
+
 ### [6.4.2] 2023-01-07
 
 #### Changed
