@@ -2368,10 +2368,10 @@ module.exports = function (RED) {
           playerMainUrlObject = member.urlObject
         }
         if (name === playerNameLeftRear) {
-          playerRightRearUuid = member.uuid
+          playerLeftRearUuid = member.uuid
         }
         if (name === playerNameRightRear) {
-          playerLeftRearUuid = member.uuid
+          playerRightRearUuid = member.uuid
         }
         if (name === playerNameSubwoofer) {
           playerSubwooferUuid = member.uuid
