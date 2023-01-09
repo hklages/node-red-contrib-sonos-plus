@@ -32,6 +32,8 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
+- New commands household.create.surroundsystem, household.separate.surroundsystem
+
 - New commands player.get.subwoofer / player.set.subwoofer
 
 - New ENV variable to set Spotify region US for US, Australie, New Zealand, ..
