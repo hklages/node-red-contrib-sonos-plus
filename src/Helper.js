@@ -76,6 +76,41 @@ module.exports = {
       }
     })
   },
+
+  /** Provides an array of satellite UUID's of HTSatChanMapSet 
+   * @param {string} mapString string from HTSatChanMapSet
+   * 
+   * @returns {Promise<array of strings>} array of string with UUID, length 1 to 3
+   * 
+   * @throws {error} 
+   * 
+   * Example mapString (short version, can have also :RR) - maximum 3 uuid
+   * "RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_000E58FE3AEA01400:SW"
+   */
+  extractSatellitesUuids: async (mapString) => {
+    debug('method:%s', 'extractSatellitesUuids')
+
+    if (!module.exports.isTruthy(mapString)) {
+      throw new Error('invalid parameter - invalid/missing')
+    }
+    if (typeof mapString !== 'string') {
+      throw new Error('invalid parameter - is not string')
+    }
+    // removing :LF,RF and :LR and :RR and :SW
+    const cleanedMapString = mapString.replace(/:LF,RF|:LR|:RR|:SW/g, '')
+    
+    // splitting and removing main player
+    if (!cleanedMapString.includes(';')) {
+      throw new Error('invalid parameter - no ; ')
+    }
+    const uuids = cleanedMapString.split(';')
+    uuids.shift() // removing the first = main player
+    if (!(uuids.length >= 1 && uuids.length <= 4)) {
+      throw new Error('invalid parameter -  number of satellites')
+    }
+  
+    return uuids 
+  },
   
   /** Converts hh:mm:ss time to milliseconds. Does not check input!
    * No validation: hh 0 to 23, mm 0 to 59 ss 0 59, : must exist

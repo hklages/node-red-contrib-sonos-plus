@@ -3,7 +3,7 @@
 // describe('xxxxx', function(){}) instead of describe('xxxxx', () => {})
 // That makes the this.timeout work!
 
-const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, isTruthyProperty,
+const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, extractSatellitesUuids, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
   isOnOff, validToInteger, validRegex }
   = require('../src/Helper.js')
@@ -217,6 +217,85 @@ describe('encodeHtmlEntity function', function () {
       .equal('&lt;&gt;&apos;&amp;&quot;')
   })
 
+})
+
+describe('extractSatellitesUuids function', function () {
+  it('null throws error', async () => {
+    const value = null
+    await extractSatellitesUuids(value)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw(Error, 'invalid parameter - invalid/missing')
+      })
+  })
+  it('not string throws error', async () => {
+    const value = 1
+    await extractSatellitesUuids(value)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw(Error, 'invalid parameter - is not string')
+      })
+  })
+  it('no ;', async () => {
+    const value = 'xxxxxx'
+    await extractSatellitesUuids(value)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw(Error, 'invalid parameter - no ; ')
+      })
+  })
+  it('1 item', async () => {
+    const value
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_000E58FE3AEA01400:SW'
+    const result = await extractSatellitesUuids(value)
+    expect(result)
+      .be.a('array')
+    expect(result[0])
+      .be.a('string')
+      .equal('RINCON_000E58FE3AEA01400')
+    expect(result.length)
+      .be.a('number')
+      .equal(1)
+  })
+  it('2 items', async () => {
+    const value
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_000E58FE3AEA01400:SW'
+    const result = await extractSatellitesUuids(value)
+    expect(result)
+      .be.a('array')
+    expect(result[0])
+      .be.a('string')
+      .equal('RINCON_B8E9375831C001400')
+    expect(result[1])
+      .be.a('string')
+      .equal('RINCON_000E58FE3AEA01400')
+    expect(result.length)
+      .be.a('number')
+      .equal(2)
+  })
+  it('3 items', async () => {
+    const value
+      // eslint-disable-next-line max-len
+      = 'RINCON_48A6B8B5614E01400:LF,RF;RINCON_38420B92ABE601400:RR;RINCON_7828CA042C8401400:LR;RINCON_542A1B108A6201400:SW'
+    const result = await extractSatellitesUuids(value)
+    expect(result)
+      .be.a('array')
+    expect(result[0])
+      .be.a('string')
+      .equal('RINCON_38420B92ABE601400')
+    expect(result[1])
+      .be.a('string')
+      .equal('RINCON_7828CA042C8401400')
+    expect(result[2])
+      .be.a('string')
+      .equal('RINCON_542A1B108A6201400')
+    expect(result.length)
+      .be.a('number')
+      .equal(3)
+  })
 })
 
 describe('hhmmss2msec function', function () {

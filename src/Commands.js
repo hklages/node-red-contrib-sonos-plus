@@ -452,8 +452,16 @@ module.exports = {
    * @property {string} uuid such as RINCON_5CAAFD00223601400
    * @property {string} groupId such as RINCON_5CAAFD00223601400:482
    * @property {boolean} invisible false in case of any bindings otherwise true
-   * @property {string} channelMapSet such as 
+   * @property {string} channelMapSet such as
    *                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
+   *                    is used for stereo pair
+   * @property {string} channelMapSet such as
+   *                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
+   *                    is used for stereo pair
+   * @property {string} HTSatChanMapSet such as
+   *                    RINCON_x01400:LF,RF;RINCON_x01400:RR;RINCON_x01400:LR;RINCON_x01400:SW
+   *                    is used for surround system 5.1 
+   * 
    */
 
   /** Get array of all groups. Each group consist of an array of players <playerGroupData>[]
