@@ -2681,6 +2681,7 @@ module.exports = function (RED) {
     satellites.forEach(async (uuid) =>  {
       await tsMainPlayer.DevicePropertiesService.RemoveHTSatellite(
         { 'SatRoomUUID': uuid })
+      await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](1000)
     })
 
     return {}
