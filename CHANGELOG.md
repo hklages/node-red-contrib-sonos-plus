@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.6.0] 2023-01-10
+
+#### Added
+
+- Universal node: new commands household.add.subwoofer, household.add.satellites, household.remove.satellites
+
+#### Changed
+
+- removed commands from 6.5.0: household.create.surroundsystem, household.separate.surroundsystem
+
 ### [6.5.0] 2023-01-09
 
 #### Added

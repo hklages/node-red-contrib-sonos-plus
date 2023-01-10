@@ -32,7 +32,7 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
-- New commands household.create.surroundsystem, household.separate.surroundsystem
+- New commands household.add.subwoofer, household.add.satellites, household.remove.satellites (removing surroundsystem commands)
 
 - New commands player.get.subwoofer / player.set.subwoofer
 
