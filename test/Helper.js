@@ -244,7 +244,7 @@ describe('extractSatellitesUuids function', function () {
       .catch(function (err) {
         expect(function () {
           throw err 
-        }).to.throw(Error, 'invalid parameter - no ; ')
+        }).to.throw(Error, 'invalid parameter - no satellites (missing ;)')
       })
   })
   it('1 item LR', async () => {

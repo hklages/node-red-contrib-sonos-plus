@@ -649,7 +649,7 @@ describe('getDeviceInfo function', function () {
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities).to.include('LINE_IN')
   })
-
+  
   it('living returns id RINCON_949F3EC13B9901400', async () => {
     const playerUrl = new URL(BEAM)
     const timeout = 2000

@@ -100,7 +100,7 @@ module.exports = {
     }
     
     if (!mapString.includes(';')) {
-      throw new Error('invalid parameter - no ; ')
+      throw new Error('invalid parameter - no satellites (missing ;)')
     }
     const uuidsPlusChannel = mapString.split(';')
     const satellitesUuids = uuidsPlusChannel.filter((item) => {

@@ -2337,7 +2337,7 @@ module.exports = function (RED) {
    *
    */
   async function householdAddSatellites (msg, tsPlayer) {
-    debug('command:%s', 'householdCreateSurroundSystem')
+    debug('command:%s', 'householdAddSatellites')
     // Alle player names are required!
     const playerNameMain = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name main')
     const playerNameRightRear
