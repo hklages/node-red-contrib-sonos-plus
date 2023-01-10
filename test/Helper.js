@@ -247,22 +247,45 @@ describe('extractSatellitesUuids function', function () {
         }).to.throw(Error, 'invalid parameter - no ; ')
       })
   })
-  it('1 item', async () => {
+  it('1 item LR', async () => {
     const value
-      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_000E58FE3AEA01400:SW'
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR'
     const result = await extractSatellitesUuids(value)
     expect(result)
       .be.a('array')
     expect(result[0])
       .be.a('string')
-      .equal('RINCON_000E58FE3AEA01400')
+      .equal('RINCON_B8E9375831C001400')
     expect(result.length)
       .be.a('number')
       .equal(1)
   })
+  it('1 item RR', async () => {
+    const value
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_38420B92ABE601400:RR'
+    const result = await extractSatellitesUuids(value)
+    expect(result)
+      .be.a('array')
+    expect(result[0])
+      .be.a('string')
+      .equal('RINCON_38420B92ABE601400')
+    expect(result.length)
+      .be.a('number')
+      .equal(1)
+  })
+  it('1 item SW', async () => {
+    const value
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_000E58FE3AEA01400:SW'
+    await extractSatellitesUuids(value)
+      .catch(function (err) {
+        expect(function () {
+          throw err 
+        }).to.throw(Error, 'invalid parameter -  number of satellites')
+      })
+  })
   it('2 items', async () => {
     const value
-      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_000E58FE3AEA01400:SW'
+      = 'RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_38420B92ABE601400:RR'
     const result = await extractSatellitesUuids(value)
     expect(result)
       .be.a('array')
@@ -271,7 +294,7 @@ describe('extractSatellitesUuids function', function () {
       .equal('RINCON_B8E9375831C001400')
     expect(result[1])
       .be.a('string')
-      .equal('RINCON_000E58FE3AEA01400')
+      .equal('RINCON_38420B92ABE601400')
     expect(result.length)
       .be.a('number')
       .equal(2)
@@ -289,12 +312,9 @@ describe('extractSatellitesUuids function', function () {
     expect(result[1])
       .be.a('string')
       .equal('RINCON_7828CA042C8401400')
-    expect(result[2])
-      .be.a('string')
-      .equal('RINCON_542A1B108A6201400')
     expect(result.length)
       .be.a('number')
-      .equal(3)
+      .equal(2)
   })
 })
 

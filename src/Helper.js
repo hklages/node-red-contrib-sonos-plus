@@ -77,16 +77,18 @@ module.exports = {
     })
   },
 
-  /** Provides an array of satellite UUID's of HTSatChanMapSet 
+  /** Provides an array of satellite UUID's of HTSatChanMapSet (not the subwoofer SW).
    * @param {string} mapString string from HTSatChanMapSet
    * 
-   * @returns {Promise<array of strings>} array of string with UUID, length 1 to 3
+   * @returns {Promise<array of strings>} array of string with satellite UUIDs, length 1 to 2
    * 
    * @throws {error} 
    * 
-   * Example mapString (short version, can have also :RR) - maximum 3 uuid
-   * "RINCON_949F3EC13B9901400:LF,RF;RINCON_B8E9375831C001400:LR;RINCON_000E58FE3AEA01400:SW"
    */
+  // Example
+  // eslint-disable-next-line max-len
+  // RINCON_48A6B8B5614E01400:LF,RF;RINCON_38420B92ABE601400:RR;RINCON_7828CA042C8401400:LR;RINCON_542A1B108A6201400:SW
+   
   extractSatellitesUuids: async (mapString) => {
     debug('method:%s', 'extractSatellitesUuids')
 
@@ -96,20 +98,22 @@ module.exports = {
     if (typeof mapString !== 'string') {
       throw new Error('invalid parameter - is not string')
     }
-    // removing :LF,RF and :LR and :RR and :SW
-    const cleanedMapString = mapString.replace(/:LF,RF|:LR|:RR|:SW/g, '')
     
-    // splitting and removing main player
-    if (!cleanedMapString.includes(';')) {
+    if (!mapString.includes(';')) {
       throw new Error('invalid parameter - no ; ')
     }
-    const uuids = cleanedMapString.split(';')
-    uuids.shift() // removing the first = main player
-    if (!(uuids.length >= 1 && uuids.length <= 4)) {
+    const uuidsPlusChannel = mapString.split(';')
+    const satellitesUuids = uuidsPlusChannel.filter((item) => {
+      return item.includes(':LR')||item.includes(':RR')
+    })
+    if (!(satellitesUuids.length >= 1 && satellitesUuids.length <= 2)) {
       throw new Error('invalid parameter -  number of satellites')
     }
-  
-    return uuids 
+    
+    // removing :LR and :RR
+    return satellitesUuids.map((item) => {
+      return item.replace(/:LR|:RR/, '')
+    }) 
   },
   
   /** Converts hh:mm:ss time to milliseconds. Does not check input!
