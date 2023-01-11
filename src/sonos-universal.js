@@ -2391,10 +2391,12 @@ module.exports = function (RED) {
   }
 
   /**
-   * Add a subwoofer to a player. Subwoofer will become hidden.
+   * Add a subwoofer to a player. Subwoofer will become hidden. As sub woofer dont have names, 
+   * we need to use the ip-address
+   * 
    * @param {object} msg incoming message
    * @param {string} msg.payload - the main player, will keep visible
-   * @param {string} msg.playerNameSubwoofer - subwoofer, will become invisible
+   * @param {string} msg.ipSubwoofer - subwoofer, will become invisible
    * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -2408,12 +2410,11 @@ module.exports = function (RED) {
    */
   async function householdAddSubwoofer (msg, tsPlayer) {
     debug('command:%s', 'householdAddSubwoofer')
-    // Alle player names are required!
+    // main player name and subwoofer ip is required!
     const playerNameMain = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name main')
-    const playerNameSubwoofer
-      = validRegex(msg, 'playerNameSubwoofer', REGEX_ANYCHAR, 'player name subwoofer')
+    const ipSubwoofer = validRegex(msg, 'ipSubwoofer', REGEX_IP, 'ip subwoofer')
 
-    // Get the group data and extra the uuid, urlObject
+    // Get the group data and extra the uuid, ip, urlObject
     const allGroupsData = await getGroupsAll(tsPlayer, false)
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
@@ -2425,12 +2426,11 @@ module.exports = function (RED) {
     let playerMainUrlObject = null // needed to create the tsMainPlayer
     for (const group of allGroupsData) {
       for (const member of group) {
-        const name = member.playerName
-        if (name === playerNameMain) {
+        if (member.playerName === playerNameMain) {
           playerMainUuid = member.uuid
           playerMainUrlObject = member.urlObject
         }
-        if (name === playerNameSubwoofer) {
+        if (member.urlObject.hostname === ipSubwoofer) {
           playerSubwooferUuid = member.uuid
         }
       }
@@ -2439,7 +2439,7 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} SONOS-Playername main was not found`)
     }
     if (playerSubwooferUuid === '') {
-      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername subwoofer was not found`)
+      throw new Error(`${PACKAGE_PREFIX} subwoofer ip was not found`)
     }
 
     // We have to use main player
