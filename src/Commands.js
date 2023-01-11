@@ -455,9 +455,6 @@ module.exports = {
    * @property {string} channelMapSet such as
    *                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
    *                    is used for stereo pair
-   * @property {string} channelMapSet such as
-   *                    RINCON_000E58FE3AEA01400:LF,LF;RINCON_B8E9375831C001400:RF,RF
-   *                    is used for stereo pair
    * @property {string} HTSatChanMapSet such as
    *                    RINCON_x01400:LF,RF;RINCON_x01400:RR;RINCON_x01400:LR;RINCON_x01400:SW
    *                    is used for surround system 5.1 
