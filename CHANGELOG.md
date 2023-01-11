@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.6.1] 2023-01-11
+
+#### Changed
+
+- Universal node: household.add.subwoofer with ip instead of SONOS-Playername
+
 ### [6.6.0] 2023-01-10
 
 #### Added
