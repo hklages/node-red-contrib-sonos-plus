@@ -288,7 +288,7 @@ module.exports = {
       } 
       if (typeof value === 'string') {
         if (!REGEX_TIME_24.test(value)) {
-          throw new Error(`${txtPrefix} >>${value}) is not a time`)
+          throw new Error(`${txtPrefix} >>${value} is not a valid time`)
         }
         validValue = value
       } 

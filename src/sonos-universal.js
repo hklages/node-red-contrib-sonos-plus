@@ -2466,6 +2466,14 @@ module.exports = function (RED) {
     debug('command:%s', 'householdDisableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
+
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })
 
     return {}
@@ -2485,6 +2493,13 @@ module.exports = function (RED) {
     debug('command:%s', 'householdEnableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })
 
     return {}
@@ -2503,6 +2518,7 @@ module.exports = function (RED) {
   async function householdGetAlarms (msg, tsPlayer) {
     debug('command:%s', 'householdGetAlarms')
     const payload = await getAlarmsAll(tsPlayer)
+
     return { payload }
   }
 
@@ -2704,8 +2720,18 @@ module.exports = function (RED) {
    */
   async function householdSetAlarmTime (msg, tsPlayer) {
     debug('command:%s', 'householdSetAlarmTime')
+    // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'Alarm Id')
+    // alarmTime is required
     const validAlarmTime = validTime(msg, 'alarmTime', 'Alarm time')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
+
     await tsPlayer.AlarmClockService.PatchAlarm(
       { ID: validAlarmId, StartLocalTime: validAlarmTime })
     
