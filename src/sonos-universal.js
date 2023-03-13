@@ -30,7 +30,7 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger, encodeHtmlEntity, extractSatellitesUuids
+  validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -111,6 +111,7 @@ module.exports = function (RED) {
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
+    'household.set.alarmTime': householdSetAlarmTime,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
     'household.wakeup.player': householdPlayerWakeUp,
@@ -2687,6 +2688,27 @@ module.exports = function (RED) {
     const tsLeftPlayer = new SonosDevice(leftPlayerData.urlObject.hostname)
     await tsLeftPlayer.DevicePropertiesService.SeparateStereoPair(
       { 'ChannelMapSet': leftPlayerData.channelMapSet })
+    return {}
+  }
+
+  /**
+   *  Set household alarm Time.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {string} msg.alarmStart - the time at which the alarm should start (hh:mm:ss format)
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdSetAlarmTime (msg, tsPlayer) {
+    debug('command:%s', 'householdSetAlarmTime')
+    const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'Alarm Id')
+    const validAlarmTime = validTime(msg, 'alarmTime', 'Alarm time')
+    await tsPlayer.AlarmClockService.PatchAlarm(
+      { ID: validAlarmId, StartLocalTime: validAlarmTime })
+    
     return {}
   }
 

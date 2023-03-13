@@ -16,7 +16,8 @@
 
 'use strict'
 
-const { PACKAGE_PREFIX, REGEX_4DIGITSSIGN, VALIDATION_INTEGER_MAXIMUM, VALIDATION_INTEGER_MINIMUM
+const { PACKAGE_PREFIX, REGEX_4DIGITSSIGN, VALIDATION_INTEGER_MAXIMUM, VALIDATION_INTEGER_MINIMUM,
+  REGEX_TIME_24
 } = require('./Globals.js')
 
 const debug = require('debug')(`${PACKAGE_PREFIX}helper`)
@@ -256,6 +257,48 @@ module.exports = {
       return (propertyNameExists ? validValue : defaultValue)
     }
     
+  },
+
+  /** Validates msg[propertyName] is a Time at hh:mm:ss format. 
+   *  
+   * @param {object} msg Node-RED message
+   * @param {(string|number)} msg.propertyName item, to be validated
+   * @param {string} propertyName property name
+   * @param {string} propertyMeaning additional information, being included in error message
+   *
+   * @returns {string} the valid time in hh:mm:ss format
+   *
+   * @throws {error} see code
+   * @throws {error} all methods
+   */
+  validTime: (msg, propertyName, propertyMeaning) => {
+    debug('method:%s', 'validTime')
+      
+    // does propertyName exist? if yes validate and store the time
+    const path = []
+    path.push(propertyName)
+    const propertyNameExists = module.exports.isTruthyProperty(msg, path)
+    let validValue
+    if (propertyNameExists) {
+      const txtPrefix = `${PACKAGE_PREFIX} ${propertyMeaning} (msg.${propertyName})`
+      const value = msg[propertyName]
+  
+      if (typeof value !== 'string') {
+        throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning}  is not a string`)
+      } 
+      if (typeof value === 'string') {
+        if (!REGEX_TIME_24.test(value)) {
+          throw new Error(`${txtPrefix} >>${value}) is not a time`)
+        }
+        validValue = value
+      } 
+          
+    } else {
+      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+    }
+  
+    return validValue
+  
   },
 
   /** Validates msg[propertyName] against regex and returns that value or a default value.
