@@ -603,7 +603,7 @@ describe('validRegex function', function () {
     const msg = { 'payload': '01:02:03' }
     const propertyName = 'payload'
     const propertyMeaning = 'just a test'
-    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
     const defaultValue = '00:00:01'
     const result
       = validRegex(msg, propertyName, regex, propertyMeaning, defaultValue)
@@ -616,7 +616,7 @@ describe('validRegex function', function () {
     const msg = { }
     const propertyName = 'payload'
     const propertyMeaning = 'just a test'
-    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
     const defaultValue = '00:00:01'
     const result
       = validRegex(msg, propertyName, regex, propertyMeaning, defaultValue)

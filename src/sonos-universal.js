@@ -11,7 +11,7 @@
 'use strict'
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
-  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
+  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME_SPECIAL, REGEX_MACADDRESS,
   REGEX_TIME_DELTA, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
@@ -1264,7 +1264,7 @@ module.exports = function (RED) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
       }
-      if (!REGEX_TIME.test(msg.duration)) {
+      if (!REGEX_TIME_SPECIAL.test(msg.duration)) {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not format hh:mm:ss`)
       }
       options.duration = msg.duration
@@ -1919,7 +1919,7 @@ module.exports = function (RED) {
   async function groupSeek (msg, tsPlayer) {
     debug('command:%s', 'groupSeek')
     // Payload seek time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME, 'seek time')
+    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'seek time')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2078,7 +2078,7 @@ module.exports = function (RED) {
   async function groupSetSleeptimer (msg, tsPlayer) {
     debug('command:%s', 'groupSetSleeptimer')
     // Payload sleep time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME, 'timer duration')
+    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'timer duration')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -2923,7 +2923,7 @@ module.exports = function (RED) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
       }
-      if (!REGEX_TIME.test(msg.duration)) {
+      if (!REGEX_TIME_SPECIAL.test(msg.duration)) {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not format hh:mm:ss`)
       }
       options.duration = msg.duration
