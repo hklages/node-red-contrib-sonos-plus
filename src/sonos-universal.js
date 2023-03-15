@@ -2320,7 +2320,7 @@ module.exports = function (RED) {
   /**
    * Adds satellites to a player. It will form a 5.1 surround system if a sub is added.
    * Surround systems are only supported for some type of SONOS player - see SONOS documentation.
-   * Working example: Beam, One, One, Sub.
+   * Working example: Beam, One, One, Sub. Github #238
    * @param {object} msg incoming message
    * @param {string} msg.payload - the main player, will keep visible
    * @param {string} msg.playerNameRightRear - right rear player, will become invisible
@@ -2393,7 +2393,7 @@ module.exports = function (RED) {
   /**
    * Add a subwoofer to a player. Subwoofer will become hidden. As sub woofer doesn't have names, 
    * we need to use the ip-address. In case of a Home Theater 5.1 we use AddHTSatellite
-   * and otherwise AddBondedZones.
+   * and otherwise AddBondedZones. Github #238
    * 
    * @param {object} msg incoming message
    * @param {string} msg.payload - the main player, will keep visible
@@ -2709,7 +2709,7 @@ module.exports = function (RED) {
 
   /**
    *  Removes only the satellites (not the subwoofer) of players. 
-   * All players will become visible again.
+   * All players will become visible again. Github #238
    * @param {object} msg incoming message
    * @param {string} msg.payload - main SONOS-Playername, is visible
    * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
