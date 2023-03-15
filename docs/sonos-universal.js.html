@@ -39,7 +39,7 @@
 'use strict'
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
-  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
+  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME_SPECIAL, REGEX_MACADDRESS,
   REGEX_TIME_DELTA, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
@@ -58,7 +58,7 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger, encodeHtmlEntity, extractSatellitesUuids
+  validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -139,6 +139,7 @@ module.exports = function (RED) {
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
+    'household.set.alarmTime': householdSetAlarmTime,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
     'household.wakeup.player': householdPlayerWakeUp,
@@ -1291,7 +1292,7 @@ module.exports = function (RED) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
       }
-      if (!REGEX_TIME.test(msg.duration)) {
+      if (!REGEX_TIME_SPECIAL.test(msg.duration)) {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not format hh:mm:ss`)
       }
       options.duration = msg.duration
@@ -1946,7 +1947,7 @@ module.exports = function (RED) {
   async function groupSeek (msg, tsPlayer) {
     debug('command:%s', 'groupSeek')
     // Payload seek time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME, 'seek time')
+    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'seek time')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2105,7 +2106,7 @@ module.exports = function (RED) {
   async function groupSetSleeptimer (msg, tsPlayer) {
     debug('command:%s', 'groupSetSleeptimer')
     // Payload sleep time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME, 'timer duration')
+    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'timer duration')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -2348,7 +2349,7 @@ module.exports = function (RED) {
   /**
    * Adds satellites to a player. It will form a 5.1 surround system if a sub is added.
    * Surround systems are only supported for some type of SONOS player - see SONOS documentation.
-   * Working example: Beam, One, One, Sub.
+   * Working example: Beam, One, One, Sub. Github #238
    * @param {object} msg incoming message
    * @param {string} msg.payload - the main player, will keep visible
    * @param {string} msg.playerNameRightRear - right rear player, will become invisible
@@ -2419,10 +2420,14 @@ module.exports = function (RED) {
   }
 
   /**
-   * Add a subwoofer to a player. Subwoofer will become hidden.
+   * Add a subwoofer to a player. Subwoofer will become hidden. As sub woofer doesn't have names, 
+   * we need to use the ip-address. In case of a Home Theater 5.1 we use AddHTSatellite
+   * and otherwise AddBondedZones. Github #238
+   * 
    * @param {object} msg incoming message
    * @param {string} msg.payload - the main player, will keep visible
-   * @param {string} msg.playerNameSubwoofer - subwoofer, will become invisible
+   * @param {string} msg.ipSubwoofer - subwoofer, will become invisible
+   * @param {boolean} [msg.isHTsystem = true] - is an Home Theater
    * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise&lt;object>} {}
@@ -2436,12 +2441,19 @@ module.exports = function (RED) {
    */
   async function householdAddSubwoofer (msg, tsPlayer) {
     debug('command:%s', 'householdAddSubwoofer')
-    // Alle player names are required!
+    // main player name and subwoofer ip is required!
     const playerNameMain = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name main')
-    const playerNameSubwoofer
-      = validRegex(msg, 'playerNameSubwoofer', REGEX_ANYCHAR, 'player name subwoofer')
+    const ipSubwoofer = validRegex(msg, 'ipSubwoofer', REGEX_IP, 'ip subwoofer')
 
-    // Get the group data and extra the uuid, urlObject
+    let isHTsystem = true // default
+    if (isTruthyProperty(msg, ['isHTsystem'])) {
+      if (typeof msg.isHTsystem !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: msg.isHTsystem is not boolean`)
+      }
+      isHTsystem = msg.ignoreNotExists
+    }
+
+    // Get the group data and extra the uuid, ip, urlObject
     const allGroupsData = await getGroupsAll(tsPlayer, false)
     if (!isTruthy(allGroupsData)) {
       throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
@@ -2453,12 +2465,11 @@ module.exports = function (RED) {
     let playerMainUrlObject = null // needed to create the tsMainPlayer
     for (const group of allGroupsData) {
       for (const member of group) {
-        const name = member.playerName
-        if (name === playerNameMain) {
+        if (member.playerName === playerNameMain) {
           playerMainUuid = member.uuid
           playerMainUrlObject = member.urlObject
         }
-        if (name === playerNameSubwoofer) {
+        if (member.urlObject.hostname === ipSubwoofer) {
           playerSubwooferUuid = member.uuid
         }
       }
@@ -2467,15 +2478,22 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} SONOS-Playername main was not found`)
     }
     if (playerSubwooferUuid === '') {
-      throw new Error(`${PACKAGE_PREFIX} SONOS-Playername subwoofer was not found`)
+      throw new Error(`${PACKAGE_PREFIX} subwoofer ip was not found`)
     }
 
     // We have to use main player
-    const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
-    await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
-      // eslint-disable-next-line max-len
-      { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
-
+    if (isHTsystem) {
+      const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
+      await tsMainPlayer.DevicePropertiesService.AddHTAddBondedZones(
+        // eslint-disable-next-line max-len
+        { 'ChannelMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
+    } else {
+      const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
+      await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
+        // eslint-disable-next-line max-len
+        { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })   
+    }
+   
     return {}
   }
 
@@ -2493,6 +2511,14 @@ module.exports = function (RED) {
     debug('command:%s', 'householdDisableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
+
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })
 
     return {}
@@ -2512,6 +2538,13 @@ module.exports = function (RED) {
     debug('command:%s', 'householdEnableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })
 
     return {}
@@ -2530,6 +2563,7 @@ module.exports = function (RED) {
   async function householdGetAlarms (msg, tsPlayer) {
     debug('command:%s', 'householdGetAlarms')
     const payload = await getAlarmsAll(tsPlayer)
+
     return { payload }
   }
 
@@ -2719,8 +2753,39 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Set household alarm Time.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {string} msg.alarmStart - the time at which the alarm should start (hh:mm:ss format)
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise&lt;object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdSetAlarmTime (msg, tsPlayer) {
+    debug('command:%s', 'householdSetAlarmTime')
+    // Payload alarm id is required.
+    const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'Alarm Id')
+    // alarmTime is required
+    const validAlarmTime = validTime(msg, 'alarmTime', 'Alarm time')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
+
+    await tsPlayer.AlarmClockService.PatchAlarm(
+      { ID: validAlarmId, StartLocalTime: validAlarmTime })
+    
+    return {}
+  }
+
+  /**
    *  Removes only the satellites (not the subwoofer) of players. 
-   * All players will become visible again.
+   * All players will become visible again. Github #238
    * @param {object} msg incoming message
    * @param {string} msg.payload - main SONOS-Playername, is visible
    * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
@@ -2903,7 +2968,7 @@ module.exports = function (RED) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
       }
-      if (!REGEX_TIME.test(msg.duration)) {
+      if (!REGEX_TIME_SPECIAL.test(msg.duration)) {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not format hh:mm:ss`)
       }
       options.duration = msg.duration
@@ -3755,7 +3820,7 @@ module.exports = function (RED) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Jan 10 2023 15:47:37 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.2</a> on Wed Mar 15 2023 09:43:59 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

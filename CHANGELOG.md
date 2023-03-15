@@ -10,6 +10,12 @@ All notable changes to this project are documented in this file.
 
 #### Changed
 
+- changed add.subwoofer to make it work with non HTsystems
+
+- correct artUri for apple data
+
+- alarm.enable/disable validates the alarm id
+
 - updated dependencies
 
 ### [6.6.1] 2023-01-11

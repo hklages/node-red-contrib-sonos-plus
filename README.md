@@ -34,6 +34,10 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 - New command household.set.alarm
 
+- household.add.subwoofer now support non - HT systems
+
+- bugfixing artUri for some apple tracks
+
 - New commands household.add.subwoofer, household.add.satellites, household.remove.satellites (removing surroundsystem commands)
 
 - New commands player.get.subwoofer / player.set.subwoofer
