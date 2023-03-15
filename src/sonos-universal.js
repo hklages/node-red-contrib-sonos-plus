@@ -2391,12 +2391,14 @@ module.exports = function (RED) {
   }
 
   /**
-   * Add a subwoofer to a player. Subwoofer will become hidden. As sub woofer dont have names, 
-   * we need to use the ip-address
+   * Add a subwoofer to a player. Subwoofer will become hidden. As sub woofer doesn't have names, 
+   * we need to use the ip-address. In case of a Home Theater 5.1 we use AddHTSatellite
+   * and otherwise AddBondedZones.
    * 
    * @param {object} msg incoming message
    * @param {string} msg.payload - the main player, will keep visible
    * @param {string} msg.ipSubwoofer - subwoofer, will become invisible
+   * @param {boolean} [msg.isHTsystem = true] - is an Home Theater
    * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -2413,6 +2415,14 @@ module.exports = function (RED) {
     // main player name and subwoofer ip is required!
     const playerNameMain = validRegex(msg, 'payload', REGEX_ANYCHAR, 'player name main')
     const ipSubwoofer = validRegex(msg, 'ipSubwoofer', REGEX_IP, 'ip subwoofer')
+
+    let isHTsystem = true // default
+    if (isTruthyProperty(msg, ['isHTsystem'])) {
+      if (typeof msg.isHTsystem !== 'boolean') {
+        throw new Error(`${PACKAGE_PREFIX}: msg.isHTsystem is not boolean`)
+      }
+      isHTsystem = msg.ignoreNotExists
+    }
 
     // Get the group data and extra the uuid, ip, urlObject
     const allGroupsData = await getGroupsAll(tsPlayer, false)
@@ -2443,11 +2453,18 @@ module.exports = function (RED) {
     }
 
     // We have to use main player
-    const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
-    await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
-      // eslint-disable-next-line max-len
-      { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
-
+    if (isHTsystem) {
+      const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
+      await tsMainPlayer.DevicePropertiesService.AddHTAddBondedZones(
+        // eslint-disable-next-line max-len
+        { 'ChannelMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
+    } else {
+      const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
+      await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
+        // eslint-disable-next-line max-len
+        { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })   
+    }
+   
     return {}
   }
 
