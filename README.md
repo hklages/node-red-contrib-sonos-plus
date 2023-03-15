@@ -32,17 +32,11 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
+- New command household.set.alarm
+
 - New commands household.add.subwoofer, household.add.satellites, household.remove.satellites (removing surroundsystem commands)
 
 - New commands player.get.subwoofer / player.set.subwoofer
-
-- New ENV variable to set Spotify region US for US, Australie, New Zealand, ..
-
-- New household.wakeup.player, more error messages
-
-- New command household.update.musiclibrary, household.get.musiclibrary.options
-
-- DNS names are now supported and recommended instead of pure ipv4 address (config dialog)
 
 ### QUICKSTART - DEGUG - SUPPORT
 

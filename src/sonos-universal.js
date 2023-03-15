@@ -11,7 +11,7 @@
 'use strict'
 
 const { PACKAGE_PREFIX, REGEX_ANYCHAR, REGEX_CSV, REGEX_HTTP, REGEX_IP, REGEX_DNS,
-  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME, REGEX_MACADDRESS,
+  REGEX_QUEUEMODES, REGEX_RADIO_ID, REGEX_SERIAL, REGEX_TIME_SPECIAL, REGEX_MACADDRESS,
   REGEX_TIME_DELTA, TIMEOUT_HTTP_REQUEST,
   ML_REQUESTS_MAXIMUM, QUEUE_REQUESTS_MAXIMUM, REGEX_ALBUMARTISTDISPLAY
 } = require('./Globals.js')
@@ -30,7 +30,7 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger, encodeHtmlEntity, extractSatellitesUuids
+  validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -111,6 +111,7 @@ module.exports = function (RED) {
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
+    'household.set.alarmTime': householdSetAlarmTime,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
     'household.wakeup.player': householdPlayerWakeUp,
@@ -1263,7 +1264,7 @@ module.exports = function (RED) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
       }
-      if (!REGEX_TIME.test(msg.duration)) {
+      if (!REGEX_TIME_SPECIAL.test(msg.duration)) {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not format hh:mm:ss`)
       }
       options.duration = msg.duration
@@ -1918,7 +1919,7 @@ module.exports = function (RED) {
   async function groupSeek (msg, tsPlayer) {
     debug('command:%s', 'groupSeek')
     // Payload seek time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME, 'seek time')
+    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'seek time')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -2077,7 +2078,7 @@ module.exports = function (RED) {
   async function groupSetSleeptimer (msg, tsPlayer) {
     debug('command:%s', 'groupSetSleeptimer')
     // Payload sleep time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME, 'timer duration')
+    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'timer duration')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -2482,6 +2483,14 @@ module.exports = function (RED) {
     debug('command:%s', 'householdDisableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
+
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: false })
 
     return {}
@@ -2501,6 +2510,13 @@ module.exports = function (RED) {
     debug('command:%s', 'householdEnableAlarm')
     // Payload alarm id is required.
     const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'enable alarm')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
     await tsPlayer.AlarmClockService.PatchAlarm({ ID: validAlarmId, Enabled: true })
 
     return {}
@@ -2519,6 +2535,7 @@ module.exports = function (RED) {
   async function householdGetAlarms (msg, tsPlayer) {
     debug('command:%s', 'householdGetAlarms')
     const payload = await getAlarmsAll(tsPlayer)
+
     return { payload }
   }
 
@@ -2708,6 +2725,37 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Set household alarm Time.
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload alarm id, integer, not negative
+   * @param {string} msg.alarmStart - the time at which the alarm should start (hh:mm:ss format)
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function householdSetAlarmTime (msg, tsPlayer) {
+    debug('command:%s', 'householdSetAlarmTime')
+    // Payload alarm id is required.
+    const validAlarmId = validToInteger(msg, 'payload', 0, 9999, 'Alarm Id')
+    // alarmTime is required
+    const validAlarmTime = validTime(msg, 'alarmTime', 'Alarm time')
+
+    // check existence of alarm id 
+    const alarmsObject = await getAlarmsAll(tsPlayer)
+    const matchArray = alarmsObject.alarms.filter(alarm => alarm.ID === validAlarmId.toString())
+    if (matchArray.length !== 1) {
+      throw new Error(`${PACKAGE_PREFIX} Could not find any alarm with that id`)
+    }
+
+    await tsPlayer.AlarmClockService.PatchAlarm(
+      { ID: validAlarmId, StartLocalTime: validAlarmTime })
+    
+    return {}
+  }
+
+  /**
    *  Removes only the satellites (not the subwoofer) of players. 
    * All players will become visible again. Github #238
    * @param {object} msg incoming message
@@ -2892,7 +2940,7 @@ module.exports = function (RED) {
       if (typeof msg.duration !== 'string') {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not a string`)
       }
-      if (!REGEX_TIME.test(msg.duration)) {
+      if (!REGEX_TIME_SPECIAL.test(msg.duration)) {
         throw new Error(`${PACKAGE_PREFIX} duration (msg.duration) is not format hh:mm:ss`)
       }
       options.duration = msg.duration

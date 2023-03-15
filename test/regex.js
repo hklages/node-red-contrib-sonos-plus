@@ -152,7 +152,7 @@ describe('REGEX_HTTP - valid', function () {
   })
 })
 
-describe('REGEX_TIME - invalid', function () {
+describe('REGEX_TIME_SPECIAL - invalid', function () {
   const tests = [
     '', // empty
     ':',
@@ -172,13 +172,13 @@ describe('REGEX_TIME - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_TIME.test(item))
+      expect(regex.REGEX_TIME_SPECIAL.test(item))
         .be.a('boolean')
         .to.be.false
     })
   })
 })
-describe('REGEX_TIME - valid', function () {
+describe('REGEX_TIME_SPECIAL - valid', function () {
   const tests = [
     '00:00:00',
     '12:00:00',
@@ -189,7 +189,7 @@ describe('REGEX_TIME - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_TIME.test(item))
+      expect(regex.REGEX_TIME_SPECIAL.test(item))
         .be.a('boolean')
         .to.be.true
     })

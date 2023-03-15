@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.7.0] 2023-03-15
+
+#### Added
+
+- Universal node: new command household.set.alarm
+
+#### Changed
+
+- updated dependencies
+
 ### [6.6.1] 2023-01-11
 
 #### Changed
@@ -449,7 +459,7 @@ payload.mediaData.CurrentURIMetaData is object/undefined instead of string/empty
 
 - artUri now instead of AlbumArtUri - may break some flows!
 
-- bugfix: sometimes http:// prefix 2 times
+- bugfix: sometimes http prefix 2 times
 
 - internal: dependencies fs-extra, path removed, eslint update
 

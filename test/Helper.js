@@ -5,7 +5,7 @@
 
 const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, extractSatellitesUuids, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
-  isOnOff, validToInteger, validRegex }
+  isOnOff, validToInteger, validRegex, validTime }
   = require('../src/Helper.js')
 
 const { describe, it } = require('mocha')
@@ -603,7 +603,7 @@ describe('validRegex function', function () {
     const msg = { 'payload': '01:02:03' }
     const propertyName = 'payload'
     const propertyMeaning = 'just a test'
-    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
     const defaultValue = '00:00:01'
     const result
       = validRegex(msg, propertyName, regex, propertyMeaning, defaultValue)
@@ -616,13 +616,169 @@ describe('validRegex function', function () {
     const msg = { }
     const propertyName = 'payload'
     const propertyMeaning = 'just a test'
-    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
     const defaultValue = '00:00:01'
     const result
       = validRegex(msg, propertyName, regex, propertyMeaning, defaultValue)
     expect(result)
       .be.a('string')
       .equal('00:00:01')
+  })
+
+})
+
+describe('validTime function', function () {
+    
+  it('string 00:00:00', () => {
+    const msg = { 'startTime': '00:00:00' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('00:00:00')
+  })
+
+  it('string 00:00:01 ', () => {
+    const msg = { 'startTime': '00:00:01' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('00:00:01')
+  })
+
+  it('string 00:01:01 ', () => {
+    const msg = { 'startTime': '00:01:01' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('00:01:01')
+  })
+
+  it('string 01:01:01 ', () => {
+    const msg = { 'startTime': '01:01:01' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('01:01:01')
+  })
+
+  it('string 00:00:59 ', () => {
+    const msg = { 'startTime': '00:00:59' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('00:00:59')
+  })
+
+  it('string 00:59:01 ', () => {
+    const msg = { 'startTime': '00:59:01' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('00:59:01')
+  })
+
+  it('string 23:01:01 ', () => {
+    const msg = { 'startTime': '23:01:01' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('23:01:01')
+  })
+
+  it('string 23:59:59 ', () => {
+    const msg = { 'startTime': '23:59:59' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    const result
+      = validTime(msg, propertyName, propertyMeaning)
+    expect(result)
+      .be.a('string')
+      .equal('23:59:59')
+  })
+
+  it('throw exception invalid 24:00:00', () => {
+    const msg = { 'startTime': '24:00:00' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (msg.startTime) >>24:00:00 is not a valid time')
+  })
+
+  it('throw exception invalid 0:00:00', () => {
+    const msg = { 'startTime': '0:00:00' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (msg.startTime) >>0:00:00 is not a valid time')
+  })
+
+  it('throw exception invalid 00:60:00', () => {
+    const msg = { 'startTime': '00:60:00' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (msg.startTime) >>00:60:00 is not a valid time')
+  })
+
+  it('throw exception invalid 00:00:60', () => {
+    const msg = { 'startTime': '00:00:60' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (msg.startTime) >>00:00:60 is not a valid time')
+  })
+
+  it('throw exception invalid 00:0:00', () => {
+    const msg = { 'startTime': '00:0:00' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (msg.startTime) >>00:0:00 is not a valid time')
+  })
+
+  it('throw exception invalid 00:00:0', () => {
+    const msg = { 'startTime': '00:00:0' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (msg.startTime) >>00:00:0 is not a valid time')
+  })
+
+  it('throw exception missing startTime', () => {
+    const msg = { 'xxxxxx': '00:00:0' }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test (startTime) is missing/invalid')
+  })
+
+  it('throw exception integer', () => {
+    const msg = { 'startTime': 5 }
+    const propertyName = 'startTime'
+    const propertyMeaning = 'just a test'
+    expect(validTime.bind(validTime, msg, propertyName, propertyMeaning))
+      .to.throw('nrcsp: just a test  is not a string')
   })
 
 })
