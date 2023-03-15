@@ -384,7 +384,7 @@ module.exports = {
 
   /** 
    * Returns an array (always) of items (DidlBrowseItem) extracted from action "Browse" output. 
-   * title, id, artist, album are html decoded. uri, r:resMD (string) arent! 
+   * title, id, artist, album are html decoded. uri, r:resMD (string) aren't! 
    * @param {object} browseOutcome Browse outcome
    * @param {number} browseOutcome.NumberReturned amount returned items
    * @param {number} browseOutcome.TotalMatches amount of total item
