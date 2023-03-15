@@ -2422,7 +2422,7 @@ module.exports = function (RED) {
       if (typeof msg.isHTsystem !== 'boolean') {
         throw new Error(`${PACKAGE_PREFIX}: msg.isHTsystem is not boolean`)
       }
-      isHTsystem = msg.ignoreNotExists
+      isHTsystem = msg.isHTsystem
     }
 
     // Get the group data and extra the uuid, ip, urlObject
@@ -2456,14 +2456,14 @@ module.exports = function (RED) {
     // We have to use main player
     if (isHTsystem) {
       const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
-      await tsMainPlayer.DevicePropertiesService.AddHTAddBondedZones(
-        // eslint-disable-next-line max-len
-        { 'ChannelMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
-    } else {
-      const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
       await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
         // eslint-disable-next-line max-len
         { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })   
+    } else {
+      const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
+      await tsMainPlayer.DevicePropertiesService.AddBondedZones(
+        // eslint-disable-next-line max-len
+        { 'ChannelMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
     }
    
     return {}
