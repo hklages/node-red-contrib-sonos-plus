@@ -31,7 +31,7 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
   validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime, validPropertyRequiredRegex,
-  validPropertyRequiredInteger, validPropertyOptionalBoolean
+  validPropertyRequiredInteger
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -3407,7 +3407,6 @@ module.exports = function (RED) {
    * @param {object} msg NODE-RED incoming message object
    * @param {string} msg.payload uri of clip (such as http://)
    * @param {number/string} msg.volume volume at what the clip is being played
-   * @param {boolean} [msg.onlywhenplaying=true] only when SONOS-Player is playing?
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
@@ -3422,7 +3421,6 @@ module.exports = function (RED) {
     // required: payload = notification, volume. Optional: onlyWhenPlaying with default = true
     const validatedUri = validPropertyRequiredRegex(msg, 'payload', REGEX_HTTP)
     const validatedVolume = validPropertyRequiredInteger(msg, 'volume', 0, 100)
-    const validatedOnlyWhenPlaying = validPropertyOptionalBoolean(msg, 'onlyWhenPlaying', true)
 
     // create new sonos-ts player object to be used - using playerName - if given -  or tsPlayer
     const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
@@ -3430,7 +3428,6 @@ module.exports = function (RED) {
         
     await selectedPlayer.PlayNotificationAudioClip({
       trackUri: validatedUri,
-      onlywhenplaying: validatedOnlyWhenPlaying, 
       volume: validatedVolume
     })
 
