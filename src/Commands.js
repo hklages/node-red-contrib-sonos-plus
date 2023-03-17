@@ -20,8 +20,11 @@ const {
   parseZoneGroupToArray, parseAlarmsToArray
 } = require('./Extensions.js')
 
-const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty
+const { encodeHtmlEntity, hhmmss2msec, isTruthy, isTruthyProperty, validPropertyRequiredRegex
 } = require('./Helper.js')
+
+const { REGEX_ANYCHAR
+} = require('./Globals.js')
 
 const { MetaDataHelper, SonosDevice } = require('@svrooij/sonos/lib')
 
@@ -428,6 +431,52 @@ module.exports = {
   //     GROUP RELATED
   //  
 
+  /** Get hostname of selected SONOS-Player.
+   * @param {object} msg NODE-RED incoming message object
+   * @param {string} msg.playerName the SONOS-Player - optional
+   * @param {string} tsPlayer sonos-ts player
+  
+   * @returns {promise<string>} hostname
+  
+   * @throws {error} methods getGroupCurrent, validPropertyRequiredRegex
+   */
+  getSelectedPlayerHostname: async (msg, tsPlayer) => {
+    debug('method:%s', 'getSelectedPlayerHostname')
+    let selectedHostname = tsPlayer.urlObject.hostname
+    if (isTruthyProperty(msg, ['playerName'])) {
+      // for future use - currently it only checks for string as we use REGEX_ANYCHAR
+      const optionalPlayerName = validPropertyRequiredRegex(msg, 'playerName', REGEX_ANYCHAR)  
+      const groupData = await this.getGroupCurrent(tsPlayer, optionalPlayerName)
+      selectedHostname = groupData.members[groupData.playerIndex].urlObject.hostname
+    } 
+
+    return selectedHostname
+  },
+
+  /** Get hostname of coordinator in selected group.
+   * @param {object} msg NODE-RED incoming message object
+   * @param {string} msg.playerName the SONOS-Player - optional
+   * @param {string} tsPlayer sonos-ts player
+  
+   * @returns {promise<string>} coordinator hostname
+  
+   * @throws {error} methods getGroupCurrent, validPropertyRequiredRegex
+   */
+  getCoordinatorHostname: async (msg, tsPlayer) => {
+    debug('method:%s', 'getCoordinatorHostname')
+    
+    let groupData
+    if (isTruthyProperty(msg, ['playerName'])) {
+      // for future use - currently it only checks for string as we use REGEX_ANYCHAR
+      const optionalPlayerName = validPropertyRequiredRegex(msg, 'playerName', REGEX_ANYCHAR)  
+      groupData = await this.getGroupCurrent(tsPlayer, optionalPlayerName)
+    } else {
+      groupData = await this.getGroupCurrent(tsPlayer)
+    }
+
+    return groupData.members[groupData.members[0].urlObject.hostname]  // coordinator hostname
+  },
+
   /** Get group data for a given player.
    * @param {string} tsPlayer sonos-ts player
    * @param {string} [playerName] SONOS-Playername such as Kitchen 
@@ -441,6 +490,7 @@ module.exports = {
     debug('method:%s', 'getGroupCurrent')
     const allGroups = await module.exports.getGroupsAll(tsPlayer)
     const thisGroup = await extractGroup(tsPlayer.urlObject.hostname, allGroups, playerName)
+
     return thisGroup
   },
   

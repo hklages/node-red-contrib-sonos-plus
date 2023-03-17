@@ -259,6 +259,94 @@ module.exports = {
     
   },
 
+  /** Validates and converts required msg[propertyName] to number(integer). Throws errors if 
+   * missing or invalid.
+   * 
+   * min, max should be in range VALIDATION_INTEGER_MINIMUM to VALIDATION_INTEGER_MAXIMUM
+   * as that correspondent to REGEX check 4 signed digits
+   * msg[propertyName] must be in range [min, max]
+   *  
+   * @param {object} msg Node-RED message including msg[propertName]
+   * @param {string} propertyName property name, value to be verified
+   * @param {number} min minimum, not greater VALIDATION_INTEGER_MAXIMUM
+   * @param {number} max maximum, not less VALIDATION_INTEGER_MINIMUM, max > min
+   *
+   * @returns {number} integer in range [min,max]
+   *
+   * @throws {error} see code
+   * @throws {error} all methods
+   */
+  validPropertyRequiredInteger: (msg, propertyName, min, max) => {
+    debug('method:%s', 'validPropertyRequiredInteger')
+    
+    // validate min max
+    const txtPrefix = `${PACKAGE_PREFIX} ${propertyName}`
+    if (typeof min !== 'number' || min < VALIDATION_INTEGER_MINIMUM) {
+      throw new Error(`${txtPrefix} min is not type number or less VALIDATION_INTEGER_MINIMUM`)
+    } 
+    if (typeof max !== 'number' || max > VALIDATION_INTEGER_MAXIMUM) {
+      throw new Error(`${txtPrefix} max is not type number or bigger VALIDATION_INTEGER_MAXIMUM`)
+    } 
+    if (min >= max) {
+      throw new Error(`${txtPrefix} max is not greater then min`)
+    }
+    
+    // property exists?
+    if (!module.exports.isTruthyProperty(msg, [propertyName])) {
+      throw new Error(`${txtPrefix}) is missing`)
+    }
+
+    let validValue
+    const value = msg[propertyName]
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      throw new Error(`${txtPrefix} is not type string/number`)
+    }
+    if (typeof value === 'string') {
+      if (!REGEX_4DIGITSSIGN.test(value)) {
+        throw new Error(`${txtPrefix} >>${value}) is not 4 signed digits only`)
+      }
+      validValue = parseInt(value)
+    } else { // as it is not string it must be number
+      validValue = value
+    }
+    if (!Number.isInteger(validValue)) {
+      throw new Error(`${txtPrefix} is not integer`)
+    }
+    if (!(validValue >= min && validValue <= max)) {
+      throw new Error(`${txtPrefix} >>${value} is out of range`)
+    }
+      
+    return validValue
+        
+  },
+
+  /** Returns the msg[propertyName] value if exist or the defaultValue. 
+   * Throws an error if msg[propertyName] is not boolean.
+   * 
+   * @param {object} msg Node-RED message object with msg[propertyName]
+   * @param {string} propertyName property name
+   * @param {boolean} defaultValue
+   *
+   * @returns {boolean} value of msg[propertName] if exist and boolean or default, if not exist
+   *
+   * @throws {error} ${txtPrefix} is not boolean,
+   */
+  validPropertyOptionalBoolean: (msg, propertyName, defaultValue) => {
+    debug('method:%s', 'validPropertyOptionalBoolean')
+    const txtPrefix = `${PACKAGE_PREFIX} (${propertyName}`
+   
+    let validatedValue = defaultValue
+    if (module.exports.isTruthyProperty(msg, [propertyName])) {
+      const value = msg[propertyName]
+      if (typeof value !== 'boolean') {
+        throw new Error(`${txtPrefix}) is not boolean`)
+      }
+      validatedValue = value
+    } 
+
+    return validatedValue
+  },
+
   /** Validates msg[propertyName] is a Time at hh:mm:ss format. 
    *  
    * @param {object} msg Node-RED message
@@ -344,6 +432,41 @@ module.exports = {
     if (!regex.test(value)) {
       throw new Error(`${txtPrefix} >>${value} wrong syntax. Regular expr. - see documentation`)
     }
+    return value
+  },
+
+  /** Validates msg[propertyName] and returns the value: 
+   *  - must exist, be string, match regex - otherwise throws error
+   * 
+   * @param {object} msg Node-RED message with msg[propertyName]
+   * @param {string} propertyName property name
+   * @param {string} regex expression to evaluate string
+   *
+   * @returns {string} validated value 
+   *
+   * @throws {error} if msg[propertyName] is missing
+   * @throws {error} msg[propertyName] is not of type string
+   * @throws {error} if msg[propertyName] has invalid regex
+   */
+  validPropertyRequiredRegex: (msg, propertyName, regex) => {
+    debug('method:%s', 'validPropertyRequiredRegex')
+    const errorPrefix = `${PACKAGE_PREFIX} (${propertyName})`
+
+    const path = [propertyName]
+    if (!module.exports.isTruthyProperty(msg, path)) {
+      throw new Error(`${errorPrefix}) is missing`)
+    }
+    const value = msg[propertyName]
+   
+    if (typeof value !== 'string') {
+      throw new Error(`${errorPrefix} is not type string`)
+    }
+    if (!regex.test(value)) {
+      throw new Error(
+        `${errorPrefix} >>${value} does't match regular expression -see documentation`
+      ) 
+    }
+
     return value
   },
 
