@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.7.1] 2023-03-18
+
+#### Added
+
+- Universal node: new command player.play.clip
+
+#### Changed
+
+- correct artUri for apple data
+
+- internal optimization
+
 ### [6.7.0] 2023-03-15
 
 #### Added

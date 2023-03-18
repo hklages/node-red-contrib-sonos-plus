@@ -32,6 +32,8 @@ Explore the full scope in the [Wiki.](https://github.com/hklages/node-red-contri
 
 ### NEWS (cumulative, recent)
 
+- new EXPERIMENTAL command player.play.clip
+
 - New command household.set.alarm
 
 - household.add.subwoofer now support non - HT systems
