@@ -645,7 +645,9 @@ module.exports = {
     // add several properties
     const transformedItems = await Promise.all(itemArray.map(async (item) => {
       // correct image for apple. Github #249
-      item.artUri = item.artUri.replace('&amp;imgRightAlbum', '&imgRightAlbum')
+      if (item.sid === '204') {
+        item.artUri = item.artUri.replace('&amp;img', '&img')    
+      }
       
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri

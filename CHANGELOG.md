@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.7.2] 2023-03-18
+
+#### Changed
+
+- correct artUri for apple data - another attempt
+
+- internal optimization
+
 ### [6.7.1] 2023-03-18
 
 #### Added
