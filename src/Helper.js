@@ -132,32 +132,29 @@ module.exports = {
     return ((+hours) * 3600 + (+minutes) * 60 + (+seconds)) * 1000
   },
 
-  /** Validates property and returns true|false if on|off (NOT case sensitive). 
+  /** Validates and converts required msg[propertyName] to boolean. msg[propertyName] must 
+   * exist, be On|on|Off|off. Throws errors if property is missing or invalid. 
    * 
-   * @param {object} msg Node-RED message
-   * @param {string} msg.propertyName item, to be validated
-   * @param {string} propertyName property name
-   * @param {string} propertyMeaning additional information, including in error message
+   * @param {object} msg Node-RED message including msg[propertName] as string/integer
+   * @param {string} propertyName property name to be validated
    *
-   * @returns {boolean} true if msg.property == on, false if msg.property == off -not case sensitive
+   * @returns {boolean} true if On or on
    *
-   * @throws {error} '* ${propertyName}) is missing/invalid', '* ${propertyName}) is not string',
-   * '* ${propertyName}) is not on/off'
-   * @throws {error} all methods
+   * @throws {error} see code
    */
-  isOnOff: (msg, propertyName, propertyMeaning) => {
-    debug('method:%s', 'validRegex')
-    const path = []
-    path.push(propertyName)
+  validPropertyRequiredOnOff: (msg, propertyName) => {
+    debug('method:%s', 'validPropertyRequiredOnOff')
+
+    const path = [propertyName]
     if (!module.exports.isTruthyProperty(msg, path)) {
-      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is missing/invalid`)
+      throw new Error(`${PACKAGE_PREFIX} (${propertyName}) is missing/invalid`)
     }
     const value = msg[propertyName]
     if (typeof value !== 'string') {
-      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is not string`)
+      throw new Error(`${PACKAGE_PREFIX} (${propertyName}) is not string`)
     }
     if (!(value.toLowerCase() === 'on' || value.toLowerCase() === 'off')) {
-      throw new Error(`${PACKAGE_PREFIX} ${propertyMeaning} (${propertyName}) is not on/off`)
+      throw new Error(`${PACKAGE_PREFIX} (${propertyName}) is not on/off`)
     }
     return (value.toLowerCase() === 'on')
   },

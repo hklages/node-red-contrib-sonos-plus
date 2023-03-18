@@ -5,8 +5,8 @@
 
 const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, extractSatellitesUuids, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
-  isOnOff, validToInteger, validRegex, validTime, validPropertyRequiredInteger,
-  validPropertyRequiredRegex }
+  validToInteger, validRegex, validTime, validPropertyRequiredInteger,
+  validPropertyRequiredRegex, validPropertyRequiredOnOff }
   = require('../src/Helper.js')
 
 const { describe, it } = require('mocha')
@@ -345,13 +345,26 @@ describe('hhmmss2msec function', function () {
   })
 })
 
-describe('isOnOff function', function () {
-    
+describe('validPropertyRequiredOnOff function', function () {
+
+  it('property missing throw error', () => {
+    const msg = { 'xxx': 10 }
+    const propertyName = 'payload'
+    expect(validPropertyRequiredOnOff.bind(validPropertyRequiredOnOff, msg, propertyName))
+      .to.throw('nrcsp: (payload) is missing')
+  })
+
+  it('property not string throw error', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    expect(validPropertyRequiredOnOff.bind(validPropertyRequiredOnOff, msg, propertyName))
+      .to.throw('nrcsp: (payload) is not string')
+  })
+
   it('on means true', () => {
     const msg = { 'payload': 'on' }
     const propertyName = 'payload'
-    const propertyMeaning = 'just a test'
-    const result = isOnOff(msg, propertyName, propertyMeaning)
+    const result = validPropertyRequiredOnOff(msg, propertyName)
     expect(result)
       .be.a('boolean')
       .equal(true)
@@ -360,8 +373,7 @@ describe('isOnOff function', function () {
   it('ON means true', () => {
     const msg = { 'payload': 'ON' }
     const propertyName = 'payload'
-    const propertyMeaning = 'just a test'
-    const result = isOnOff(msg, propertyName, propertyMeaning)
+    const result = validPropertyRequiredOnOff(msg, propertyName)
     expect(result)
       .be.a('boolean')
       .equal(true)
@@ -370,8 +382,7 @@ describe('isOnOff function', function () {
   it('off means false', ()  => {
     const msg = { 'payload': 'off' }
     const propertyName = 'payload'
-    const propertyMeaning = 'just a test'
-    const result = isOnOff(msg, propertyName, propertyMeaning)
+    const result = validPropertyRequiredOnOff(msg, propertyName)
     expect(result)
       .be.a('boolean')
       .equal(false)
@@ -380,8 +391,7 @@ describe('isOnOff function', function () {
   it('OFF means false', ()  => {
     const msg = { 'payload': 'OFF' }
     const propertyName = 'payload'
-    const propertyMeaning = 'just a test'
-    const result = isOnOff(msg, propertyName, propertyMeaning)
+    const result = validPropertyRequiredOnOff(msg, propertyName)
     expect(result)
       .be.a('boolean')
       .equal(false)

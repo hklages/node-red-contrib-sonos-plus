@@ -29,9 +29,9 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
   isOnlineSonosPlayer
 } = require('./Extensions.js')
 
-const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
+const { isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
   validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime, validPropertyRequiredRegex,
-  validPropertyRequiredInteger
+  validPropertyRequiredInteger, validPropertyRequiredOnOff
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -1972,7 +1972,7 @@ module.exports = function (RED) {
   async function groupSetCrossfade (msg, tsPlayer) {
     debug('command:%s', 'groupSetCrossfade')
     // Payload crossfade sate is required.
-    const newState = isOnOff(msg, 'payload', 'crosssfade state')
+    const newState = validPropertyRequiredOnOff(msg, 'payload')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -1997,7 +1997,7 @@ module.exports = function (RED) {
   async function groupSetMute (msg, tsPlayer) {
     debug('command:%s', 'groupSetMute')
     // Payload mute state is required.
-    const newState = isOnOff(msg, 'payload', 'mute state')
+    const newState = validPropertyRequiredOnOff(msg, 'payload')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
@@ -3559,7 +3559,7 @@ module.exports = function (RED) {
   async function playerSetButtonLockState (msg, tsPlayer) {
     debug('command:%s', 'playerSetButtonLockState')
     //msg.payload button state is required - convert to On Off
-    const newState = (isOnOff(msg, 'payload', 'button lock state') ? 'On' : 'Off')
+    const newState = (validPropertyRequiredOnOff(msg, 'payload') ? 'On' : 'Off')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -3602,18 +3602,18 @@ module.exports = function (RED) {
     // No check exist needed as command has already been checked
     if (msg.nrcspCmd === 'player.set.nightmode') {
       eqType = 'NightMode'
-      eqValue = isOnOff(msg, 'payload', 'nightmode') // Required
+      eqValue = validPropertyRequiredOnOff(msg, 'payload') // Required
       eqValue = (eqValue ? 1 : 0)
     } else if (msg.nrcspCmd === 'player.set.subgain') {
       eqType = 'SubGain'
-      eqValue = validToInteger(msg, 'payload', -15, 15, 'subgain') // Required
+      eqValue = validPropertyRequiredInteger(msg, 'payload', -15, 15) // Required
     } else if (msg.nrcspCmd === 'player.set.dialoglevel') {
       eqType = 'DialogLevel'
-      eqValue = isOnOff(msg, 'payload', 'dialoglevel') // Required
+      eqValue = validPropertyRequiredOnOff(msg, 'payload') // Required
       eqValue = (eqValue ? 1 : 0)
     } else if (msg.nrcspCmd === 'player.set.subwoofer') {
       eqType = 'SubEnable'
-      eqValue = isOnOff(msg, 'payload', 'subwoofer') // Required
+      eqValue = validPropertyRequiredOnOff(msg, 'payload') // Required
       eqValue = (eqValue ? 1 : 0)
     } else {
       // Can not happen
@@ -3638,7 +3638,7 @@ module.exports = function (RED) {
   async function playerSetLed (msg, tsPlayer) {
     debug('command:%s', 'playerSetLed')
     // msg.payload Led state is required - convert to On Off
-    const newState = (isOnOff(msg, 'payload', 'led state') ? 'On' : 'Off')
+    const newState = (validPropertyRequiredOnOff(msg, 'payload') ? 'On' : 'Off')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -3664,7 +3664,7 @@ module.exports = function (RED) {
   async function playerSetLoudness (msg, tsPlayer) {
     debug('command:%s', 'playerSetLoudness')
     // msg.payload is required
-    const newState = isOnOff(msg, 'payload', 'loudness state')
+    const newState = validPropertyRequiredOnOff(msg, 'payload')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
@@ -3690,7 +3690,7 @@ module.exports = function (RED) {
   async function playerSetMute (msg, tsPlayer) {
     debug('command:%s', 'playerSetMute')
     // Payload mute state is required.
-    const newState = isOnOff(msg, 'payload', 'mute state')
+    const newState = validPropertyRequiredOnOff(msg, 'payload')
 
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
