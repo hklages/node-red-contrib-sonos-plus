@@ -21,7 +21,7 @@ const { sendWakeUp } = require('./Wake-on-lan')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
-  getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers
+  getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers, getSelectedPlayerHostname
 } = require('./Commands.js')
 
 const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusicServiceId,
@@ -30,7 +30,8 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 } = require('./Extensions.js')
 
 const { isOnOff, isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime
+  validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime, validPropertyRequiredRegex,
+  validPropertyRequiredInteger
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -135,6 +136,7 @@ module.exports = function (RED) {
     'player.get.volume': playerGetVolume,
     'player.join.group': playerJoinGroup,
     'player.play.avtransport': playerPlayAvtransport,
+    'player.play.clip': playerPlayClip,
     'player.play.linein': playerPlayLineIn,
     'player.play.tv': playerPlayTv,
     'player.set.bass': playerSetBass,
@@ -3395,6 +3397,39 @@ module.exports = function (RED) {
       await ts1Player.SetVolume(validated.volume)
     }
     await ts1Player.Play()
+
+    return {}
+  }
+
+  /**
+   *  Player play clip.
+   * 
+   * @param {object} msg NODE-RED incoming message object
+   * @param {string} msg.payload uri of clip (such as http://)
+   * @param {number/string} msg.volume volume at what the clip is being played
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   *
+   */
+  async function playerPlayClip (msg, tsPlayer) {
+    debug('command:%s', 'playerPlayClip')
+
+    // required: payload = notification, volume. Optional: onlyWhenPlaying with default = true
+    const validatedUri = validPropertyRequiredRegex(msg, 'payload', REGEX_HTTP)
+    const validatedVolume = validPropertyRequiredInteger(msg, 'volume', 0, 100)
+
+    // create new sonos-ts player object to be used - using playerName - if given -  or tsPlayer
+    const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
+    const selectedPlayer = new SonosDevice(selectedHostname)
+        
+    await selectedPlayer.PlayNotificationAudioClip({
+      trackUri: validatedUri,
+      volume: validatedVolume
+    })
 
     return {}
   }
