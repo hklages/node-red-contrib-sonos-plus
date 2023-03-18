@@ -646,7 +646,7 @@ module.exports = {
     const transformedItems = await Promise.all(itemArray.map(async (item) => {
       // correct image for apple. Github #249
       if (item.sid === '204') {
-        item.artUri = item.artUri.replace('&amp;img', '&img')    
+        item.artUri = item.artUri.replace('&amp;', '&')    
       }
       
       if (item.artUri.startsWith('/getaa')) {
