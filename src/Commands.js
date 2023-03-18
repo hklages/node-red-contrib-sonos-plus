@@ -644,11 +644,11 @@ module.exports = {
     const itemArray = await parseBrowseToArray(favorites, 'item')
     // add several properties
     const transformedItems = await Promise.all(itemArray.map(async (item) => {
+      // correct image for apple. Github #249
+      item.artUri = item.artUri.replace('&amp;imgRightAlbum', '&imgRightAlbum')
+      
       if (item.artUri.startsWith('/getaa')) {
         item.artUri = tsPlayer.urlObject.origin + item.artUri
-
-        // correct image for apple. Github #249
-        item.artUri = item.artUri.replace('&amp;imgRightAlbum', '&imgRightAlbum')
       }
       
       // My Sonos items have own upnp class object.itemobject.item.sonos-favorite"
