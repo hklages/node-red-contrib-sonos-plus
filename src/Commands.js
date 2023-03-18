@@ -446,7 +446,7 @@ module.exports = {
     if (isTruthyProperty(msg, ['playerName'])) {
       // for future use - currently it only checks for string as we use REGEX_ANYCHAR
       const optionalPlayerName = validPropertyRequiredRegex(msg, 'playerName', REGEX_ANYCHAR)  
-      const groupData = await this.getGroupCurrent(tsPlayer, optionalPlayerName)
+      const groupData = await module.exports.getGroupCurrent(tsPlayer, optionalPlayerName)
       selectedHostname = groupData.members[groupData.playerIndex].urlObject.hostname
     } 
 
@@ -469,9 +469,9 @@ module.exports = {
     if (isTruthyProperty(msg, ['playerName'])) {
       // for future use - currently it only checks for string as we use REGEX_ANYCHAR
       const optionalPlayerName = validPropertyRequiredRegex(msg, 'playerName', REGEX_ANYCHAR)  
-      groupData = await this.getGroupCurrent(tsPlayer, optionalPlayerName)
+      groupData = await module.exports.getGroupCurrent(tsPlayer, optionalPlayerName)
     } else {
-      groupData = await this.getGroupCurrent(tsPlayer)
+      groupData = await module.exports.getGroupCurrent(tsPlayer)
     }
 
     return groupData.members[groupData.members[0].urlObject.hostname]  // coordinator hostname
