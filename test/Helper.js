@@ -5,7 +5,8 @@
 
 const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, extractSatellitesUuids, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
-  isOnOff, validToInteger, validRegex, validTime }
+  isOnOff, validToInteger, validRegex, validTime, validPropertyRequiredInteger,
+  validPropertyRequiredRegex }
   = require('../src/Helper.js')
 
 const { describe, it } = require('mocha')
@@ -597,6 +598,182 @@ describe('validToInteger function', function () {
   
 })
 
+describe('validPropertyRequiredInteger function', function () {
+  
+  it('min is not number throw error', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    const min = '0'
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: min is not type number or less VALIDATION_INTEGER_MINIMUM')
+  })
+
+  it('min is less -9999 throw error', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    const min = -10000 //VALIDATION_INTEGER_MINIMUM = 9999
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: min is not type number or less VALIDATION_INTEGER_MINIMUM')
+  })
+
+  it('max is not number throw error', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = '20'
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: max is not type number or bigger VALIDATION_INTEGER_MAXIMUM')
+  })
+
+  it('max is greater then 9999 throw error', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10000 // VALIDATION_INTEGER_MAXIMUM = 9999
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: max is not type number or bigger VALIDATION_INTEGER_MAXIMUM')
+  })
+
+  it('payload missing throw error', () => {
+    const msg = { 'xxx': 10 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: (payload) is missing')
+  })
+
+  it('payload not string or number throw error', () => {
+    const msg = { 'payload': true }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: (payload) is not type string/number')
+  })
+
+  it('payload not integer throw error', () => {
+    const msg = { 'payload': 1.1 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: (payload) is not integer')
+  })
+
+  it('string 25 out of range 10 to 20', () => {
+    const msg = { 'payload': '25' }
+    const propertyName = 'payload'
+    const min = 10
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: (payload) >>25 is out of range')
+  })
+
+  it('string 25 out of range 10 to 20', () => {
+    const msg = { 'payload': '25' }
+    const propertyName = 'payload'
+    const min = 10
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: (payload) >>25 is out of range')
+  })
+
+  it('not 4 digits string', () => {
+    const msg = { 'payload': 'xx' }
+    const propertyName = 'payload'
+    const min = 10
+    const max = 20
+    expect(validPropertyRequiredInteger.bind(validPropertyRequiredInteger,
+      msg, propertyName, min, max,))
+      .to.throw('nrcsp: (payload) >>xx) is not 4 signed digits')
+  })
+
+  it('string 5 to integer 5', () => {
+    const msg = { 'payload': '5' }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10
+    const result
+      = validPropertyRequiredInteger(msg, propertyName, min, max,)
+    expect(result)
+      .be.a('number')
+      .equal(5)
+  })
+
+  it('string 0 to integer 0', () => {
+    const msg = { 'payload': '0' }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10
+    const result
+      = validPropertyRequiredInteger(msg, propertyName, min, max,)
+    expect(result)
+      .be.a('number')
+      .equal(0)
+  })
+
+  it('string 10 to integer 10', () => {
+    const msg = { 'payload': '10' }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10
+    const result
+      = validPropertyRequiredInteger(msg, propertyName, min, max,)
+    expect(result)
+      .be.a('number')
+      .equal(10)
+  })
+
+  it('intger 5 to integer 5', () => {
+    const msg = { 'payload': 5 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10
+    const result
+      = validPropertyRequiredInteger(msg, propertyName, min, max,)
+    expect(result)
+      .be.a('number')
+      .equal(5)
+  })
+
+  it('integer 0 to integer 0', () => {
+    const msg = { 'payload': 0 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10
+    const result
+      = validPropertyRequiredInteger(msg, propertyName, min, max,)
+    expect(result)
+      .be.a('number')
+      .equal(0)
+  })
+
+  it('integer 10 to integer 10', () => {
+    const msg = { 'payload': 10 }
+    const propertyName = 'payload'
+    const min = 0
+    const max = 10
+    const result
+      = validPropertyRequiredInteger(msg, propertyName, min, max,)
+    expect(result)
+      .be.a('number')
+      .equal(10)
+  })
+  
+})
+
 describe('validRegex function', function () {
     
   it('string 01:02:03 to string 01:02:03', () => {
@@ -623,6 +800,48 @@ describe('validRegex function', function () {
     expect(result)
       .be.a('string')
       .equal('00:00:01')
+  })
+
+})
+
+describe('validPropertyRequiredRegex function', function () {
+    
+  it('payload missing', () => {
+    const msg = { }
+    const propertyName = 'payload'
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
+    expect(validPropertyRequiredRegex.bind(
+      validTime, msg, propertyName, regex))
+      .to.throw('nrcsp: (payload) is missing')
+  })
+
+  it('is not string', () => {
+    const msg = { 'payload': 1 }
+    const propertyName = 'payload'
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
+    expect(validPropertyRequiredRegex.bind(
+      validTime, msg, propertyName, regex))
+      .to.throw('nrcsp: (payload) is not type string')
+  })
+
+  it('invalid syntax', () => {
+    const msg = { 'payload': '0' }
+    const propertyName = 'payload'
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
+    expect(validPropertyRequiredRegex.bind(
+      validTime, msg, propertyName, regex))
+      .to.throw('nrcsp: (payload) >>0 does not match regular expression -see documentation')
+  })
+
+  it('string 01:02:03 to string 01:02:03', () => {
+    const msg = { 'payload': '01:02:03' }
+    const propertyName = 'payload'
+    const regex = /^(([0-1][0-9]):([0-5][0-9]):([0-5][0-9]))$/  // REGEX_TIME_SPECIAL
+    const result
+      = validPropertyRequiredRegex(msg, propertyName, regex)
+    expect(result)
+      .be.a('string')
+      .equal('01:02:03')
   })
 
 })

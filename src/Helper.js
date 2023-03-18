@@ -259,14 +259,13 @@ module.exports = {
     
   },
 
-  /** Validates and converts required msg[propertyName] to number(integer). Throws errors if 
-   * missing or invalid.
+  /** Validates and converts required msg[propertyName] to number(integer). msg[propertyName] must 
+   * exist, be string/ integer in range [min, max]. Throws errors if property is missing or invalid.
    * 
    * min, max should be in range VALIDATION_INTEGER_MINIMUM to VALIDATION_INTEGER_MAXIMUM
    * as that correspondent to REGEX check 4 signed digits
-   * msg[propertyName] must be in range [min, max]
    *  
-   * @param {object} msg Node-RED message including msg[propertName]
+   * @param {object} msg Node-RED message including msg[propertName] as string/integer
    * @param {string} propertyName property name, value to be verified
    * @param {number} min minimum, not greater VALIDATION_INTEGER_MAXIMUM
    * @param {number} max maximum, not less VALIDATION_INTEGER_MINIMUM, max > min
@@ -279,21 +278,22 @@ module.exports = {
   validPropertyRequiredInteger: (msg, propertyName, min, max) => {
     debug('method:%s', 'validPropertyRequiredInteger')
     
-    // validate min max
-    const txtPrefix = `${PACKAGE_PREFIX} ${propertyName}`
+    // validate min max - developer information
+    const txtPrefix = `${PACKAGE_PREFIX} (${propertyName})`
     if (typeof min !== 'number' || min < VALIDATION_INTEGER_MINIMUM) {
-      throw new Error(`${txtPrefix} min is not type number or less VALIDATION_INTEGER_MINIMUM`)
+      throw new Error(`${PACKAGE_PREFIX} min is not type number or less VALIDATION_INTEGER_MINIMUM`)
     } 
     if (typeof max !== 'number' || max > VALIDATION_INTEGER_MAXIMUM) {
-      throw new Error(`${txtPrefix} max is not type number or bigger VALIDATION_INTEGER_MAXIMUM`)
+      // eslint-disable-next-line max-len
+      throw new Error(`${PACKAGE_PREFIX} max is not type number or bigger VALIDATION_INTEGER_MAXIMUM`)
     } 
     if (min >= max) {
-      throw new Error(`${txtPrefix} max is not greater then min`)
+      throw new Error(`${PACKAGE_PREFIX} max is not greater then min`)
     }
     
     // property exists?
     if (!module.exports.isTruthyProperty(msg, [propertyName])) {
-      throw new Error(`${txtPrefix}) is missing`)
+      throw new Error(`${txtPrefix} is missing`)
     }
 
     let validValue
@@ -303,7 +303,7 @@ module.exports = {
     }
     if (typeof value === 'string') {
       if (!REGEX_4DIGITSSIGN.test(value)) {
-        throw new Error(`${txtPrefix} >>${value}) is not 4 signed digits only`)
+        throw new Error(`${txtPrefix} >>${value}) is not 4 signed digits`)
       }
       validValue = parseInt(value)
     } else { // as it is not string it must be number
@@ -454,7 +454,7 @@ module.exports = {
 
     const path = [propertyName]
     if (!module.exports.isTruthyProperty(msg, path)) {
-      throw new Error(`${errorPrefix}) is missing`)
+      throw new Error(`${errorPrefix} is missing`)
     }
     const value = msg[propertyName]
    
@@ -463,7 +463,7 @@ module.exports = {
     }
     if (!regex.test(value)) {
       throw new Error(
-        `${errorPrefix} >>${value} does't match regular expression -see documentation`
+        `${errorPrefix} >>${value} does not match regular expression -see documentation`
       ) 
     }
 
