@@ -21,7 +21,8 @@ const { sendWakeUp } = require('./Wake-on-lan')
 
 const { createGroupSnapshot, getGroupCurrent, getGroupsAll, getSonosPlaylists, getSonosQueueV2,
   playGroupNotification, playJoinerNotification, restoreGroupSnapshot, getAlarmsAll, getMySonos,
-  getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers, getSelectedPlayerHostname
+  getMusicLibraryItemsV2, getSonosPlaylistTracks, setVolumeOnMembers, getSelectedPlayerHostname, 
+  getCoordinatorHostname
 } = require('./Commands.js')
 
 const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusicServiceId,
@@ -1961,8 +1962,8 @@ module.exports = function (RED) {
   /**
    *  Set group crossfade on|off.
    * @param {object} msg incoming message
-   * @param {string} msg.payload on|off.
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload on|off.
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -1971,12 +1972,13 @@ module.exports = function (RED) {
    */
   async function groupSetCrossfade (msg, tsPlayer) {
     debug('command:%s', 'groupSetCrossfade')
-    // Payload crossfade sate is required.
+    // required: msg.payload crossfade state
     const newState = validPropertyRequiredOnOff(msg, 'payload')
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    // create new sonos-ts player object with coordinator
+    const hostname = await getCoordinatorHostname(msg, tsPlayer)
+
+    const tsCoordinator = new SonosDevice(hostname)
     await tsCoordinator.AVTransportService.SetCrossfadeMode(
       { 'InstanceID': 0, 'CrossfadeMode': newState })
 
@@ -1986,8 +1988,8 @@ module.exports = function (RED) {
   /**
    *  Set group mute state.
    * @param {object} msg incoming message
-   * @param {string} msg.payload on|off.
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload on|off.
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -1996,12 +1998,13 @@ module.exports = function (RED) {
    */
   async function groupSetMute (msg, tsPlayer) {
     debug('command:%s', 'groupSetMute')
-    // Payload mute state is required.
+    // required: msg.payload mute state
     const newState = validPropertyRequiredOnOff(msg, 'payload')
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    
+    // create new sonos-ts player object with coordinator
+    const hostname = await getCoordinatorHostname(msg, tsPlayer)
+    const tsCoordinator = new SonosDevice(hostname)
 
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     await tsCoordinator.GroupRenderingControlService.SetGroupMute(
       { 'InstanceID': 0, 'DesiredMute': newState })
 
@@ -3403,11 +3406,10 @@ module.exports = function (RED) {
 
   /**
    *  Player play clip.
-   * 
    * @param {object} msg NODE-RED incoming message object
-   * @param {string} msg.payload uri of clip (such as http://)
-   * @param {number/string} msg.volume volume at what the clip is being played
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload uri of clip (such as http://)
+   *          {number/string} msg.volume volume at what the clip is being played
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -3422,7 +3424,7 @@ module.exports = function (RED) {
     const validatedUri = validPropertyRequiredRegex(msg, 'payload', REGEX_HTTP)
     const validatedVolume = validPropertyRequiredInteger(msg, 'volume', 0, 100)
 
-    // create new sonos-ts player object to be used - using playerName - if given -  or tsPlayer
+    // create new sonos-ts player object to be used - using playerName - if given - or tsPlayer
     const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
     const selectedPlayer = new SonosDevice(selectedHostname)
         
@@ -3548,8 +3550,8 @@ module.exports = function (RED) {
   /**
    *  Set player button lock state.
    * @param {object} msg incoming message
-   * @param {string} msg.payload on|off
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload on|off or On|Off
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -3558,24 +3560,25 @@ module.exports = function (RED) {
    */
   async function playerSetButtonLockState (msg, tsPlayer) {
     debug('command:%s', 'playerSetButtonLockState')
-    //msg.payload button state is required - convert to On Off
+    //required: msg.payload button state
     const newState = (validPropertyRequiredOnOff(msg, 'payload') ? 'On' : 'Off')
 
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // create new sonos-ts player object to be used - using playerName - if given - or tsPlayer
+    const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
+    const selectedPlayer = new SonosDevice(selectedHostname)
 
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.DevicePropertiesService.SetButtonLockState(
+    await selectedPlayer.DevicePropertiesService.SetButtonLockState(
       { 'DesiredButtonLockState': newState })
+    
     return {}
   }
 
   /**
    *  Set player EQ type
    * @param {object} msg incoming message, uses msg.nrcspCmd
-   * @param {string} msg.nrcspCmd the lowercase, player.set.nightmode/subgain/dialoglevel
-   * @param {string} msg.payload value on,off or -15 .. 15 in case of subgain
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.nrcspCmd the lowercase, player.set.nightmode/subgain/dialoglevel
+   *          {string} msg.payload value on,off or -15 .. 15 in case of subgain
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -3627,8 +3630,8 @@ module.exports = function (RED) {
   /**
    *  Set player led on|off.
    * @param {object} msg incoming message
-   * @param {string} msg.payload on|off
-   * @param {string} [msg.playerName = using tslayer] SONOS-Playername
+   *          {string} msg.payload on|off
+   *          {string} [msg.playerName = using tslayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -3637,14 +3640,14 @@ module.exports = function (RED) {
    */
   async function playerSetLed (msg, tsPlayer) {
     debug('command:%s', 'playerSetLed')
-    // msg.payload Led state is required - convert to On Off
+    // required msg.payload Led state
     const newState = (validPropertyRequiredOnOff(msg, 'payload') ? 'On' : 'Off')
 
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // create new sonos-ts player object to be used - using playerName - if given - or tsPlayer
+    const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
+    const selectedPlayer = new SonosDevice(selectedHostname)
 
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.DevicePropertiesService.SetLEDState(
+    await selectedPlayer.DevicePropertiesService.SetLEDState(
       { 'DesiredLEDState': newState })
 
     return {}
@@ -3653,8 +3656,8 @@ module.exports = function (RED) {
   /**
    *  Set player loudness on|off.
    * @param {object} msg incoming message
-   * @param {string} msg.payload on|off
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload on|off
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -3663,14 +3666,14 @@ module.exports = function (RED) {
    */
   async function playerSetLoudness (msg, tsPlayer) {
     debug('command:%s', 'playerSetLoudness')
-    // msg.payload is required
+    // required: msg.payload loudness
     const newState = validPropertyRequiredOnOff(msg, 'payload')
 
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // create new sonos-ts player object to be used - using playerName - if given - or tsPlayer
+    const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
+    const selectedPlayer = new SonosDevice(selectedHostname)
 
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.RenderingControlService.SetLoudness(
+    await selectedPlayer.RenderingControlService.SetLoudness(
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredLoudness': newState })
 
     return {}
@@ -3679,8 +3682,8 @@ module.exports = function (RED) {
   /**
    *  Set player mute state.
    * @param {object} msg incoming message
-   * @param {string} msg.payload on|off.
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload on|off.
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -3689,14 +3692,14 @@ module.exports = function (RED) {
    */
   async function playerSetMute (msg, tsPlayer) {
     debug('command:%s', 'playerSetMute')
-    // Payload mute state is required.
+    // required: msg.payload mute state
     const newState = validPropertyRequiredOnOff(msg, 'payload')
 
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // create new sonos-ts player object to be used - using playerName - if given - or tsPlayer
+    const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
+    const selectedPlayer = new SonosDevice(selectedHostname)
 
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    await ts1Player.RenderingControlService.SetMute(
+    await selectedPlayer.RenderingControlService.SetMute(
       { 'InstanceID': 0, 'Channel': 'Master', 'DesiredMute': newState })
 
     return {}
