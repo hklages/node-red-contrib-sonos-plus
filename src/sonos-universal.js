@@ -395,8 +395,8 @@ module.exports = function (RED) {
   /**
    *  Adjust group volume and outputs new volume.
    * @param {object} msg incoming message
-   * @param {(string|number)} msg.payload -100 to + 100, integer
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {(string|number)} msg.payload -100 to + 100, integer
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} property newVolume as string, range 0 ... 100
@@ -405,16 +405,17 @@ module.exports = function (RED) {
    */
   async function groupAdjustVolume (msg, tsPlayer) {
     debug('command:%s', 'groupAdjustVolume')
-    // Payload adjusted volume is required
-    const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // required: msg.payload volume
+    const adjustVolume = validPropertyRequiredInteger(msg, 'payload', -100, +100)
 
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    // create new sonos-ts player object with coordinator
+    const hostname = await getCoordinatorHostname(msg, tsPlayer)
+    const tsCoordinator = new SonosDevice(hostname)
+
     const result = await tsCoordinator.GroupRenderingControlService.SetRelativeGroupVolume(
       { 'InstanceID': 0, 'Adjustment': adjustVolume })
-
     const newVolume = result.NewVolume
+
     return { newVolume } // caution newVolume property!
   }
 
@@ -1911,8 +1912,8 @@ module.exports = function (RED) {
   /**
    *  Group seek to specific time.
    * @param {object} msg incoming message
-   * @param {string} msg.payload hh:mm:ss time in song.
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string} msg.payload hh:mm:ss time in song.
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
@@ -1921,12 +1922,13 @@ module.exports = function (RED) {
    */
   async function groupSeek (msg, tsPlayer) {
     debug('command:%s', 'groupSeek')
-    // Payload seek time is required.
-    const validTime = validRegex(msg, 'payload', REGEX_TIME_SPECIAL, 'seek time')
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // required: msg.payload seek time .
+    const validTime = validPropertyRequiredRegex(msg, 'payload', REGEX_TIME_SPECIAL)
 
-    const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
+    // create new sonos-ts player object with coordinator
+    const hostname = await getCoordinatorHostname(msg, tsPlayer)
+    const tsCoordinator = new SonosDevice(hostname)
+    
     await tsCoordinator.AVTransportService.Seek(
       { 'InstanceID': 0, 'Target': validTime, 'Unit': 'REL_TIME' })
 
@@ -2966,8 +2968,8 @@ module.exports = function (RED) {
   /**
    *  Adjust player volume and outputs new volume.
    * @param {object} msg incoming message
-   * @param {string/number} msg.payload -100 to +100 integer.
-   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   *          {string/number} msg.payload -100 to +100 integer.
+   *          {string} [msg.playerName = using tsPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} property newVolume as string, range 0 ... 100
@@ -2976,13 +2978,14 @@ module.exports = function (RED) {
    */
   async function playerAdjustVolume (msg, tsPlayer) {
     debug('command:%s', 'playerAdjustVolume')
-    // msg.payload volume is required.
-    const adjustVolume = validToInteger(msg, 'payload', -100, +100, 'adjust volume')
-    const validated = await validatedGroupProperties(msg)
-    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+    // required: msg.payload volume
+    const adjustVolume = validPropertyRequiredInteger(msg, 'payload', -100, +100)
 
-    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
-    const result = await ts1Player.RenderingControlService.SetRelativeVolume(
+    // create new sonos-ts player object to be used - using playerName - if given - or tsPlayer
+    const selectedHostname = await getSelectedPlayerHostname(msg, tsPlayer)
+    const selectedPlayer = new SonosDevice(selectedHostname)
+
+    const result = await selectedPlayer.RenderingControlService.SetRelativeVolume(
       { 'InstanceID': 0, 'Channel': 'Master', 'Adjustment': adjustVolume })
 
     const newVolume = result.NewVolume
