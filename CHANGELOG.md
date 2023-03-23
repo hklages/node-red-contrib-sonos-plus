@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.7.3] 2023-03-23
+
+#### Changed
+
+- first step to improve code readability
+
 ### [6.7.2] 2023-03-18
 
 #### Changed
