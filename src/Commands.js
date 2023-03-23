@@ -474,7 +474,7 @@ module.exports = {
       groupData = await module.exports.getGroupCurrent(tsPlayer)
     }
 
-    return groupData.members[groupData.members[0].urlObject.hostname]  // coordinator hostname
+    return groupData.members[0].urlObject.hostname  // coordinator hostname
   },
 
   /** Get group data for a given player.
