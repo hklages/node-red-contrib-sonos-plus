@@ -50,7 +50,7 @@ There is a Quickstart guide in the [Wiki](https://github.com/hklages/node-red-co
 
 Set the ENV variable DEBUG for debugging (example `DEBUG=nrcsp:universal`). Usage is described [here](https://www.npmjs.com/package/debug). Prefix: `nrcsp:` and available keywords: `universal|mysonos|config|commands|extensions|helper|discovery`.
 
-Open a GitHub issue (preferred method) or send an email to nrcsplus@gmail.com (German/English).
+Open a GitHub issue (preferred method) or send an [email](nrcsplus@gmail.com) (German/English).
 
 ### Installation
 
