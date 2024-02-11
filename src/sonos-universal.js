@@ -1801,6 +1801,7 @@ module.exports = function (RED) {
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'spotify uri')
     if (!(validatedUri.startsWith('spotify:track:')
       || validatedUri.startsWith('spotify:album:')
+      || validatedUri.startsWith('spotify:artistRadio:')
       || validatedUri.startsWith('spotify:artistTopTracks:')
       || validatedUri.startsWith('spotify:playlist:')
       || validatedUri.startsWith('spotify:user:spotify:playlist:'))) {

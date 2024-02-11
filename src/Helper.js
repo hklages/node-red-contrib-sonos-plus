@@ -28,12 +28,13 @@ module.exports = {
    * Works with multiple occurrences.
    * @param {string} htmlData the string to be decode, maybe empty
    * 
-   * @returns {Promise<string>} decoded string
+   * @returns {"Promise<string>"} decoded string
    * 
    * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
    */
   decodeHtmlEntity: async (htmlData) => {
     debug('method:%s', 'decodeHtmlEntity')
+    debug('htmlData: %s', htmlData)
     if (!module.exports.isTruthy(htmlData)) {
       throw new Error('htmlData invalid/missing')
     }
@@ -55,7 +56,7 @@ module.exports = {
    * Works with multiple occurrences.
    * @param {string} htmlData the string to be decode, maybe empty.
    * 
-   * @returns {Promise<string>} encoded string
+   * @returns {"Promise<string>"} encoded string
    * 
    * @throws {error} 'htmlData invalid/missing', 'htmlData is not string'
    */
@@ -81,7 +82,7 @@ module.exports = {
   /** Provides an array of satellite UUID's of HTSatChanMapSet (not the subwoofer SW).
    * @param {string} mapString string from HTSatChanMapSet
    * 
-   * @returns {Promise<array of strings>} array of string with satellite UUIDs, length 1 to 2
+   * @returns {"Promise<array of strings>"} array of string with satellite UUIDs, length 1 to 2
    * 
    * @throws {error} 
    * 
