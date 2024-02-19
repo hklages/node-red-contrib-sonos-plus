@@ -2,7 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
-### [6.7.4] 2023-03-23
+### [6.7.5] 2024-02-19
+
+#### Changed
+
+- avoid installing beta.7 (incompatible) - using <=2.6.0-beta.5
+
+### [6.7.4] 2024-01-xx
 
 #### Changed
 
