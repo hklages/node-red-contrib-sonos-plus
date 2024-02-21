@@ -824,7 +824,7 @@ describe('parseBrowseToArray function', function () {
   
   const TEST_DATA_BROWSE = require('./testdata-parseBrowse.json')
 
-  // keep in mind that get mysonos appends SONNS playlists at the end. 
+  // keep in mind that get mysonos appends SONOS playlists at the end. 
   // for testing they have to be removed from the result array!
   it('mysonos with out playlist 42 entries - array, length, some items', async () => {
     const TEST = TEST_DATA_BROWSE['mysonos-42entries']
