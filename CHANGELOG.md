@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.7.6] 2024-02-21
+
+#### Changed
+
+- dependency update to @svrooij/sonos 2.6.0 beta.7
+- because of that update the parseBrowseToArray was modified (no html decoding)
+
 ### [6.7.5] 2024-02-19
 
 #### Changed
