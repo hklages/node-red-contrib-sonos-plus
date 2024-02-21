@@ -423,7 +423,9 @@ module.exports = {
     if (!isTruthyPropertyStringNotEmpty(browseOutcome, ['Result'])) {
       throw new Error(`${PACKAGE_PREFIX} invalid response Browse: - missing Result DIDL XML`)
     }
-    const decodedResult = await decodeHtmlEntity(browseOutcome['Result'])
+    // From sonos@beta.9 there is no need to decode the data - therefor it is commented out
+    // const decodedResult = await decodeHtmlEntity(browseOutcome['Result'])
+
     // stopNodes because we use that value for export and import and no further processing
     const parser = new XMLParser({
       ignoreAttributes: false,
@@ -435,7 +437,7 @@ module.exports = {
       textNodeName: '#text',  //is default, just to remember
       processEntities: false // very important to keep the didl in "r:resMD"!
     })
-    const browseJson = await parser.parse(decodedResult)  
+    const browseJson = await parser.parse(browseOutcome['Result'])  
     if (!isTruthyProperty(browseJson, ['DIDL-Lite'])) {
       throw new Error(`${PACKAGE_PREFIX} invalid response Browse: missing DIDL-Lite`)
     }
