@@ -1,6 +1,11 @@
 /**
  * Collection of methods to handle the discovery of player. 
- * Method: UDP SSD broadcast port 1900.
+ * Method: UDP SSD broadcast port 1900. See details in Discovery-base-hk.js
+ * 
+ * When Node-RED is running you can use your browser to start the programs: 
+ * 
+ * http://<ipandport>/nrcsp/discoverAllPlayerWithHost
+ * http://<ipandport>/nrcsp/discoverAllPlayerWithSerialnumber
  *
  * @module Discovery
  * 

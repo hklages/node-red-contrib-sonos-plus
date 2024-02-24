@@ -3,11 +3,19 @@
 /**
  * Class for SONOS player discovery in a local network.
  * 
- *  METHOD: We use a random port to create a UDP socket and send a specific broadcast
- * message to PORT = 1900 and ADDRESS = '239.255.255.250'. 
+ * METHOD: We use a random port to create a UDP socket and send a specific broadcast
+ * message (M-SEARCH) to PORT = 1900 and ADDRESS = '239.255.255.250'.  
+ * 
  * We listen for a while (SEARCH_TIMEOUT_DURATION) assuming that  
  * any existing SONOS player will respond in that time period. 
+ * 
+ * Please ensure that the ports are open and in case of a Docker container
+ * that the ports are mapped (best is network and not bridge!)
  *
+ *  INFOS: 
+ *  https://williamboles.me/discovering-whats-out-there-with-ssdp/
+ *  https://nodejs.org/api/dgram.html
+ * 
  *  EXAMPLE: 
  *   const playerDiscovery = new SonosPlayerDiscovery()
  *   const player = playerDiscovery.discoverOnePlayer()
@@ -20,9 +28,6 @@
  *   @since 2022-01-08
 */
 
-// https://williamboles.me/discovering-whats-out-there-with-ssdp/
-
-// https://nodejs.org/api/dgram.html
 const dgram = require('dgram')
 
 // https://www.tutorialspoint.com/nodejs/nodejs_event_emitter.htm
