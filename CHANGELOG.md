@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.7.6] 2024-03-27
+
+#### Changed
+
+- fix for group.get.trackplus and group.get.state not throwing .replace event
+
 ### [6.7.6] 2024-02-21
 
 #### Changed

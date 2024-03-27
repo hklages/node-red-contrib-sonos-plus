@@ -1470,7 +1470,9 @@ module.exports = function (RED) {
     let validatedUri = validRegex(msg, 'payload', REGEX_HTTP, 'uri')
 
     //validate optional msg.info, msg.artUri
-    const track = { 'Title': '', 'AlbumArtUri': '' }
+    // added a blank in AlbumArtUri to avoid that ts-sonos throws error uri.replace not function
+    // ... same for title
+    const track = { 'Title': ' ', 'AlbumArtUri': ' ' }
     if (isTruthyPropertyStringNotEmpty(msg, ['info'])) {
       track.Title = msg.info
     }
