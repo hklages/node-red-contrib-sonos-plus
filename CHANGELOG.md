@@ -2,7 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
-### [6.7.6] 2024-03-27
+### [6.7.8] 2024-04-08
+
+#### Changed
+
+- fix for snap in combination with tv
+
+### [6.7.7] 2024-03-27
 
 #### Changed
 
