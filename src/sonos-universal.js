@@ -463,11 +463,11 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Create a snapshot of the given group of players.
+   *  Create a snapshot (state, content, volume, mutestate, ...) of the given group.
    * @param {object} msg incoming message
    * @param {boolean} [msg.snapVolumes = false] will capture the players volumes
    * @param {boolean} [msg.snapMutestates = false] will capture the players mutestates
-   * @param {boolean} [msg.sonosPlaylistName = null] will capture the players mutestates
+   * @param {boolean} [msg.sonosPlaylistName = null] used to save the queue content
    * @param {string} [msg.playerName = using tssPlayer] SONOS-Playername
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
