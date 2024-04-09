@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.8.0] 2024-04-09
+
+#### Changed
+
+- group.next.track and group.previous.track dont throw any more error in case of normal/shuffle_no_repeat at beginning/end
+
 ### [6.7.8] 2024-04-08
 
 #### Changed
