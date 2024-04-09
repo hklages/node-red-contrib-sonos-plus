@@ -925,15 +925,15 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
     
+    // changed according to issue #281
+    // At end of a queue, non repeat mode: ignore the Next
     try {
       await tsCoordinator.AVTransportService.Next({ InstanceID: 0 })
     } catch (error) {
       if (error.UpnpErrorCode === 711) {
-        await tsCoordinator.AVTransportService.Seek({
-          InstanceID: 0,
-          Target: '00:00:01',
-          Unit: 'REL_TIME',
-        })
+        
+        // ignore this
+
       } else if (error.UpnpErrorCode === 701) {
         throw new Error(
           `${PACKAGE_PREFIX} most likely stream (station) does not support next`
@@ -1651,6 +1651,8 @@ module.exports = function (RED) {
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
 
+    // changed according to issue #281
+    // At begin of a queue, non repeat mode: repeat the current song
     try {
       await tsCoordinator.AVTransportService.Previous({ InstanceID: 0 })
     } catch (error) {
