@@ -924,7 +924,24 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    await tsCoordinator.Next()
+    
+    try {
+      await tsCoordinator.AVTransportService.Next({ InstanceID: 0 })
+    } catch (error) {
+      if (error.UpnpErrorCode === 711) {
+        await tsCoordinator.AVTransportService.Seek({
+          InstanceID: 0,
+          Target: '00:00:01',
+          Unit: 'REL_TIME',
+        })
+      } else if (error.UpnpErrorCode === 701) {
+        throw new Error(
+          `${PACKAGE_PREFIX} most likely stream (station) does not support next`
+        )
+      } else {
+        throw new Error(`${PACKAGE_PREFIX} unknown error code > ${error.UpnpErrorCode}`)
+      }
+    }
 
     return {}
   }
@@ -1633,7 +1650,24 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
     const tsCoordinator = new SonosDevice(groupData.members[0].urlObject.hostname)
-    await tsCoordinator.Previous()
+
+    try {
+      await tsCoordinator.AVTransportService.Previous({ InstanceID: 0 })
+    } catch (error) {
+      if (error.UpnpErrorCode === 711) {
+        await tsCoordinator.AVTransportService.Seek({
+          InstanceID: 0,
+          Target: '00:00:01',
+          Unit: 'REL_TIME',
+        })
+      } else if (error.UpnpErrorCode === 701) {
+        throw new Error(
+          `${PACKAGE_PREFIX} most likely stream (station) does not support previous track`
+        )
+      } else {
+        throw new Error(`${PACKAGE_PREFIX} unknown error code > ${error.UpnpErrorCode}`)
+      }
+    }
 
     return {}
   }
@@ -1803,7 +1837,6 @@ module.exports = function (RED) {
     const validatedUri = validRegex(msg, 'payload', REGEX_ANYCHAR, 'spotify uri')
     if (!(validatedUri.startsWith('spotify:track:')
       || validatedUri.startsWith('spotify:album:')
-      || validatedUri.startsWith('spotify:artistRadio:')
       || validatedUri.startsWith('spotify:artistTopTracks:')
       || validatedUri.startsWith('spotify:playlist:')
       || validatedUri.startsWith('spotify:user:spotify:playlist:'))) {
