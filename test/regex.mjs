@@ -1,8 +1,11 @@
 // Testing regex from Globals
 
-const { describe, it } = require('mocha')
-const { expect } = require('chai')
-const regex  = require('../src/Globals.js')
+import pkg from '../src/Globals.js'
+const { REGEX_IP, REGEX_DNS, REGEX_HTTP, REGEX_TIME_SPECIAL, REGEX_TIME_DELTA,
+  REGEX_RADIO_ID, REGEX_QUEUEMODES, REGEX_CSV, REGEX_ANYCHAR, REGEX_3DIGITSSIGN} = pkg
+import { describe, it } from 'mocha'
+import { expect } from 'chai'
+
 
 describe('REGEX_IP - invalid', function () {
   const tests = [
@@ -37,7 +40,7 @@ describe('REGEX_IP - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_IP.test(item))
+      expect(REGEX_IP.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -58,7 +61,7 @@ describe('REGEX_IP - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_IP.test(item))
+      expect(REGEX_IP.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -86,7 +89,7 @@ describe('REGEX_DNS - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_DNS.test(item))
+      expect(REGEX_DNS.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -109,7 +112,7 @@ describe('REGEX_DNS - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_DNS.test(item))
+      expect(REGEX_DNS.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -131,7 +134,7 @@ describe('REGEX_HTTP - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_HTTP.test(item))
+      expect(REGEX_HTTP.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -145,7 +148,7 @@ describe('REGEX_HTTP - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_HTTP.test(item))
+      expect(REGEX_HTTP.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -172,7 +175,7 @@ describe('REGEX_TIME_SPECIAL - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_TIME_SPECIAL.test(item))
+      expect(REGEX_TIME_SPECIAL.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -189,7 +192,7 @@ describe('REGEX_TIME_SPECIAL - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_TIME_SPECIAL.test(item))
+      expect(REGEX_TIME_SPECIAL.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -214,7 +217,7 @@ describe('REGEX_DELTA - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_TIME_DELTA.test(item))
+      expect(REGEX_TIME_DELTA.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -236,7 +239,7 @@ describe('REGEX_TIME_DELTA - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_TIME_DELTA.test(item))
+      expect(REGEX_TIME_DELTA.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -256,7 +259,7 @@ describe('REGEX_RADIO_ID - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_RADIO_ID.test(item))
+      expect(REGEX_RADIO_ID.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -271,7 +274,7 @@ describe('REGEX_RADIO_ID - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_RADIO_ID.test(item))
+      expect(REGEX_RADIO_ID.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -295,7 +298,7 @@ describe('REGEX_QUEUEMODES - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_QUEUEMODES.test(item))
+      expect(REGEX_QUEUEMODES.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -314,7 +317,7 @@ describe('REGEX_QUEUEMODES - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_QUEUEMODES.test(item))
+      expect(REGEX_QUEUEMODES.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -342,7 +345,7 @@ describe('REGEX_CSV - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_CSV.test(item))
+      expect(REGEX_CSV.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -373,7 +376,7 @@ describe('REGEX_CSV - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_CSV.test(item))
+      expect(REGEX_CSV.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -387,7 +390,7 @@ describe('REGEX_ANYCHARACTER - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_ANYCHAR.test(item))
+      expect(REGEX_ANYCHAR.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -408,7 +411,7 @@ describe('REGEX_ANYCHARACTER - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_ANYCHAR.test(item))
+      expect(REGEX_ANYCHAR.test(item))
         .be.a('boolean')
         .to.be.true
     })
@@ -432,7 +435,7 @@ describe('REGEX_3DIGITSSIGN - invalid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} invalid`, function () {
-      expect(regex.REGEX_3DIGITSSIGN.test(item))
+      expect(REGEX_3DIGITSSIGN.test(item))
         .be.a('boolean')
         .to.be.false
     })
@@ -454,7 +457,7 @@ describe('REGEX_3DIGITSSIGN - valid', function () {
   ]
   tests.forEach((item) => {
     it(`${item} valid`, function () {
-      expect(regex.REGEX_3DIGITSSIGN.test(item))
+      expect(REGEX_3DIGITSSIGN.test(item))
         .be.a('boolean')
         .to.be.true
     })

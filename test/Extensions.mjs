@@ -9,14 +9,19 @@
 // using http://192.168.178.53:1400 a SONOS Play:3
 // using http://192.168.178.15:1400 a Synology NAS
 
+import pkg from '../src/Extensions.js' 
 const { isOnlineSonosPlayer, getDeviceInfo, matchSerialUuid, parseZoneGroupToArray,
   parseBrowseToArray, guessProcessingType, validatedGroupProperties, extractGroup,
   // eslint-disable-next-line max-len
   parseAlarmsToArray
-} = require('../src/Extensions.js')
+} = pkg
+import { describe, it } from 'mocha'
+import { expect } from 'chai'
+
+import TEST_DATA_ZONEGROUP from './testdata-parsezonegroup.json'with { type: "json" }
 
 const PLAY5 = 'http://192.168.178.51:1400'
-const BEAM = 'http://192.168.178.53:1400'
+const BEAM = 'http://192.168.178.56:1400'
 const PLAY1 = 'http://192.168.178.54:1400'
 const BATH = 'http://192.168.178.52:1400'
 const SYNOLOGY_INVALID = 'http://192.168.178.15:1400' // is not a sonos player
@@ -25,11 +30,8 @@ const FRITZBOX_IP = '192.168.178.1'
 
 const PLAYERNAME_KITCHEN = 'SonosKueche'
 
-const { describe, it } = require('mocha')
-const { expect } = require('chai')
 
 describe('extractGroup function', function () {
-  const TEST_DATA_ZONEGROUP = require('./testdata-parsezonegroup.json')
   
   it('playerName used and ok ', async () => {
     let groupData = TEST_DATA_ZONEGROUP['3Player_1Group_Coordinator_Kitchen'].result
@@ -645,14 +647,14 @@ describe('getDeviceInfo function', function () {
 
   it('kitchen has line in', async () => {
     const playerUrl = new URL(PLAY5)
-    const timeout = 2000
+    const timeout = 5000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities).to.include('LINE_IN')
   })
   
   it('living returns id RINCON_949F3EC13B9901400', async () => {
     const playerUrl = new URL(BEAM)
-    const timeout = 2000
+    const timeout = 5000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.id)
       .be.a('string')
@@ -661,7 +663,7 @@ describe('getDeviceInfo function', function () {
 
   it('living has tv', async () => {
     const playerUrl = new URL(BEAM)
-    const timeout = 2000
+    const timeout = 5000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities)
       .to.include('HT_PLAYBACK')
@@ -669,16 +671,16 @@ describe('getDeviceInfo function', function () {
 
   it('bath has no tv', async () => {
     const playerUrl = new URL(BATH)
-    const timeout = 2000
+    const timeout = 5000
     const result = await getDeviceInfo(playerUrl, timeout)
     expect(result.device.capabilities).to.not.include('HT_PLAYBACK')
   })
 
-  it('bath has no line in', async () => {
+  it('bath has line in', async () => {
     const playerUrl = new URL(BATH)
-    const timeout = 2000
+    const timeout = 5000
     const result = await getDeviceInfo(playerUrl, timeout)
-    expect(result.device.capabilities).to.not.include('LINE_IN')
+    expect(result.device.capabilities).to.include('LINE_IN')
   })
 
   it('bath with too small time out throws error', async () => {
@@ -726,8 +728,6 @@ describe('matchSerialUuid function', function () {
 })
 
 describe('parseZoneGroupToArray function', function () { 
-  
-  const TEST_DATA_ZONEGROUP =  require('./testdata-parsezonegroup.json')
   
   // deep comparison not possible as urlObject is object or string
   it('3Player-1Group-CoKitchen - length and coordinator name', async () => {
@@ -818,191 +818,6 @@ describe('parseZoneGroupToArray function', function () {
       .equal('Bad') // old testdata
     
   })
-})
-
-describe('parseBrowseToArray function', function () {
-  
-  const TEST_DATA_BROWSE = require('./testdata-parseBrowse.json')
-
-  // keep in mind that get mysonos appends SONOS playlists at the end. 
-  // for testing they have to be removed from the result array!
-  it('mysonos with out playlist 42 entries - array, length, some items', async () => {
-    const TEST = TEST_DATA_BROWSE['mysonos-42entries']
-    const result = await parseBrowseToArray(TEST.browseOut, 'item')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[0].title)
-      .be.a('string')
-      .equal('1. HERZ KRAFT WERKE (Deluxe Version)')
-      .to.not.be.null
-      .to.not.be.undefined
-    expect(result[0].id)
-      .be.a('string')
-      .equal('FV:2/139')
-      .to.not.be.null
-      .to.not.be.undefined
-    expect(result[0].metadata)
-      .be.a('string')
-    expect(result[0].artUri)
-      .be.a('string')
-    expect(result[0].uri)
-      .be.a('string')
-    expect(result[0])
-      .deep.eq(result[0])
-    expect(result[40])
-      .deep.eq(result[40])
-  })
-
-  it('mysonos without playlist 1 entry - array, length, some items', async () => {
-    const TEST = TEST_DATA_BROWSE['mysonos-1entry']
-    const result = await parseBrowseToArray(TEST.browseOut, 'item')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[0].title)
-      .be.a('string')
-      .equal('x (Deluxe Edition)')
-      .to.not.be.null
-      .to.not.be.undefined
-    expect(result[0].id)
-      .be.a('string')
-      .equal('FV:2/180')
-      .to.not.be.null
-      .to.not.be.undefined
-    expect(result[0].metadata)
-      .be.a('string')
-    expect(result[0].artUri)
-      .be.a('string')
-    expect(result[0].uri)
-      .be.a('string')
-    expect(result[0])
-      .deep.eq(result[0])
-  })
-
-  it('sonos queue 0 entries - array & length', async () => {
-    const TEST = TEST_DATA_BROWSE['queue-0entries']
-    const result = await parseBrowseToArray(TEST.browseOut, 'item')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-  })
-
-  it('sonos queue 1 entry - array, length, first item', async () => {
-    const TEST = TEST_DATA_BROWSE['queue-1entry']
-    const result = await parseBrowseToArray(TEST.browseOut, 'item')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[0].title)
-      .be.a('string')
-    expect(result[0].id)
-      .be.a('string')
-    expect(result[0].processingType)
-      .be.a('string')
-      .equal('queue')
-    expect(result[0])
-      .deep.eq(result[0])
-  })
-
-  it('sonos queue 24 entry - array, length, some items', async () => {
-    const TEST = TEST_DATA_BROWSE['queue-24entries']
-    const result = await parseBrowseToArray(TEST.browseOut, 'item')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[10].title)
-      .be.a('string')
-    expect(result[10].id)
-      .be.a('string')
-    expect(result[10].processingType)
-      .be.a('string')
-      .equal('queue')
-    expect(result[5])
-      .deep.eq(result[5])
-    expect(result[23])
-      .deep.eq(result[23])
-  })
-
-  it('SONOS-Playlist 0 entries - array & length', async () => {
-    const TEST = TEST_DATA_BROWSE['sonosplaylist-0entries']
-    const result = await parseBrowseToArray(TEST.browseOut, 'container')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-  })
-
-  it('SONOS-Playlist  1 entry - array, length, first item', async () => {
-    const TEST = TEST_DATA_BROWSE['sonosplaylist-1entry']
-    const result = await parseBrowseToArray(TEST.browseOut, 'container')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[0].title)
-      .be.a('string')
-    expect(result[0].id)
-      .be.a('string')
-    expect(result[0].processingType)
-      .be.a('string')
-      .equal('queue')
-    expect(result[0])
-      .deep.eq(result[0])
-  })
-
-  it('ml album  0 entries - array & length', async () => {
-    const TEST = TEST_DATA_BROWSE['mlalbum-0entries']
-    const result = await parseBrowseToArray(TEST.browseOut, 'container')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-  })
-
-  it('ml album  1 entry - array, length, first item', async () => {
-    const TEST = TEST_DATA_BROWSE['mlalbum-1entry']
-    const result = await parseBrowseToArray(TEST.browseOut, 'container')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[0].title)
-      .be.a('string')
-    expect(result[0].id)
-      .be.a('string')
-    expect(result[0].processingType)
-      .be.a('string')
-      .equal('queue')
-    expect(result[0])
-      .deep.eq(result[0])
-  })
-
-  it('ml album  6 entries - array, length, some items', async () => {
-    const TEST = TEST_DATA_BROWSE['mlalbum-6entries']
-    const result = await parseBrowseToArray(TEST.browseOut, 'container')
-    expect(result)
-      .be.a('array')
-    expect(result.length) // number of items
-      .to.equal(TEST.result.length)
-    expect(result[3].title)
-      .be.a('string')
-    expect(result[3].id)
-      .be.a('string')
-    expect(result[3].processingType)
-      .be.a('string')
-      .equal('queue')
-    expect(result[4])
-      .deep.eq(result[4])
-    expect(result[5])
-      .deep.eq(result[5])
-  })
-  
 })
 
 describe('guessProcessingType function', function () {

@@ -22,9 +22,9 @@
     "TEST-rdply-mypackge-code": "not necessary as that is linked to development directory",
     "TEST-strt-server": "NODE-RED",
     "TEST-all": "mocha",
-    "TEST-Helper": "mocha ./test/Helper.js",
-    "TEST-regex": "mocha ./test/regex.js",
-    "TEST-Extensions": "mocha ./test/Extensions.js"
+    "TEST-Helper_ECMA": "mocha ./test/Helper.mjs",
+    "TEST-regex_ECMA": "mocha ./test/regex.mjs",
+    "TEST-Extensions_ECMA": "mocha ./test/Extensions.mjs"
   },
   "keywords": [
     "sonos",
@@ -59,8 +59,8 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.6.0",
     "@typescript-eslint/parser": "^7.6.0",
-    "chai": "^4.3.10",
-    "eslint": "^9.0.0",
+    "chai": "^5.1.0",
+    "eslint": "^8.57.0",
     "mocha": "^10.4.0"
   },
   "engines": {

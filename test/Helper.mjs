@@ -3,14 +3,15 @@
 // describe('xxxxx', function(){}) instead of describe('xxxxx', () => {})
 // That makes the this.timeout work!
 
+
+import pkg from '../src/Helper.js'
 const { hhmmss2msec, encodeHtmlEntity, decodeHtmlEntity, extractSatellitesUuids, isTruthyProperty,
   isTruthyPropertyStringNotEmpty, isTruthy, isTruthyStringNotEmpty, isTruthyArray,
   validToInteger, validRegex, validTime, validPropertyRequiredInteger,
-  validPropertyRequiredRegex, validPropertyRequiredOnOff }
-  = require('../src/Helper.js')
+  validPropertyRequiredRegex, validPropertyRequiredOnOff  } = pkg
 
-const { describe, it } = require('mocha')
-const { expect } = require('chai')
+import { describe, it } from 'mocha'
+import { expect } from 'chai'
 
 describe('decodeHtmlEntity function', function () {
 
@@ -1630,4 +1631,6 @@ describe('isTruthyArray function', function () {
       .equal(true)
   })
 })
+
+
 
