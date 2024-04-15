@@ -1,1 +1,220 @@
-[{"id":"3cf79766dc783777","type":"comment","z":"25081f9e.f5f34","name":"Example 07: Play notification - Read me","info":"## Purpose: \nPlay notification on a player an afterwards restore the origional played sound.\n\n## Restrictions:\nThis is not a SONOS build in function. The current SONOS player status is captured, then the notification is played and afterwards, the status is being restored. \n\nIf the current song has been started via an Smartphone app such as Apple or spotify, it is not possible to capture the current status and therefore the restore is not possible.\n\nSONOS does not provide a \"blocking command\". So another flow with different commands, being send while a notification is playing will mess up the process. \n\n\n## Method\nThis flow uses a function node to serialize (queue) the incoming notifications. The status node listen on the group.play.notification and initiates playing the next notification.\n\n","x":985,"y":1153,"wires":[]},{"id":"1cb3359af3b9410d","type":"function","z":"25081f9e.f5f34","name":"queue","func":"// from https://gist.github.com/dceejay/cea8afa28b7a93ebdc0f \n// if queue doesn't exist, create it\nif (msg.hasOwnProperty(\"restartQueue\")) {\n    context.queue = []\n    \n} else {\n    context.queue = context.queue || []\n    context.busy = context.busy || false\n\n    // if the msg is a trigger one release next message\n    if (msg.hasOwnProperty(\"releaseNext\")) {\n        if (context.queue.length > 0) {\n            var m = context.queue.shift()\n            node.status({ fill: 'green', shape: 'dot', text: context.queue.length })\n            return m \n        }\n        else {\n            context.busy = false;\n        }\n    }\n    else {\n        if (context.busy) {\n            // if busy add to queue\n            context.queue.push(msg);\n        }\n        else {\n        // otherwise we are empty so just pass through and set busy flag\n            context.busy = true;\n            node.status({ fill: 'green', shape: 'dot', text: context.queue.length })\n            return msg;\n        }\n    }\n}\nnode.status({ fill: 'green', shape: 'dot', text: context.queue.length })\n\nreturn null;\nreturn null;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":1330,"y":1193,"wires":[["918a3409e44f6d77"]]},{"id":"918a3409e44f6d77","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.play.notification","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":1504,"y":1193,"wires":[[]]},{"id":"71af6193cc72265e","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config node.","x":1570,"y":1219,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"a4b21d8eb40d6f76","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":1150,"y":1253,"wires":[["305a9cefba4d8577"]]},{"id":"305a9cefba4d8577","type":"change","z":"25081f9e.f5f34","name":"reset","rules":[{"t":"set","p":"restartQueue","pt":"msg","to":"true","tot":"bool"}],"action":"","property":"","from":"","to":"","reg":false,"x":1270,"y":1253,"wires":[["1cb3359af3b9410d"]]},{"id":"9fca6dfa78099394","type":"change","z":"25081f9e.f5f34","name":"initiate next","rules":[{"t":"set","p":"releaseNext","pt":"msg","to":"true","tot":"bool"}],"action":"","property":"","from":"","to":"","reg":false,"x":1511,"y":1150,"wires":[["1cb3359af3b9410d"]]},{"id":"70d2c2afc4fe3a69","type":"status","z":"25081f9e.f5f34","name":"","scope":["918a3409e44f6d77"],"x":1341,"y":1150,"wires":[["9fca6dfa78099394"]]},{"id":"49dc2f9242135869","type":"change","z":"25081f9e.f5f34","name":"with volume","rules":[{"t":"set","p":"volume","pt":"msg","to":"40","tot":"str"}],"action":"","property":"","from":"","to":"","reg":false,"x":1150,"y":1193,"wires":[["1cb3359af3b9410d"]]},{"id":"e570f662cdd79758","type":"inject","z":"25081f9e.f5f34","name":"https soundbible foghorn","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payload":"https://soundbible.com/mp3/foghorn-daniel_simon.mp3","payloadType":"str","x":945,"y":1193,"wires":[["49dc2f9242135869"]]},{"id":"88e9fa70.4a53e8","type":"sonos-config","name":"your_player_dns","serialnum":"","ipaddress":"sonoskitchen.fritz.box"}]
+[
+  {
+    "id": "3cf79766dc783777",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Example 07: Play notification - Read me",
+    "info": "## Purpose: \nPlay notification on a player an afterwards restore the origional played sound.\n\n## Restrictions:\nThis is not a SONOS build in function. The current SONOS player status is captured, then the notification is played and afterwards, the status is being restored. \n\nIf the current song has been started via an Smartphone app such as Apple or spotify, it is not possible to capture the current status and therefore the restore is not possible.\n\nSONOS does not provide a \"blocking command\". So another flow with different commands, being send while a notification is playing will mess up the process. \n\n\n## Method\nThis flow uses a function node to serialize (queue) the incoming notifications. The status node listen on the group.play.notification and initiates playing the next notification.\n\n",
+    "x": 985,
+    "y": 1153,
+    "wires": []
+  },
+  {
+    "id": "1cb3359af3b9410d",
+    "type": "function",
+    "z": "25081f9e.f5f34",
+    "name": "queue",
+    "func": "// from https://gist.github.com/dceejay/cea8afa28b7a93ebdc0f \n// if queue doesn't exist, create it\nif (msg.hasOwnProperty(\"restartQueue\")) {\n    context.queue = []\n    \n} else {\n    context.queue = context.queue || []\n    context.busy = context.busy || false\n\n    // if the msg is a trigger one release next message\n    if (msg.hasOwnProperty(\"releaseNext\")) {\n        if (context.queue.length > 0) {\n            var m = context.queue.shift()\n            node.status({ fill: 'green', shape: 'dot', text: context.queue.length })\n            return m \n        }\n        else {\n            context.busy = false;\n        }\n    }\n    else {\n        if (context.busy) {\n            // if busy add to queue\n            context.queue.push(msg);\n        }\n        else {\n        // otherwise we are empty so just pass through and set busy flag\n            context.busy = true;\n            node.status({ fill: 'green', shape: 'dot', text: context.queue.length })\n            return msg;\n        }\n    }\n}\nnode.status({ fill: 'green', shape: 'dot', text: context.queue.length })\n\nreturn null;\nreturn null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1330,
+    "y": 1193,
+    "wires": [
+      [
+        "918a3409e44f6d77"
+      ]
+    ]
+  },
+  {
+    "id": "918a3409e44f6d77",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.play.notification",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 1504,
+    "y": 1193,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "71af6193cc72265e",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config node.",
+    "x": 1570,
+    "y": 1219,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "a4b21d8eb40d6f76",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 1150,
+    "y": 1253,
+    "wires": [
+      [
+        "305a9cefba4d8577"
+      ]
+    ]
+  },
+  {
+    "id": "305a9cefba4d8577",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "reset",
+    "rules": [
+      {
+        "t": "set",
+        "p": "restartQueue",
+        "pt": "msg",
+        "to": "true",
+        "tot": "bool"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 1270,
+    "y": 1253,
+    "wires": [
+      [
+        "1cb3359af3b9410d"
+      ]
+    ]
+  },
+  {
+    "id": "9fca6dfa78099394",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "initiate next",
+    "rules": [
+      {
+        "t": "set",
+        "p": "releaseNext",
+        "pt": "msg",
+        "to": "true",
+        "tot": "bool"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 1511,
+    "y": 1150,
+    "wires": [
+      [
+        "1cb3359af3b9410d"
+      ]
+    ]
+  },
+  {
+    "id": "70d2c2afc4fe3a69",
+    "type": "status",
+    "z": "25081f9e.f5f34",
+    "name": "",
+    "scope": [
+      "918a3409e44f6d77"
+    ],
+    "x": 1341,
+    "y": 1150,
+    "wires": [
+      [
+        "9fca6dfa78099394"
+      ]
+    ]
+  },
+  {
+    "id": "49dc2f9242135869",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "with volume",
+    "rules": [
+      {
+        "t": "set",
+        "p": "volume",
+        "pt": "msg",
+        "to": "40",
+        "tot": "str"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 1150,
+    "y": 1193,
+    "wires": [
+      [
+        "1cb3359af3b9410d"
+      ]
+    ]
+  },
+  {
+    "id": "e570f662cdd79758",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "https soundbible foghorn",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "https://soundbible.com/mp3/foghorn-daniel_simon.mp3",
+    "payloadType": "str",
+    "x": 945,
+    "y": 1193,
+    "wires": [
+      [
+        "49dc2f9242135869"
+      ]
+    ]
+  },
+  {
+    "id": "88e9fa70.4a53e8",
+    "type": "sonos-config",
+    "name": "your_player_dns",
+    "serialnum": "",
+    "ipaddress": "sonoskitchen.fritz.box"
+  }
+]

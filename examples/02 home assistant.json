@@ -1,1 +1,153 @@
-[{"id":"3926de4a.bafdf2","type":"comment","z":"25081f9e.f5f34","name":"Example 02A: Home Assistant Integration Commands  - Read Me","info":"PURPOSE: \nSend commands and parameter from Home Assisant to the Universal node.\n\nMETHOD\n1. Create a entity node \n    - select type \"Switch\"\n    - In Home Assistant Config use as name \"Sonos Plus Universal Node\"\n\n2. import the example 02 from the example folder\n\n3. Create connection from entitynode to the 2 imported nodes. \n4. You can now use automation, scripts, ... \n\n`service: nodered.trigger\ndata:\n  entity_id: switch.sonos_plus_universal_node\n  payload:\n    topic: group.stop`\n    \nor in case you need to transfer data: \n\n`entity_id: switch.sonos_plus_universal_node\npayload:\n  topic: group.play.tunein\n  payload: s24896`\n  \npayload also support Home Assistant templates!\n\n","x":271,"y":655,"wires":[]},{"id":"eb4bd71e.20eaa8","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"message","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":537,"y":704,"wires":[[]]},{"id":"c4108064.32c79","type":"function","z":"25081f9e.f5f34","name":"msg.payload to msg","func":"Object.assign(msg, msg.payload);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":347,"y":704,"wires":[["eb4bd71e.20eaa8"]]},{"id":"08e96912cd7dafab","type":"comment","z":"25081f9e.f5f34","name":"↓modify","info":"Select your config-node or change the IP address in this config node.","x":542,"y":672,"wires":[],"icon":"font-awesome/fa-arrow-down"},{"id":"aeceb84f7e8ebddb","type":"comment","z":"25081f9e.f5f34","name":"here HA entity node","info":"PURPOSE: \nSend commands and parameter from Home Assisant to the Universal node.\n\nMETHOD\n1. Create a entity node \n    - select type \"Switch\"\n    - In Home Assistant Config use as name \"Sonos Plus Universal Node\"\n\n2. import the example 02 from the example folder\n\n3. Create connection from entitynode to the 2 imported nodes. \n4. You can now use automation, scripts, ... \n\n`service: nodered.trigger\ndata:\n  entity_id: switch.sonos_plus_universal_node\n  payload:\n    topic: group.stop`\n    \nor in case you need to transfer data: \n\n`entity_id: switch.sonos_plus_universal_node\npayload:\n  topic: group.play.tunein\n  payload: s24896`\n\n","x":129,"y":704,"wires":[]},{"id":"4b688b0f622cf0c1","type":"comment","z":"25081f9e.f5f34","name":"Example 02B: Home Assistant Integration - Events  - Read Me","info":"PURPOSE: \nAct on Sonos events and send data to Home Assisant\n\nMETHOD\n1. Subscribe to an event from package sonos-events\n2. Either use a \"call service node\" and change helper or submit an event with \"fire event\"\n\nExample call servcie node with helper \n`Domain: input_boolean\nService: {{#payload}}turn_on{{/payload}}{{^payload}}turn_off{{/payload}}\nEntity Idinput_boolean.is_beam_microphone\n`\n\n\n","x":943,"y":655,"wires":[]},{"id":"dbfba6e4886df549","type":"sonosevents-selection","z":"25081f9e.f5f34","d":true,"name":"","confignode":"1c70290d.90a4e7","playerHostname":"192.168.178.53","events":[{"fullName":"DevicePropertiesService.micEnabled"}],"outputs":1,"x":823,"y":687,"wires":[["8c66a3c05af5c3e7"]]},{"id":"8c66a3c05af5c3e7","type":"debug","z":"25081f9e.f5f34","name":"Microphone at Beam enabled/disabled","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":1123,"y":687,"wires":[]},{"id":"439289f650f3ba5a","type":"comment","z":"25081f9e.f5f34","name":"↑modify - node from sonos-events package","info":"Select your config-node or change the IP address in this config node.","x":893,"y":721,"wires":[],"icon":"font-awesome/fa-arrow-down"},{"id":"8a2a92e7ac72228f","type":"comment","z":"25081f9e.f5f34","name":"use HA Node \"call service\" or \"fire event\" instead of debug node","info":"","x":1323,"y":715,"wires":[],"icon":"font-awesome/fa-arrow-down"},{"id":"88e9fa70.4a53e8","type":"sonos-config","name":"your_player_dns","serialnum":"","ipaddress":"sonoskitchen.fritz.box"},{"id":"1c70290d.90a4e7","type":"sonosevents-config","name":"household","listenerHostname":"","listenerPort":""}]
+[
+  {
+    "id": "3926de4a.bafdf2",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Example 02A: Home Assistant Integration Commands  - Read Me",
+    "info": "PURPOSE: \nSend commands and parameter from Home Assisant to the Universal node.\n\nMETHOD\n1. Create a entity node \n    - select type \"Switch\"\n    - In Home Assistant Config use as name \"Sonos Plus Universal Node\"\n\n2. import the example 02 from the example folder\n\n3. Create connection from entitynode to the 2 imported nodes. \n4. You can now use automation, scripts, ... \n\n`service: nodered.trigger\ndata:\n  entity_id: switch.sonos_plus_universal_node\n  payload:\n    topic: group.stop`\n    \nor in case you need to transfer data: \n\n`entity_id: switch.sonos_plus_universal_node\npayload:\n  topic: group.play.tunein\n  payload: s24896`\n  \npayload also support Home Assistant templates!\n\n",
+    "x": 271,
+    "y": 655,
+    "wires": []
+  },
+  {
+    "id": "eb4bd71e.20eaa8",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "message",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 537,
+    "y": 704,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "c4108064.32c79",
+    "type": "function",
+    "z": "25081f9e.f5f34",
+    "name": "msg.payload to msg",
+    "func": "Object.assign(msg, msg.payload);\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 347,
+    "y": 704,
+    "wires": [
+      [
+        "eb4bd71e.20eaa8"
+      ]
+    ]
+  },
+  {
+    "id": "08e96912cd7dafab",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↓modify",
+    "info": "Select your config-node or change the IP address in this config node.",
+    "x": 542,
+    "y": 672,
+    "wires": [],
+    "icon": "font-awesome/fa-arrow-down"
+  },
+  {
+    "id": "aeceb84f7e8ebddb",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "here HA entity node",
+    "info": "PURPOSE: \nSend commands and parameter from Home Assisant to the Universal node.\n\nMETHOD\n1. Create a entity node \n    - select type \"Switch\"\n    - In Home Assistant Config use as name \"Sonos Plus Universal Node\"\n\n2. import the example 02 from the example folder\n\n3. Create connection from entitynode to the 2 imported nodes. \n4. You can now use automation, scripts, ... \n\n`service: nodered.trigger\ndata:\n  entity_id: switch.sonos_plus_universal_node\n  payload:\n    topic: group.stop`\n    \nor in case you need to transfer data: \n\n`entity_id: switch.sonos_plus_universal_node\npayload:\n  topic: group.play.tunein\n  payload: s24896`\n\n",
+    "x": 129,
+    "y": 704,
+    "wires": []
+  },
+  {
+    "id": "4b688b0f622cf0c1",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Example 02B: Home Assistant Integration - Events  - Read Me",
+    "info": "PURPOSE: \nAct on Sonos events and send data to Home Assisant\n\nMETHOD\n1. Subscribe to an event from package sonos-events\n2. Either use a \"call service node\" and change helper or submit an event with \"fire event\"\n\nExample call servcie node with helper \n`Domain: input_boolean\nService: {{#payload}}turn_on{{/payload}}{{^payload}}turn_off{{/payload}}\nEntity Idinput_boolean.is_beam_microphone\n`\n\n\n",
+    "x": 943,
+    "y": 655,
+    "wires": []
+  },
+  {
+    "id": "dbfba6e4886df549",
+    "type": "sonosevents-selection",
+    "z": "25081f9e.f5f34",
+    "d": true,
+    "name": "",
+    "confignode": "1c70290d.90a4e7",
+    "playerHostname": "192.168.178.53",
+    "events": [
+      {
+        "fullName": "DevicePropertiesService.micEnabled"
+      }
+    ],
+    "outputs": 1,
+    "x": 823,
+    "y": 687,
+    "wires": [
+      [
+        "8c66a3c05af5c3e7"
+      ]
+    ]
+  },
+  {
+    "id": "8c66a3c05af5c3e7",
+    "type": "debug",
+    "z": "25081f9e.f5f34",
+    "name": "Microphone at Beam enabled/disabled",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 1123,
+    "y": 687,
+    "wires": []
+  },
+  {
+    "id": "439289f650f3ba5a",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify - node from sonos-events package",
+    "info": "Select your config-node or change the IP address in this config node.",
+    "x": 893,
+    "y": 721,
+    "wires": [],
+    "icon": "font-awesome/fa-arrow-down"
+  },
+  {
+    "id": "8a2a92e7ac72228f",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "use HA Node \"call service\" or \"fire event\" instead of debug node",
+    "info": "",
+    "x": 1323,
+    "y": 715,
+    "wires": [],
+    "icon": "font-awesome/fa-arrow-down"
+  },
+  {
+    "id": "88e9fa70.4a53e8",
+    "type": "sonos-config",
+    "name": "your_player_dns",
+    "serialnum": "",
+    "ipaddress": "sonoskitchen.fritz.box"
+  },
+  {
+    "id": "1c70290d.90a4e7",
+    "type": "sonosevents-config",
+    "name": "household",
+    "listenerHostname": "",
+    "listenerPort": ""
+  }
+]

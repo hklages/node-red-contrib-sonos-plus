@@ -1,1 +1,171 @@
-[{"id":"3ce73efc.9acb82","type":"comment","z":"25081f9e.f5f34","name":"Example 04: Line in Play:5 / TV Beam or Playbar","info":"","x":221,"y":908,"wires":[]},{"id":"51281a6b.ba3244","type":"switch","z":"25081f9e.f5f34","name":"","property":"payload.modelName","propertyType":"msg","rules":[{"t":"eq","v":"Sonos Play:5","vt":"str"},{"t":"eq","v":"Sonos Beam","vt":"str"},{"t":"eq","v":"Sonos Playbar","vt":"str"}],"checkall":"true","repair":false,"outputs":3,"x":434,"y":942,"wires":[["b123fdba.28bbb"],["66623590.23783c"],["66623590.23783c"]]},{"id":"b123fdba.28bbb","type":"change","z":"25081f9e.f5f34","name":"line in","rules":[{"t":"set","p":"payload","pt":"msg","to":"'x-rincon-stream:RINCON_' & \t$replace(msg.payload.MACAddress, ':', '') & \t'01400'\t","tot":"jsonata"}],"action":"","property":"","from":"","to":"","reg":false,"x":568,"y":913,"wires":[["c3c2037.bf1ca"]]},{"id":"66623590.23783c","type":"change","z":"25081f9e.f5f34","name":"tv (line in)","rules":[{"t":"set","p":"payload","pt":"msg","to":"'x-sonos-htastream:RINCON_' & \t$replace(msg.payload.MACAddress, ':', '') & \t'01400:spdif'\t","tot":"jsonata"}],"action":"","property":"","from":"","to":"","reg":false,"x":578,"y":973,"wires":[["54c37fb8.f6b96","c3c2037.bf1ca"]]},{"id":"70f8c562.6cfc6c","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"8d44022c.adb65","command":"player.get.properties","name":"","x":259.33333333333337,"y":942,"wires":[["51281a6b.ba3244"]]},{"id":"67a14287.ce336c","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":91,"y":942,"wires":[["70f8c562.6cfc6c"]]},{"id":"c3c2037.bf1ca","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"8d44022c.adb65","command":"player.play.avtransport","name":"","x":762,"y":937,"wires":[[]]},{"id":"8d44022c.adb65","type":"sonos-config","name":"your_tvplayer_dns","serialnum":"","ipaddress":"sonosliving.fritz.box"}]
+[
+  {
+    "id": "3ce73efc.9acb82",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Example 04: Line in Play:5 / TV Beam or Playbar",
+    "info": "",
+    "x": 221,
+    "y": 908,
+    "wires": []
+  },
+  {
+    "id": "51281a6b.ba3244",
+    "type": "switch",
+    "z": "25081f9e.f5f34",
+    "name": "",
+    "property": "payload.modelName",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "Sonos Play:5",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "Sonos Beam",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "Sonos Playbar",
+        "vt": "str"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 3,
+    "x": 434,
+    "y": 942,
+    "wires": [
+      [
+        "b123fdba.28bbb"
+      ],
+      [
+        "66623590.23783c"
+      ],
+      [
+        "66623590.23783c"
+      ]
+    ]
+  },
+  {
+    "id": "b123fdba.28bbb",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "line in",
+    "rules": [
+      {
+        "t": "set",
+        "p": "payload",
+        "pt": "msg",
+        "to": "'x-rincon-stream:RINCON_' & \t$replace(msg.payload.MACAddress, ':', '') & \t'01400'\t",
+        "tot": "jsonata"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 568,
+    "y": 913,
+    "wires": [
+      [
+        "c3c2037.bf1ca"
+      ]
+    ]
+  },
+  {
+    "id": "66623590.23783c",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "tv (line in)",
+    "rules": [
+      {
+        "t": "set",
+        "p": "payload",
+        "pt": "msg",
+        "to": "'x-sonos-htastream:RINCON_' & \t$replace(msg.payload.MACAddress, ':', '') & \t'01400:spdif'\t",
+        "tot": "jsonata"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 578,
+    "y": 973,
+    "wires": [
+      [
+        "54c37fb8.f6b96",
+        "c3c2037.bf1ca"
+      ]
+    ]
+  },
+  {
+    "id": "70f8c562.6cfc6c",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "8d44022c.adb65",
+    "command": "player.get.properties",
+    "name": "",
+    "x": 259.33333333333337,
+    "y": 942,
+    "wires": [
+      [
+        "51281a6b.ba3244"
+      ]
+    ]
+  },
+  {
+    "id": "67a14287.ce336c",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 91,
+    "y": 942,
+    "wires": [
+      [
+        "70f8c562.6cfc6c"
+      ]
+    ]
+  },
+  {
+    "id": "c3c2037.bf1ca",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "8d44022c.adb65",
+    "command": "player.play.avtransport",
+    "name": "",
+    "x": 762,
+    "y": 937,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "8d44022c.adb65",
+    "type": "sonos-config",
+    "name": "your_tvplayer_dns",
+    "serialnum": "",
+    "ipaddress": "sonosliving.fritz.box"
+  }
+]

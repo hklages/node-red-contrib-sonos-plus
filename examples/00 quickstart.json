@@ -1,1 +1,451 @@
-[{"id":"dd3ffb6.ac1d808","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":90,"y":200,"wires":[["71d34ef1.1c242"]]},{"id":"71d34ef1.1c242","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.play.tunein","state":"s24896","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":250,"y":200,"wires":[[]]},{"id":"a2c2b3bd.e1b71","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":90,"y":312,"wires":[["9c0a7e9e.9bca6"]]},{"id":"9c0a7e9e.9bca6","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.play.queue","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":251,"y":312,"wires":[[]]},{"id":"2fb9a1fd.68737e","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":570,"y":312,"wires":[["37f90c94.f24384"]]},{"id":"37f90c94.f24384","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"household.create.group","state":"SonosKueche,SonosWohnzimmer,SonosBad","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":750.5,"y":312,"wires":[[]]},{"id":"2f8328c7.2bc198","type":"comment","z":"25081f9e.f5f34","name":"QUICKSTART","info":"","x":78,"y":20,"wires":[]},{"id":"124ff2fb.b4d12d","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config-node or modify it and use your ip address.\n\nPayload: The SONOS-Playernames being grouped. The first one will become coordinator. No blanks allowed.","x":811,"y":337,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"686fbbe.e808c44","type":"comment","z":"25081f9e.f5f34","name":"Play station SWR3 from TuneIn - read me","info":"# Play station SWR3 from TuneIn\n\n## Use case\nPlay a TuneIn radio station. \n\n## Customizing\n- edit `group.play.tunein`and select your configuration node.","x":200,"y":168,"wires":[],"icon":"node-red/subflow.svg"},{"id":"a4203acd.9aa738","type":"comment","z":"25081f9e.f5f34","name":"Play the SONOS queue - must not be empty - read me","info":"# Play the SONOS queue\n\n## Customizing\n- edit `group.play.queue `and select your configuration node.\n\nEnsure that the queue is filled with songs. You can to that either with this package or with the SONOS app.","x":240,"y":280,"wires":[],"icon":"node-red/subflow.svg"},{"id":"d013ff60.44585","type":"comment","z":"25081f9e.f5f34","name":"Create a group with 3 Sonos-Player - read me","info":"# Create a group with 3 Sonos-Player\nFirst player is coordinator.\n\n## Customizing\n- edit `household.create.group`\n    - select any configuration nodee\n    - edit payload and enter Sonos-Playernams (not the config node names), seperated by comma but without any blank\n\n","x":690,"y":280,"wires":[],"icon":"node-red/subflow.svg"},{"id":"9332b5ce.6f61d8","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":90,"y":89,"wires":[["ecf7c75f.c060b8"]]},{"id":"ecf7c75f.c060b8","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"household.get.groups","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":261,"y":89,"wires":[["ddbaa9b2.3788b8"]]},{"id":"ad3e01a6.495bd","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config-node or modify it and use your ip address.","x":303,"y":116,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"a98e0bd0.e64db8","type":"comment","z":"25081f9e.f5f34","name":"Test - all players detected - read me","info":"# Test - all players detected\n\n## Use case\ncheck your installation and verify that all players are online.\n\n## Customizing\n- edit `household.get.groups`and select your configuration node.","x":180,"y":57,"wires":[],"icon":"node-red/subflow.svg"},{"id":"ddbaa9b2.3788b8","type":"debug","z":"25081f9e.f5f34","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"false","statusVal":"","statusType":"auto","x":454,"y":89,"wires":[]},{"id":"bd45739.842a39","type":"comment","z":"25081f9e.f5f34","name":"Test - what is currently playing - read me","info":"# Test - what is currently playing\n\n## Use case\nGet information what is currently playing\n\n## Customizing\n - edit `household.get.trackplus`and select your configuration node.","x":680,"y":168,"wires":[],"icon":"node-red/subflow.svg"},{"id":"ee9dd47a.6d2d08","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":570,"y":200,"wires":[["3cf7e92f.54c756"]]},{"id":"3cf7e92f.54c756","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.get.trackplus","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":731.5,"y":200,"wires":[["c708c82a.fe2fb8"]]},{"id":"c708c82a.fe2fb8","type":"debug","z":"25081f9e.f5f34","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"false","statusVal":"","statusType":"auto","x":911,"y":200,"wires":[]},{"id":"61402b93dc8fba75","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config-node or modify it and use your ip address.","x":301,"y":229,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"0e9129524b1462fa","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config-node or modify it and use your ip address.","x":292,"y":341,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"b008f91aacceb441","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config-node or modify it and use your ip address.","x":771,"y":229,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"acd8d32553286a50","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":1131,"y":312,"wires":[["dbc0d72e5cfef842"]]},{"id":"dbc0d72e5cfef842","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.play.library.artist","state":"Beatles","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":1301,"y":312,"wires":[[]]},{"id":"a0e0e8a9db62ac2b","type":"comment","z":"25081f9e.f5f34","name":"↑modify","info":"Select your config-node or modify it and use your ip address.","x":1353,"y":336,"wires":[],"icon":"font-awesome/fa-edit"},{"id":"7bc75035f27ceafb","type":"comment","z":"25081f9e.f5f34","name":"Play Beatles from your Music library - read me","info":"# Play Beatles from your Music library\n\n## Customizing \n- in `household.create.group`\n    - select your configuration node.\n    - edit payload and enter the name of a beatles album on your music library\n \n\n","x":1251,"y":280,"wires":[],"icon":"node-red/subflow.svg"},{"id":"88e9fa70.4a53e8","type":"sonos-config","name":"your_player_dns","serialnum":"","ipaddress":"sonoskitchen.fritz.box"}]
+[
+  {
+    "id": "dd3ffb6.ac1d808",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 90,
+    "y": 200,
+    "wires": [
+      [
+        "71d34ef1.1c242"
+      ]
+    ]
+  },
+  {
+    "id": "71d34ef1.1c242",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.play.tunein",
+    "state": "s24896",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 250,
+    "y": 200,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "a2c2b3bd.e1b71",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 90,
+    "y": 312,
+    "wires": [
+      [
+        "9c0a7e9e.9bca6"
+      ]
+    ]
+  },
+  {
+    "id": "9c0a7e9e.9bca6",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.play.queue",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 251,
+    "y": 312,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "2fb9a1fd.68737e",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 570,
+    "y": 312,
+    "wires": [
+      [
+        "37f90c94.f24384"
+      ]
+    ]
+  },
+  {
+    "id": "37f90c94.f24384",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "household.create.group",
+    "state": "SonosKueche,SonosWohnzimmer,SonosBad",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 750.5,
+    "y": 312,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "2f8328c7.2bc198",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "QUICKSTART",
+    "info": "",
+    "x": 78,
+    "y": 20,
+    "wires": []
+  },
+  {
+    "id": "124ff2fb.b4d12d",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config-node or modify it and use your ip address.\n\nPayload: The SONOS-Playernames being grouped. The first one will become coordinator. No blanks allowed.",
+    "x": 811,
+    "y": 337,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "686fbbe.e808c44",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Play station SWR3 from TuneIn - read me",
+    "info": "# Play station SWR3 from TuneIn\n\n## Use case\nPlay a TuneIn radio station. \n\n## Customizing\n- edit `group.play.tunein`and select your configuration node.",
+    "x": 200,
+    "y": 168,
+    "wires": [],
+    "icon": "node-red/subflow.svg"
+  },
+  {
+    "id": "a4203acd.9aa738",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Play the SONOS queue - must not be empty - read me",
+    "info": "# Play the SONOS queue\n\n## Customizing\n- edit `group.play.queue `and select your configuration node.\n\nEnsure that the queue is filled with songs. You can to that either with this package or with the SONOS app.",
+    "x": 240,
+    "y": 280,
+    "wires": [],
+    "icon": "node-red/subflow.svg"
+  },
+  {
+    "id": "d013ff60.44585",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Create a group with 3 Sonos-Player - read me",
+    "info": "# Create a group with 3 Sonos-Player\nFirst player is coordinator.\n\n## Customizing\n- edit `household.create.group`\n    - select any configuration nodee\n    - edit payload and enter Sonos-Playernams (not the config node names), seperated by comma but without any blank\n\n",
+    "x": 690,
+    "y": 280,
+    "wires": [],
+    "icon": "node-red/subflow.svg"
+  },
+  {
+    "id": "9332b5ce.6f61d8",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 90,
+    "y": 89,
+    "wires": [
+      [
+        "ecf7c75f.c060b8"
+      ]
+    ]
+  },
+  {
+    "id": "ecf7c75f.c060b8",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "household.get.groups",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 261,
+    "y": 89,
+    "wires": [
+      [
+        "ddbaa9b2.3788b8"
+      ]
+    ]
+  },
+  {
+    "id": "ad3e01a6.495bd",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config-node or modify it and use your ip address.",
+    "x": 303,
+    "y": 116,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "a98e0bd0.e64db8",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Test - all players detected - read me",
+    "info": "# Test - all players detected\n\n## Use case\ncheck your installation and verify that all players are online.\n\n## Customizing\n- edit `household.get.groups`and select your configuration node.",
+    "x": 180,
+    "y": 57,
+    "wires": [],
+    "icon": "node-red/subflow.svg"
+  },
+  {
+    "id": "ddbaa9b2.3788b8",
+    "type": "debug",
+    "z": "25081f9e.f5f34",
+    "name": "",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "false",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 454,
+    "y": 89,
+    "wires": []
+  },
+  {
+    "id": "bd45739.842a39",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Test - what is currently playing - read me",
+    "info": "# Test - what is currently playing\n\n## Use case\nGet information what is currently playing\n\n## Customizing\n - edit `household.get.trackplus`and select your configuration node.",
+    "x": 680,
+    "y": 168,
+    "wires": [],
+    "icon": "node-red/subflow.svg"
+  },
+  {
+    "id": "ee9dd47a.6d2d08",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 570,
+    "y": 200,
+    "wires": [
+      [
+        "3cf7e92f.54c756"
+      ]
+    ]
+  },
+  {
+    "id": "3cf7e92f.54c756",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.get.trackplus",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 731.5,
+    "y": 200,
+    "wires": [
+      [
+        "c708c82a.fe2fb8"
+      ]
+    ]
+  },
+  {
+    "id": "c708c82a.fe2fb8",
+    "type": "debug",
+    "z": "25081f9e.f5f34",
+    "name": "",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "false",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 911,
+    "y": 200,
+    "wires": []
+  },
+  {
+    "id": "61402b93dc8fba75",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config-node or modify it and use your ip address.",
+    "x": 301,
+    "y": 229,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "0e9129524b1462fa",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config-node or modify it and use your ip address.",
+    "x": 292,
+    "y": 341,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "b008f91aacceb441",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config-node or modify it and use your ip address.",
+    "x": 771,
+    "y": 229,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "acd8d32553286a50",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 1009,
+    "y": 312,
+    "wires": [
+      [
+        "dbc0d72e5cfef842"
+      ]
+    ]
+  },
+  {
+    "id": "dbc0d72e5cfef842",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.play.library.artist",
+    "state": "Beatles",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 1179,
+    "y": 312,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "a0e0e8a9db62ac2b",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "↑modify",
+    "info": "Select your config-node or modify it and use your ip address.",
+    "x": 1231,
+    "y": 336,
+    "wires": [],
+    "icon": "font-awesome/fa-edit"
+  },
+  {
+    "id": "7bc75035f27ceafb",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Play Beatles from your Music library - read me",
+    "info": "# Play Beatles from your Music library\n\n## Customizing \n- in `household.create.group`\n    - select your configuration node.\n    - edit payload and enter the name of a beatles album on your music library\n \n\n",
+    "x": 1129,
+    "y": 280,
+    "wires": [],
+    "icon": "node-red/subflow.svg"
+  },
+  {
+    "id": "88e9fa70.4a53e8",
+    "type": "sonos-config",
+    "name": "your_player_dns",
+    "serialnum": "",
+    "ipaddress": "sonoskitchen.fritz.box"
+  }
+]
