@@ -1,1 +1,83 @@
-[{"id":"da2d9474.71d978","type":"comment","z":"25081f9e.f5f34","name":"Example 05: Play Playlist from Music-Library in My Sonos","info":"","x":251,"y":1015,"wires":[]},{"id":"beaf5dab.83544","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":91,"y":1049,"wires":[["45978a20.48df94"]]},{"id":"45978a20.48df94","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.clear.queue","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":261.33333333333337,"y":1049,"wires":[["5863ebe9.89e0b4"]]},{"id":"5863ebe9.89e0b4","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.play.mysonos","state":"MLAdele","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":474,"y":1049,"wires":[["54c37fb8.f6b96"]]},{"id":"88e9fa70.4a53e8","type":"sonos-config","name":"your_player_dns","serialnum":"","ipaddress":"sonoskitchen.fritz.box"}]
+[
+  {
+    "id": "da2d9474.71d978",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Example 05: Play Playlist from Music-Library in My Sonos",
+    "info": "",
+    "x": 251,
+    "y": 1015,
+    "wires": []
+  },
+  {
+    "id": "beaf5dab.83544",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 91,
+    "y": 1049,
+    "wires": [
+      [
+        "45978a20.48df94"
+      ]
+    ]
+  },
+  {
+    "id": "45978a20.48df94",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.clear.queue",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 261.33333333333337,
+    "y": 1049,
+    "wires": [
+      [
+        "5863ebe9.89e0b4"
+      ]
+    ]
+  },
+  {
+    "id": "5863ebe9.89e0b4",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.play.mysonos",
+    "state": "LibPl_10CC",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 474,
+    "y": 1049,
+    "wires": [
+      [
+        "54c37fb8.f6b96"
+      ]
+    ]
+  },
+  {
+    "id": "88e9fa70.4a53e8",
+    "type": "sonos-config",
+    "name": "your_player_dns",
+    "serialnum": "",
+    "ipaddress": "sonoskitchen.fritz.box"
+  }
+]

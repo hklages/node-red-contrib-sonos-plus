@@ -1,1 +1,318 @@
-[{"id":"a72c5aae.097e58","type":"comment","z":"25081f9e.f5f34","name":"Example 08: Group snapshot with save queue","info":"","x":175,"y":1366,"wires":[]},{"id":"47546566.e54dac","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":90,"y":1401,"wires":[["a6faed33.59f02"]]},{"id":"a3913e88.2f518","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.create.snap","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":710,"y":1440,"wires":[["214d9ba2.b171d4"]]},{"id":"214d9ba2.b171d4","type":"change","z":"25081f9e.f5f34","name":"store in flow, stop","rules":[{"t":"set","p":"recentsnapshot","pt":"flow","to":"payload","tot":"msg"}],"action":"","property":"","from":"","to":"","reg":false,"x":853,"y":1399,"wires":[["8793912b.c33de"]]},{"id":"864433c7.ce87b","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.save.queue","state":"queueBackup","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":433,"y":1440,"wires":[["9c8b04f0.ffcfa8"]]},{"id":"7f4c7f7b.d858b","type":"inject","z":"25081f9e.f5f34","name":"trigger","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","payloadType":"date","x":90,"y":1501,"wires":[["2e987a06.948b86"]]},{"id":"2e987a06.948b86","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.clear.queue","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":160,"y":1541,"wires":[["53358155.282d6"]]},{"id":"8793912b.c33de","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.stop","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":951,"y":1440,"wires":[["94510914.f1a8f8"]]},{"id":"a6faed33.59f02","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"household.remove.sonosplaylist","state":"queueBackup","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":190,"y":1440,"wires":[["864433c7.ce87b"]]},{"id":"94510914.f1a8f8","type":"debug","z":"25081f9e.f5f34","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","x":1110,"y":1400,"wires":[]},{"id":"9c8b04f0.ffcfa8","type":"change","z":"25081f9e.f5f34","name":"store volumes, mute sate","rules":[{"t":"set","p":"snapVolumes","pt":"msg","to":"true","tot":"bool"},{"t":"set","p":"snapMutestates","pt":"msg","to":"true","tot":"bool"}],"action":"","property":"","from":"","to":"","reg":false,"x":590,"y":1399,"wires":[["a3913e88.2f518"]]},{"id":"2c292e27.39eec2","type":"sonos-universal","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"group.play.snap","state":"","stateType":"str","avoidCheckPlayerAvailability":false,"name":"","x":680,"y":1540,"wires":[["dd8d92da.82331"]]},{"id":"dd8d92da.82331","type":"debug","z":"25081f9e.f5f34","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","x":850,"y":1506,"wires":[]},{"id":"53358155.282d6","type":"sonos-manage-mysonos","z":"25081f9e.f5f34","confignode":"88e9fa70.4a53e8","command":"mysonos.queue.item","state":"queueBackup","stateType":"str","name":"","x":378,"y":1541,"wires":[["ec6a899a.01f038"]]},{"id":"ec6a899a.01f038","type":"change","z":"25081f9e.f5f34","name":"restore from flow","rules":[{"t":"set","p":"payload","pt":"msg","to":"recentsnapshot","tot":"flow"}],"action":"","property":"","from":"","to":"","reg":false,"x":550,"y":1504,"wires":[["2c292e27.39eec2"]]},{"id":"88e9fa70.4a53e8","type":"sonos-config","name":"your_player_dns","serialnum":"","ipaddress":"sonoskitchen.fritz.box"}]
+[
+  {
+    "id": "a72c5aae.097e58",
+    "type": "comment",
+    "z": "25081f9e.f5f34",
+    "name": "Example 08: Group snapshot with save queue",
+    "info": "",
+    "x": 175,
+    "y": 1366,
+    "wires": []
+  },
+  {
+    "id": "47546566.e54dac",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 90,
+    "y": 1401,
+    "wires": [
+      [
+        "a6faed33.59f02"
+      ]
+    ]
+  },
+  {
+    "id": "a3913e88.2f518",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.create.snap",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 710,
+    "y": 1440,
+    "wires": [
+      [
+        "214d9ba2.b171d4"
+      ]
+    ]
+  },
+  {
+    "id": "214d9ba2.b171d4",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "store in flow, stop",
+    "rules": [
+      {
+        "t": "set",
+        "p": "recentsnapshot",
+        "pt": "flow",
+        "to": "payload",
+        "tot": "msg"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 853,
+    "y": 1399,
+    "wires": [
+      [
+        "8793912b.c33de"
+      ]
+    ]
+  },
+  {
+    "id": "864433c7.ce87b",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.save.queue",
+    "state": "queueBackup",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 433,
+    "y": 1440,
+    "wires": [
+      [
+        "9c8b04f0.ffcfa8"
+      ]
+    ]
+  },
+  {
+    "id": "7f4c7f7b.d858b",
+    "type": "inject",
+    "z": "25081f9e.f5f34",
+    "name": "trigger",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payloadType": "date",
+    "x": 90,
+    "y": 1501,
+    "wires": [
+      [
+        "2e987a06.948b86"
+      ]
+    ]
+  },
+  {
+    "id": "2e987a06.948b86",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.clear.queue",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 160,
+    "y": 1541,
+    "wires": [
+      [
+        "53358155.282d6"
+      ]
+    ]
+  },
+  {
+    "id": "8793912b.c33de",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.stop",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 951,
+    "y": 1440,
+    "wires": [
+      [
+        "94510914.f1a8f8"
+      ]
+    ]
+  },
+  {
+    "id": "a6faed33.59f02",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "household.remove.sonosplaylist",
+    "state": "queueBackup",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 190,
+    "y": 1440,
+    "wires": [
+      [
+        "864433c7.ce87b"
+      ]
+    ]
+  },
+  {
+    "id": "94510914.f1a8f8",
+    "type": "debug",
+    "z": "25081f9e.f5f34",
+    "name": "",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "x": 1110,
+    "y": 1400,
+    "wires": []
+  },
+  {
+    "id": "9c8b04f0.ffcfa8",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "store volumes, mute sate",
+    "rules": [
+      {
+        "t": "set",
+        "p": "snapVolumes",
+        "pt": "msg",
+        "to": "true",
+        "tot": "bool"
+      },
+      {
+        "t": "set",
+        "p": "snapMutestates",
+        "pt": "msg",
+        "to": "true",
+        "tot": "bool"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 590,
+    "y": 1399,
+    "wires": [
+      [
+        "a3913e88.2f518"
+      ]
+    ]
+  },
+  {
+    "id": "2c292e27.39eec2",
+    "type": "sonos-universal",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "group.play.snap",
+    "state": "",
+    "stateType": "str",
+    "avoidCheckPlayerAvailability": false,
+    "name": "",
+    "x": 680,
+    "y": 1540,
+    "wires": [
+      [
+        "dd8d92da.82331"
+      ]
+    ]
+  },
+  {
+    "id": "dd8d92da.82331",
+    "type": "debug",
+    "z": "25081f9e.f5f34",
+    "name": "",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "x": 850,
+    "y": 1506,
+    "wires": []
+  },
+  {
+    "id": "53358155.282d6",
+    "type": "sonos-manage-mysonos",
+    "z": "25081f9e.f5f34",
+    "confignode": "88e9fa70.4a53e8",
+    "command": "mysonos.queue.item",
+    "state": "queueBackup",
+    "stateType": "str",
+    "name": "",
+    "x": 378,
+    "y": 1541,
+    "wires": [
+      [
+        "ec6a899a.01f038"
+      ]
+    ]
+  },
+  {
+    "id": "ec6a899a.01f038",
+    "type": "change",
+    "z": "25081f9e.f5f34",
+    "name": "restore from flow",
+    "rules": [
+      {
+        "t": "set",
+        "p": "payload",
+        "pt": "msg",
+        "to": "recentsnapshot",
+        "tot": "flow"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 550,
+    "y": 1504,
+    "wires": [
+      [
+        "2c292e27.39eec2"
+      ]
+    ]
+  },
+  {
+    "id": "88e9fa70.4a53e8",
+    "type": "sonos-config",
+    "name": "your_player_dns",
+    "serialnum": "",
+    "ipaddress": "sonoskitchen.fritz.box"
+  }
+]

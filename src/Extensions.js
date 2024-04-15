@@ -385,7 +385,7 @@ module.exports = {
   /** 
    * Returns an array (always) of items (DidlBrowseItem) extracted from action "Browse" output. 
    * title, id, artist, album are html decoded. uri, r:resMD (string) aren't! 
-   * @param {object} browseOutcome Browse outcome
+   * @param {object} browseOutcome Browse outcome since ts sonos v2.6.0-beta.9 encoded!
    * @param {number} browseOutcome.NumberReturned amount returned items
    * @param {number} browseOutcome.TotalMatches amount of total item
    * @param {string} browseOutcome.Result Didl-Light format, xml 
@@ -423,7 +423,7 @@ module.exports = {
     if (!isTruthyPropertyStringNotEmpty(browseOutcome, ['Result'])) {
       throw new Error(`${PACKAGE_PREFIX} invalid response Browse: - missing Result DIDL XML`)
     }
-    // From sonos@beta.9 there is no need to decode the data - therefor it is commented out
+    // From sonos@2.6.0-beta.9 there is no need to decode the data - therefor it is commented out
     // const decodedResult = await decodeHtmlEntity(browseOutcome['Result'])
 
     // stopNodes because we use that value for export and import and no further processing
