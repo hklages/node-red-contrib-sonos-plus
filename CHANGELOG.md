@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.8.1] 2024-04-15
+
+#### Changed
+
+- update examples
+
+- update dev dependencies chai
+
+- small bug fixes
+
 ### [6.8.0] 2024-04-09
 
 #### Changed
