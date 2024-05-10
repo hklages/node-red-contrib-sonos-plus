@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.9.0] 2024-05-10
+
+#### Changed
+
+- command household.set.alarmTime renamed to household.set.alarmtime (lowercase)
+
 ### [6.8.1] 2024-04-15
 
 #### Changed
