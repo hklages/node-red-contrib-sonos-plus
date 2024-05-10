@@ -45,6 +45,7 @@ const debug = require('debug')(`${PACKAGE_PREFIX}universal-create`)
 module.exports = function (RED) {
 
   // Function lexical order, ascending
+  // commands in lower case!
   const COMMAND_TABLE_UNIVERSAL = {
     'coordinator.delegate': coordinatorDelegateCoordination,
     'group.adjust.volume': groupAdjustVolume,
