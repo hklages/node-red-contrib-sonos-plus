@@ -113,7 +113,7 @@ module.exports = function (RED) {
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
-    'household.set.alarmTime': householdSetAlarmTime,
+    'household.set.alarmtime': householdSetAlarmTime,
     'household.test.player': householdTestPlayerOnline,
     'household.update.musiclibrary': householdMusicLibraryUpdate,
     'household.wakeup.player': householdPlayerWakeUp,
@@ -2773,7 +2773,7 @@ module.exports = function (RED) {
    *  Set household alarm Time.
    * @param {object} msg incoming message
    * @param {string/number} msg.payload alarm id, integer, not negative
-   * @param {string} msg.alarmStart - the time at which the alarm should start (hh:mm:ss format)
+   * @param {string} msg.alarmTime - the time at which the alarm should start (hh:mm:ss format)
    * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
    *
    * @returns {promise<object>} {}
