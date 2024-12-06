@@ -1,18 +1,9 @@
 {
   "name": "node-red-contrib-sonos-plus",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "A set of Node-RED nodes to control SONOS player in your local network.",
   "main": "index.js",
   "scripts": {
-    "DEV-mtnc-git-version": "git --version",
-    "DEV-mtnc-npm-version": "npm list npm -g",
-    "DEV-mtnc-dev-dependencies-versions": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm list -dev --depth=0",
-    "DEV-mtnc-dependencies-versions": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm list --depth=0",
-    "DEV-mtnc-dependencies-outdated": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm outdated --depth=0",
-    "DEV-mtnc-git-update": "git update-git-for-windows",
-    "DEV-mtnc-npm-update": "npm install npm@latest -g",
-    "DEV-mtnc-eslint-update": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && npm install eslint@latest",
-    "DEV-mtnc-dependencies-update": "open topic - fallback everyone manual",
     "DEV-generate-docs": "cd C:/Users/hekla/Development/node-red-contrib-sonos-plus && jsdoc -c mydoc.json",
     "TEST-mtnc-nodered-version": "npm list node-red -g",
     "TEST-mtnc-nodered-update": "npm install node-red@latest -g",
@@ -51,17 +42,17 @@
   "author": "hklages",
   "license": "MIT",
   "dependencies": {
-    "@svrooij/sonos": "^2.6.0-beta.10",
-    "axios": "^1.6.8",
-    "debug": "^4.3.4",
-    "fast-xml-parser": "^4.3.6"
+    "@svrooij/sonos": "2.6.0-beta.10",
+    "axios": "^1.7.9",
+    "fast-xml-parser": "^4.5.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^7.6.0",
-    "@typescript-eslint/parser": "^7.6.0",
-    "chai": "^5.1.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "chai": "^5.1.2",
+    "debug": "^4.4.0",
     "eslint": "^8.57.0",
-    "mocha": "^10.4.0"
+    "mocha": "^11.0.1"
   },
   "engines": {
     "node": ">=12.0.0"
