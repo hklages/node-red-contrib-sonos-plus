@@ -12,6 +12,12 @@ Works well with [Home Assistant](https://www.home-assistant.io/) (see example) a
 
 This package is in no way connected to or supported by [Sonos Inc.](https://www.sonos.com/de-de/impressum)
 
+---
+
+> ## There are no further functional enhancement planned! Two maintenance releases are planned for 2025
+
+---
+
 ### Highlights
 
 - Play your track, album, playlist, station from Spotify, Napster, Amazon, Deezer and other music content provider.

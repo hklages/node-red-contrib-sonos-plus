@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.9.1] 2024-12-12
+
+#### Info
+
+- There are no further functional enhancement planned! Two maintenance releases are planned for 2025.
+
+#### Changed
+
+- command group.play.notification now only adjusts the volume if needed
+
+- update dependencies
+
 ### [6.9.0] 2024-05-10
 
 #### Changed

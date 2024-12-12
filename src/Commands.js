@@ -68,7 +68,7 @@ module.exports = {
     // Create snapshot state/volume/content but not the queue
     // SONOS-Queue is not snapshot because usually it is not changed.
     const snapShot = await module.exports.createGroupSnapshot(tsPlayerArray, {
-      snapVolumes: true,  // simplification - only necessary in some cases
+      snapVolumes: (options.volume !== -1),  // only capture if requested
       snapMutes: false, // dont save the mutestates of each player
       sonosPlaylistName: null // dont save the SONOS-Queue
     })
