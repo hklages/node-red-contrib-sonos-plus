@@ -117,6 +117,43 @@ module.exports = {
       return item.replace(/:LR|:RR/, '')
     }) 
   },
+
+  /** Returns the UUID of the subwoofer.
+   * @param {string} mapString string from HTSatChanMapSet or channelMapSet
+   * 
+   * @returns {"Promise<string>"} subwoofer UUID
+   * 
+   * @throws {error} 
+   * 
+   */
+  // Example
+  // eslint-disable-next-line max-len
+  // RINCON_48A6B8B5614E01400:LF,RF;RINCON_38420B92ABE601400:RR;RINCON_7828CA042C8401400:LR;RINCON_542A1B108A6201400:SW
+   
+  extractSubwooferUuid: async (mapString) => {
+    debug('method:%s', 'extractSubwooferUuid')
+
+    if (!module.exports.isTruthy(mapString)) {
+      throw new Error('invalid parameter - invalid/missing')
+    }
+    if (typeof mapString !== 'string') {
+      throw new Error('invalid parameter - is not string')
+    }
+    
+    if (!mapString.includes(';')) {
+      throw new Error('invalid parameter - no subwoofer (missing ;)')
+    }
+    const uuidsPlusChannel = mapString.split(';')
+    const subwooferUuidArray = uuidsPlusChannel.filter((item) => {
+      return item.includes(':SW')
+    })
+    if ((subwooferUuidArray.length !== 1)) {
+      throw new Error('invalid parameter -  no subwoofer found')
+    }
+    
+    // remove identifier :SW
+    return subwooferUuidArray[0].replace(/:SW/, '')
+  },
   
   /** Converts hh:mm:ss time to milliseconds. Does not check input!
    * No validation: hh 0 to 23, mm 0 to 59 ss 0 59, : must exist
