@@ -2887,7 +2887,14 @@ module.exports = function (RED) {
     }
 
     // Get Satellites UUIDs
-    const subwooferUuid = await extractSubwooferUuid(mainPlayerData.htSatChanMapSet)
+    // :SW can be in htSatChanMapSet or channelMapSet
+    let mapSet = mainPlayerData.htSatChanMapSet 
+    if (!mapSet.includes(':SW')) {
+      mapSet = mainPlayerData.channelMapSet
+    }
+    
+    const subwooferUuid = await extractSubwooferUuid(mapSet)
+    console.log(subwooferUuid)
 
     // IMPORTANT: Must be send to main player
     const tsMainPlayer = new SonosDevice(mainPlayerData.urlObject.hostname)
