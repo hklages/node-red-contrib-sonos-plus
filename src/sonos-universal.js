@@ -31,8 +31,8 @@ const { executeActionV8, failureV2, getDeviceInfo, getDeviceProperties, getMusic
 } = require('./Extensions.js')
 
 const { isTruthy, isTruthyProperty, isTruthyPropertyStringNotEmpty, validRegex,
-  validToInteger, encodeHtmlEntity, extractSatellitesUuids, validTime, validPropertyRequiredRegex,
-  validPropertyRequiredInteger, validPropertyRequiredOnOff
+  validToInteger, encodeHtmlEntity, extractSatellitesUuids, extractSubwooferUuid, validTime,
+  validPropertyRequiredRegex, validPropertyRequiredInteger, validPropertyRequiredOnOff
 } = require('./Helper.js')
 
 const { SonosDevice, MetaDataHelper } = require('@svrooij/sonos/lib')
@@ -112,6 +112,7 @@ module.exports = function (RED) {
     'household.get.sonosplaylisttracks': householdGetSonosPlaylistTracks,
     'household.remove.satellites': householdRemoveSatellites,
     'household.remove.sonosplaylist': householdRemoveSonosPlaylist,
+    'household.remove.subwoofer': householdRemoveSubwoofer,
     'household.separate.group': householdSeparateGroup,
     'household.separate.stereopair': householdSeparateStereoPair,
     'household.set.alarmtime': householdSetAlarmTime,
@@ -2802,7 +2803,7 @@ module.exports = function (RED) {
   }
 
   /**
-   *  Removes only the satellites (not the subwoofer) of players. 
+   *  Removes only the satellites (not the subwoofer) of a player. 
    * All players will become visible again. Github #238
    * @param {object} msg incoming message
    * @param {string} msg.payload - main SONOS-Playername, is visible
@@ -2846,6 +2847,59 @@ module.exports = function (RED) {
         { 'SatRoomUUID': uuid })
       await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](1000)
     })
+
+    return {}
+  }
+
+  /**
+   * Removes only the subwoofer of a player. 
+   * The subwoofer will become visible again. 
+   * @param {object} msg incoming message
+   * @param {string} msg.payload - main SONOS-Playername, is visible
+   * @param {object} tsPlayer any sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} 'all groups data undefined', 
+   * 'main player name left was not found'
+   * @throws {error} all methods
+   * 
+   * CAUTION: The command has to be send to the main player!
+   *
+   */
+  async function householdRemoveSubwoofer (msg, tsPlayer) {
+    debug('command:%s', 'householdRemoveSubwoofer')
+
+    const mainPlayername = validRegex(msg, 'payload', REGEX_ANYCHAR, 'main player name')
+
+    // Get all player and find the given one
+    const allGroupsData = await getGroupsAll(tsPlayer, true)
+    if (!isTruthy(allGroupsData)) {
+      throw new Error(`${PACKAGE_PREFIX} all groups data undefined`)
+    }
+    // - flatten the array of groups of player and search for main player
+    const flatArrayOfPlayer = [].concat.apply([], allGroupsData)
+    const mainPlayerData = flatArrayOfPlayer.find(singlePlayer => {
+      return singlePlayer.playerName === mainPlayername
+    })
+    if (mainPlayerData === undefined) {
+      throw new Error(`${PACKAGE_PREFIX} could not find given main player`)
+    }
+
+    // Get Satellites UUIDs
+    // :SW can be in htSatChanMapSet or channelMapSet
+    let mapSet = mainPlayerData.htSatChanMapSet 
+    if (!mapSet.includes(':SW')) {
+      mapSet = mainPlayerData.channelMapSet
+    }
+    
+    const subwooferUuid = await extractSubwooferUuid(mapSet)
+    console.log(subwooferUuid)
+
+    // IMPORTANT: Must be send to main player
+    const tsMainPlayer = new SonosDevice(mainPlayerData.urlObject.hostname)
+    await tsMainPlayer.DevicePropertiesService.RemoveHTSatellite(
+      { 'SatRoomUUID': subwooferUuid })
 
     return {}
   }
