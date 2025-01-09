@@ -2894,7 +2894,6 @@ module.exports = function (RED) {
     }
     
     const subwooferUuid = await extractSubwooferUuid(mapSet)
-    console.log(subwooferUuid)
 
     // IMPORTANT: Must be send to main player
     const tsMainPlayer = new SonosDevice(mainPlayerData.urlObject.hostname)
