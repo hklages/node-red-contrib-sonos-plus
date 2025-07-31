@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * All functions provided by Universal node. 
  * Universal node: all except commands related to groups and player.
@@ -189,7 +190,7 @@ module.exports = function (RED) {
             ipv4Validated = ipv4Array[0]
           } catch (err) {
 
-            throw new Error(`${PACKAGE_PREFIX} could not resolve dns name >>${hostname}`)
+            throw new Error(`${PACKAGE_PREFIX} could not resolve dns name >>${hostname}-${err.msg}`)
           }
         } else {
 
@@ -219,7 +220,7 @@ module.exports = function (RED) {
         } catch (err) {
           // discovery failed - either no player found or no matching serial number
 
-          throw new Error(`${PACKAGE_PREFIX} discovery failed`)
+          throw new Error(`${PACKAGE_PREFIX} discovery failed - ${err.msg}`)
         }
       } else {
 
@@ -253,7 +254,7 @@ module.exports = function (RED) {
         node.status({ fill: 'green', shape: 'dot', text: success })
       } catch (err) {
 
-        throw new Error(`${PACKAGE_PREFIX} could not subscribe to msg`)
+        throw new Error(`${PACKAGE_PREFIX} could not subscribe to msg - ${err.msg}`)
       }
 
     })(config, configNode, this) // handle any error of async wrapper but not the messages
@@ -501,7 +502,7 @@ module.exports = function (RED) {
         throw new Error(`${PACKAGE_PREFIX}: sonosPlaylistName is not string`)
       }
       if (!REGEX_ANYCHAR.test(msg.sonosPlaylistName)) {
-        // eslint-disable-next-line max-len
+         
         throw new Error(`${PACKAGE_PREFIX}: sonosPlaylistName name has wrong syntax`)
       }
       options.sonosPlaylistName = msg.sonosPlaylistName
@@ -548,7 +549,7 @@ module.exports = function (RED) {
    *
    * @throws {error} all methods
    */
-  // eslint-disable-next-line max-len
+   
   async function groupGetTransportActions (msg, tsPlayer) {
     debug('command:%s', 'groupGetTransportActions')
     const validated = await validatedGroupProperties(msg)
@@ -830,7 +831,7 @@ module.exports = function (RED) {
     let serviceId = await getMusicServiceId(uri)
 
     // Get station uri for all "x-sonosapi-stream"
-    // eslint-disable-next-line max-len
+     
     const stationArtUri = (uri.startsWith('x-sonosapi-stream') ? `${tsCoordinator.urlObject.origin}/getaa?s=1&u=${uri}` : '')
 
     // Get current position data
@@ -870,7 +871,7 @@ module.exports = function (RED) {
         title = positionData.TrackMetaData.Title
       }
     }
-    // eslint-disable-next-line max-len
+     
     const album = (isTruthyPropertyStringNotEmpty(positionData, ['TrackMetaData', 'Album']) ? positionData.TrackMetaData.Album : '')
 
     let artUri = ''
@@ -1448,7 +1449,7 @@ module.exports = function (RED) {
     // - Find title in list of SONOS-Playlists - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
     if (foundIndex === -1) {
-      // eslint-disable-next-line max-len
+       
       throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string >>${validatedTitle}`)
     }
 
@@ -1770,7 +1771,7 @@ module.exports = function (RED) {
     // - Find title in playlist - exact
     const foundIndex = sonosPlaylists.findIndex((playlist) => (playlist.title === validatedTitle))
     if (foundIndex === -1) {
-      // eslint-disable-next-line max-len
+       
       throw new Error(`${PACKAGE_PREFIX} no SONOS-Playlist title matching search string >>${validatedTitle}`)
     }
 
@@ -2432,7 +2433,7 @@ module.exports = function (RED) {
     // We have to use main player
     const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
     await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
-      // eslint-disable-next-line max-len
+       
       { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerRightRearUuid}:RR;${playerLeftRearUuid}:LR` })
 
     return {}
@@ -2504,12 +2505,12 @@ module.exports = function (RED) {
     if (isHTsystem) {
       const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
       await tsMainPlayer.DevicePropertiesService.AddHTSatellite(
-        // eslint-disable-next-line max-len
+         
         { 'HTSatChanMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })   
     } else {
       const tsMainPlayer = new SonosDevice(playerMainUrlObject.hostname)
       await tsMainPlayer.DevicePropertiesService.AddBondedZones(
-        // eslint-disable-next-line max-len
+         
         { 'ChannelMapSet': `${playerMainUuid}:LF,RF;${playerSubwooferUuid}:SW` })
     }
    
@@ -3194,7 +3195,7 @@ module.exports = function (RED) {
     debug('command:%s', 'playerGetEq')
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
+     
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
 
@@ -3485,7 +3486,7 @@ module.exports = function (RED) {
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
 
-    // eslint-disable-next-line max-len   
+     
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
 
@@ -3549,7 +3550,7 @@ module.exports = function (RED) {
     // Validate msg.playerName, msg.volume
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
+     
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
     // Get the device info, check whether line in is supported and get uuid
@@ -3591,7 +3592,7 @@ module.exports = function (RED) {
     // Validate msg.playerName, msg.volume
     const validated = await validatedGroupProperties(msg)
     const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
-    // eslint-disable-next-line max-len
+     
     const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
     ts1Player.urlObject = groupData.members[groupData.playerIndex].urlObject
     // Get the device info, check whether TV is supported and get uuid

@@ -2,12 +2,17 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.9.3] 2025-07-31
+
+#### Changed
+
+- update dependencies
+
 ### [6.9.2] 2025-01-09
 
 #### Changed
 
 - added command "household.remove.subwoofer"
-
 
 ### [6.9.1] 2024-12-12
 

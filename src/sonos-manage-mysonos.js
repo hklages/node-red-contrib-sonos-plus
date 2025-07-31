@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * All functions provided by My Sonos node. My Sonos node handles Music-Library and My-Sonos.
  * My Sonos also holds SONOS-Playlist.
@@ -80,7 +81,7 @@ module.exports = function (RED) {
             ipv4Validated = ipv4Array[0]
           } catch (err) {
             
-            throw new Error(`${PACKAGE_PREFIX} could not resolve dns name >>${hostname}`)
+            throw new Error(`${PACKAGE_PREFIX} could not resolve dns name >>${hostname} ${err.msg}`)
           }
         } else {
 
@@ -110,7 +111,7 @@ module.exports = function (RED) {
         } catch (err) {
           // discovery failed - either no player found or no matching serial number
 
-          throw new Error(`${PACKAGE_PREFIX} discovery failed`)
+          throw new Error(`${PACKAGE_PREFIX} discovery failed - ${err.msg}`)
         }
       } else {
 
@@ -144,7 +145,7 @@ module.exports = function (RED) {
         node.status({ fill: 'green', shape: 'dot', text: success })
       } catch (err) {
         
-        throw new Error(`${PACKAGE_PREFIX} could not subscribe to msg`)
+        throw new Error(`${PACKAGE_PREFIX} could not subscribe to msg ${err.msg}`)
       }
       
     })(config, configNode, this) // handle any error of async wrapper but not the messages
@@ -308,7 +309,7 @@ module.exports = function (RED) {
     debug('command:%s', 'libraryGetItem')
     
     // payload as title search string is optional.
-    // eslint-disable-next-line max-len
+     
     const validSearch = validRegex(msg, 'payload', REGEX_ANYCHAR_BLANK, 'payload search in title', '')
     
     let type = ''
