@@ -14,7 +14,7 @@ This package is in no way connected to or supported by [Sonos Inc.](https://www.
 
 ---
 
-> ## There are no further functional enhancement planned! Two maintenance releases are planned for 2025
+> ## There are no further functional enhancement planned! Two maintenance releases are planned for 2026
 
 ---
 
