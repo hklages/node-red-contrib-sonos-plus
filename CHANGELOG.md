@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.9.4] 2026-03-15
+
+#### Changed
+
+- update dependencies
+
 ### [6.9.3] 2025-07-31
 
 #### Changed
