@@ -123,6 +123,7 @@ module.exports = function (RED) {
     'joiner.play.notification': joinerPlayNotification,
     'player.adjust.volume': playerAdjustVolume,
     'player.become.standalone': playerBecomeStandalone,
+    'player.get.balance': playerGetBalance,
     'player.get.bass': playerGetBass,
     'player.get.batterylevel': playerGetBatteryLevel,
     'player.get.buttonlockstate': playerGetButtonLockState,
@@ -143,6 +144,7 @@ module.exports = function (RED) {
     'player.play.clip': playerPlayClip,
     'player.play.linein': playerPlayLineIn,
     'player.play.tv': playerPlayTv,
+    'player.set.balance': playerSetBalance,
     'player.set.bass': playerSetBass,
     'player.set.buttonlockstate': playerSetButtonLockState,
     'player.set.dialoglevel': playerSetEQ,
@@ -3108,6 +3110,44 @@ module.exports = function (RED) {
   }
 
   /**
+   *  Get player balance - minus for left and plus for right!
+   * @param {object} msg incoming message
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} property payload string -20 .. +20
+   *
+   * @throws {error} all methods
+   */
+  async function playerGetBalance (msg, tsPlayer) {
+    debug('command:%s', 'playerGetBalance')
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+    const resultLf  = await ts1Player.RenderingControlService.GetVolume(
+      { 'InstanceID': 0, 'Channel': 'LF' })
+    const lf = parseInt(resultLf.CurrentVolume)
+
+    const resultRf = await ts1Player.RenderingControlService.GetVolume(
+      { 'InstanceID': 0, 'Channel': 'RF' })
+    const rf = parseInt(resultRf.CurrentVolume)
+
+    let balance = 0
+    if (lf === 100) {
+      balance = -(100 - rf) / 5
+    } else if (rf === 100) {
+      balance = (100 - lf) / 5 
+    } else {
+      balance = 0 // error, assume 0
+    }
+    
+    const payload = String(balance)
+
+    return { payload }
+  }
+
+  /**
    *  Get player bass.
    * @param {object} msg incoming message
    * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
@@ -3615,6 +3655,46 @@ module.exports = function (RED) {
       throw new Error(`${PACKAGE_PREFIX} player does not support TV`)
     }
 
+    return {}
+  }
+
+   /**
+   *  Set player balance - left minus and right plus
+   * @param {object} msg incoming message
+   * @param {string/number} msg.payload -20 to +20 integer.
+   * @param {string} [msg.playerName = using tsPlayer] SONOS-Playername
+   * @param {object} tsPlayer sonos-ts player with .urlObject as Javascript build-in URL
+   *
+   * @returns {promise<object>} {}
+   *
+   * @throws {error} all methods
+   */
+  async function playerSetBalance (msg, tsPlayer) {
+    debug('command:%s', 'playerSetBalance')
+    // Payload balance is required.
+    const newBalance = validToInteger(msg, 'payload', -20, +20, 'set balance')
+    const validated = await validatedGroupProperties(msg)
+    const groupData = await getGroupCurrent(tsPlayer, validated.playerName)
+
+    const ts1Player = new SonosDevice(groupData.members[groupData.playerIndex].urlObject.hostname)
+
+    // Balance is mapped to left und right volume channels.
+    // positive balance -> right = 100, left = 100 - balance * 5
+    // negative balance -> left = 100, right = 100 + balance * 5 /balance is negative
+    let leftVolume = 100
+    let rightVolume = 100
+    if (newBalance > 0) {
+      leftVolume = 100 - newBalance * 5
+    } else {
+      rightVolume = 100 + newBalance * 5
+    }
+
+    await ts1Player.RenderingControlService.SetVolume(
+      { 'InstanceID': 0, 'Channel': 'LF', 'DesiredVolume': leftVolume })
+    
+    await ts1Player.RenderingControlService.SetVolume(
+      { 'InstanceID': 0, 'Channel': 'RF', 'DesiredVolume': rightVolume })
+    
     return {}
   }
 
