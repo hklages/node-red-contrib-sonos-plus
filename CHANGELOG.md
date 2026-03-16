@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+### [6.9.5] 2026-03-16
+
+#### added
+
+- new commands player.get.balance, player.set.balance
+
 ### [6.9.4] 2026-03-15
 
 #### Changed
