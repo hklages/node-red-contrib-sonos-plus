@@ -179,6 +179,7 @@ module.exports = function (RED) {
       const port = 1400 // assuming this port, used to build playerUrlObject
       let ipv4Validated // used to build playerUrlObject
       let playerUrlObject // for node.on etc
+      let serialForRediscovery = null // set when addressing by serial - enables runtime re-resolve
 
       if (isTruthyPropertyStringNotEmpty(configurationNode, ['ipaddress'])) {
         // Case A: using ip address or DNS name(must be resolved). SONOS does not accept DNS.
@@ -215,6 +216,7 @@ module.exports = function (RED) {
         const serialNb = configurationNode.serialnum
         if (!REGEX_SERIAL.test(serialNb))
           throw new Error(`${PACKAGE_PREFIX} serial number invalid >>${serialNb}`)
+        serialForRediscovery = serialNb // allow runtime re-resolution after DHCP changes
 
         try { // redundant - just to get custom error message
           ipv4Validated = await discoverSpecificSonosPlayerBySerial(serialNb)
@@ -242,7 +244,23 @@ module.exports = function (RED) {
               node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${msg.nrcspCmd}` })
               debug('OK: %s', msg.nrcspCmd)
             })
-            .catch((err) => {
+            .catch(async (err) => {
+              // serial-addressed: the player may have changed IP (DHCP). Re-discover
+              // by serial once and retry the command before reporting failure.
+              if (serialForRediscovery) {
+                try {
+                  ipv4Validated = await discoverSpecificSonosPlayerBySerial(serialForRediscovery)
+                  debug('rediscovered ip address >>%s', ipv4Validated)
+                  const msgUpdate = await processInputMsg(node, configuration, msg, ipv4Validated)
+                  Object.assign(msg, msgUpdate)
+                  send(msg)
+                  done()
+                  node.status({ 'fill': 'green', 'shape': 'dot', 'text': `ok:${msg.nrcspCmd} (rediscovered)` })
+                  return
+                } catch (errRetry) {
+                  debug('rediscovery retry failed >>%s', errRetry.message)
+                }
+              }
               let lastFunction = 'processInputMsg'
               if (msg.nrcspCmd && typeof msg.nrcspCmd === 'string') {
                 lastFunction = msg.nrcspCmd
