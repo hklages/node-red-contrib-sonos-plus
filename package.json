@@ -43,14 +43,14 @@
   "license": "MIT",
   "dependencies": {
     "@svrooij/sonos": "2.6.0-beta.10",
-    "axios": "^1.13.6",
-    "fast-xml-parser": "^4.5.4"
+    "axios": "^1.17.0",
+    "fast-xml-parser": "^4.5.6"
   },
   "devDependencies": {
     "chai": "^5.3.3",
-    "debug": "^4.5.4",
+    "debug": "^4.4.3",
     "mocha": "^7.2.0",
-    "typescript-eslint": "^8.38.0"
+    "typescript-eslint": "^8.61.0"
   },
   "engines": {
     "node": ">=18.0.0"
